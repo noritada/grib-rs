@@ -1,0 +1,6 @@
+[package]
+name = "rust-grib2"
+version = "0.1.0"
+authors = ["Noritada Kobayashi <noritada.kobayashi@gmail.com>"]
+
+[dependencies]

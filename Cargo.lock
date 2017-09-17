@@ -1,0 +1,4 @@
+[root]
+name = "rust-grib2"
+version = "0.1.0"
+
