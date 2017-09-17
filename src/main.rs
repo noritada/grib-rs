@@ -20,7 +20,35 @@ fn main() {
         Ok(f) => f,
     };
 
-    let size = parser::read_sect0(&mut f);
+    let whole_size = parser::unpack_sect0(&mut f);
+    let mut rest_size: usize = whole_size - 16; // 16 is Section 0 size
 
-    println!("GRIB2 with size {}", size);
+    loop {
+        if rest_size == 4 {
+            if parser::unpack_sect8(&mut f) {
+                break;
+            }
+            else {
+                panic!("section 8 not found");
+            }
+        }
+
+        let (sect_num, sect_size) = parser::unpack_sect_header(&mut f);
+        println!("reading section {} with size {}...", sect_num, sect_size);
+
+        match sect_num {
+            1 => parser::unpack_sect1_body(&mut f, sect_size),
+            2 => parser::unpack_sect2_body(&mut f, sect_size),
+              // actually, section 2 is optional
+            3 => parser::unpack_sect3_body(&mut f, sect_size),
+            4 => parser::unpack_sect4_body(&mut f, sect_size),
+            5 => parser::unpack_sect5_body(&mut f, sect_size),
+            6 => parser::unpack_sect6_body(&mut f, sect_size),
+            7 => parser::unpack_sect7_body(&mut f, sect_size),
+            _ => panic!("unknown section number: {}", sect_num),
+        };
+        rest_size -= sect_size;
+    }
+
+    println!("GRIB2 with size {}", whole_size);
 }
