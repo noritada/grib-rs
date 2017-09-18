@@ -1,22 +1,17 @@
 use std::fs::File;
+use std::io;
 use std::io::Read;
+use std::result::Result;
 
-pub fn unpack_sect0(f: &mut File) -> usize {
+pub fn unpack_sect0(f: &mut File) -> Result<usize, String> {
     let mut buf = [0; 16];
-    match f.read(&mut buf[..]) {
-        Err(_) => panic!("read failed"),
-        Ok(nbytes) => {
-            if nbytes < buf.len() {
-                panic!("not a GRIB2 file");
-            }
-        },
-    };
+    try!(f.read_exact(&mut buf[..]).map_err(clarify_err));
 
     if buf[0] != b'G' || buf[1] != b'R' || buf[2] != b'I' || buf[3] != b'B' {
-        panic!("not a GRIB file");
+        return Err("not a GRIB file".to_string());
     }
     if buf[7] != 2 {
-        panic!("not GRIB version 2");
+        return Err("not GRIB version 2".to_string());
     }
 
     let mut fsize = 0u64;
@@ -26,19 +21,12 @@ pub fn unpack_sect0(f: &mut File) -> usize {
         fsize |= buf[i] as u64;
     }
 
-    fsize as usize
+    Ok(fsize as usize)
 }
 
-pub fn unpack_sect1_body(f: &mut File, sect_size: usize) {
+pub fn unpack_sect1_body(f: &mut File, sect_size: usize) -> Result<(), String> {
     let mut buf = [0; 16]; // octet 6-21
-    match f.read(&mut buf[..]) {
-        Err(_) => panic!("read failed"),
-        Ok(nbytes) => {
-            if nbytes < buf.len() {
-                panic!("file broken");
-            }
-        },
-    };
+    try!(f.read_exact(&mut buf[..]).map_err(clarify_err));
 
     let master_table_version = buf[4];
     println!("GRIB Master Tables Version Number: {}", master_table_version);
@@ -56,30 +44,27 @@ pub fn unpack_sect1_body(f: &mut File, sect_size: usize) {
         // placeholder
         println!("reading extra {} bytes", len_extra);
         let mut buf = vec![0; len_extra];
-        f.read(&mut buf[..]);
+        try!(f.read_exact(&mut buf[..]).map_err(clarify_err));
     }
+
+    Ok(())
 }
 
-pub fn unpack_sect2_body(f: &mut File, sect_size: usize) {
+pub fn unpack_sect2_body(f: &mut File, sect_size: usize) -> Result<(), String> {
     let len_extra = sect_size - 5; // 5 is header size
     if len_extra > 0 {
         // placeholder
         println!("reading extra {} bytes", len_extra);
         let mut buf = vec![0; len_extra];
-        f.read(&mut buf[..]);
+        try!(f.read_exact(&mut buf[..]).map_err(clarify_err));
     }
+
+    Ok(())
 }
 
-pub fn unpack_sect3_body(f: &mut File, sect_size: usize) {
+pub fn unpack_sect3_body(f: &mut File, sect_size: usize) -> Result<(), String> {
     let mut buf = [0; 9]; // octet 6-14
-    match f.read(&mut buf[..]) {
-        Err(_) => panic!("read failed"),
-        Ok(nbytes) => {
-            if nbytes < buf.len() {
-                panic!("file broken");
-            }
-        },
-    };
+    try!(f.read_exact(&mut buf[..]).map_err(clarify_err));
 
     // octet 7-10
     let npoints = concat_bytes_as_u32(&mut buf, 1, 4);
@@ -94,20 +79,15 @@ pub fn unpack_sect3_body(f: &mut File, sect_size: usize) {
         // placeholder
         println!("reading extra {} bytes", len_extra);
         let mut buf = vec![0; len_extra];
-        f.read(&mut buf[..]);
+        try!(f.read_exact(&mut buf[..]).map_err(clarify_err));
     }
+
+    Ok(())
 }
 
-pub fn unpack_sect4_body(f: &mut File, sect_size: usize) {
+pub fn unpack_sect4_body(f: &mut File, sect_size: usize) -> Result<(), String> {
     let mut buf = [0; 4]; // octet 6-9
-    match f.read(&mut buf[..]) {
-        Err(_) => panic!("read failed"),
-        Ok(nbytes) => {
-            if nbytes < buf.len() {
-                panic!("file broken");
-            }
-        },
-    };
+    try!(f.read_exact(&mut buf[..]).map_err(clarify_err));
 
     // octet 6-7
     let ncoordinates = concat_bytes_as_u16(&mut buf, 0, 2);
@@ -122,20 +102,15 @@ pub fn unpack_sect4_body(f: &mut File, sect_size: usize) {
         // placeholder
         println!("reading extra {} bytes", len_extra);
         let mut buf = vec![0; len_extra];
-        f.read(&mut buf[..]);
+        try!(f.read_exact(&mut buf[..]).map_err(clarify_err));
     }
+
+    Ok(())
 }
 
-pub fn unpack_sect5_body(f: &mut File, sect_size: usize) {
+pub fn unpack_sect5_body(f: &mut File, sect_size: usize) -> Result<(), String> {
     let mut buf = [0; 6]; // octet 6-11
-    match f.read(&mut buf[..]) {
-        Err(_) => panic!("read failed"),
-        Ok(nbytes) => {
-            if nbytes < buf.len() {
-                panic!("file broken");
-            }
-        },
-    };
+    try!(f.read_exact(&mut buf[..]).map_err(clarify_err));
 
     // octet 6-9
     let npoints7 = concat_bytes_as_u32(&mut buf, 0, 4);
@@ -150,20 +125,15 @@ pub fn unpack_sect5_body(f: &mut File, sect_size: usize) {
         // placeholder
         println!("reading extra {} bytes", len_extra);
         let mut buf = vec![0; len_extra];
-        f.read(&mut buf[..]);
+        try!(f.read_exact(&mut buf[..]).map_err(clarify_err));
     }
+
+    Ok(())
 }
 
-pub fn unpack_sect6_body(f: &mut File, sect_size: usize) {
+pub fn unpack_sect6_body(f: &mut File, sect_size: usize) -> Result<(), String> {
     let mut buf = [0; 1]; // octet 6
-    match f.read(&mut buf[..]) {
-        Err(_) => panic!("read failed"),
-        Ok(nbytes) => {
-            if nbytes < buf.len() {
-                panic!("file broken");
-            }
-        },
-    };
+    try!(f.read_exact(&mut buf[..]).map_err(clarify_err));
 
     let bitmap_indicator = buf[0];
     println!("bit-map indicator: {}", bitmap_indicator);
@@ -173,50 +143,50 @@ pub fn unpack_sect6_body(f: &mut File, sect_size: usize) {
         // placeholder
         println!("reading extra {} bytes", len_extra);
         let mut buf = vec![0; len_extra];
-        f.read(&mut buf[..]);
+        try!(f.read_exact(&mut buf[..]).map_err(clarify_err));
     }
+
+    Ok(())
 }
 
-pub fn unpack_sect7_body(f: &mut File, sect_size: usize) {
+pub fn unpack_sect7_body(f: &mut File, sect_size: usize) -> Result<(), String> {
     let len_extra = sect_size - 5; // 5 is header size
     if len_extra > 0 {
         // placeholder
         println!("reading extra {} bytes", len_extra);
         let mut buf = vec![0; len_extra]; // octet 6-21
-        f.read(&mut buf[..]);
+        try!(f.read_exact(&mut buf[..]).map_err(clarify_err));
     }
+
+    Ok(())
 }
 
-pub fn unpack_sect8(f: &mut File) -> bool {
+pub fn unpack_sect8(f: &mut File) -> Result<(), String> {
     let mut buf = [0; 4];
-    match f.read(&mut buf[..]) {
-        Err(_) => panic!("read failed"),
-        Ok(nbytes) => {
-            if nbytes < buf.len() {
-                panic!("file broken");
-            }
-        },
-    };
+    try!(f.read_exact(&mut buf[..]).map_err(clarify_err));
 
-    buf[0] == b'7' && buf[1] == b'7' && buf[2] == b'7' && buf[3] == b'7'
+    if buf[0] != b'7' || buf[1] != b'7' || buf[2] != b'7' || buf[3] != b'7' {
+        return Err("Section 8 (End Section) mismatch".to_string());
+    }
+
+    Ok(())
 }
 
 /// Reads a common header for sections 1-7 and returns the section
 /// number and size.
-pub fn unpack_sect_header(f: &mut File) -> (u8, usize) {
+pub fn unpack_sect_header(f: &mut File) -> Result<(u8, usize), String> {
     let mut buf = [0; 5];
-    match f.read(&mut buf[..]) {
-        Err(_) => panic!("read failed"),
-        Ok(nbytes) => {
-            if nbytes < buf.len() {
-                panic!("file broken");
-            }
-        },
-    };
+    try!(f.read_exact(&mut buf[..]).map_err(clarify_err));
 
     let sect_size = concat_bytes_as_u32(&mut buf, 0, 4) as usize;
     let sect_num = buf[4];
-    (sect_num, sect_size)
+    Ok((sect_num, sect_size))
+}
+
+// To convert
+// io::Result<usize> (= Result<usize, io::Error) -> Result<usize, String>
+fn clarify_err(e: io::Error) -> String {
+    format!("read error: {}", e.to_string())
 }
 
 // It seems possible to write a numeric generic function with num crate...

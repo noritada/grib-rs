@@ -20,20 +20,24 @@ fn main() {
         Ok(f) => f,
     };
 
-    let whole_size = parser::unpack_sect0(&mut f);
+    let whole_size = match parser::unpack_sect0(&mut f) {
+        Err(why) => panic!(why),
+        Ok(size) => size,
+    };
     let mut rest_size: usize = whole_size - 16; // 16 is Section 0 size
 
     loop {
         if rest_size == 4 {
-            if parser::unpack_sect8(&mut f) {
-                break;
-            }
-            else {
-                panic!("section 8 not found");
-            }
+            match parser::unpack_sect8(&mut f) {
+                Err(why) => panic!(why),
+                Ok(_) => { break; },
+            };
         }
 
-        let (sect_num, sect_size) = parser::unpack_sect_header(&mut f);
+        let (sect_num, sect_size) = match parser::unpack_sect_header(&mut f) {
+            Err(why) => panic!(why),
+            Ok(tuple) => tuple,
+        };
         println!("reading section {} with size {}...", sect_num, sect_size);
 
         match sect_num {
