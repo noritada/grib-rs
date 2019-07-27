@@ -40,7 +40,7 @@ fn main() {
         };
         println!("reading section {} with size {}...", sect_num, sect_size);
 
-        match sect_num {
+        let _ = match sect_num {
             1 => parser::unpack_sect1_body(&mut f, sect_size),
             2 => parser::unpack_sect2_body(&mut f, sect_size),
               // actually, section 2 is optional
