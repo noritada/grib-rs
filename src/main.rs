@@ -1,5 +1,4 @@
 use std::env;
-use std::error::Error;
 use std::fs::File;
 use std::path::Path;
 
@@ -15,7 +14,7 @@ fn main() {
     let display = path.display();
 
     let mut f = match File::open(&path) {
-        Err(why) => panic!("couldn't open {}: {}", display, Error::description(&why)),
+        Err(why) => panic!("couldn't open {}: {}", display, why.to_string()),
         Ok(f) => f,
     };
 
