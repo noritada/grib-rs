@@ -36,24 +36,10 @@ fn main() {
             };
         }
 
-        let (sect_num, sect_size) = match parser::unpack_sect_header(&mut f) {
-            Err(why) => panic!(why),
-            Ok(tuple) => tuple,
-        };
-        println!("reading section {} with size {}...", sect_num, sect_size);
-
-        let _ = match sect_num {
-            1 => parser::unpack_sect1_body(&mut f, sect_size),
-            2 => parser::unpack_sect2_body(&mut f, sect_size),
-            // actually, section 2 is optional
-            3 => parser::unpack_sect3_body(&mut f, sect_size),
-            4 => parser::unpack_sect4_body(&mut f, sect_size),
-            5 => parser::unpack_sect5_body(&mut f, sect_size),
-            6 => parser::unpack_sect6_body(&mut f, sect_size),
-            7 => parser::unpack_sect7_body(&mut f, sect_size),
-            _ => panic!("unknown section number: {}", sect_num),
-        };
-        rest_size -= sect_size;
+        let sect_info = parser::unpack_sect_header(&mut f).unwrap();
+        let sect_body = sect_info.read_body(&mut f).unwrap();
+        println!("{:#?},\n{:#?}", sect_info, sect_body);
+        rest_size -= sect_info.size;
     }
 
     println!("GRIB2 with size {}", whole_size);
