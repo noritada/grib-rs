@@ -1,6 +1,14 @@
+use std::convert::TryInto;
 use std::io;
 use std::io::Read;
 use std::result::Result;
+
+macro_rules! read_as {
+    ($ty:ty, $name:ident, $start:expr) => {{
+        let end = $start + std::mem::size_of::<$ty>();
+        <$ty>::from_be_bytes($name[$start..end].try_into().unwrap())
+    }};
+}
 
 pub fn unpack_sect0<R: Read>(f: &mut R) -> Result<usize, String> {
     let magic = b"GRIB";
@@ -14,12 +22,7 @@ pub fn unpack_sect0<R: Read>(f: &mut R) -> Result<usize, String> {
         return Err("not GRIB version 2".to_string());
     }
 
-    let mut fsize = 0u64;
-    for i in 8..16 {
-        //fsize |= (buf[i] as u64) << ((15 - i) * 0b1000);
-        fsize <<= 0b1000;
-        fsize |= buf[i] as u64;
-    }
+    let fsize = read_as!(u64, buf, 8);
 
     Ok(fsize as usize)
 }
@@ -38,7 +41,7 @@ pub fn unpack_sect1_body<R: Read>(f: &mut R, sect_size: usize) -> Result<(), Str
     println!("GRIB Local Tables Version Number: {}", local_table_version);
 
     // octet 13-19
-    let year = concat_bytes_as_u16(&mut buf, 7, 2);
+    let year = read_as!(u16, buf, 7);
     println!(
         "reference time of data: {:04}-{:02}-{:02}T{:02}:{:02}:{:02}Z",
         year, buf[9], buf[10], buf[11], buf[12], buf[13]
@@ -72,11 +75,11 @@ pub fn unpack_sect3_body<R: Read>(f: &mut R, sect_size: usize) -> Result<(), Str
     f.read_exact(&mut buf[..]).map_err(clarify_err)?;
 
     // octet 7-10
-    let npoints = concat_bytes_as_u32(&mut buf, 1, 4);
+    let npoints = read_as!(u32, buf, 1);
     println!("number of data points: {}", npoints);
 
     // octet 13-14
-    let grid_tmpl_code = concat_bytes_as_u16(&mut buf, 7, 2);
+    let grid_tmpl_code = read_as!(u16, buf, 7);
     println!("grid definition template number: {}", grid_tmpl_code);
 
     let len_extra = sect_size - 5 - buf.len(); // 5 is header size
@@ -95,14 +98,14 @@ pub fn unpack_sect4_body<R: Read>(f: &mut R, sect_size: usize) -> Result<(), Str
     f.read_exact(&mut buf[..]).map_err(clarify_err)?;
 
     // octet 6-7
-    let ncoordinates = concat_bytes_as_u16(&mut buf, 0, 2);
+    let ncoordinates = read_as!(u16, buf, 0);
     println!(
         "number of coordinate values after template: {}",
         ncoordinates
     );
 
     // octet 8-9
-    let prod_tmpl_code = concat_bytes_as_u16(&mut buf, 2, 2);
+    let prod_tmpl_code = read_as!(u16, buf, 2);
     println!("product definition template number: {}", prod_tmpl_code);
 
     let len_extra = sect_size - 5 - buf.len(); // 5 is header size
@@ -121,14 +124,14 @@ pub fn unpack_sect5_body<R: Read>(f: &mut R, sect_size: usize) -> Result<(), Str
     f.read_exact(&mut buf[..]).map_err(clarify_err)?;
 
     // octet 6-9
-    let npoints7 = concat_bytes_as_u32(&mut buf, 0, 4);
+    let npoints7 = read_as!(u32, buf, 0);
     println!(
         "number of data points where one or more values are specified in Section 7: {}",
         npoints7
     );
 
     // octet 10-11
-    let represent_tmpl_code = concat_bytes_as_u16(&mut buf, 4, 2);
+    let represent_tmpl_code = read_as!(u16, buf, 4);
     println!(
         "data representation template number: {}",
         represent_tmpl_code
@@ -193,7 +196,7 @@ pub fn unpack_sect_header<R: Read>(f: &mut R) -> Result<(u8, usize), String> {
     let mut buf = [0; 5];
     f.read_exact(&mut buf[..]).map_err(clarify_err)?;
 
-    let sect_size = concat_bytes_as_u32(&mut buf, 0, 4) as usize;
+    let sect_size = read_as!(u32, buf, 0) as usize;
     let sect_num = buf[4];
     Ok((sect_num, sect_size))
 }
@@ -202,26 +205,4 @@ pub fn unpack_sect_header<R: Read>(f: &mut R) -> Result<(u8, usize), String> {
 // io::Result<usize> (= Result<usize, io::Error) -> Result<usize, String>
 fn clarify_err(e: io::Error) -> String {
     format!("read error: {}", e.to_string())
-}
-
-// It seems possible to write a numeric generic function with num crate...
-
-fn concat_bytes_as_u32(buf: &mut [u8], start: usize, len: usize) -> u32 {
-    let mut ret = 0u32;
-    for i in start..(start + len) {
-        ret <<= 0b1000;
-        ret |= buf[i] as u32;
-    }
-
-    ret
-}
-
-fn concat_bytes_as_u16(buf: &mut [u8], start: usize, len: usize) -> u16 {
-    let mut ret = 0u16;
-    for i in start..(start + len) {
-        ret <<= 0b1000;
-        ret |= buf[i] as u16;
-    }
-
-    ret
 }
