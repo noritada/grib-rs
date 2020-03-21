@@ -15,8 +15,7 @@ fn main() {
     let display = path.display();
 
     let mut f = match File::open(&path) {
-        Err(why) => panic!("couldn't open {}: {}",
-                           display, Error::description(&why)),
+        Err(why) => panic!("couldn't open {}: {}", display, Error::description(&why)),
         Ok(f) => f,
     };
 
@@ -30,7 +29,9 @@ fn main() {
         if rest_size == 4 {
             match parser::unpack_sect8(&mut f) {
                 Err(why) => panic!(why),
-                Ok(_) => { break; },
+                Ok(_) => {
+                    break;
+                }
             };
         }
 
@@ -43,7 +44,7 @@ fn main() {
         let _ = match sect_num {
             1 => parser::unpack_sect1_body(&mut f, sect_size),
             2 => parser::unpack_sect2_body(&mut f, sect_size),
-              // actually, section 2 is optional
+            // actually, section 2 is optional
             3 => parser::unpack_sect3_body(&mut f, sect_size),
             4 => parser::unpack_sect4_body(&mut f, sect_size),
             5 => parser::unpack_sect5_body(&mut f, sect_size),

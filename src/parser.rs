@@ -29,15 +29,20 @@ pub fn unpack_sect1_body(f: &mut File, sect_size: usize) -> Result<(), String> {
     try!(f.read_exact(&mut buf[..]).map_err(clarify_err));
 
     let master_table_version = buf[4];
-    println!("GRIB Master Tables Version Number: {}", master_table_version);
+    println!(
+        "GRIB Master Tables Version Number: {}",
+        master_table_version
+    );
 
     let local_table_version = buf[5];
     println!("GRIB Local Tables Version Number: {}", local_table_version);
 
     // octet 13-19
     let year = concat_bytes_as_u16(&mut buf, 7, 2);
-    println!("reference time of data: {:04}-{:02}-{:02}T{:02}:{:02}:{:02}Z",
-             year, buf[9], buf[10], buf[11], buf[12], buf[13]);
+    println!(
+        "reference time of data: {:04}-{:02}-{:02}T{:02}:{:02}:{:02}Z",
+        year, buf[9], buf[10], buf[11], buf[12], buf[13]
+    );
 
     let len_extra = sect_size - 5 - buf.len(); // 5 is header size
     if len_extra > 0 {
@@ -91,7 +96,10 @@ pub fn unpack_sect4_body(f: &mut File, sect_size: usize) -> Result<(), String> {
 
     // octet 6-7
     let ncoordinates = concat_bytes_as_u16(&mut buf, 0, 2);
-    println!("number of coordinate values after template: {}", ncoordinates);
+    println!(
+        "number of coordinate values after template: {}",
+        ncoordinates
+    );
 
     // octet 8-9
     let prod_tmpl_code = concat_bytes_as_u16(&mut buf, 2, 2);
@@ -114,11 +122,17 @@ pub fn unpack_sect5_body(f: &mut File, sect_size: usize) -> Result<(), String> {
 
     // octet 6-9
     let npoints7 = concat_bytes_as_u32(&mut buf, 0, 4);
-    println!("number of data points where one or more values are specified in Section 7: {}", npoints7);
+    println!(
+        "number of data points where one or more values are specified in Section 7: {}",
+        npoints7
+    );
 
     // octet 10-11
     let represent_tmpl_code = concat_bytes_as_u16(&mut buf, 4, 2);
-    println!("data representation template number: {}", represent_tmpl_code);
+    println!(
+        "data representation template number: {}",
+        represent_tmpl_code
+    );
 
     let len_extra = sect_size - 5 - buf.len(); // 5 is header size
     if len_extra > 0 {
