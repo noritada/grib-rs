@@ -1,9 +1,8 @@
-use std::fs::File;
 use std::io;
 use std::io::Read;
 use std::result::Result;
 
-pub fn unpack_sect0(f: &mut File) -> Result<usize, String> {
+pub fn unpack_sect0<R: Read>(f: &mut R) -> Result<usize, String> {
     let magic = b"GRIB";
     let mut buf = [0; 16];
     f.read_exact(&mut buf[..]).map_err(clarify_err)?;
@@ -25,7 +24,7 @@ pub fn unpack_sect0(f: &mut File) -> Result<usize, String> {
     Ok(fsize as usize)
 }
 
-pub fn unpack_sect1_body(f: &mut File, sect_size: usize) -> Result<(), String> {
+pub fn unpack_sect1_body<R: Read>(f: &mut R, sect_size: usize) -> Result<(), String> {
     let mut buf = [0; 16]; // octet 6-21
     f.read_exact(&mut buf[..]).map_err(clarify_err)?;
 
@@ -56,7 +55,7 @@ pub fn unpack_sect1_body(f: &mut File, sect_size: usize) -> Result<(), String> {
     Ok(())
 }
 
-pub fn unpack_sect2_body(f: &mut File, sect_size: usize) -> Result<(), String> {
+pub fn unpack_sect2_body<R: Read>(f: &mut R, sect_size: usize) -> Result<(), String> {
     let len_extra = sect_size - 5; // 5 is header size
     if len_extra > 0 {
         // placeholder
@@ -68,7 +67,7 @@ pub fn unpack_sect2_body(f: &mut File, sect_size: usize) -> Result<(), String> {
     Ok(())
 }
 
-pub fn unpack_sect3_body(f: &mut File, sect_size: usize) -> Result<(), String> {
+pub fn unpack_sect3_body<R: Read>(f: &mut R, sect_size: usize) -> Result<(), String> {
     let mut buf = [0; 9]; // octet 6-14
     f.read_exact(&mut buf[..]).map_err(clarify_err)?;
 
@@ -91,7 +90,7 @@ pub fn unpack_sect3_body(f: &mut File, sect_size: usize) -> Result<(), String> {
     Ok(())
 }
 
-pub fn unpack_sect4_body(f: &mut File, sect_size: usize) -> Result<(), String> {
+pub fn unpack_sect4_body<R: Read>(f: &mut R, sect_size: usize) -> Result<(), String> {
     let mut buf = [0; 4]; // octet 6-9
     f.read_exact(&mut buf[..]).map_err(clarify_err)?;
 
@@ -117,7 +116,7 @@ pub fn unpack_sect4_body(f: &mut File, sect_size: usize) -> Result<(), String> {
     Ok(())
 }
 
-pub fn unpack_sect5_body(f: &mut File, sect_size: usize) -> Result<(), String> {
+pub fn unpack_sect5_body<R: Read>(f: &mut R, sect_size: usize) -> Result<(), String> {
     let mut buf = [0; 6]; // octet 6-11
     f.read_exact(&mut buf[..]).map_err(clarify_err)?;
 
@@ -146,7 +145,7 @@ pub fn unpack_sect5_body(f: &mut File, sect_size: usize) -> Result<(), String> {
     Ok(())
 }
 
-pub fn unpack_sect6_body(f: &mut File, sect_size: usize) -> Result<(), String> {
+pub fn unpack_sect6_body<R: Read>(f: &mut R, sect_size: usize) -> Result<(), String> {
     let mut buf = [0; 1]; // octet 6
     f.read_exact(&mut buf[..]).map_err(clarify_err)?;
 
@@ -164,7 +163,7 @@ pub fn unpack_sect6_body(f: &mut File, sect_size: usize) -> Result<(), String> {
     Ok(())
 }
 
-pub fn unpack_sect7_body(f: &mut File, sect_size: usize) -> Result<(), String> {
+pub fn unpack_sect7_body<R: Read>(f: &mut R, sect_size: usize) -> Result<(), String> {
     let len_extra = sect_size - 5; // 5 is header size
     if len_extra > 0 {
         // placeholder
@@ -176,7 +175,7 @@ pub fn unpack_sect7_body(f: &mut File, sect_size: usize) -> Result<(), String> {
     Ok(())
 }
 
-pub fn unpack_sect8(f: &mut File) -> Result<(), String> {
+pub fn unpack_sect8<R: Read>(f: &mut R) -> Result<(), String> {
     let magic = b"7777";
     let mut buf = magic.clone();
     f.read_exact(&mut buf[..]).map_err(clarify_err)?;
@@ -190,7 +189,7 @@ pub fn unpack_sect8(f: &mut File) -> Result<(), String> {
 
 /// Reads a common header for sections 1-7 and returns the section
 /// number and size.
-pub fn unpack_sect_header(f: &mut File) -> Result<(u8, usize), String> {
+pub fn unpack_sect_header<R: Read>(f: &mut R) -> Result<(u8, usize), String> {
     let mut buf = [0; 5];
     f.read_exact(&mut buf[..]).map_err(clarify_err)?;
 

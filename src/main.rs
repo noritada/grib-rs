@@ -1,5 +1,6 @@
 use std::env;
 use std::fs::File;
+use std::io::BufReader;
 use std::path::Path;
 
 mod parser;
@@ -17,6 +18,7 @@ fn main() {
         Err(why) => panic!("couldn't open {}: {}", display, why.to_string()),
         Ok(f) => f,
     };
+    let mut f = BufReader::new(&mut f);
 
     let whole_size = match parser::unpack_sect0(&mut f) {
         Err(why) => panic!(why),
