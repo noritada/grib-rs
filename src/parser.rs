@@ -3,6 +3,8 @@ use std::io;
 use std::io::Read;
 use std::result::Result;
 
+const SECT_HEADER_SIZE: usize = 5;
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct SectionInfo {
     pub num: u8,
@@ -12,14 +14,15 @@ pub struct SectionInfo {
 
 impl SectionInfo {
     pub fn read_body<R: Read>(&self, mut f: &mut R) -> Result<SectionBody, ParseError> {
+        let body_size = self.size - SECT_HEADER_SIZE;
         let body = match self.num {
-            1 => unpack_sect1_body(&mut f, self.size)?,
-            2 => unpack_sect2_body(&mut f, self.size)?,
-            3 => unpack_sect3_body(&mut f, self.size)?,
-            4 => unpack_sect4_body(&mut f, self.size)?,
-            5 => unpack_sect5_body(&mut f, self.size)?,
-            6 => unpack_sect6_body(&mut f, self.size)?,
-            7 => unpack_sect7_body(&mut f, self.size)?,
+            1 => unpack_sect1_body(&mut f, body_size)?,
+            2 => unpack_sect2_body(&mut f, body_size)?,
+            3 => unpack_sect3_body(&mut f, body_size)?,
+            4 => unpack_sect4_body(&mut f, body_size)?,
+            5 => unpack_sect5_body(&mut f, body_size)?,
+            6 => unpack_sect6_body(&mut f, body_size)?,
+            7 => unpack_sect7_body(&mut f, body_size)?,
             _ => return Err(ParseError::UnknownSectionNumber(self.num)),
         };
         Ok(body)
@@ -108,11 +111,11 @@ pub fn unpack_sect0<R: Read>(f: &mut R) -> Result<usize, ParseError> {
     Ok(fsize as usize)
 }
 
-pub fn unpack_sect1_body<R: Read>(f: &mut R, sect_size: usize) -> Result<SectionBody, ParseError> {
+pub fn unpack_sect1_body<R: Read>(f: &mut R, body_size: usize) -> Result<SectionBody, ParseError> {
     let mut buf = [0; 16]; // octet 6-21
     f.read_exact(&mut buf[..]).map_err(clarify_err)?;
 
-    let len_extra = sect_size - 5 - buf.len(); // 5 is header size
+    let len_extra = body_size - buf.len();
     if len_extra > 0 {
         // placeholder
         println!("reading extra {} bytes", len_extra);
@@ -134,8 +137,8 @@ pub fn unpack_sect1_body<R: Read>(f: &mut R, sect_size: usize) -> Result<Section
     })
 }
 
-pub fn unpack_sect2_body<R: Read>(f: &mut R, sect_size: usize) -> Result<SectionBody, ParseError> {
-    let len_extra = sect_size - 5; // 5 is header size
+pub fn unpack_sect2_body<R: Read>(f: &mut R, body_size: usize) -> Result<SectionBody, ParseError> {
+    let len_extra = body_size;
     if len_extra > 0 {
         // placeholder
         println!("reading extra {} bytes", len_extra);
@@ -146,11 +149,11 @@ pub fn unpack_sect2_body<R: Read>(f: &mut R, sect_size: usize) -> Result<Section
     Ok(SectionBody::Section2)
 }
 
-pub fn unpack_sect3_body<R: Read>(f: &mut R, sect_size: usize) -> Result<SectionBody, ParseError> {
+pub fn unpack_sect3_body<R: Read>(f: &mut R, body_size: usize) -> Result<SectionBody, ParseError> {
     let mut buf = [0; 9]; // octet 6-14
     f.read_exact(&mut buf[..]).map_err(clarify_err)?;
 
-    let len_extra = sect_size - 5 - buf.len(); // 5 is header size
+    let len_extra = body_size - buf.len();
     if len_extra > 0 {
         // placeholder
         println!("reading extra {} bytes", len_extra);
@@ -164,11 +167,11 @@ pub fn unpack_sect3_body<R: Read>(f: &mut R, sect_size: usize) -> Result<Section
     })
 }
 
-pub fn unpack_sect4_body<R: Read>(f: &mut R, sect_size: usize) -> Result<SectionBody, ParseError> {
+pub fn unpack_sect4_body<R: Read>(f: &mut R, body_size: usize) -> Result<SectionBody, ParseError> {
     let mut buf = [0; 4]; // octet 6-9
     f.read_exact(&mut buf[..]).map_err(clarify_err)?;
 
-    let len_extra = sect_size - 5 - buf.len(); // 5 is header size
+    let len_extra = body_size - buf.len();
     if len_extra > 0 {
         // placeholder
         println!("reading extra {} bytes", len_extra);
@@ -182,11 +185,11 @@ pub fn unpack_sect4_body<R: Read>(f: &mut R, sect_size: usize) -> Result<Section
     })
 }
 
-pub fn unpack_sect5_body<R: Read>(f: &mut R, sect_size: usize) -> Result<SectionBody, ParseError> {
+pub fn unpack_sect5_body<R: Read>(f: &mut R, body_size: usize) -> Result<SectionBody, ParseError> {
     let mut buf = [0; 6]; // octet 6-11
     f.read_exact(&mut buf[..]).map_err(clarify_err)?;
 
-    let len_extra = sect_size - 5 - buf.len(); // 5 is header size
+    let len_extra = body_size - buf.len();
     if len_extra > 0 {
         // placeholder
         println!("reading extra {} bytes", len_extra);
@@ -200,11 +203,11 @@ pub fn unpack_sect5_body<R: Read>(f: &mut R, sect_size: usize) -> Result<Section
     })
 }
 
-pub fn unpack_sect6_body<R: Read>(f: &mut R, sect_size: usize) -> Result<SectionBody, ParseError> {
+pub fn unpack_sect6_body<R: Read>(f: &mut R, body_size: usize) -> Result<SectionBody, ParseError> {
     let mut buf = [0; 1]; // octet 6
     f.read_exact(&mut buf[..]).map_err(clarify_err)?;
 
-    let len_extra = sect_size - 5 - buf.len(); // 5 is header size
+    let len_extra = body_size - buf.len();
     if len_extra > 0 {
         // placeholder
         println!("reading extra {} bytes", len_extra);
@@ -217,8 +220,8 @@ pub fn unpack_sect6_body<R: Read>(f: &mut R, sect_size: usize) -> Result<Section
     })
 }
 
-pub fn unpack_sect7_body<R: Read>(f: &mut R, sect_size: usize) -> Result<SectionBody, ParseError> {
-    let len_extra = sect_size - 5; // 5 is header size
+pub fn unpack_sect7_body<R: Read>(f: &mut R, body_size: usize) -> Result<SectionBody, ParseError> {
+    let len_extra = body_size;
     if len_extra > 0 {
         // placeholder
         println!("reading extra {} bytes", len_extra);
@@ -244,7 +247,7 @@ pub fn unpack_sect8<R: Read>(f: &mut R) -> Result<(), ParseError> {
 /// Reads a common header for sections 1-7 and returns the section
 /// number and size.
 pub fn unpack_sect_header<R: Read>(f: &mut R) -> Result<SectionInfo, ParseError> {
-    let mut buf = [0; 5];
+    let mut buf = [0; SECT_HEADER_SIZE];
     f.read_exact(&mut buf[..]).map_err(clarify_err)?;
 
     let sect_size = read_as!(u32, buf, 0) as usize;
