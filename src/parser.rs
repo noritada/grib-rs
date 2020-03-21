@@ -4,10 +4,11 @@ use std::io::Read;
 use std::result::Result;
 
 pub fn unpack_sect0(f: &mut File) -> Result<usize, String> {
+    let magic = b"GRIB";
     let mut buf = [0; 16];
     f.read_exact(&mut buf[..]).map_err(clarify_err)?;
 
-    if buf[0] != b'G' || buf[1] != b'R' || buf[2] != b'I' || buf[3] != b'B' {
+    if &buf[0..4] != magic {
         return Err("not a GRIB file".to_string());
     }
     if buf[7] != 2 {
@@ -176,10 +177,11 @@ pub fn unpack_sect7_body(f: &mut File, sect_size: usize) -> Result<(), String> {
 }
 
 pub fn unpack_sect8(f: &mut File) -> Result<(), String> {
-    let mut buf = [0; 4];
+    let magic = b"7777";
+    let mut buf = magic.clone();
     f.read_exact(&mut buf[..]).map_err(clarify_err)?;
 
-    if buf[0] != b'7' || buf[1] != b'7' || buf[2] != b'7' || buf[3] != b'7' {
+    if buf[..] != magic[..] {
         return Err("Section 8 (End Section) mismatch".to_string());
     }
 
