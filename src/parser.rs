@@ -12,7 +12,6 @@ const SECT8_ES_SIZE: usize = SECT8_ES_MAGIC.len();
 pub struct SectionInfo {
     pub num: u8,
     pub size: usize,
-    pub body: Option<SectionBody>,
 }
 
 impl SectionInfo {
@@ -124,7 +123,7 @@ pub fn read<R: Read>(mut f: &mut R) -> Result<Vec<(SectionInfo, SectionBody)>, P
     Ok(sects)
 }
 
-pub fn scan<R: Read + Seek>(mut f: &mut R) -> Result<Vec<SectionInfo>, ParseError> {
+pub fn scan<R: Read>(mut f: &mut R) -> Result<Vec<SectionInfo>, ParseError> {
     let whole_size = unpack_sect0(&mut f)?;
     let mut rest_size = whole_size - SECT0_IS_SIZE;
     let mut sects = Vec::new();
@@ -136,7 +135,10 @@ pub fn scan<R: Read + Seek>(mut f: &mut R) -> Result<Vec<SectionInfo>, ParseErro
         }
 
         let sect_info = unpack_sect_header(&mut f)?;
-        let _sect_body = sect_info.skip_body(&mut f)?;
+        // Some readers such as flate2::gz::read::GzDecoder do not
+        // implement Seek.
+        // let _sect_body = sect_info.skip_body(&mut f)?;
+        let _sect_body = sect_info.read_body(&mut f)?;
         rest_size -= sect_info.size;
         sects.push(sect_info);
     }
@@ -305,7 +307,6 @@ pub fn unpack_sect_header<R: Read>(f: &mut R) -> Result<SectionInfo, ParseError>
     Ok(SectionInfo {
         num: sect_num,
         size: sect_size,
-        body: None,
     })
 }
 
@@ -314,4 +315,59 @@ pub fn unpack_sect_header<R: Read>(f: &mut R) -> Result<SectionInfo, ParseError>
 fn clarify_err(e: io::Error) -> ParseError {
     let msg = format!("read error: {}", e.to_string());
     ParseError::ReadError(msg)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use std::fs::File;
+    use std::io::BufReader;
+    use xz2::bufread::XzDecoder;
+
+    #[test]
+    fn read_normal() {
+        let f = File::open(
+            "testdata/Z__C_RJTD_20160822020000_NOWC_GPV_Ggis10km_Pphw10_FH0000-0100_grib2.bin.xz",
+        )
+        .unwrap();
+        let f = BufReader::new(f);
+        let mut f = XzDecoder::new(f);
+
+        assert_eq!(
+            scan(&mut f),
+            Ok(vec![
+                SectionInfo { num: 1, size: 21 },
+                SectionInfo { num: 3, size: 72 },
+                SectionInfo { num: 4, size: 34 },
+                SectionInfo { num: 5, size: 23 },
+                SectionInfo { num: 6, size: 6 },
+                SectionInfo { num: 7, size: 1391 },
+                SectionInfo { num: 4, size: 34 },
+                SectionInfo { num: 5, size: 23 },
+                SectionInfo { num: 6, size: 6 },
+                SectionInfo { num: 7, size: 1399 },
+                SectionInfo { num: 4, size: 34 },
+                SectionInfo { num: 5, size: 23 },
+                SectionInfo { num: 6, size: 6 },
+                SectionInfo { num: 7, size: 1404 },
+                SectionInfo { num: 4, size: 34 },
+                SectionInfo { num: 5, size: 23 },
+                SectionInfo { num: 6, size: 6 },
+                SectionInfo { num: 7, size: 1395 },
+                SectionInfo { num: 4, size: 34 },
+                SectionInfo { num: 5, size: 23 },
+                SectionInfo { num: 6, size: 6 },
+                SectionInfo { num: 7, size: 1395 },
+                SectionInfo { num: 4, size: 34 },
+                SectionInfo { num: 5, size: 23 },
+                SectionInfo { num: 6, size: 6 },
+                SectionInfo { num: 7, size: 1397 },
+                SectionInfo { num: 4, size: 34 },
+                SectionInfo { num: 5, size: 23 },
+                SectionInfo { num: 6, size: 6 },
+                SectionInfo { num: 7, size: 1386 },
+            ],)
+        );
+    }
 }
