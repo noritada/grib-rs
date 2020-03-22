@@ -1,9 +1,12 @@
 use std::convert::TryInto;
 use std::io;
-use std::io::Read;
+use std::io::{Read, Seek, SeekFrom};
 use std::result::Result;
 
+const SECT0_IS_SIZE: usize = 16;
 const SECT_HEADER_SIZE: usize = 5;
+const SECT8_ES_MAGIC: &'static [u8] = b"7777";
+const SECT8_ES_SIZE: usize = SECT8_ES_MAGIC.len();
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct SectionInfo {
@@ -26,6 +29,13 @@ impl SectionInfo {
             _ => return Err(ParseError::UnknownSectionNumber(self.num)),
         };
         Ok(body)
+    }
+
+    pub fn skip_body<S: Seek>(&self, f: &mut S) -> Result<(), ParseError> {
+        let body_size = self.size - SECT_HEADER_SIZE;
+        f.seek(SeekFrom::Current(body_size as i64))
+            .map_err(clarify_err)?; // < std::io::Seek
+        Ok(())
     }
 }
 
@@ -93,9 +103,50 @@ macro_rules! read_as {
     }};
 }
 
+pub fn read<R: Read>(mut f: &mut R) -> Result<Vec<(SectionInfo, SectionBody)>, ParseError> {
+    let whole_size = unpack_sect0(&mut f)?;
+    let mut rest_size = whole_size - SECT0_IS_SIZE;
+    let mut sects = Vec::new();
+
+    loop {
+        if rest_size == SECT8_ES_SIZE {
+            unpack_sect8(&mut f)?;
+            break;
+        }
+
+        let sect_info = unpack_sect_header(&mut f).unwrap();
+        let sect_body = sect_info.read_body(&mut f).unwrap();
+        println!("{:#?},\n{:#?}", sect_info, sect_body);
+        rest_size -= sect_info.size;
+        sects.push((sect_info, sect_body)); // FIXME
+    }
+
+    Ok(sects)
+}
+
+pub fn scan<R: Read + Seek>(mut f: &mut R) -> Result<Vec<SectionInfo>, ParseError> {
+    let whole_size = unpack_sect0(&mut f)?;
+    let mut rest_size = whole_size - SECT0_IS_SIZE;
+    let mut sects = Vec::new();
+
+    loop {
+        if rest_size == SECT8_ES_SIZE {
+            unpack_sect8(&mut f)?;
+            break;
+        }
+
+        let sect_info = unpack_sect_header(&mut f)?;
+        let _sect_body = sect_info.skip_body(&mut f)?;
+        rest_size -= sect_info.size;
+        sects.push(sect_info);
+    }
+
+    Ok(sects)
+}
+
 pub fn unpack_sect0<R: Read>(f: &mut R) -> Result<usize, ParseError> {
     let magic = b"GRIB";
-    let mut buf = [0; 16];
+    let mut buf = [0; SECT0_IS_SIZE];
     f.read_exact(&mut buf[..]).map_err(clarify_err)?;
 
     if &buf[0..4] != magic {
@@ -233,11 +284,10 @@ pub fn unpack_sect7_body<R: Read>(f: &mut R, body_size: usize) -> Result<Section
 }
 
 pub fn unpack_sect8<R: Read>(f: &mut R) -> Result<(), ParseError> {
-    let magic = b"7777";
-    let mut buf = magic.clone();
+    let mut buf = [0; SECT8_ES_SIZE];
     f.read_exact(&mut buf[..]).map_err(clarify_err)?;
 
-    if buf[..] != magic[..] {
+    if buf[..] != SECT8_ES_MAGIC[..] {
         return Err(ParseError::EndSectionMismatch);
     }
 

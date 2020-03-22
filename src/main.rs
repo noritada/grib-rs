@@ -20,27 +20,6 @@ fn main() {
     };
     let mut f = BufReader::new(&mut f);
 
-    let whole_size = match parser::unpack_sect0(&mut f) {
-        Err(why) => panic!(why),
-        Ok(size) => size,
-    };
-    let mut rest_size: usize = whole_size - 16; // 16 is Section 0 size
-
-    loop {
-        if rest_size == 4 {
-            match parser::unpack_sect8(&mut f) {
-                Err(why) => panic!(why),
-                Ok(_) => {
-                    break;
-                }
-            };
-        }
-
-        let sect_info = parser::unpack_sect_header(&mut f).unwrap();
-        let sect_body = sect_info.read_body(&mut f).unwrap();
-        println!("{:#?},\n{:#?}", sect_info, sect_body);
-        rest_size -= sect_info.size;
-    }
-
-    println!("GRIB2 with size {}", whole_size);
+    let sects = parser::read(&mut f);
+    println!("GRIB2: {:#?}", sects);
 }
