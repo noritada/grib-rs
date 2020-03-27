@@ -403,6 +403,16 @@ mod tests {
     use std::io::BufReader;
     use xz2::bufread::XzDecoder;
 
+    macro_rules! sect_list {
+        ($($num:expr,)*) => {{
+            vec![
+                $(
+                    SectionInfo { num: $num, size: 0 },
+                )*
+            ]
+        }}
+    }
+
     #[test]
     fn read_normal() {
         let f = File::open(
@@ -452,125 +462,49 @@ mod tests {
 
     #[test]
     fn validate_simple() {
-        let sects = vec![
-            SectionInfo { num: 1, size: 0 },
-            SectionInfo { num: 2, size: 0 },
-            SectionInfo { num: 3, size: 0 },
-            SectionInfo { num: 4, size: 0 },
-            SectionInfo { num: 5, size: 0 },
-            SectionInfo { num: 6, size: 0 },
-            SectionInfo { num: 7, size: 0 },
-            SectionInfo { num: 8, size: 0 },
-        ];
+        let sects = sect_list![1, 2, 3, 4, 5, 6, 7, 8,];
 
         assert_eq!(validate(sects), Ok(vec![(1, 2)]));
     }
 
     #[test]
     fn validate_sect2_loop() {
-        let sects = vec![
-            SectionInfo { num: 1, size: 0 },
-            SectionInfo { num: 2, size: 0 },
-            SectionInfo { num: 3, size: 0 },
-            SectionInfo { num: 4, size: 0 },
-            SectionInfo { num: 5, size: 0 },
-            SectionInfo { num: 6, size: 0 },
-            SectionInfo { num: 7, size: 0 },
-            SectionInfo { num: 2, size: 0 },
-            SectionInfo { num: 3, size: 0 },
-            SectionInfo { num: 4, size: 0 },
-            SectionInfo { num: 5, size: 0 },
-            SectionInfo { num: 6, size: 0 },
-            SectionInfo { num: 7, size: 0 },
-            SectionInfo { num: 8, size: 0 },
-        ];
+        let sects = sect_list![1, 2, 3, 4, 5, 6, 7, 2, 3, 4, 5, 6, 7, 8,];
 
         assert_eq!(validate(sects), Ok(vec![(1, 2), (7, 2)]));
     }
 
     #[test]
     fn validate_sect3_loop() {
-        let sects = vec![
-            SectionInfo { num: 1, size: 0 },
-            SectionInfo { num: 2, size: 0 },
-            SectionInfo { num: 3, size: 0 },
-            SectionInfo { num: 4, size: 0 },
-            SectionInfo { num: 5, size: 0 },
-            SectionInfo { num: 6, size: 0 },
-            SectionInfo { num: 7, size: 0 },
-            SectionInfo { num: 3, size: 0 },
-            SectionInfo { num: 4, size: 0 },
-            SectionInfo { num: 5, size: 0 },
-            SectionInfo { num: 6, size: 0 },
-            SectionInfo { num: 7, size: 0 },
-            SectionInfo { num: 8, size: 0 },
-        ];
+        let sects = sect_list![1, 2, 3, 4, 5, 6, 7, 3, 4, 5, 6, 7, 8,];
 
         assert_eq!(validate(sects), Ok(vec![(1, 2), (7, 3)]));
     }
 
     #[test]
     fn validate_sect3_loop_no_sect2() {
-        let sects = vec![
-            SectionInfo { num: 1, size: 0 },
-            SectionInfo { num: 3, size: 0 },
-            SectionInfo { num: 4, size: 0 },
-            SectionInfo { num: 5, size: 0 },
-            SectionInfo { num: 6, size: 0 },
-            SectionInfo { num: 7, size: 0 },
-            SectionInfo { num: 3, size: 0 },
-            SectionInfo { num: 4, size: 0 },
-            SectionInfo { num: 5, size: 0 },
-            SectionInfo { num: 6, size: 0 },
-            SectionInfo { num: 7, size: 0 },
-            SectionInfo { num: 8, size: 0 },
-        ];
+        let sects = sect_list![1, 3, 4, 5, 6, 7, 3, 4, 5, 6, 7, 8,];
 
         assert_eq!(validate(sects), Ok(vec![(1, 3), (6, 3)]));
     }
 
     #[test]
     fn validate_sect4_loop() {
-        let sects = vec![
-            SectionInfo { num: 1, size: 0 },
-            SectionInfo { num: 2, size: 0 },
-            SectionInfo { num: 3, size: 0 },
-            SectionInfo { num: 4, size: 0 },
-            SectionInfo { num: 5, size: 0 },
-            SectionInfo { num: 6, size: 0 },
-            SectionInfo { num: 7, size: 0 },
-            SectionInfo { num: 4, size: 0 },
-            SectionInfo { num: 5, size: 0 },
-            SectionInfo { num: 6, size: 0 },
-            SectionInfo { num: 7, size: 0 },
-            SectionInfo { num: 8, size: 0 },
-        ];
+        let sects = sect_list![1, 2, 3, 4, 5, 6, 7, 4, 5, 6, 7, 8,];
 
         assert_eq!(validate(sects), Ok(vec![(1, 2), (7, 4)]));
     }
 
     #[test]
     fn validate_sect4_loop_no_sect2() {
-        let sects = vec![
-            SectionInfo { num: 1, size: 0 },
-            SectionInfo { num: 3, size: 0 },
-            SectionInfo { num: 4, size: 0 },
-            SectionInfo { num: 5, size: 0 },
-            SectionInfo { num: 6, size: 0 },
-            SectionInfo { num: 7, size: 0 },
-            SectionInfo { num: 4, size: 0 },
-            SectionInfo { num: 5, size: 0 },
-            SectionInfo { num: 6, size: 0 },
-            SectionInfo { num: 7, size: 0 },
-            SectionInfo { num: 8, size: 0 },
-        ];
+        let sects = sect_list![1, 3, 4, 5, 6, 7, 4, 5, 6, 7, 8,];
 
         assert_eq!(validate(sects), Ok(vec![(1, 3), (6, 4)]));
     }
 
     #[test]
     fn validate_end_after_sect1() {
-        let sects = vec![SectionInfo { num: 1, size: 0 }];
+        let sects = sect_list![1,];
 
         assert_eq!(
             validate(sects),
@@ -580,10 +514,7 @@ mod tests {
 
     #[test]
     fn validate_end_in_sect2_loop_1() {
-        let sects = vec![
-            SectionInfo { num: 1, size: 0 },
-            SectionInfo { num: 2, size: 0 },
-        ];
+        let sects = sect_list![1, 2,];
 
         assert_eq!(
             validate(sects),
@@ -593,11 +524,7 @@ mod tests {
 
     #[test]
     fn validate_end_in_sect2_loop_2() {
-        let sects = vec![
-            SectionInfo { num: 1, size: 0 },
-            SectionInfo { num: 2, size: 0 },
-            SectionInfo { num: 3, size: 0 },
-        ];
+        let sects = sect_list![1, 2, 3,];
 
         assert_eq!(
             validate(sects),
@@ -607,10 +534,7 @@ mod tests {
 
     #[test]
     fn validate_end_in_sect3_loop_1() {
-        let sects = vec![
-            SectionInfo { num: 1, size: 0 },
-            SectionInfo { num: 3, size: 0 },
-        ];
+        let sects = sect_list![1, 3,];
 
         assert_eq!(
             validate(sects),
@@ -620,11 +544,7 @@ mod tests {
 
     #[test]
     fn validate_end_in_sect3_loop_2() {
-        let sects = vec![
-            SectionInfo { num: 1, size: 0 },
-            SectionInfo { num: 3, size: 0 },
-            SectionInfo { num: 4, size: 0 },
-        ];
+        let sects = sect_list![1, 3, 4,];
 
         assert_eq!(
             validate(sects),
@@ -634,16 +554,7 @@ mod tests {
 
     #[test]
     fn validate_end_in_sect4_loop_1() {
-        let sects = vec![
-            SectionInfo { num: 1, size: 0 },
-            SectionInfo { num: 2, size: 0 },
-            SectionInfo { num: 3, size: 0 },
-            SectionInfo { num: 4, size: 0 },
-            SectionInfo { num: 5, size: 0 },
-            SectionInfo { num: 6, size: 0 },
-            SectionInfo { num: 7, size: 0 },
-            SectionInfo { num: 4, size: 0 },
-        ];
+        let sects = sect_list![1, 2, 3, 4, 5, 6, 7, 4,];
 
         assert_eq!(
             validate(sects),
@@ -653,17 +564,7 @@ mod tests {
 
     #[test]
     fn validate_end_in_sect4_loop_2() {
-        let sects = vec![
-            SectionInfo { num: 1, size: 0 },
-            SectionInfo { num: 2, size: 0 },
-            SectionInfo { num: 3, size: 0 },
-            SectionInfo { num: 4, size: 0 },
-            SectionInfo { num: 5, size: 0 },
-            SectionInfo { num: 6, size: 0 },
-            SectionInfo { num: 7, size: 0 },
-            SectionInfo { num: 4, size: 0 },
-            SectionInfo { num: 5, size: 0 },
-        ];
+        let sects = sect_list![1, 2, 3, 4, 5, 6, 7, 4, 5,];
 
         assert_eq!(
             validate(sects),
@@ -673,74 +574,35 @@ mod tests {
 
     #[test]
     fn validate_no_grid_in_sect4() {
-        let sects = vec![
-            SectionInfo { num: 1, size: 0 },
-            SectionInfo { num: 4, size: 0 },
-            SectionInfo { num: 5, size: 0 },
-            SectionInfo { num: 6, size: 0 },
-            SectionInfo { num: 7, size: 0 },
-            SectionInfo { num: 8, size: 0 },
-        ];
+        let sects = sect_list![1, 4, 5, 6, 7, 8,];
 
         assert_eq!(validate(sects), Err(ParseError::NoGridDefinition(1)));
     }
 
     #[test]
     fn validate_no_grid_in_sect8() {
-        let sects = vec![
-            SectionInfo { num: 1, size: 0 },
-            SectionInfo { num: 8, size: 0 },
-        ];
+        let sects = sect_list![1, 8,];
 
         assert_eq!(validate(sects), Err(ParseError::NoGridDefinition(1)));
     }
 
     #[test]
     fn validate_wrong_order_in_sect2() {
-        let sects = vec![
-            SectionInfo { num: 1, size: 0 },
-            SectionInfo { num: 2, size: 0 },
-            SectionInfo { num: 4, size: 0 },
-            SectionInfo { num: 3, size: 0 },
-            SectionInfo { num: 5, size: 0 },
-            SectionInfo { num: 6, size: 0 },
-            SectionInfo { num: 7, size: 0 },
-            SectionInfo { num: 8, size: 0 },
-        ];
+        let sects = sect_list![1, 2, 4, 3, 5, 6, 7, 8,];
 
         assert_eq!(validate(sects), Err(ParseError::GRIB2WrongIteration(2)));
     }
 
     #[test]
     fn validate_wrong_order_in_sect3() {
-        let sects = vec![
-            SectionInfo { num: 1, size: 0 },
-            SectionInfo { num: 3, size: 0 },
-            SectionInfo { num: 5, size: 0 },
-            SectionInfo { num: 4, size: 0 },
-            SectionInfo { num: 6, size: 0 },
-            SectionInfo { num: 7, size: 0 },
-            SectionInfo { num: 8, size: 0 },
-        ];
+        let sects = sect_list![1, 3, 5, 4, 6, 7, 8,];
 
         assert_eq!(validate(sects), Err(ParseError::GRIB2WrongIteration(2)));
     }
 
     #[test]
     fn validate_wrong_order_in_sect4() {
-        let sects = vec![
-            SectionInfo { num: 1, size: 0 },
-            SectionInfo { num: 3, size: 0 },
-            SectionInfo { num: 4, size: 0 },
-            SectionInfo { num: 5, size: 0 },
-            SectionInfo { num: 6, size: 0 },
-            SectionInfo { num: 7, size: 0 },
-            SectionInfo { num: 4, size: 0 },
-            SectionInfo { num: 6, size: 0 },
-            SectionInfo { num: 5, size: 0 },
-            SectionInfo { num: 7, size: 0 },
-            SectionInfo { num: 8, size: 0 },
-        ];
+        let sects = sect_list![1, 3, 4, 5, 6, 7, 4, 6, 5, 7, 8,];
 
         assert_eq!(validate(sects), Err(ParseError::GRIB2WrongIteration(7)));
     }
