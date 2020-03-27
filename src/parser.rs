@@ -93,6 +93,9 @@ pub enum ParseError {
     GRIBVersionMismatch(u8),
     UnknownSectionNumber(u8),
     EndSectionMismatch,
+    GRIB2IterationSuddenlyFinished,
+    NoGridDefinition(usize),
+    GRIB2WrongIteration(usize),
 }
 
 macro_rules! read_as {
@@ -131,6 +134,11 @@ pub fn scan<R: Read>(mut f: &mut R) -> Result<Vec<SectionInfo>, ParseError> {
     loop {
         if rest_size == SECT8_ES_SIZE {
             unpack_sect8(&mut f)?;
+            let sect_info = SectionInfo {
+                num: 8,
+                size: SECT8_ES_SIZE,
+            };
+            sects.push(sect_info);
             break;
         }
 
@@ -144,6 +152,76 @@ pub fn scan<R: Read>(mut f: &mut R) -> Result<Vec<SectionInfo>, ParseError> {
     }
 
     Ok(sects)
+}
+
+/// Validates the section order and returns a vector showing starting
+/// points of section groups.
+fn validate(sects: Vec<SectionInfo>) -> Result<Vec<(usize, u8)>, ParseError> {
+    let mut iter = sects.iter().enumerate();
+    let mut starts = Vec::new();
+    let mut grid_def_exists = false;
+
+    macro_rules! check {
+        ($num:expr) => {{
+            let (i, sect) = iter
+                .next()
+                .ok_or(ParseError::GRIB2IterationSuddenlyFinished)?;
+            if sect.num != $num {
+                return Err(ParseError::GRIB2WrongIteration(i));
+            }
+        }};
+    }
+
+    check!(1);
+
+    loop {
+        let start = match iter.next() {
+            Some((i, SectionInfo { num: 2, .. })) => {
+                check!(3);
+                check!(4);
+                check!(5);
+                check!(6);
+                check!(7);
+                grid_def_exists = true;
+                (i, 2)
+            }
+            Some((i, SectionInfo { num: 3, .. })) => {
+                check!(4);
+                check!(5);
+                check!(6);
+                check!(7);
+                grid_def_exists = true;
+                (i, 3)
+            }
+            Some((i, SectionInfo { num: 4, .. })) => {
+                if !grid_def_exists {
+                    return Err(ParseError::NoGridDefinition(i));
+                }
+                check!(5);
+                check!(6);
+                check!(7);
+                (i, 4)
+            }
+            Some((i, SectionInfo { num: 8, .. })) => {
+                if !grid_def_exists {
+                    return Err(ParseError::NoGridDefinition(i));
+                }
+                if i < sects.len() - 1 {
+                    return Err(ParseError::GRIB2WrongIteration(i));
+                }
+                break;
+            }
+            Some((i, SectionInfo { .. })) => {
+                return Err(ParseError::GRIB2WrongIteration(i));
+            }
+            None => {
+                return Err(ParseError::GRIB2IterationSuddenlyFinished);
+            }
+        };
+        starts.push(start);
+    }
+
+    Ok(starts)
 }
 
 pub fn unpack_sect0<R: Read>(f: &mut R) -> Result<usize, ParseError> {
@@ -367,7 +445,303 @@ mod tests {
                 SectionInfo { num: 5, size: 23 },
                 SectionInfo { num: 6, size: 6 },
                 SectionInfo { num: 7, size: 1386 },
+                SectionInfo { num: 8, size: 4 },
             ],)
         );
+    }
+
+    #[test]
+    fn validate_simple() {
+        let sects = vec![
+            SectionInfo { num: 1, size: 0 },
+            SectionInfo { num: 2, size: 0 },
+            SectionInfo { num: 3, size: 0 },
+            SectionInfo { num: 4, size: 0 },
+            SectionInfo { num: 5, size: 0 },
+            SectionInfo { num: 6, size: 0 },
+            SectionInfo { num: 7, size: 0 },
+            SectionInfo { num: 8, size: 0 },
+        ];
+
+        assert_eq!(validate(sects), Ok(vec![(1, 2)]));
+    }
+
+    #[test]
+    fn validate_sect2_loop() {
+        let sects = vec![
+            SectionInfo { num: 1, size: 0 },
+            SectionInfo { num: 2, size: 0 },
+            SectionInfo { num: 3, size: 0 },
+            SectionInfo { num: 4, size: 0 },
+            SectionInfo { num: 5, size: 0 },
+            SectionInfo { num: 6, size: 0 },
+            SectionInfo { num: 7, size: 0 },
+            SectionInfo { num: 2, size: 0 },
+            SectionInfo { num: 3, size: 0 },
+            SectionInfo { num: 4, size: 0 },
+            SectionInfo { num: 5, size: 0 },
+            SectionInfo { num: 6, size: 0 },
+            SectionInfo { num: 7, size: 0 },
+            SectionInfo { num: 8, size: 0 },
+        ];
+
+        assert_eq!(validate(sects), Ok(vec![(1, 2), (7, 2)]));
+    }
+
+    #[test]
+    fn validate_sect3_loop() {
+        let sects = vec![
+            SectionInfo { num: 1, size: 0 },
+            SectionInfo { num: 2, size: 0 },
+            SectionInfo { num: 3, size: 0 },
+            SectionInfo { num: 4, size: 0 },
+            SectionInfo { num: 5, size: 0 },
+            SectionInfo { num: 6, size: 0 },
+            SectionInfo { num: 7, size: 0 },
+            SectionInfo { num: 3, size: 0 },
+            SectionInfo { num: 4, size: 0 },
+            SectionInfo { num: 5, size: 0 },
+            SectionInfo { num: 6, size: 0 },
+            SectionInfo { num: 7, size: 0 },
+            SectionInfo { num: 8, size: 0 },
+        ];
+
+        assert_eq!(validate(sects), Ok(vec![(1, 2), (7, 3)]));
+    }
+
+    #[test]
+    fn validate_sect3_loop_no_sect2() {
+        let sects = vec![
+            SectionInfo { num: 1, size: 0 },
+            SectionInfo { num: 3, size: 0 },
+            SectionInfo { num: 4, size: 0 },
+            SectionInfo { num: 5, size: 0 },
+            SectionInfo { num: 6, size: 0 },
+            SectionInfo { num: 7, size: 0 },
+            SectionInfo { num: 3, size: 0 },
+            SectionInfo { num: 4, size: 0 },
+            SectionInfo { num: 5, size: 0 },
+            SectionInfo { num: 6, size: 0 },
+            SectionInfo { num: 7, size: 0 },
+            SectionInfo { num: 8, size: 0 },
+        ];
+
+        assert_eq!(validate(sects), Ok(vec![(1, 3), (6, 3)]));
+    }
+
+    #[test]
+    fn validate_sect4_loop() {
+        let sects = vec![
+            SectionInfo { num: 1, size: 0 },
+            SectionInfo { num: 2, size: 0 },
+            SectionInfo { num: 3, size: 0 },
+            SectionInfo { num: 4, size: 0 },
+            SectionInfo { num: 5, size: 0 },
+            SectionInfo { num: 6, size: 0 },
+            SectionInfo { num: 7, size: 0 },
+            SectionInfo { num: 4, size: 0 },
+            SectionInfo { num: 5, size: 0 },
+            SectionInfo { num: 6, size: 0 },
+            SectionInfo { num: 7, size: 0 },
+            SectionInfo { num: 8, size: 0 },
+        ];
+
+        assert_eq!(validate(sects), Ok(vec![(1, 2), (7, 4)]));
+    }
+
+    #[test]
+    fn validate_sect4_loop_no_sect2() {
+        let sects = vec![
+            SectionInfo { num: 1, size: 0 },
+            SectionInfo { num: 3, size: 0 },
+            SectionInfo { num: 4, size: 0 },
+            SectionInfo { num: 5, size: 0 },
+            SectionInfo { num: 6, size: 0 },
+            SectionInfo { num: 7, size: 0 },
+            SectionInfo { num: 4, size: 0 },
+            SectionInfo { num: 5, size: 0 },
+            SectionInfo { num: 6, size: 0 },
+            SectionInfo { num: 7, size: 0 },
+            SectionInfo { num: 8, size: 0 },
+        ];
+
+        assert_eq!(validate(sects), Ok(vec![(1, 3), (6, 4)]));
+    }
+
+    #[test]
+    fn validate_end_after_sect1() {
+        let sects = vec![SectionInfo { num: 1, size: 0 }];
+
+        assert_eq!(
+            validate(sects),
+            Err(ParseError::GRIB2IterationSuddenlyFinished)
+        );
+    }
+
+    #[test]
+    fn validate_end_in_sect2_loop_1() {
+        let sects = vec![
+            SectionInfo { num: 1, size: 0 },
+            SectionInfo { num: 2, size: 0 },
+        ];
+
+        assert_eq!(
+            validate(sects),
+            Err(ParseError::GRIB2IterationSuddenlyFinished)
+        );
+    }
+
+    #[test]
+    fn validate_end_in_sect2_loop_2() {
+        let sects = vec![
+            SectionInfo { num: 1, size: 0 },
+            SectionInfo { num: 2, size: 0 },
+            SectionInfo { num: 3, size: 0 },
+        ];
+
+        assert_eq!(
+            validate(sects),
+            Err(ParseError::GRIB2IterationSuddenlyFinished)
+        );
+    }
+
+    #[test]
+    fn validate_end_in_sect3_loop_1() {
+        let sects = vec![
+            SectionInfo { num: 1, size: 0 },
+            SectionInfo { num: 3, size: 0 },
+        ];
+
+        assert_eq!(
+            validate(sects),
+            Err(ParseError::GRIB2IterationSuddenlyFinished)
+        );
+    }
+
+    #[test]
+    fn validate_end_in_sect3_loop_2() {
+        let sects = vec![
+            SectionInfo { num: 1, size: 0 },
+            SectionInfo { num: 3, size: 0 },
+            SectionInfo { num: 4, size: 0 },
+        ];
+
+        assert_eq!(
+            validate(sects),
+            Err(ParseError::GRIB2IterationSuddenlyFinished)
+        );
+    }
+
+    #[test]
+    fn validate_end_in_sect4_loop_1() {
+        let sects = vec![
+            SectionInfo { num: 1, size: 0 },
+            SectionInfo { num: 2, size: 0 },
+            SectionInfo { num: 3, size: 0 },
+            SectionInfo { num: 4, size: 0 },
+            SectionInfo { num: 5, size: 0 },
+            SectionInfo { num: 6, size: 0 },
+            SectionInfo { num: 7, size: 0 },
+            SectionInfo { num: 4, size: 0 },
+        ];
+
+        assert_eq!(
+            validate(sects),
+            Err(ParseError::GRIB2IterationSuddenlyFinished)
+        );
+    }
+
+    #[test]
+    fn validate_end_in_sect4_loop_2() {
+        let sects = vec![
+            SectionInfo { num: 1, size: 0 },
+            SectionInfo { num: 2, size: 0 },
+            SectionInfo { num: 3, size: 0 },
+            SectionInfo { num: 4, size: 0 },
+            SectionInfo { num: 5, size: 0 },
+            SectionInfo { num: 6, size: 0 },
+            SectionInfo { num: 7, size: 0 },
+            SectionInfo { num: 4, size: 0 },
+            SectionInfo { num: 5, size: 0 },
+        ];
+
+        assert_eq!(
+            validate(sects),
+            Err(ParseError::GRIB2IterationSuddenlyFinished)
+        );
+    }
+
+    #[test]
+    fn validate_no_grid_in_sect4() {
+        let sects = vec![
+            SectionInfo { num: 1, size: 0 },
+            SectionInfo { num: 4, size: 0 },
+            SectionInfo { num: 5, size: 0 },
+            SectionInfo { num: 6, size: 0 },
+            SectionInfo { num: 7, size: 0 },
+            SectionInfo { num: 8, size: 0 },
+        ];
+
+        assert_eq!(validate(sects), Err(ParseError::NoGridDefinition(1)));
+    }
+
+    #[test]
+    fn validate_no_grid_in_sect8() {
+        let sects = vec![
+            SectionInfo { num: 1, size: 0 },
+            SectionInfo { num: 8, size: 0 },
+        ];
+
+        assert_eq!(validate(sects), Err(ParseError::NoGridDefinition(1)));
+    }
+
+    #[test]
+    fn validate_wrong_order_in_sect2() {
+        let sects = vec![
+            SectionInfo { num: 1, size: 0 },
+            SectionInfo { num: 2, size: 0 },
+            SectionInfo { num: 4, size: 0 },
+            SectionInfo { num: 3, size: 0 },
+            SectionInfo { num: 5, size: 0 },
+            SectionInfo { num: 6, size: 0 },
+            SectionInfo { num: 7, size: 0 },
+            SectionInfo { num: 8, size: 0 },
+        ];
+
+        assert_eq!(validate(sects), Err(ParseError::GRIB2WrongIteration(2)));
+    }
+
+    #[test]
+    fn validate_wrong_order_in_sect3() {
+        let sects = vec![
+            SectionInfo { num: 1, size: 0 },
+            SectionInfo { num: 3, size: 0 },
+            SectionInfo { num: 5, size: 0 },
+            SectionInfo { num: 4, size: 0 },
+            SectionInfo { num: 6, size: 0 },
+            SectionInfo { num: 7, size: 0 },
+            SectionInfo { num: 8, size: 0 },
+        ];
+
+        assert_eq!(validate(sects), Err(ParseError::GRIB2WrongIteration(2)));
+    }
+
+    #[test]
+    fn validate_wrong_order_in_sect4() {
+        let sects = vec![
+            SectionInfo { num: 1, size: 0 },
+            SectionInfo { num: 3, size: 0 },
+            SectionInfo { num: 4, size: 0 },
+            SectionInfo { num: 5, size: 0 },
+            SectionInfo { num: 6, size: 0 },
+            SectionInfo { num: 7, size: 0 },
+            SectionInfo { num: 4, size: 0 },
+            SectionInfo { num: 6, size: 0 },
+            SectionInfo { num: 5, size: 0 },
+            SectionInfo { num: 7, size: 0 },
+            SectionInfo { num: 8, size: 0 },
+        ];
+
+        assert_eq!(validate(sects), Err(ParseError::GRIB2WrongIteration(7)));
     }
 }
