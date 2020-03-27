@@ -96,9 +96,9 @@ pub enum ParseError {
 }
 
 macro_rules! read_as {
-    ($ty:ty, $name:ident, $start:expr) => {{
+    ($ty:ty, $buf:ident, $start:expr) => {{
         let end = $start + std::mem::size_of::<$ty>();
-        <$ty>::from_be_bytes($name[$start..end].try_into().unwrap())
+        <$ty>::from_be_bytes($buf[$start..end].try_into().unwrap())
     }};
 }
 
