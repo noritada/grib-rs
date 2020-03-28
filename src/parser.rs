@@ -34,8 +34,7 @@ impl SectionInfo {
 
     pub fn skip_body<S: Seek>(&self, f: &mut S) -> Result<(), ParseError> {
         let body_size = self.size - SECT_HEADER_SIZE;
-        f.seek(SeekFrom::Current(body_size as i64))
-            .map_err(clarify_err)?; // < std::io::Seek
+        f.seek(SeekFrom::Current(body_size as i64))?; // < std::io::Seek
         Ok(())
     }
 }
@@ -302,7 +301,7 @@ fn get_submessages<'a>(sects: &'a Vec<SectionInfo>) -> Result<Vec<SubMessage<'a>
 
 pub fn unpack_sect0<R: Read>(f: &mut R) -> Result<usize, ParseError> {
     let mut buf = [0; SECT0_IS_SIZE];
-    f.read_exact(&mut buf[..]).map_err(clarify_err)?;
+    f.read_exact(&mut buf[..])?;
 
     if &buf[0..SECT0_IS_MAGIC_SIZE] != SECT0_IS_MAGIC {
         return Err(ParseError::NotGRIB);
@@ -319,14 +318,14 @@ pub fn unpack_sect0<R: Read>(f: &mut R) -> Result<usize, ParseError> {
 
 pub fn unpack_sect1_body<R: Read>(f: &mut R, body_size: usize) -> Result<SectionBody, ParseError> {
     let mut buf = [0; 16]; // octet 6-21
-    f.read_exact(&mut buf[..]).map_err(clarify_err)?;
+    f.read_exact(&mut buf[..])?;
 
     let len_extra = body_size - buf.len();
     if len_extra > 0 {
         // placeholder
         println!("reading extra {} bytes", len_extra);
         let mut buf = vec![0; len_extra];
-        f.read_exact(&mut buf[..]).map_err(clarify_err)?;
+        f.read_exact(&mut buf[..])?;
     }
 
     Ok(SectionBody::Section1 {
@@ -349,7 +348,7 @@ pub fn unpack_sect2_body<R: Read>(f: &mut R, body_size: usize) -> Result<Section
         // placeholder
         println!("reading extra {} bytes", len_extra);
         let mut buf = vec![0; len_extra];
-        f.read_exact(&mut buf[..]).map_err(clarify_err)?;
+        f.read_exact(&mut buf[..])?;
     }
 
     Ok(SectionBody::Section2)
@@ -357,14 +356,14 @@ pub fn unpack_sect2_body<R: Read>(f: &mut R, body_size: usize) -> Result<Section
 
 pub fn unpack_sect3_body<R: Read>(f: &mut R, body_size: usize) -> Result<SectionBody, ParseError> {
     let mut buf = [0; 9]; // octet 6-14
-    f.read_exact(&mut buf[..]).map_err(clarify_err)?;
+    f.read_exact(&mut buf[..])?;
 
     let len_extra = body_size - buf.len();
     if len_extra > 0 {
         // placeholder
         println!("reading extra {} bytes", len_extra);
         let mut buf = vec![0; len_extra];
-        f.read_exact(&mut buf[..]).map_err(clarify_err)?;
+        f.read_exact(&mut buf[..])?;
     }
 
     Ok(SectionBody::Section3 {
@@ -375,14 +374,14 @@ pub fn unpack_sect3_body<R: Read>(f: &mut R, body_size: usize) -> Result<Section
 
 pub fn unpack_sect4_body<R: Read>(f: &mut R, body_size: usize) -> Result<SectionBody, ParseError> {
     let mut buf = [0; 4]; // octet 6-9
-    f.read_exact(&mut buf[..]).map_err(clarify_err)?;
+    f.read_exact(&mut buf[..])?;
 
     let len_extra = body_size - buf.len();
     if len_extra > 0 {
         // placeholder
         println!("reading extra {} bytes", len_extra);
         let mut buf = vec![0; len_extra];
-        f.read_exact(&mut buf[..]).map_err(clarify_err)?;
+        f.read_exact(&mut buf[..])?;
     }
 
     Ok(SectionBody::Section4 {
@@ -393,14 +392,14 @@ pub fn unpack_sect4_body<R: Read>(f: &mut R, body_size: usize) -> Result<Section
 
 pub fn unpack_sect5_body<R: Read>(f: &mut R, body_size: usize) -> Result<SectionBody, ParseError> {
     let mut buf = [0; 6]; // octet 6-11
-    f.read_exact(&mut buf[..]).map_err(clarify_err)?;
+    f.read_exact(&mut buf[..])?;
 
     let len_extra = body_size - buf.len();
     if len_extra > 0 {
         // placeholder
         println!("reading extra {} bytes", len_extra);
         let mut buf = vec![0; len_extra];
-        f.read_exact(&mut buf[..]).map_err(clarify_err)?;
+        f.read_exact(&mut buf[..])?;
     }
 
     Ok(SectionBody::Section5 {
@@ -411,14 +410,14 @@ pub fn unpack_sect5_body<R: Read>(f: &mut R, body_size: usize) -> Result<Section
 
 pub fn unpack_sect6_body<R: Read>(f: &mut R, body_size: usize) -> Result<SectionBody, ParseError> {
     let mut buf = [0; 1]; // octet 6
-    f.read_exact(&mut buf[..]).map_err(clarify_err)?;
+    f.read_exact(&mut buf[..])?;
 
     let len_extra = body_size - buf.len();
     if len_extra > 0 {
         // placeholder
         println!("reading extra {} bytes", len_extra);
         let mut buf = vec![0; len_extra];
-        f.read_exact(&mut buf[..]).map_err(clarify_err)?;
+        f.read_exact(&mut buf[..])?;
     }
 
     Ok(SectionBody::Section6 {
@@ -432,7 +431,7 @@ pub fn unpack_sect7_body<R: Read>(f: &mut R, body_size: usize) -> Result<Section
         // placeholder
         println!("reading extra {} bytes", len_extra);
         let mut buf = vec![0; len_extra]; // octet 6-21
-        f.read_exact(&mut buf[..]).map_err(clarify_err)?;
+        f.read_exact(&mut buf[..])?;
     }
 
     Ok(SectionBody::Section7)
@@ -440,7 +439,7 @@ pub fn unpack_sect7_body<R: Read>(f: &mut R, body_size: usize) -> Result<Section
 
 pub fn unpack_sect8<R: Read>(f: &mut R) -> Result<(), ParseError> {
     let mut buf = [0; SECT8_ES_SIZE];
-    f.read_exact(&mut buf[..]).map_err(clarify_err)?;
+    f.read_exact(&mut buf[..])?;
 
     if buf[..] != SECT8_ES_MAGIC[..] {
         return Err(ParseError::EndSectionMismatch);
@@ -453,7 +452,7 @@ pub fn unpack_sect8<R: Read>(f: &mut R) -> Result<(), ParseError> {
 /// number and size.
 pub fn unpack_sect_header<R: Read>(f: &mut R) -> Result<SectionInfo, ParseError> {
     let mut buf = [0; SECT_HEADER_SIZE];
-    f.read_exact(&mut buf[..]).map_err(clarify_err)?;
+    f.read_exact(&mut buf[..])?;
 
     let sect_size = read_as!(u32, buf, 0) as usize;
     let sect_num = buf[4];
@@ -463,11 +462,10 @@ pub fn unpack_sect_header<R: Read>(f: &mut R) -> Result<SectionInfo, ParseError>
     })
 }
 
-// To convert
-// io::Result<usize> (= Result<usize, io::Error) -> Result<usize, String>
-fn clarify_err(e: io::Error) -> ParseError {
-    let msg = format!("read error: {}", e.to_string());
-    ParseError::ReadError(msg)
+impl From<io::Error> for ParseError {
+    fn from(e: io::Error) -> Self {
+        Self::ReadError(e.to_string())
+    }
 }
 
 #[cfg(test)]
