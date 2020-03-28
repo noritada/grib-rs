@@ -14,12 +14,12 @@ fn main() {
     let path = Path::new(&args[1]);
     let display = path.display();
 
-    let mut f = match File::open(&path) {
+    let f = match File::open(&path) {
         Err(why) => panic!("couldn't open {}: {}", display, why.to_string()),
         Ok(f) => f,
     };
-    let mut f = BufReader::new(&mut f);
+    let f = BufReader::new(f);
 
-    let sects = parser::read(&mut f);
+    let sects = parser::read(f);
     println!("GRIB2: {:#?}", sects);
 }

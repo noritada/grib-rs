@@ -117,7 +117,7 @@ macro_rules! read_as {
     }};
 }
 
-pub fn read<R: Read>(mut f: &mut R) -> Result<Vec<(SectionInfo, SectionBody)>, ParseError> {
+pub fn read<R: Read>(mut f: R) -> Result<Vec<(SectionInfo, SectionBody)>, ParseError> {
     let whole_size = unpack_sect0(&mut f)?;
     let mut rest_size = whole_size - SECT0_IS_SIZE;
     let mut sects = Vec::new();
@@ -138,7 +138,7 @@ pub fn read<R: Read>(mut f: &mut R) -> Result<Vec<(SectionInfo, SectionBody)>, P
     Ok(sects)
 }
 
-pub fn scan<R: Read>(mut f: &mut R) -> Result<Vec<SectionInfo>, ParseError> {
+pub fn scan<R: Read>(mut f: R) -> Result<Vec<SectionInfo>, ParseError> {
     let whole_size = unpack_sect0(&mut f)?;
     let mut rest_size = whole_size - SECT0_IS_SIZE;
     let mut sects = Vec::new();
@@ -465,10 +465,10 @@ mod tests {
         )
         .unwrap();
         let f = BufReader::new(f);
-        let mut f = XzDecoder::new(f);
+        let f = XzDecoder::new(f);
 
         assert_eq!(
-            scan(&mut f),
+            scan(f),
             Ok(vec![
                 SectionInfo { num: 1, size: 21 },
                 SectionInfo { num: 3, size: 72 },
