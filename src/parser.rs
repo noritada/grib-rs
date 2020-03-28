@@ -101,7 +101,7 @@ pub enum ParseError {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-struct SubMessage<'a> {
+pub struct SubMessage<'a> {
     section2: Option<&'a SectionInfo>,
     section3: Option<&'a SectionInfo>,
     section4: Option<&'a SectionInfo>,
@@ -138,7 +138,37 @@ pub fn read<R: Read>(mut f: R) -> Result<Vec<(SectionInfo, SectionBody)>, ParseE
     Ok(sects)
 }
 
-pub fn scan<R: Read>(mut f: R) -> Result<Vec<SectionInfo>, ParseError> {
+pub trait GribReader<R: Read> {
+    fn new(f: R) -> Result<Self, ParseError>
+    where
+        Self: Sized;
+}
+
+pub struct Grib2FileReader<R: Read> {
+    reader: R,
+    sections: Box<Vec<SectionInfo>>,
+}
+
+impl<R: Read> Grib2FileReader<R> {
+    pub fn list_submessages<'a>(&'a self) -> Result<Vec<SubMessage<'a>>, ParseError> {
+        get_submessages(&self.sections)
+    }
+}
+
+impl<R: Read> GribReader<R> for Grib2FileReader<R> {
+    fn new(mut f: R) -> Result<Self, ParseError>
+    where
+        Self: Sized,
+    {
+        let sects = scan(&mut f)?;
+        Ok(Self {
+            reader: f,
+            sections: Box::new(sects),
+        })
+    }
+}
+
+fn scan<R: Read>(mut f: R) -> Result<Vec<SectionInfo>, ParseError> {
     let whole_size = unpack_sect0(&mut f)?;
     let mut rest_size = whole_size - SECT0_IS_SIZE;
     let mut sects = Vec::new();
