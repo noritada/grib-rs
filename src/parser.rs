@@ -3,6 +3,8 @@ use std::io;
 use std::io::{Read, Seek, SeekFrom};
 use std::result::Result;
 
+const SECT0_IS_MAGIC: &'static [u8] = b"GRIB";
+const SECT0_IS_MAGIC_SIZE: usize = SECT0_IS_MAGIC.len();
 const SECT0_IS_SIZE: usize = 16;
 const SECT_HEADER_SIZE: usize = 5;
 const SECT8_ES_MAGIC: &'static [u8] = b"7777";
@@ -269,11 +271,10 @@ fn get_submessages<'a>(sects: &'a Vec<SectionInfo>) -> Result<Vec<SubMessage<'a>
 }
 
 pub fn unpack_sect0<R: Read>(f: &mut R) -> Result<usize, ParseError> {
-    let magic = b"GRIB";
     let mut buf = [0; SECT0_IS_SIZE];
     f.read_exact(&mut buf[..]).map_err(clarify_err)?;
 
-    if &buf[0..4] != magic {
+    if &buf[0..SECT0_IS_MAGIC_SIZE] != SECT0_IS_MAGIC {
         return Err(ParseError::NotGRIB);
     }
     let version = buf[7];
