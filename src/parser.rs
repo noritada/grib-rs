@@ -98,6 +98,16 @@ pub enum ParseError {
     GRIB2WrongIteration(usize),
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+struct SubMessage<'a> {
+    section2: Option<&'a SectionInfo>,
+    section3: Option<&'a SectionInfo>,
+    section4: Option<&'a SectionInfo>,
+    section5: Option<&'a SectionInfo>,
+    section6: Option<&'a SectionInfo>,
+    section7: Option<&'a SectionInfo>,
+}
+
 macro_rules! read_as {
     ($ty:ty, $buf:ident, $start:expr) => {{
         let end = $start + std::mem::size_of::<$ty>();
@@ -154,12 +164,13 @@ pub fn scan<R: Read>(mut f: &mut R) -> Result<Vec<SectionInfo>, ParseError> {
     Ok(sects)
 }
 
-/// Validates the section order and returns a vector showing starting
-/// points of section groups.
-fn validate(sects: Vec<SectionInfo>) -> Result<Vec<(usize, u8)>, ParseError> {
+/// Validates the section order of sections and split them into a
+/// vector of section groups.
+fn get_submessages<'a>(sects: &'a Vec<SectionInfo>) -> Result<Vec<SubMessage<'a>>, ParseError> {
     let mut iter = sects.iter().enumerate();
     let mut starts = Vec::new();
-    let mut grid_def_exists = false;
+    let mut sect2_default = None;
+    let mut sect3_default = None;
 
     macro_rules! check {
         ($num:expr) => {{
@@ -169,41 +180,74 @@ fn validate(sects: Vec<SectionInfo>) -> Result<Vec<(usize, u8)>, ParseError> {
             if sect.num != $num {
                 return Err(ParseError::GRIB2WrongIteration(i));
             }
+            sect
+        }};
+    }
+
+    macro_rules! update_default {
+        ($submessage:expr) => {{
+            let submessage = $submessage;
+            sect2_default = submessage.section2;
+            sect3_default = submessage.section3;
+            submessage
         }};
     }
 
     check!(1);
 
     loop {
-        let start = match iter.next() {
-            Some((i, SectionInfo { num: 2, .. })) => {
-                check!(3);
-                check!(4);
-                check!(5);
-                check!(6);
-                check!(7);
-                grid_def_exists = true;
-                (i, 2)
+        let sect = iter.next();
+        let start = match sect {
+            Some((_i, SectionInfo { num: 2, .. })) => {
+                let (_, sect) = sect.unwrap();
+                let sect3 = check!(3);
+                let sect4 = check!(4);
+                let sect5 = check!(5);
+                let sect6 = check!(6);
+                let sect7 = check!(7);
+                update_default!(SubMessage {
+                    section2: Some(&sect),
+                    section3: Some(&sect3),
+                    section4: Some(&sect4),
+                    section5: Some(&sect5),
+                    section6: Some(&sect6),
+                    section7: Some(&sect7),
+                })
             }
-            Some((i, SectionInfo { num: 3, .. })) => {
-                check!(4);
-                check!(5);
-                check!(6);
-                check!(7);
-                grid_def_exists = true;
-                (i, 3)
+            Some((_i, SectionInfo { num: 3, .. })) => {
+                let (_, sect) = sect.unwrap();
+                let sect4 = check!(4);
+                let sect5 = check!(5);
+                let sect6 = check!(6);
+                let sect7 = check!(7);
+                update_default!(SubMessage {
+                    section2: sect2_default,
+                    section3: Some(&sect),
+                    section4: Some(&sect4),
+                    section5: Some(&sect5),
+                    section6: Some(&sect6),
+                    section7: Some(&sect7),
+                })
             }
             Some((i, SectionInfo { num: 4, .. })) => {
-                if !grid_def_exists {
+                if sect3_default == None {
                     return Err(ParseError::NoGridDefinition(i));
                 }
-                check!(5);
-                check!(6);
-                check!(7);
-                (i, 4)
+                let (_, sect) = sect.unwrap();
+                let sect5 = check!(5);
+                let sect6 = check!(6);
+                let sect7 = check!(7);
+                update_default!(SubMessage {
+                    section2: sect2_default,
+                    section3: sect3_default,
+                    section4: Some(&sect),
+                    section5: Some(&sect5),
+                    section6: Some(&sect6),
+                    section7: Some(&sect7),
+                })
             }
             Some((i, SectionInfo { num: 8, .. })) => {
-                if !grid_def_exists {
+                if sect3_default == None {
                     return Err(ParseError::NoGridDefinition(i));
                 }
                 if i < sects.len() - 1 {
@@ -461,149 +505,274 @@ mod tests {
     }
 
     #[test]
-    fn validate_simple() {
+    fn get_submessages_simple() {
         let sects = sect_list![1, 2, 3, 4, 5, 6, 7, 8,];
 
-        assert_eq!(validate(sects), Ok(vec![(1, 2)]));
+        assert_eq!(
+            get_submessages(&sects),
+            Ok(vec![SubMessage {
+                section2: Some(&sects[1]),
+                section3: Some(&sects[2]),
+                section4: Some(&sects[3]),
+                section5: Some(&sects[4]),
+                section6: Some(&sects[5]),
+                section7: Some(&sects[6]),
+            },])
+        );
     }
 
     #[test]
-    fn validate_sect2_loop() {
+    fn get_submessages_sect2_loop() {
         let sects = sect_list![1, 2, 3, 4, 5, 6, 7, 2, 3, 4, 5, 6, 7, 8,];
 
-        assert_eq!(validate(sects), Ok(vec![(1, 2), (7, 2)]));
+        assert_eq!(
+            get_submessages(&sects),
+            Ok(vec![
+                SubMessage {
+                    section2: Some(&sects[1]),
+                    section3: Some(&sects[2]),
+                    section4: Some(&sects[3]),
+                    section5: Some(&sects[4]),
+                    section6: Some(&sects[5]),
+                    section7: Some(&sects[6]),
+                },
+                SubMessage {
+                    section2: Some(&sects[7]),
+                    section3: Some(&sects[8]),
+                    section4: Some(&sects[9]),
+                    section5: Some(&sects[10]),
+                    section6: Some(&sects[11]),
+                    section7: Some(&sects[12]),
+                },
+            ])
+        );
     }
 
     #[test]
-    fn validate_sect3_loop() {
+    fn get_submessages_sect3_loop() {
         let sects = sect_list![1, 2, 3, 4, 5, 6, 7, 3, 4, 5, 6, 7, 8,];
 
-        assert_eq!(validate(sects), Ok(vec![(1, 2), (7, 3)]));
+        assert_eq!(
+            get_submessages(&sects),
+            Ok(vec![
+                SubMessage {
+                    section2: Some(&sects[1]),
+                    section3: Some(&sects[2]),
+                    section4: Some(&sects[3]),
+                    section5: Some(&sects[4]),
+                    section6: Some(&sects[5]),
+                    section7: Some(&sects[6]),
+                },
+                SubMessage {
+                    section2: Some(&sects[1]),
+                    section3: Some(&sects[7]),
+                    section4: Some(&sects[8]),
+                    section5: Some(&sects[9]),
+                    section6: Some(&sects[10]),
+                    section7: Some(&sects[11]),
+                },
+            ])
+        );
     }
 
     #[test]
-    fn validate_sect3_loop_no_sect2() {
+    fn get_submessages_sect3_loop_no_sect2() {
         let sects = sect_list![1, 3, 4, 5, 6, 7, 3, 4, 5, 6, 7, 8,];
 
-        assert_eq!(validate(sects), Ok(vec![(1, 3), (6, 3)]));
+        assert_eq!(
+            get_submessages(&sects),
+            Ok(vec![
+                SubMessage {
+                    section2: None,
+                    section3: Some(&sects[1]),
+                    section4: Some(&sects[2]),
+                    section5: Some(&sects[3]),
+                    section6: Some(&sects[4]),
+                    section7: Some(&sects[5]),
+                },
+                SubMessage {
+                    section2: None,
+                    section3: Some(&sects[6]),
+                    section4: Some(&sects[7]),
+                    section5: Some(&sects[8]),
+                    section6: Some(&sects[9]),
+                    section7: Some(&sects[10]),
+                },
+            ])
+        );
     }
 
     #[test]
-    fn validate_sect4_loop() {
+    fn get_submessages_sect4_loop() {
         let sects = sect_list![1, 2, 3, 4, 5, 6, 7, 4, 5, 6, 7, 8,];
 
-        assert_eq!(validate(sects), Ok(vec![(1, 2), (7, 4)]));
+        assert_eq!(
+            get_submessages(&sects),
+            Ok(vec![
+                SubMessage {
+                    section2: Some(&sects[1]),
+                    section3: Some(&sects[2]),
+                    section4: Some(&sects[3]),
+                    section5: Some(&sects[4]),
+                    section6: Some(&sects[5]),
+                    section7: Some(&sects[6]),
+                },
+                SubMessage {
+                    section2: Some(&sects[1]),
+                    section3: Some(&sects[2]),
+                    section4: Some(&sects[7]),
+                    section5: Some(&sects[8]),
+                    section6: Some(&sects[9]),
+                    section7: Some(&sects[10]),
+                },
+            ])
+        );
     }
 
     #[test]
-    fn validate_sect4_loop_no_sect2() {
+    fn get_submessages_sect4_loop_no_sect2() {
         let sects = sect_list![1, 3, 4, 5, 6, 7, 4, 5, 6, 7, 8,];
 
-        assert_eq!(validate(sects), Ok(vec![(1, 3), (6, 4)]));
+        assert_eq!(
+            get_submessages(&sects),
+            Ok(vec![
+                SubMessage {
+                    section2: None,
+                    section3: Some(&sects[1]),
+                    section4: Some(&sects[2]),
+                    section5: Some(&sects[3]),
+                    section6: Some(&sects[4]),
+                    section7: Some(&sects[5]),
+                },
+                SubMessage {
+                    section2: None,
+                    section3: Some(&sects[1]),
+                    section4: Some(&sects[6]),
+                    section5: Some(&sects[7]),
+                    section6: Some(&sects[8]),
+                    section7: Some(&sects[9]),
+                },
+            ])
+        );
     }
 
     #[test]
-    fn validate_end_after_sect1() {
+    fn get_submessages_end_after_sect1() {
         let sects = sect_list![1,];
 
         assert_eq!(
-            validate(sects),
+            get_submessages(&sects),
             Err(ParseError::GRIB2IterationSuddenlyFinished)
         );
     }
 
     #[test]
-    fn validate_end_in_sect2_loop_1() {
+    fn get_submessages_end_in_sect2_loop_1() {
         let sects = sect_list![1, 2,];
 
         assert_eq!(
-            validate(sects),
+            get_submessages(&sects),
             Err(ParseError::GRIB2IterationSuddenlyFinished)
         );
     }
 
     #[test]
-    fn validate_end_in_sect2_loop_2() {
+    fn get_submessages_end_in_sect2_loop_2() {
         let sects = sect_list![1, 2, 3,];
 
         assert_eq!(
-            validate(sects),
+            get_submessages(&sects),
             Err(ParseError::GRIB2IterationSuddenlyFinished)
         );
     }
 
     #[test]
-    fn validate_end_in_sect3_loop_1() {
+    fn get_submessages_end_in_sect3_loop_1() {
         let sects = sect_list![1, 3,];
 
         assert_eq!(
-            validate(sects),
+            get_submessages(&sects),
             Err(ParseError::GRIB2IterationSuddenlyFinished)
         );
     }
 
     #[test]
-    fn validate_end_in_sect3_loop_2() {
+    fn get_submessages_end_in_sect3_loop_2() {
         let sects = sect_list![1, 3, 4,];
 
         assert_eq!(
-            validate(sects),
+            get_submessages(&sects),
             Err(ParseError::GRIB2IterationSuddenlyFinished)
         );
     }
 
     #[test]
-    fn validate_end_in_sect4_loop_1() {
+    fn get_submessages_end_in_sect4_loop_1() {
         let sects = sect_list![1, 2, 3, 4, 5, 6, 7, 4,];
 
         assert_eq!(
-            validate(sects),
+            get_submessages(&sects),
             Err(ParseError::GRIB2IterationSuddenlyFinished)
         );
     }
 
     #[test]
-    fn validate_end_in_sect4_loop_2() {
+    fn get_submessages_end_in_sect4_loop_2() {
         let sects = sect_list![1, 2, 3, 4, 5, 6, 7, 4, 5,];
 
         assert_eq!(
-            validate(sects),
+            get_submessages(&sects),
             Err(ParseError::GRIB2IterationSuddenlyFinished)
         );
     }
 
     #[test]
-    fn validate_no_grid_in_sect4() {
+    fn get_submessages_no_grid_in_sect4() {
         let sects = sect_list![1, 4, 5, 6, 7, 8,];
 
-        assert_eq!(validate(sects), Err(ParseError::NoGridDefinition(1)));
+        assert_eq!(
+            get_submessages(&sects),
+            Err(ParseError::NoGridDefinition(1))
+        );
     }
 
     #[test]
-    fn validate_no_grid_in_sect8() {
+    fn get_submessages_no_grid_in_sect8() {
         let sects = sect_list![1, 8,];
 
-        assert_eq!(validate(sects), Err(ParseError::NoGridDefinition(1)));
+        assert_eq!(
+            get_submessages(&sects),
+            Err(ParseError::NoGridDefinition(1))
+        );
     }
 
     #[test]
-    fn validate_wrong_order_in_sect2() {
+    fn get_submessages_wrong_order_in_sect2() {
         let sects = sect_list![1, 2, 4, 3, 5, 6, 7, 8,];
 
-        assert_eq!(validate(sects), Err(ParseError::GRIB2WrongIteration(2)));
+        assert_eq!(
+            get_submessages(&sects),
+            Err(ParseError::GRIB2WrongIteration(2))
+        );
     }
 
     #[test]
-    fn validate_wrong_order_in_sect3() {
+    fn get_submessages_wrong_order_in_sect3() {
         let sects = sect_list![1, 3, 5, 4, 6, 7, 8,];
 
-        assert_eq!(validate(sects), Err(ParseError::GRIB2WrongIteration(2)));
+        assert_eq!(
+            get_submessages(&sects),
+            Err(ParseError::GRIB2WrongIteration(2))
+        );
     }
 
     #[test]
-    fn validate_wrong_order_in_sect4() {
+    fn get_submessages_wrong_order_in_sect4() {
         let sects = sect_list![1, 3, 4, 5, 6, 7, 4, 6, 5, 7, 8,];
 
-        assert_eq!(validate(sects), Err(ParseError::GRIB2WrongIteration(7)));
+        assert_eq!(
+            get_submessages(&sects),
+            Err(ParseError::GRIB2WrongIteration(7))
+        );
     }
 }
