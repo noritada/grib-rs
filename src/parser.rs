@@ -43,12 +43,23 @@ impl SectionInfo {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum SectionBody {
     Section1 {
-        /// GRIB Master Tables Version Number
+        /// Identification of originating/generating centre (see Common Code Table C-1)
+        centre_id: u16,
+        /// Identification of originating/generating sub-centre (allocated by originating/ generating centre)
+        subcentre_id: u16,
+        /// GRIB Master Tables Version Number (see Code Table 1.0)
         master_table_version: u8,
-        /// GRIB Local Tables Version Number
+        /// GRIB Local Tables Version Number (see Code Table 1.1)
         local_table_version: u8,
-        /// Significance of Reference Time
+        /// Significance of Reference Time (see Code Table 1.2)
+        ref_time_significance: u8,
+        /// Reference time of data
         ref_time: RefTime,
+        /// Production status of processed data in this GRIB message
+        /// (see Code Table 1.3)
+        prod_status: u8,
+        /// Type of processed data in this GRIB message (see Code Table 1.4)
+        data_type: u8,
     },
     Section2,
     Section3 {
@@ -331,8 +342,11 @@ pub fn unpack_sect1_body<R: Read>(f: &mut R, body_size: usize) -> Result<Section
     }
 
     Ok(SectionBody::Section1 {
+        centre_id: read_as!(u16, buf, 0),
+        subcentre_id: read_as!(u16, buf, 2),
         master_table_version: buf[4],
         local_table_version: buf[5],
+        ref_time_significance: buf[6],
         ref_time: RefTime {
             year: read_as!(u16, buf, 7),
             month: buf[9],
@@ -341,6 +355,8 @@ pub fn unpack_sect1_body<R: Read>(f: &mut R, body_size: usize) -> Result<Section
             minute: buf[12],
             second: buf[13],
         },
+        prod_status: buf[14],
+        data_type: buf[15],
     })
 }
 
