@@ -21,5 +21,6 @@ fn main() {
     let f = BufReader::new(f);
 
     let grib2 = Grib2FileReader::new(f).unwrap();
-    println!("GRIB2: {:#?}", grib2.list_submessages());
+    println!("Info:\n{}\n", grib2);
+    println!("Submessages:\n{:#?}", grib2.list_submessages().unwrap());
 }

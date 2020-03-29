@@ -1,4 +1,6 @@
 use std::convert::TryInto;
+use std::fmt;
+use std::fmt::{Display, Formatter};
 use std::io;
 use std::io::{Read, Seek, SeekFrom};
 use std::result::Result;
@@ -156,6 +158,22 @@ impl<R: Read> GribReader<R> for Grib2FileReader<R> {
             reader: f,
             sections: Box::new(sects),
         })
+    }
+}
+
+impl<R: Read> Display for Grib2FileReader<R> {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        let err = "No information available".to_string();
+        let s = match self.sections.first() {
+            Some(SectionInfo {
+                body: Some(body), ..
+            }) => match body {
+                SectionBody::Section1 { .. } => format!("{:#?}", body),
+                _ => err,
+            },
+            _ => err,
+        };
+        write!(f, "{}", s)
     }
 }
 
