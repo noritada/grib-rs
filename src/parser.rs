@@ -13,6 +13,7 @@ const SECT8_ES_SIZE: usize = SECT8_ES_MAGIC.len();
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct SectionInfo {
     pub num: u8,
+    pub offset: usize,
     pub size: usize,
 }
 
@@ -127,7 +128,8 @@ pub fn read<R: Read>(mut f: R) -> Result<Vec<(SectionInfo, SectionBody)>, ParseE
             break;
         }
 
-        let sect_info = unpack_sect_header(&mut f).unwrap();
+        let mut sect_info = unpack_sect_header(&mut f).unwrap();
+        sect_info.offset = whole_size - rest_size;
         let sect_body = sect_info.read_body(&mut f).unwrap();
         println!("{:#?},\n{:#?}", sect_info, sect_body);
         rest_size -= sect_info.size;
@@ -177,13 +179,15 @@ fn scan<R: Read>(mut f: R) -> Result<Vec<SectionInfo>, ParseError> {
             unpack_sect8(&mut f)?;
             let sect_info = SectionInfo {
                 num: 8,
+                offset: whole_size - rest_size,
                 size: SECT8_ES_SIZE,
             };
             sects.push(sect_info);
             break;
         }
 
-        let sect_info = unpack_sect_header(&mut f)?;
+        let mut sect_info = unpack_sect_header(&mut f)?;
+        sect_info.offset = whole_size - rest_size;
         // Some readers such as flate2::gz::read::GzDecoder do not
         // implement Seek.
         // let _sect_body = sect_info.skip_body(&mut f)?;
@@ -449,7 +453,9 @@ pub fn unpack_sect8<R: Read>(f: &mut R) -> Result<(), ParseError> {
 }
 
 /// Reads a common header for sections 1-7 and returns the section
-/// number and size.
+/// number and size.  Since offset is not determined within this
+/// function, the `offset` field in returned `SectionInfo` struct is
+/// set to `0`.
 pub fn unpack_sect_header<R: Read>(f: &mut R) -> Result<SectionInfo, ParseError> {
     let mut buf = [0; SECT_HEADER_SIZE];
     f.read_exact(&mut buf[..])?;
@@ -458,6 +464,7 @@ pub fn unpack_sect_header<R: Read>(f: &mut R) -> Result<SectionInfo, ParseError>
     let sect_num = buf[4];
     Ok(SectionInfo {
         num: sect_num,
+        offset: 0,
         size: sect_size,
     })
 }
@@ -480,7 +487,7 @@ mod tests {
         ($($num:expr,)*) => {{
             vec![
                 $(
-                    SectionInfo { num: $num, size: 0 },
+                    SectionInfo { num: $num, offset: 0, size: 0 },
                 )*
             ]
         }}
@@ -498,37 +505,161 @@ mod tests {
         assert_eq!(
             scan(f),
             Ok(vec![
-                SectionInfo { num: 1, size: 21 },
-                SectionInfo { num: 3, size: 72 },
-                SectionInfo { num: 4, size: 34 },
-                SectionInfo { num: 5, size: 23 },
-                SectionInfo { num: 6, size: 6 },
-                SectionInfo { num: 7, size: 1391 },
-                SectionInfo { num: 4, size: 34 },
-                SectionInfo { num: 5, size: 23 },
-                SectionInfo { num: 6, size: 6 },
-                SectionInfo { num: 7, size: 1399 },
-                SectionInfo { num: 4, size: 34 },
-                SectionInfo { num: 5, size: 23 },
-                SectionInfo { num: 6, size: 6 },
-                SectionInfo { num: 7, size: 1404 },
-                SectionInfo { num: 4, size: 34 },
-                SectionInfo { num: 5, size: 23 },
-                SectionInfo { num: 6, size: 6 },
-                SectionInfo { num: 7, size: 1395 },
-                SectionInfo { num: 4, size: 34 },
-                SectionInfo { num: 5, size: 23 },
-                SectionInfo { num: 6, size: 6 },
-                SectionInfo { num: 7, size: 1395 },
-                SectionInfo { num: 4, size: 34 },
-                SectionInfo { num: 5, size: 23 },
-                SectionInfo { num: 6, size: 6 },
-                SectionInfo { num: 7, size: 1397 },
-                SectionInfo { num: 4, size: 34 },
-                SectionInfo { num: 5, size: 23 },
-                SectionInfo { num: 6, size: 6 },
-                SectionInfo { num: 7, size: 1386 },
-                SectionInfo { num: 8, size: 4 },
+                SectionInfo {
+                    num: 1,
+                    offset: 16,
+                    size: 21
+                },
+                SectionInfo {
+                    num: 3,
+                    offset: 37,
+                    size: 72
+                },
+                SectionInfo {
+                    num: 4,
+                    offset: 109,
+                    size: 34
+                },
+                SectionInfo {
+                    num: 5,
+                    offset: 143,
+                    size: 23
+                },
+                SectionInfo {
+                    num: 6,
+                    offset: 166,
+                    size: 6
+                },
+                SectionInfo {
+                    num: 7,
+                    offset: 172,
+                    size: 1391
+                },
+                SectionInfo {
+                    num: 4,
+                    offset: 1563,
+                    size: 34
+                },
+                SectionInfo {
+                    num: 5,
+                    offset: 1597,
+                    size: 23
+                },
+                SectionInfo {
+                    num: 6,
+                    offset: 1620,
+                    size: 6
+                },
+                SectionInfo {
+                    num: 7,
+                    offset: 1626,
+                    size: 1399
+                },
+                SectionInfo {
+                    num: 4,
+                    offset: 3025,
+                    size: 34
+                },
+                SectionInfo {
+                    num: 5,
+                    offset: 3059,
+                    size: 23
+                },
+                SectionInfo {
+                    num: 6,
+                    offset: 3082,
+                    size: 6
+                },
+                SectionInfo {
+                    num: 7,
+                    offset: 3088,
+                    size: 1404
+                },
+                SectionInfo {
+                    num: 4,
+                    offset: 4492,
+                    size: 34
+                },
+                SectionInfo {
+                    num: 5,
+                    offset: 4526,
+                    size: 23
+                },
+                SectionInfo {
+                    num: 6,
+                    offset: 4549,
+                    size: 6
+                },
+                SectionInfo {
+                    num: 7,
+                    offset: 4555,
+                    size: 1395
+                },
+                SectionInfo {
+                    num: 4,
+                    offset: 5950,
+                    size: 34
+                },
+                SectionInfo {
+                    num: 5,
+                    offset: 5984,
+                    size: 23
+                },
+                SectionInfo {
+                    num: 6,
+                    offset: 6007,
+                    size: 6
+                },
+                SectionInfo {
+                    num: 7,
+                    offset: 6013,
+                    size: 1395
+                },
+                SectionInfo {
+                    num: 4,
+                    offset: 7408,
+                    size: 34
+                },
+                SectionInfo {
+                    num: 5,
+                    offset: 7442,
+                    size: 23
+                },
+                SectionInfo {
+                    num: 6,
+                    offset: 7465,
+                    size: 6
+                },
+                SectionInfo {
+                    num: 7,
+                    offset: 7471,
+                    size: 1397
+                },
+                SectionInfo {
+                    num: 4,
+                    offset: 8868,
+                    size: 34
+                },
+                SectionInfo {
+                    num: 5,
+                    offset: 8902,
+                    size: 23
+                },
+                SectionInfo {
+                    num: 6,
+                    offset: 8925,
+                    size: 6
+                },
+                SectionInfo {
+                    num: 7,
+                    offset: 8931,
+                    size: 1386
+                },
+                SectionInfo {
+                    num: 8,
+                    offset: 10317,
+                    size: 4
+                },
             ],)
         );
     }
