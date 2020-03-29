@@ -15,6 +15,7 @@ pub struct SectionInfo {
     pub num: u8,
     pub offset: usize,
     pub size: usize,
+    pub body: Option<SectionBody>,
 }
 
 impl SectionInfo {
@@ -128,28 +129,6 @@ macro_rules! read_as {
     }};
 }
 
-pub fn read<R: Read>(mut f: R) -> Result<Vec<(SectionInfo, SectionBody)>, ParseError> {
-    let whole_size = unpack_sect0(&mut f)?;
-    let mut rest_size = whole_size - SECT0_IS_SIZE;
-    let mut sects = Vec::new();
-
-    loop {
-        if rest_size == SECT8_ES_SIZE {
-            unpack_sect8(&mut f)?;
-            break;
-        }
-
-        let mut sect_info = unpack_sect_header(&mut f).unwrap();
-        sect_info.offset = whole_size - rest_size;
-        let sect_body = sect_info.read_body(&mut f).unwrap();
-        println!("{:#?},\n{:#?}", sect_info, sect_body);
-        rest_size -= sect_info.size;
-        sects.push((sect_info, sect_body)); // FIXME
-    }
-
-    Ok(sects)
-}
-
 pub trait GribReader<R: Read> {
     fn new(f: R) -> Result<Self, ParseError>
     where
@@ -192,6 +171,7 @@ fn scan<R: Read>(mut f: R) -> Result<Vec<SectionInfo>, ParseError> {
                 num: 8,
                 offset: whole_size - rest_size,
                 size: SECT8_ES_SIZE,
+                body: None,
             };
             sects.push(sect_info);
             break;
@@ -202,7 +182,7 @@ fn scan<R: Read>(mut f: R) -> Result<Vec<SectionInfo>, ParseError> {
         // Some readers such as flate2::gz::read::GzDecoder do not
         // implement Seek.
         // let _sect_body = sect_info.skip_body(&mut f)?;
-        let _sect_body = sect_info.read_body(&mut f)?;
+        sect_info.body = Some(sect_info.read_body(&mut f)?);
         rest_size -= sect_info.size;
         sects.push(sect_info);
     }
@@ -456,8 +436,8 @@ pub fn unpack_sect8<R: Read>(f: &mut R) -> Result<(), ParseError> {
 
 /// Reads a common header for sections 1-7 and returns the section
 /// number and size.  Since offset is not determined within this
-/// function, the `offset` field in returned `SectionInfo` struct is
-/// set to `0`.
+/// function, the `offset` and `body` fields in returned `SectionInfo`
+/// struct is set to `0` and `None` respectively.
 pub fn unpack_sect_header<R: Read>(f: &mut R) -> Result<SectionInfo, ParseError> {
     let mut buf = [0; SECT_HEADER_SIZE];
     f.read_exact(&mut buf[..])?;
@@ -468,6 +448,7 @@ pub fn unpack_sect_header<R: Read>(f: &mut R) -> Result<SectionInfo, ParseError>
         num: sect_num,
         offset: 0,
         size: sect_size,
+        body: None,
     })
 }
 
@@ -489,7 +470,7 @@ mod tests {
         ($($num:expr,)*) => {{
             vec![
                 $(
-                    SectionInfo { num: $num, offset: 0, size: 0 },
+                    SectionInfo { num: $num, offset: 0, size: 0, body: None },
                 )*
             ]
         }}
@@ -510,157 +491,263 @@ mod tests {
                 SectionInfo {
                     num: 1,
                     offset: 16,
-                    size: 21
+                    size: 21,
+                    body: Some(SectionBody::Section1 {
+                        centre_id: 34,
+                        subcentre_id: 0,
+                        master_table_version: 5,
+                        local_table_version: 1,
+                        ref_time_significance: 0,
+                        ref_time: RefTime {
+                            year: 2016,
+                            month: 8,
+                            date: 22,
+                            hour: 2,
+                            minute: 0,
+                            second: 0,
+                        },
+                        prod_status: 0,
+                        data_type: 2,
+                    }),
                 },
                 SectionInfo {
                     num: 3,
                     offset: 37,
-                    size: 72
+                    size: 72,
+                    body: Some(SectionBody::Section3 {
+                        num_points: 86016,
+                        grid_tmpl_num: 0,
+                    }),
                 },
                 SectionInfo {
                     num: 4,
                     offset: 109,
-                    size: 34
+                    size: 34,
+                    body: Some(SectionBody::Section4 {
+                        num_coordinates: 0,
+                        prod_tmpl_num: 0,
+                    }),
                 },
                 SectionInfo {
                     num: 5,
                     offset: 143,
-                    size: 23
+                    size: 23,
+                    body: Some(SectionBody::Section5 {
+                        num_points: 86016,
+                        repr_tmpl_code: 200,
+                    }),
                 },
                 SectionInfo {
                     num: 6,
                     offset: 166,
-                    size: 6
+                    size: 6,
+                    body: Some(SectionBody::Section6 {
+                        bitmap_indicator: 255,
+                    }),
                 },
                 SectionInfo {
                     num: 7,
                     offset: 172,
-                    size: 1391
+                    size: 1391,
+                    body: Some(SectionBody::Section7),
                 },
                 SectionInfo {
                     num: 4,
                     offset: 1563,
-                    size: 34
+                    size: 34,
+                    body: Some(SectionBody::Section4 {
+                        num_coordinates: 0,
+                        prod_tmpl_num: 0,
+                    }),
                 },
                 SectionInfo {
                     num: 5,
                     offset: 1597,
-                    size: 23
+                    size: 23,
+                    body: Some(SectionBody::Section5 {
+                        num_points: 86016,
+                        repr_tmpl_code: 200,
+                    }),
                 },
                 SectionInfo {
                     num: 6,
                     offset: 1620,
-                    size: 6
+                    size: 6,
+                    body: Some(SectionBody::Section6 {
+                        bitmap_indicator: 255,
+                    }),
                 },
                 SectionInfo {
                     num: 7,
                     offset: 1626,
-                    size: 1399
+                    size: 1399,
+                    body: Some(SectionBody::Section7),
                 },
                 SectionInfo {
                     num: 4,
                     offset: 3025,
-                    size: 34
+                    size: 34,
+                    body: Some(SectionBody::Section4 {
+                        num_coordinates: 0,
+                        prod_tmpl_num: 0,
+                    }),
                 },
                 SectionInfo {
                     num: 5,
                     offset: 3059,
-                    size: 23
+                    size: 23,
+                    body: Some(SectionBody::Section5 {
+                        num_points: 86016,
+                        repr_tmpl_code: 200,
+                    }),
                 },
                 SectionInfo {
                     num: 6,
                     offset: 3082,
-                    size: 6
+                    size: 6,
+                    body: Some(SectionBody::Section6 {
+                        bitmap_indicator: 255,
+                    }),
                 },
                 SectionInfo {
                     num: 7,
                     offset: 3088,
-                    size: 1404
+                    size: 1404,
+                    body: Some(SectionBody::Section7),
                 },
                 SectionInfo {
                     num: 4,
                     offset: 4492,
-                    size: 34
+                    size: 34,
+                    body: Some(SectionBody::Section4 {
+                        num_coordinates: 0,
+                        prod_tmpl_num: 0,
+                    }),
                 },
                 SectionInfo {
                     num: 5,
                     offset: 4526,
-                    size: 23
+                    size: 23,
+                    body: Some(SectionBody::Section5 {
+                        num_points: 86016,
+                        repr_tmpl_code: 200,
+                    }),
                 },
                 SectionInfo {
                     num: 6,
                     offset: 4549,
-                    size: 6
+                    size: 6,
+                    body: Some(SectionBody::Section6 {
+                        bitmap_indicator: 255,
+                    }),
                 },
                 SectionInfo {
                     num: 7,
                     offset: 4555,
-                    size: 1395
+                    size: 1395,
+                    body: Some(SectionBody::Section7),
                 },
                 SectionInfo {
                     num: 4,
                     offset: 5950,
-                    size: 34
+                    size: 34,
+                    body: Some(SectionBody::Section4 {
+                        num_coordinates: 0,
+                        prod_tmpl_num: 0,
+                    }),
                 },
                 SectionInfo {
                     num: 5,
                     offset: 5984,
-                    size: 23
+                    size: 23,
+                    body: Some(SectionBody::Section5 {
+                        num_points: 86016,
+                        repr_tmpl_code: 200,
+                    }),
                 },
                 SectionInfo {
                     num: 6,
                     offset: 6007,
-                    size: 6
+                    size: 6,
+                    body: Some(SectionBody::Section6 {
+                        bitmap_indicator: 255,
+                    }),
                 },
                 SectionInfo {
                     num: 7,
                     offset: 6013,
-                    size: 1395
+                    size: 1395,
+                    body: Some(SectionBody::Section7),
                 },
                 SectionInfo {
                     num: 4,
                     offset: 7408,
-                    size: 34
+                    size: 34,
+                    body: Some(SectionBody::Section4 {
+                        num_coordinates: 0,
+                        prod_tmpl_num: 0,
+                    }),
                 },
                 SectionInfo {
                     num: 5,
                     offset: 7442,
-                    size: 23
+                    size: 23,
+                    body: Some(SectionBody::Section5 {
+                        num_points: 86016,
+                        repr_tmpl_code: 200,
+                    }),
                 },
                 SectionInfo {
                     num: 6,
                     offset: 7465,
-                    size: 6
+                    size: 6,
+                    body: Some(SectionBody::Section6 {
+                        bitmap_indicator: 255,
+                    }),
                 },
                 SectionInfo {
                     num: 7,
                     offset: 7471,
-                    size: 1397
+                    size: 1397,
+                    body: Some(SectionBody::Section7),
                 },
                 SectionInfo {
                     num: 4,
                     offset: 8868,
-                    size: 34
+                    size: 34,
+                    body: Some(SectionBody::Section4 {
+                        num_coordinates: 0,
+                        prod_tmpl_num: 0,
+                    }),
                 },
                 SectionInfo {
                     num: 5,
                     offset: 8902,
-                    size: 23
+                    size: 23,
+                    body: Some(SectionBody::Section5 {
+                        num_points: 86016,
+                        repr_tmpl_code: 200,
+                    }),
                 },
                 SectionInfo {
                     num: 6,
                     offset: 8925,
-                    size: 6
+                    size: 6,
+                    body: Some(SectionBody::Section6 {
+                        bitmap_indicator: 255,
+                    }),
                 },
                 SectionInfo {
                     num: 7,
                     offset: 8931,
-                    size: 1386
+                    size: 1386,
+                    body: Some(SectionBody::Section7),
                 },
                 SectionInfo {
                     num: 8,
                     offset: 10317,
-                    size: 4
+                    size: 4,
+                    body: None
                 },
             ],)
         );
