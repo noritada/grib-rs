@@ -3,8 +3,7 @@ use std::fs::File;
 use std::io::BufReader;
 use std::path::Path;
 
-mod parser;
-use crate::parser::GribReader;
+use rust_grib2::parser::{Grib2FileReader, GribReader};
 
 fn main() {
     if env::args().len() != 2 {
@@ -21,6 +20,6 @@ fn main() {
     };
     let f = BufReader::new(f);
 
-    let grib2 = parser::Grib2FileReader::new(f).unwrap();
+    let grib2 = Grib2FileReader::new(f).unwrap();
     println!("GRIB2: {:#?}", grib2.list_submessages());
 }
