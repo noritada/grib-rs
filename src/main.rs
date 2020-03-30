@@ -2,7 +2,7 @@ use clap::{crate_authors, crate_name, crate_version, App, Arg, SubCommand};
 use std::fmt;
 use std::fmt::{Display, Formatter};
 use std::fs::File;
-use std::io::BufReader;
+use std::io::{BufReader, Error};
 use std::path::Path;
 use std::result::Result;
 
@@ -11,6 +11,7 @@ use rust_grib2::parser::{Grib2FileReader, GribReader, ParseError};
 enum CliError {
     NoSubCommandSpecified,
     ParseError(ParseError),
+    IOError(Error),
 }
 
 impl Display for CliError {
@@ -18,6 +19,7 @@ impl Display for CliError {
         match self {
             Self::NoSubCommandSpecified => write!(f, "No subcommand specified"),
             Self::ParseError(e) => write!(f, "{:#?}", e),
+            Self::IOError(e) => write!(f, "{:#?}", e),
         }
     }
 }
@@ -25,6 +27,12 @@ impl Display for CliError {
 impl From<ParseError> for CliError {
     fn from(e: ParseError) -> Self {
         Self::ParseError(e)
+    }
+}
+
+impl From<Error> for CliError {
+    fn from(e: Error) -> Self {
+        Self::IOError(e)
     }
 }
 
@@ -44,17 +52,11 @@ fn app() -> App<'static, 'static> {
         )
 }
 
-fn grib(file_name: &str) -> Result<Grib2FileReader<BufReader<File>>, ParseError> {
+fn grib(file_name: &str) -> Result<Grib2FileReader<BufReader<File>>, CliError> {
     let path = Path::new(file_name);
-    let display = path.display();
-
-    let f = match File::open(&path) {
-        Err(why) => panic!("couldn't open {}: {}", display, why.to_string()),
-        Ok(f) => f,
-    };
+    let f = File::open(&path)?;
     let f = BufReader::new(f);
-
-    Grib2FileReader::new(f)
+    Ok(Grib2FileReader::new(f)?)
 }
 
 fn real_main() -> Result<(), CliError> {
