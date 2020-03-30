@@ -103,18 +103,6 @@ pub struct RefTime {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub enum ParseError {
-    ReadError(String),
-    NotGRIB,
-    GRIBVersionMismatch(u8),
-    UnknownSectionNumber(u8),
-    EndSectionMismatch,
-    GRIB2IterationSuddenlyFinished,
-    NoGridDefinition(usize),
-    GRIB2WrongIteration(usize),
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct SubMessage<'a> {
     section2: Option<&'a SectionInfo>,
     section3: Option<&'a SectionInfo>,
@@ -468,6 +456,18 @@ pub fn unpack_sect_header<R: Read>(f: &mut R) -> Result<SectionInfo, ParseError>
         size: sect_size,
         body: None,
     })
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum ParseError {
+    ReadError(String),
+    NotGRIB,
+    GRIBVersionMismatch(u8),
+    UnknownSectionNumber(u8),
+    EndSectionMismatch,
+    GRIB2IterationSuddenlyFinished,
+    NoGridDefinition(usize),
+    GRIB2WrongIteration(usize),
 }
 
 impl From<io::Error> for ParseError {
