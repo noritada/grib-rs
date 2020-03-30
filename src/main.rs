@@ -71,7 +71,7 @@ fn real_main() -> Result<(), CliError> {
         ("list", Some(subcommand_matches)) => {
             let file_name = subcommand_matches.value_of("file").unwrap();
             let grib = grib(file_name)?;
-            println!("{:#?}", grib.list_submessages().unwrap());
+            println!("{:#?}", grib.list_submessages()?);
         }
         ("", None) => return Err(CliError::NoSubCommandSpecified),
         _ => unreachable!(),
