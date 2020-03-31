@@ -5,6 +5,11 @@ use std::io;
 use std::io::{Read, Seek, SeekFrom};
 use std::result::Result;
 
+use crate::codetables::{
+    lookup_table, ConversionError, CODE_TABLE_1_0, CODE_TABLE_1_1, CODE_TABLE_1_2, CODE_TABLE_1_3,
+    CODE_TABLE_1_4,
+};
+
 const SECT0_IS_MAGIC: &'static [u8] = b"GRIB";
 const SECT0_IS_MAGIC_SIZE: usize = SECT0_IS_MAGIC.len();
 const SECT0_IS_SIZE: usize = 16;
@@ -45,25 +50,7 @@ impl SectionInfo {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum SectionBody {
-    Section1 {
-        /// Identification of originating/generating centre (see Common Code Table C-1)
-        centre_id: u16,
-        /// Identification of originating/generating sub-centre (allocated by originating/ generating centre)
-        subcentre_id: u16,
-        /// GRIB Master Tables Version Number (see Code Table 1.0)
-        master_table_version: u8,
-        /// GRIB Local Tables Version Number (see Code Table 1.1)
-        local_table_version: u8,
-        /// Significance of Reference Time (see Code Table 1.2)
-        ref_time_significance: u8,
-        /// Reference time of data
-        ref_time: RefTime,
-        /// Production status of processed data in this GRIB message
-        /// (see Code Table 1.3)
-        prod_status: u8,
-        /// Type of processed data in this GRIB message (see Code Table 1.4)
-        data_type: u8,
-    },
+    Section1(Identification),
     Section2,
     Section3 {
         /// Number of data points
@@ -93,6 +80,67 @@ pub enum SectionBody {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct Identification {
+    /// Identification of originating/generating centre (see Common Code Table C-1)
+    centre_id: u16,
+    /// Identification of originating/generating sub-centre (allocated by originating/ generating centre)
+    subcentre_id: u16,
+    /// GRIB Master Tables Version Number (see Code Table 1.0)
+    master_table_version: u8,
+    /// GRIB Local Tables Version Number (see Code Table 1.1)
+    local_table_version: u8,
+    /// Significance of Reference Time (see Code Table 1.2)
+    ref_time_significance: u8,
+    /// Reference time of data
+    ref_time: RefTime,
+    /// Production status of processed data in this GRIB message
+    /// (see Code Table 1.3)
+    prod_status: u8,
+    /// Type of processed data in this GRIB message (see Code Table 1.4)
+    data_type: u8,
+}
+
+impl Display for Identification {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        fn to_str(result: Result<&'static &'static str, ConversionError>) -> String {
+            match result {
+                Ok(s) => s.to_string(),
+                Err(e) => format!("{}", e),
+            }
+        }
+
+        let master_table_version = to_str(lookup_table(CODE_TABLE_1_0, self.master_table_version));
+        let local_table_version = to_str(lookup_table(CODE_TABLE_1_1, self.local_table_version));
+        let ref_time_significance =
+            to_str(lookup_table(CODE_TABLE_1_2, self.ref_time_significance));
+        let prod_status = to_str(lookup_table(CODE_TABLE_1_3, self.prod_status));
+        let data_type = to_str(lookup_table(CODE_TABLE_1_4, self.data_type));
+
+        write!(
+            f,
+            "\
+Originating/generating centre: {}
+Originating/generating sub-centre: {}
+GRIB Master Tables Version Number: {}
+GRIB Local Tables Version Number: {}
+Significance of Reference Time: {}
+Reference time of data: {}
+Production status of processed data: {}
+Type of processed data: {}\
+",
+            self.centre_id,
+            self.subcentre_id,
+            master_table_version,
+            local_table_version,
+            ref_time_significance,
+            self.ref_time.to_string(),
+            prod_status,
+            data_type
+        )
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct RefTime {
     pub year: u16,
     pub month: u8,
@@ -100,6 +148,16 @@ pub struct RefTime {
     pub hour: u8,
     pub minute: u8,
     pub second: u8,
+}
+
+impl Display for RefTime {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        write!(
+            f,
+            "{:04}-{:02}-{:02} {:02}:{:02}:{:02}Z",
+            self.year, self.month, self.date, self.hour, self.minute, self.second
+        )
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -154,11 +212,9 @@ impl<R: Read> Display for Grib2FileReader<R> {
         let err = "No information available".to_string();
         let s = match self.sections.first() {
             Some(SectionInfo {
-                body: Some(body), ..
-            }) => match body {
-                SectionBody::Section1 { .. } => format!("{:#?}", body),
-                _ => err,
-            },
+                body: Some(SectionBody::Section1(body)),
+                ..
+            }) => format!("{}", body),
             _ => err,
         };
         write!(f, "{}", s)
@@ -327,7 +383,7 @@ pub fn unpack_sect1_body<R: Read>(f: &mut R, body_size: usize) -> Result<Section
         f.read_exact(&mut buf[..])?;
     }
 
-    Ok(SectionBody::Section1 {
+    Ok(SectionBody::Section1(Identification {
         centre_id: read_as!(u16, buf, 0),
         subcentre_id: read_as!(u16, buf, 2),
         master_table_version: buf[4],
@@ -343,7 +399,7 @@ pub fn unpack_sect1_body<R: Read>(f: &mut R, body_size: usize) -> Result<Section
         },
         prod_status: buf[14],
         data_type: buf[15],
-    })
+    }))
 }
 
 pub fn unpack_sect2_body<R: Read>(f: &mut R, body_size: usize) -> Result<SectionBody, ParseError> {
@@ -510,7 +566,7 @@ mod tests {
                     num: 1,
                     offset: 16,
                     size: 21,
-                    body: Some(SectionBody::Section1 {
+                    body: Some(SectionBody::Section1(Identification {
                         centre_id: 34,
                         subcentre_id: 0,
                         master_table_version: 5,
@@ -526,7 +582,7 @@ mod tests {
                         },
                         prod_status: 0,
                         data_type: 2,
-                    }),
+                    })),
                 },
                 SectionInfo {
                     num: 3,
