@@ -127,11 +127,11 @@ pub trait GribReader<R: Read> {
 
 pub struct Grib2FileReader<R: Read> {
     reader: R,
-    sections: Box<Vec<SectionInfo>>,
+    sections: Box<[SectionInfo]>,
 }
 
 impl<R: Read> Grib2FileReader<R> {
-    pub fn list_submessages<'a>(&'a self) -> Result<Vec<SubMessage<'a>>, ParseError> {
+    pub fn list_submessages<'a>(&'a self) -> Result<Box<[SubMessage<'a>]>, ParseError> {
         get_submessages(&self.sections)
     }
 }
@@ -144,7 +144,7 @@ impl<R: Read> GribReader<R> for Grib2FileReader<R> {
         let sects = scan(&mut f)?;
         Ok(Self {
             reader: f,
-            sections: Box::new(sects),
+            sections: sects,
         })
     }
 }
@@ -165,7 +165,7 @@ impl<R: Read> Display for Grib2FileReader<R> {
     }
 }
 
-fn scan<R: Read>(mut f: R) -> Result<Vec<SectionInfo>, ParseError> {
+fn scan<R: Read>(mut f: R) -> Result<Box<[SectionInfo]>, ParseError> {
     let whole_size = unpack_sect0(&mut f)?;
     let mut rest_size = whole_size - SECT0_IS_SIZE;
     let mut sects = Vec::new();
@@ -193,12 +193,12 @@ fn scan<R: Read>(mut f: R) -> Result<Vec<SectionInfo>, ParseError> {
         sects.push(sect_info);
     }
 
-    Ok(sects)
+    Ok(sects.into_boxed_slice())
 }
 
 /// Validates the section order of sections and split them into a
 /// vector of section groups.
-fn get_submessages<'a>(sects: &'a Vec<SectionInfo>) -> Result<Vec<SubMessage<'a>>, ParseError> {
+fn get_submessages<'a>(sects: &'a Box<[SectionInfo]>) -> Result<Box<[SubMessage<'a>]>, ParseError> {
     let mut iter = sects.iter().enumerate();
     let mut starts = Vec::new();
     let mut sect2_default = None;
@@ -297,7 +297,7 @@ fn get_submessages<'a>(sects: &'a Vec<SectionInfo>) -> Result<Vec<SubMessage<'a>
         starts.push(start);
     }
 
-    Ok(starts)
+    Ok(starts.into_boxed_slice())
 }
 
 pub fn unpack_sect0<R: Read>(f: &mut R) -> Result<usize, ParseError> {
@@ -490,7 +490,7 @@ mod tests {
                 $(
                     SectionInfo { num: $num, offset: 0, size: 0, body: None },
                 )*
-            ]
+            ].into_boxed_slice()
         }}
     }
 
@@ -767,7 +767,8 @@ mod tests {
                     size: 4,
                     body: None
                 },
-            ],)
+            ]
+            .into_boxed_slice())
         );
     }
 
@@ -784,7 +785,8 @@ mod tests {
                 section5: Some(&sects[4]),
                 section6: Some(&sects[5]),
                 section7: Some(&sects[6]),
-            },])
+            },]
+            .into_boxed_slice())
         );
     }
 
@@ -811,7 +813,8 @@ mod tests {
                     section6: Some(&sects[11]),
                     section7: Some(&sects[12]),
                 },
-            ])
+            ]
+            .into_boxed_slice())
         );
     }
 
@@ -838,7 +841,8 @@ mod tests {
                     section6: Some(&sects[10]),
                     section7: Some(&sects[11]),
                 },
-            ])
+            ]
+            .into_boxed_slice())
         );
     }
 
@@ -865,7 +869,8 @@ mod tests {
                     section6: Some(&sects[9]),
                     section7: Some(&sects[10]),
                 },
-            ])
+            ]
+            .into_boxed_slice())
         );
     }
 
@@ -892,7 +897,8 @@ mod tests {
                     section6: Some(&sects[9]),
                     section7: Some(&sects[10]),
                 },
-            ])
+            ]
+            .into_boxed_slice())
         );
     }
 
@@ -919,7 +925,8 @@ mod tests {
                     section6: Some(&sects[8]),
                     section7: Some(&sects[9]),
                 },
-            ])
+            ]
+            .into_boxed_slice())
         );
     }
 
