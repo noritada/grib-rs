@@ -119,14 +119,14 @@ impl Display for Identification {
         write!(
             f,
             "\
-Originating/generating centre: {}
-Originating/generating sub-centre: {}
-GRIB Master Tables Version Number: {}
-GRIB Local Tables Version Number: {}
-Significance of Reference Time: {}
-Reference time of data: {}
-Production status of processed data: {}
-Type of processed data: {}\
+Originating/generating centre:          {}
+Originating/generating sub-centre:      {}
+GRIB Master Tables Version Number:      {}
+GRIB Local Tables Version Number:       {}
+Significance of Reference Time:         {}
+Reference time of data:                 {}
+Production status of processed data:    {}
+Type of processed data:                 {}\
 ",
             self.centre_id,
             self.subcentre_id,
