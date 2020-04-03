@@ -9,7 +9,7 @@ fn rleunpack(
     nbit: u8,
     maxv: u8,
     expected_len: Option<usize>,
-) -> Result<Box<Vec<u8>>, RunLengthEncodingUnpackError> {
+) -> Result<Box<[u8]>, RunLengthEncodingUnpackError> {
     if nbit != 8 {
         return Err(RunLengthEncodingUnpackError::NotSupported);
     }
@@ -39,7 +39,7 @@ fn rleunpack(
         }
     }
 
-    Ok(Box::new(out_buf))
+    Ok(out_buf.into_boxed_slice())
 }
 
 #[cfg(test)]
@@ -55,6 +55,9 @@ mod tests {
         let input: Vec<u8> = input.iter().map(|n| n + 240).collect();
         let output: Vec<u8> = output.iter().map(|n| n + 240).collect();
 
-        assert_eq!(rleunpack(&input, 8, 250, Some(21)), Ok(Box::new(output)));
+        assert_eq!(
+            rleunpack(&input, 8, 250, Some(21)),
+            Ok(output.into_boxed_slice())
+        );
     }
 }
