@@ -20,7 +20,7 @@ fn rleunpack(
     };
 
     let rlbase = maxv + 1;
-    let lngu: u16 = 2u16.pow(nbit.into()) - (rlbase as u16);
+    let lngu = (2u16.pow(nbit.into()) - (rlbase as u16)) as u8;
     let mut cached = None;
     let mut exp = 1;
 
@@ -33,7 +33,7 @@ fn rleunpack(
             exp = 1;
         } else {
             let prev = cached.ok_or(RunLengthEncodingUnpackError::InvalidFirstValue)?;
-            let length = ((value - rlbase) as u16) * exp;
+            let length = (value - rlbase) * exp;
             out_buf.append(&mut vec![prev; length as usize]);
             exp *= lngu;
         }
