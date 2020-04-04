@@ -2,6 +2,7 @@
 enum RunLengthEncodingUnpackError {
     NotSupported,
     InvalidFirstValue,
+    LengthMismatch,
 }
 
 fn rleunpack(
@@ -36,6 +37,12 @@ fn rleunpack(
             let length = (value - rlbase) * exp;
             out_buf.append(&mut vec![prev; length as usize]);
             exp *= lngu;
+        }
+    }
+
+    if let Some(len) = expected_len {
+        if len != out_buf.len() {
+            return Err(RunLengthEncodingUnpackError::LengthMismatch);
         }
     }
 
