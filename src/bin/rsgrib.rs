@@ -1,4 +1,4 @@
-use clap::{crate_authors, crate_name, crate_version, App, Arg, SubCommand};
+use clap::{crate_authors, crate_name, crate_version, App, AppSettings, Arg, SubCommand};
 use std::fmt;
 use std::fmt::{Display, Formatter};
 use std::fs::File;
@@ -9,7 +9,6 @@ use std::result::Result;
 use rust_grib2::parser::{Grib2FileReader, GribReader, ParseError};
 
 enum CliError {
-    NoSubCommandSpecified,
     ParseError(ParseError),
     IOError(Error),
 }
@@ -17,7 +16,6 @@ enum CliError {
 impl Display for CliError {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         match self {
-            Self::NoSubCommandSpecified => write!(f, "No subcommand specified"),
             Self::ParseError(e) => write!(f, "{:#?}", e),
             Self::IOError(e) => write!(f, "{:#?}", e),
         }
@@ -40,6 +38,7 @@ fn app() -> App<'static, 'static> {
     App::new(crate_name!())
         .version(crate_version!())
         .author(crate_authors!())
+        .setting(AppSettings::ArgRequiredElseHelp)
         .subcommand(
             SubCommand::with_name("info")
                 .about("Shows identification information")
@@ -73,7 +72,7 @@ fn real_main() -> Result<(), CliError> {
             let grib = grib(file_name)?;
             println!("{:#?}", grib.list_submessages()?);
         }
-        ("", None) => return Err(CliError::NoSubCommandSpecified),
+        ("", None) => unreachable!(),
         _ => unreachable!(),
     }
     Ok(())
