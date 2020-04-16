@@ -39,6 +39,7 @@ fn app() -> App<'static, 'static> {
         .version(crate_version!())
         .author(crate_authors!())
         .setting(AppSettings::ArgRequiredElseHelp)
+        .setting(AppSettings::ColoredHelp)
         .subcommand(
             SubCommand::with_name("info")
                 .about("Shows identification information")
