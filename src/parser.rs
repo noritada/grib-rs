@@ -70,7 +70,7 @@ pub enum SectionBody {
         /// number of data points when a bit map is absent
         num_points: u32,
         /// Data Representation Template Number
-        repr_tmpl_code: u16,
+        repr_tmpl_num: u16,
     },
     Section6 {
         /// Bit-map indicator
@@ -456,7 +456,7 @@ pub fn unpack_sect5_body<R: Read>(f: &mut R, body_size: usize) -> Result<Section
 
     Ok(SectionBody::Section5 {
         num_points: read_as!(u32, buf, 0),
-        repr_tmpl_code: read_as!(u16, buf, 4),
+        repr_tmpl_num: read_as!(u16, buf, 4),
     })
 }
 
@@ -608,7 +608,7 @@ mod tests {
                     size: 23,
                     body: Some(SectionBody::Section5 {
                         num_points: 86016,
-                        repr_tmpl_code: 200,
+                        repr_tmpl_num: 200,
                     }),
                 },
                 SectionInfo {
@@ -640,7 +640,7 @@ mod tests {
                     size: 23,
                     body: Some(SectionBody::Section5 {
                         num_points: 86016,
-                        repr_tmpl_code: 200,
+                        repr_tmpl_num: 200,
                     }),
                 },
                 SectionInfo {
@@ -672,7 +672,7 @@ mod tests {
                     size: 23,
                     body: Some(SectionBody::Section5 {
                         num_points: 86016,
-                        repr_tmpl_code: 200,
+                        repr_tmpl_num: 200,
                     }),
                 },
                 SectionInfo {
@@ -704,7 +704,7 @@ mod tests {
                     size: 23,
                     body: Some(SectionBody::Section5 {
                         num_points: 86016,
-                        repr_tmpl_code: 200,
+                        repr_tmpl_num: 200,
                     }),
                 },
                 SectionInfo {
@@ -736,7 +736,7 @@ mod tests {
                     size: 23,
                     body: Some(SectionBody::Section5 {
                         num_points: 86016,
-                        repr_tmpl_code: 200,
+                        repr_tmpl_num: 200,
                     }),
                 },
                 SectionInfo {
@@ -768,7 +768,7 @@ mod tests {
                     size: 23,
                     body: Some(SectionBody::Section5 {
                         num_points: 86016,
-                        repr_tmpl_code: 200,
+                        repr_tmpl_num: 200,
                     }),
                 },
                 SectionInfo {
@@ -800,7 +800,7 @@ mod tests {
                     size: 23,
                     body: Some(SectionBody::Section5 {
                         num_points: 86016,
-                        repr_tmpl_code: 200,
+                        repr_tmpl_num: 200,
                     }),
                 },
                 SectionInfo {
