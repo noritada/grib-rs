@@ -50,6 +50,11 @@ fn app() -> App<'static, 'static> {
                 .about("Lists contained data")
                 .arg(Arg::with_name("file").required(true)),
         )
+        .subcommand(
+            SubCommand::with_name("templates")
+                .about("Lists used templates")
+                .arg(Arg::with_name("file").required(true)),
+        )
 }
 
 fn grib(file_name: &str) -> Result<Grib2FileReader<BufReader<File>>, CliError> {
@@ -72,6 +77,13 @@ fn real_main() -> Result<(), CliError> {
             let file_name = subcommand_matches.value_of("file").unwrap();
             let grib = grib(file_name)?;
             println!("{:#?}", grib.list_submessages()?);
+        }
+        ("templates", Some(subcommand_matches)) => {
+            let file_name = subcommand_matches.value_of("file").unwrap();
+            let grib = grib(file_name)?;
+            for tmpl in grib.list_templates() {
+                println!("{}", tmpl);
+            }
         }
         ("", None) => unreachable!(),
         _ => unreachable!(),

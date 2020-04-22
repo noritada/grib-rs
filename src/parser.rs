@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::convert::TryInto;
 use std::fmt;
 use std::fmt::{Display, Formatter};
@@ -46,37 +47,36 @@ impl SectionInfo {
         f.seek(SeekFrom::Current(body_size as i64))?; // < std::io::Seek
         Ok(())
     }
+
+    pub fn get_tmpl_code(&self) -> Option<TemplateInfo> {
+        let tmpl_num = self.body.as_ref()?.get_tmpl_num()?;
+        Some(TemplateInfo(self.num, tmpl_num))
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum SectionBody {
     Section1(Identification),
     Section2,
-    Section3 {
-        /// Number of data points
-        num_points: u32,
-        /// Grid Definition Template Number
-        grid_tmpl_num: u16,
-    },
-    Section4 {
-        /// Number of coordinate values after Template
-        num_coordinates: u16,
-        /// Product Definition Template Number
-        prod_tmpl_num: u16,
-    },
-    Section5 {
-        /// Number of data points where one or more values are
-        /// specified in Section 7 when a bit map is present, total
-        /// number of data points when a bit map is absent
-        num_points: u32,
-        /// Data Representation Template Number
-        repr_tmpl_num: u16,
-    },
+    Section3(GridDefinition),
+    Section4(ProdDefinition),
+    Section5(ReprDefinition),
     Section6 {
         /// Bit-map indicator
         bitmap_indicator: u8,
     },
     Section7,
+}
+
+impl SectionBody {
+    fn get_tmpl_num(&self) -> Option<u16> {
+        match self {
+            Self::Section3(s) => Some(s.grid_tmpl_num),
+            Self::Section4(s) => Some(s.prod_tmpl_num),
+            Self::Section5(s) => Some(s.repr_tmpl_num),
+            _ => None,
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -141,6 +141,32 @@ Type of processed data:                 {}\
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct GridDefinition {
+    /// Number of data points
+    num_points: u32,
+    /// Grid Definition Template Number
+    grid_tmpl_num: u16,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct ProdDefinition {
+    /// Number of coordinate values after Template
+    num_coordinates: u16,
+    /// Product Definition Template Number
+    prod_tmpl_num: u16,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct ReprDefinition {
+    /// Number of data points where one or more values are
+    /// specified in Section 7 when a bit map is present, total
+    /// number of data points when a bit map is absent
+    num_points: u32,
+    /// Data Representation Template Number
+    repr_tmpl_num: u16,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct RefTime {
     pub year: u16,
     pub month: u8,
@@ -177,6 +203,15 @@ macro_rules! read_as {
     }};
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct TemplateInfo(pub u8, pub u16);
+
+impl Display for TemplateInfo {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        write!(f, "{}.{}", self.0, self.1)
+    }
+}
+
 pub trait GribReader<R: Read> {
     fn new(f: R) -> Result<Self, ParseError>
     where
@@ -191,6 +226,10 @@ pub struct Grib2FileReader<R: Read> {
 impl<R: Read> Grib2FileReader<R> {
     pub fn list_submessages<'a>(&'a self) -> Result<Box<[SubMessage<'a>]>, ParseError> {
         get_submessages(&self.sections)
+    }
+
+    pub fn list_templates<'a>(&'a self) -> Vec<TemplateInfo> {
+        get_templates(&self.sections)
     }
 }
 
@@ -356,6 +395,13 @@ fn get_submessages<'a>(sects: &'a Box<[SectionInfo]>) -> Result<Box<[SubMessage<
     Ok(starts.into_boxed_slice())
 }
 
+fn get_templates(sects: &Box<[SectionInfo]>) -> Vec<TemplateInfo> {
+    let uniq: HashSet<_> = sects.iter().filter_map(|s| s.get_tmpl_code()).collect();
+    let mut vec: Vec<_> = uniq.into_iter().collect();
+    vec.sort_unstable();
+    vec
+}
+
 pub fn unpack_sect0<R: Read>(f: &mut R) -> Result<usize, ParseError> {
     let mut buf = [0; SECT0_IS_SIZE];
     f.read_exact(&mut buf[..])?;
@@ -422,10 +468,10 @@ pub fn unpack_sect3_body<R: Read>(f: &mut R, body_size: usize) -> Result<Section
         f.read_exact(&mut buf[..])?;
     }
 
-    Ok(SectionBody::Section3 {
+    Ok(SectionBody::Section3(GridDefinition {
         num_points: read_as!(u32, buf, 1),
         grid_tmpl_num: read_as!(u16, buf, 7),
-    })
+    }))
 }
 
 pub fn unpack_sect4_body<R: Read>(f: &mut R, body_size: usize) -> Result<SectionBody, ParseError> {
@@ -438,10 +484,10 @@ pub fn unpack_sect4_body<R: Read>(f: &mut R, body_size: usize) -> Result<Section
         f.read_exact(&mut buf[..])?;
     }
 
-    Ok(SectionBody::Section4 {
+    Ok(SectionBody::Section4(ProdDefinition {
         num_coordinates: read_as!(u16, buf, 0),
         prod_tmpl_num: read_as!(u16, buf, 2),
-    })
+    }))
 }
 
 pub fn unpack_sect5_body<R: Read>(f: &mut R, body_size: usize) -> Result<SectionBody, ParseError> {
@@ -454,10 +500,10 @@ pub fn unpack_sect5_body<R: Read>(f: &mut R, body_size: usize) -> Result<Section
         f.read_exact(&mut buf[..])?;
     }
 
-    Ok(SectionBody::Section5 {
+    Ok(SectionBody::Section5(ReprDefinition {
         num_points: read_as!(u32, buf, 0),
         repr_tmpl_num: read_as!(u16, buf, 4),
-    })
+    }))
 }
 
 pub fn unpack_sect6_body<R: Read>(f: &mut R, body_size: usize) -> Result<SectionBody, ParseError> {
@@ -588,28 +634,28 @@ mod tests {
                     num: 3,
                     offset: 37,
                     size: 72,
-                    body: Some(SectionBody::Section3 {
+                    body: Some(SectionBody::Section3(GridDefinition {
                         num_points: 86016,
                         grid_tmpl_num: 0,
-                    }),
+                    })),
                 },
                 SectionInfo {
                     num: 4,
                     offset: 109,
                     size: 34,
-                    body: Some(SectionBody::Section4 {
+                    body: Some(SectionBody::Section4(ProdDefinition {
                         num_coordinates: 0,
                         prod_tmpl_num: 0,
-                    }),
+                    })),
                 },
                 SectionInfo {
                     num: 5,
                     offset: 143,
                     size: 23,
-                    body: Some(SectionBody::Section5 {
+                    body: Some(SectionBody::Section5(ReprDefinition {
                         num_points: 86016,
                         repr_tmpl_num: 200,
-                    }),
+                    })),
                 },
                 SectionInfo {
                     num: 6,
@@ -629,19 +675,19 @@ mod tests {
                     num: 4,
                     offset: 1563,
                     size: 34,
-                    body: Some(SectionBody::Section4 {
+                    body: Some(SectionBody::Section4(ProdDefinition {
                         num_coordinates: 0,
                         prod_tmpl_num: 0,
-                    }),
+                    })),
                 },
                 SectionInfo {
                     num: 5,
                     offset: 1597,
                     size: 23,
-                    body: Some(SectionBody::Section5 {
+                    body: Some(SectionBody::Section5(ReprDefinition {
                         num_points: 86016,
                         repr_tmpl_num: 200,
-                    }),
+                    })),
                 },
                 SectionInfo {
                     num: 6,
@@ -661,19 +707,19 @@ mod tests {
                     num: 4,
                     offset: 3025,
                     size: 34,
-                    body: Some(SectionBody::Section4 {
+                    body: Some(SectionBody::Section4(ProdDefinition {
                         num_coordinates: 0,
                         prod_tmpl_num: 0,
-                    }),
+                    })),
                 },
                 SectionInfo {
                     num: 5,
                     offset: 3059,
                     size: 23,
-                    body: Some(SectionBody::Section5 {
+                    body: Some(SectionBody::Section5(ReprDefinition {
                         num_points: 86016,
                         repr_tmpl_num: 200,
-                    }),
+                    })),
                 },
                 SectionInfo {
                     num: 6,
@@ -693,19 +739,19 @@ mod tests {
                     num: 4,
                     offset: 4492,
                     size: 34,
-                    body: Some(SectionBody::Section4 {
+                    body: Some(SectionBody::Section4(ProdDefinition {
                         num_coordinates: 0,
                         prod_tmpl_num: 0,
-                    }),
+                    })),
                 },
                 SectionInfo {
                     num: 5,
                     offset: 4526,
                     size: 23,
-                    body: Some(SectionBody::Section5 {
+                    body: Some(SectionBody::Section5(ReprDefinition {
                         num_points: 86016,
                         repr_tmpl_num: 200,
-                    }),
+                    })),
                 },
                 SectionInfo {
                     num: 6,
@@ -725,19 +771,19 @@ mod tests {
                     num: 4,
                     offset: 5950,
                     size: 34,
-                    body: Some(SectionBody::Section4 {
+                    body: Some(SectionBody::Section4(ProdDefinition {
                         num_coordinates: 0,
                         prod_tmpl_num: 0,
-                    }),
+                    })),
                 },
                 SectionInfo {
                     num: 5,
                     offset: 5984,
                     size: 23,
-                    body: Some(SectionBody::Section5 {
+                    body: Some(SectionBody::Section5(ReprDefinition {
                         num_points: 86016,
                         repr_tmpl_num: 200,
-                    }),
+                    })),
                 },
                 SectionInfo {
                     num: 6,
@@ -757,19 +803,19 @@ mod tests {
                     num: 4,
                     offset: 7408,
                     size: 34,
-                    body: Some(SectionBody::Section4 {
+                    body: Some(SectionBody::Section4(ProdDefinition {
                         num_coordinates: 0,
                         prod_tmpl_num: 0,
-                    }),
+                    })),
                 },
                 SectionInfo {
                     num: 5,
                     offset: 7442,
                     size: 23,
-                    body: Some(SectionBody::Section5 {
+                    body: Some(SectionBody::Section5(ReprDefinition {
                         num_points: 86016,
                         repr_tmpl_num: 200,
-                    }),
+                    })),
                 },
                 SectionInfo {
                     num: 6,
@@ -789,19 +835,19 @@ mod tests {
                     num: 4,
                     offset: 8868,
                     size: 34,
-                    body: Some(SectionBody::Section4 {
+                    body: Some(SectionBody::Section4(ProdDefinition {
                         num_coordinates: 0,
                         prod_tmpl_num: 0,
-                    }),
+                    })),
                 },
                 SectionInfo {
                     num: 5,
                     offset: 8902,
                     size: 23,
-                    body: Some(SectionBody::Section5 {
+                    body: Some(SectionBody::Section5(ReprDefinition {
                         num_points: 86016,
                         repr_tmpl_num: 200,
-                    }),
+                    })),
                 },
                 SectionInfo {
                     num: 6,
@@ -1104,5 +1150,20 @@ mod tests {
             get_submessages(&sects),
             Err(ParseError::GRIB2WrongIteration(7))
         );
+    }
+
+    #[test]
+    fn get_tmpl_code_normal() {
+        let sect = SectionInfo {
+            num: 5,
+            offset: 8902,
+            size: 23,
+            body: Some(SectionBody::Section5(ReprDefinition {
+                num_points: 86016,
+                repr_tmpl_num: 200,
+            })),
+        };
+
+        assert_eq!(sect.get_tmpl_code(), Some(TemplateInfo(5, 200)));
     }
 }
