@@ -586,6 +586,17 @@ mod tests {
     use std::io::BufReader;
     use xz2::bufread::XzDecoder;
 
+    macro_rules! sect_placeholder {
+        ($num:expr) => {{
+            SectionInfo {
+                num: $num,
+                offset: 0,
+                size: 0,
+                body: None,
+            }
+        }};
+    }
+
     macro_rules! sect_list {
         ($($num:expr,)*) => {{
             vec![
@@ -1165,5 +1176,82 @@ mod tests {
         };
 
         assert_eq!(sect.get_tmpl_code(), Some(TemplateInfo(5, 200)));
+    }
+
+    #[test]
+    fn get_templates_normal() {
+        let sects = vec![
+            sect_placeholder!(1),
+            SectionInfo {
+                num: 3,
+                offset: 0,
+                size: 0,
+                body: Some(SectionBody::Section3(GridDefinition {
+                    num_points: 0,
+                    grid_tmpl_num: 0,
+                })),
+            },
+            SectionInfo {
+                num: 4,
+                offset: 0,
+                size: 0,
+                body: Some(SectionBody::Section4(ProdDefinition {
+                    num_coordinates: 0,
+                    prod_tmpl_num: 0,
+                })),
+            },
+            SectionInfo {
+                num: 5,
+                offset: 0,
+                size: 0,
+                body: Some(SectionBody::Section5(ReprDefinition {
+                    num_points: 0,
+                    repr_tmpl_num: 0,
+                })),
+            },
+            sect_placeholder!(6),
+            sect_placeholder!(7),
+            SectionInfo {
+                num: 3,
+                offset: 0,
+                size: 0,
+                body: Some(SectionBody::Section3(GridDefinition {
+                    num_points: 0,
+                    grid_tmpl_num: 1,
+                })),
+            },
+            SectionInfo {
+                num: 4,
+                offset: 0,
+                size: 0,
+                body: Some(SectionBody::Section4(ProdDefinition {
+                    num_coordinates: 0,
+                    prod_tmpl_num: 0,
+                })),
+            },
+            SectionInfo {
+                num: 5,
+                offset: 0,
+                size: 0,
+                body: Some(SectionBody::Section5(ReprDefinition {
+                    num_points: 0,
+                    repr_tmpl_num: 0,
+                })),
+            },
+            sect_placeholder!(6),
+            sect_placeholder!(7),
+            sect_placeholder!(8),
+        ]
+        .into_boxed_slice();
+
+        assert_eq!(
+            get_templates(&sects),
+            vec![
+                TemplateInfo(3, 0),
+                TemplateInfo(3, 1),
+                TemplateInfo(4, 0),
+                TemplateInfo(5, 0),
+            ]
+        );
     }
 }
