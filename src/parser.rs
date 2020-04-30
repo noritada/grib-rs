@@ -187,13 +187,13 @@ impl Display for RefTime {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct SubMessage<'a> {
-    section2: Option<&'a SectionInfo>,
-    section3: Option<&'a SectionInfo>,
-    section4: Option<&'a SectionInfo>,
-    section5: Option<&'a SectionInfo>,
-    section6: Option<&'a SectionInfo>,
-    section7: Option<&'a SectionInfo>,
+pub struct SubMessage {
+    section2: Option<usize>,
+    section3: Option<usize>,
+    section4: Option<usize>,
+    section5: Option<usize>,
+    section6: Option<usize>,
+    section7: Option<usize>,
 }
 
 macro_rules! read_as {
@@ -221,14 +221,15 @@ pub trait GribReader<R: Read> {
 pub struct Grib2FileReader<R: Read> {
     reader: R,
     sections: Box<[SectionInfo]>,
+    submessages: Box<[SubMessage]>,
 }
 
 impl<R: Read> Grib2FileReader<R> {
-    pub fn list_submessages<'a>(&'a self) -> Result<Box<[SubMessage<'a>]>, ParseError> {
-        get_submessages(&self.sections)
+    pub fn submessages(&self) -> &Box<[SubMessage]> {
+        &self.submessages
     }
 
-    pub fn list_templates<'a>(&'a self) -> Vec<TemplateInfo> {
+    pub fn list_templates(&self) -> Vec<TemplateInfo> {
         get_templates(&self.sections)
     }
 }
@@ -239,9 +240,11 @@ impl<R: Read> GribReader<R> for Grib2FileReader<R> {
         Self: Sized,
     {
         let sects = scan(&mut f)?;
+        let submessages = get_submessages(&sects)?;
         Ok(Self {
             reader: f,
             sections: sects,
+            submessages: submessages,
         })
     }
 }
@@ -293,11 +296,11 @@ fn scan<R: Read>(mut f: R) -> Result<Box<[SectionInfo]>, ParseError> {
 
 /// Validates the section order of sections and split them into a
 /// vector of section groups.
-fn get_submessages<'a>(sects: &'a Box<[SectionInfo]>) -> Result<Box<[SubMessage<'a>]>, ParseError> {
+fn get_submessages(sects: &Box<[SectionInfo]>) -> Result<Box<[SubMessage]>, ParseError> {
     let mut iter = sects.iter().enumerate();
     let mut starts = Vec::new();
-    let mut sect2_default = None;
-    let mut sect3_default = None;
+    let mut i2_default = None;
+    let mut i3_default = None;
 
     macro_rules! check {
         ($num:expr) => {{
@@ -307,15 +310,15 @@ fn get_submessages<'a>(sects: &'a Box<[SectionInfo]>) -> Result<Box<[SubMessage<
             if sect.num != $num {
                 return Err(ParseError::GRIB2WrongIteration(i));
             }
-            sect
+            i
         }};
     }
 
     macro_rules! update_default {
         ($submessage:expr) => {{
             let submessage = $submessage;
-            sect2_default = submessage.section2;
-            sect3_default = submessage.section3;
+            i2_default = submessage.section2;
+            i3_default = submessage.section3;
             submessage
         }};
     }
@@ -326,55 +329,55 @@ fn get_submessages<'a>(sects: &'a Box<[SectionInfo]>) -> Result<Box<[SubMessage<
         let sect = iter.next();
         let start = match sect {
             Some((_i, SectionInfo { num: 2, .. })) => {
-                let (_, sect) = sect.unwrap();
-                let sect3 = check!(3);
-                let sect4 = check!(4);
-                let sect5 = check!(5);
-                let sect6 = check!(6);
-                let sect7 = check!(7);
+                let (i, _) = sect.unwrap();
+                let i3 = check!(3);
+                let i4 = check!(4);
+                let i5 = check!(5);
+                let i6 = check!(6);
+                let i7 = check!(7);
                 update_default!(SubMessage {
-                    section2: Some(&sect),
-                    section3: Some(&sect3),
-                    section4: Some(&sect4),
-                    section5: Some(&sect5),
-                    section6: Some(&sect6),
-                    section7: Some(&sect7),
+                    section2: Some(i),
+                    section3: Some(i3),
+                    section4: Some(i4),
+                    section5: Some(i5),
+                    section6: Some(i6),
+                    section7: Some(i7),
                 })
             }
             Some((_i, SectionInfo { num: 3, .. })) => {
-                let (_, sect) = sect.unwrap();
-                let sect4 = check!(4);
-                let sect5 = check!(5);
-                let sect6 = check!(6);
-                let sect7 = check!(7);
+                let (i, _) = sect.unwrap();
+                let i4 = check!(4);
+                let i5 = check!(5);
+                let i6 = check!(6);
+                let i7 = check!(7);
                 update_default!(SubMessage {
-                    section2: sect2_default,
-                    section3: Some(&sect),
-                    section4: Some(&sect4),
-                    section5: Some(&sect5),
-                    section6: Some(&sect6),
-                    section7: Some(&sect7),
+                    section2: i2_default,
+                    section3: Some(i),
+                    section4: Some(i4),
+                    section5: Some(i5),
+                    section6: Some(i6),
+                    section7: Some(i7),
                 })
             }
             Some((i, SectionInfo { num: 4, .. })) => {
-                if sect3_default == None {
+                if i3_default == None {
                     return Err(ParseError::NoGridDefinition(i));
                 }
-                let (_, sect) = sect.unwrap();
-                let sect5 = check!(5);
-                let sect6 = check!(6);
-                let sect7 = check!(7);
+                let (i, _) = sect.unwrap();
+                let i5 = check!(5);
+                let i6 = check!(6);
+                let i7 = check!(7);
                 update_default!(SubMessage {
-                    section2: sect2_default,
-                    section3: sect3_default,
-                    section4: Some(&sect),
-                    section5: Some(&sect5),
-                    section6: Some(&sect6),
-                    section7: Some(&sect7),
+                    section2: i2_default,
+                    section3: i3_default,
+                    section4: Some(i),
+                    section5: Some(i5),
+                    section6: Some(i6),
+                    section7: Some(i7),
                 })
             }
             Some((i, SectionInfo { num: 8, .. })) => {
-                if sect3_default == None {
+                if i3_default == None {
                     return Err(ParseError::NoGridDefinition(i));
                 }
                 if i < sects.len() - 1 {
@@ -892,12 +895,12 @@ mod tests {
         assert_eq!(
             get_submessages(&sects),
             Ok(vec![SubMessage {
-                section2: Some(&sects[1]),
-                section3: Some(&sects[2]),
-                section4: Some(&sects[3]),
-                section5: Some(&sects[4]),
-                section6: Some(&sects[5]),
-                section7: Some(&sects[6]),
+                section2: Some(1),
+                section3: Some(2),
+                section4: Some(3),
+                section5: Some(4),
+                section6: Some(5),
+                section7: Some(6),
             },]
             .into_boxed_slice())
         );
@@ -911,20 +914,20 @@ mod tests {
             get_submessages(&sects),
             Ok(vec![
                 SubMessage {
-                    section2: Some(&sects[1]),
-                    section3: Some(&sects[2]),
-                    section4: Some(&sects[3]),
-                    section5: Some(&sects[4]),
-                    section6: Some(&sects[5]),
-                    section7: Some(&sects[6]),
+                    section2: Some(1),
+                    section3: Some(2),
+                    section4: Some(3),
+                    section5: Some(4),
+                    section6: Some(5),
+                    section7: Some(6),
                 },
                 SubMessage {
-                    section2: Some(&sects[7]),
-                    section3: Some(&sects[8]),
-                    section4: Some(&sects[9]),
-                    section5: Some(&sects[10]),
-                    section6: Some(&sects[11]),
-                    section7: Some(&sects[12]),
+                    section2: Some(7),
+                    section3: Some(8),
+                    section4: Some(9),
+                    section5: Some(10),
+                    section6: Some(11),
+                    section7: Some(12),
                 },
             ]
             .into_boxed_slice())
@@ -939,20 +942,20 @@ mod tests {
             get_submessages(&sects),
             Ok(vec![
                 SubMessage {
-                    section2: Some(&sects[1]),
-                    section3: Some(&sects[2]),
-                    section4: Some(&sects[3]),
-                    section5: Some(&sects[4]),
-                    section6: Some(&sects[5]),
-                    section7: Some(&sects[6]),
+                    section2: Some(1),
+                    section3: Some(2),
+                    section4: Some(3),
+                    section5: Some(4),
+                    section6: Some(5),
+                    section7: Some(6),
                 },
                 SubMessage {
-                    section2: Some(&sects[1]),
-                    section3: Some(&sects[7]),
-                    section4: Some(&sects[8]),
-                    section5: Some(&sects[9]),
-                    section6: Some(&sects[10]),
-                    section7: Some(&sects[11]),
+                    section2: Some(1),
+                    section3: Some(7),
+                    section4: Some(8),
+                    section5: Some(9),
+                    section6: Some(10),
+                    section7: Some(11),
                 },
             ]
             .into_boxed_slice())
@@ -968,19 +971,19 @@ mod tests {
             Ok(vec![
                 SubMessage {
                     section2: None,
-                    section3: Some(&sects[1]),
-                    section4: Some(&sects[2]),
-                    section5: Some(&sects[3]),
-                    section6: Some(&sects[4]),
-                    section7: Some(&sects[5]),
+                    section3: Some(1),
+                    section4: Some(2),
+                    section5: Some(3),
+                    section6: Some(4),
+                    section7: Some(5),
                 },
                 SubMessage {
                     section2: None,
-                    section3: Some(&sects[6]),
-                    section4: Some(&sects[7]),
-                    section5: Some(&sects[8]),
-                    section6: Some(&sects[9]),
-                    section7: Some(&sects[10]),
+                    section3: Some(6),
+                    section4: Some(7),
+                    section5: Some(8),
+                    section6: Some(9),
+                    section7: Some(10),
                 },
             ]
             .into_boxed_slice())
@@ -995,20 +998,20 @@ mod tests {
             get_submessages(&sects),
             Ok(vec![
                 SubMessage {
-                    section2: Some(&sects[1]),
-                    section3: Some(&sects[2]),
-                    section4: Some(&sects[3]),
-                    section5: Some(&sects[4]),
-                    section6: Some(&sects[5]),
-                    section7: Some(&sects[6]),
+                    section2: Some(1),
+                    section3: Some(2),
+                    section4: Some(3),
+                    section5: Some(4),
+                    section6: Some(5),
+                    section7: Some(6),
                 },
                 SubMessage {
-                    section2: Some(&sects[1]),
-                    section3: Some(&sects[2]),
-                    section4: Some(&sects[7]),
-                    section5: Some(&sects[8]),
-                    section6: Some(&sects[9]),
-                    section7: Some(&sects[10]),
+                    section2: Some(1),
+                    section3: Some(2),
+                    section4: Some(7),
+                    section5: Some(8),
+                    section6: Some(9),
+                    section7: Some(10),
                 },
             ]
             .into_boxed_slice())
@@ -1024,19 +1027,19 @@ mod tests {
             Ok(vec![
                 SubMessage {
                     section2: None,
-                    section3: Some(&sects[1]),
-                    section4: Some(&sects[2]),
-                    section5: Some(&sects[3]),
-                    section6: Some(&sects[4]),
-                    section7: Some(&sects[5]),
+                    section3: Some(1),
+                    section4: Some(2),
+                    section5: Some(3),
+                    section6: Some(4),
+                    section7: Some(5),
                 },
                 SubMessage {
                     section2: None,
-                    section3: Some(&sects[1]),
-                    section4: Some(&sects[6]),
-                    section5: Some(&sects[7]),
-                    section6: Some(&sects[8]),
-                    section7: Some(&sects[9]),
+                    section3: Some(1),
+                    section4: Some(6),
+                    section5: Some(7),
+                    section6: Some(8),
+                    section7: Some(9),
                 },
             ]
             .into_boxed_slice())
