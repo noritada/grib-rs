@@ -1,6 +1,5 @@
 use clap::{crate_authors, crate_name, crate_version, App, AppSettings, Arg, SubCommand};
-use std::fmt;
-use std::fmt::{Display, Formatter};
+use std::fmt::{self, Display, Formatter};
 use std::fs::File;
 use std::io::{BufReader, Error};
 use std::path::Path;

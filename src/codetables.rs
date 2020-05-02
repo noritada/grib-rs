@@ -1,5 +1,4 @@
-use std::fmt;
-use std::fmt::{Display, Formatter};
+use std::fmt::{self, Display, Formatter};
 
 pub struct LookupResult(Result<&'static &'static str, ConversionError>);
 

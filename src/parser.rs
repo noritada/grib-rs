@@ -1,9 +1,7 @@
 use std::collections::HashSet;
 use std::convert::TryInto;
-use std::fmt;
-use std::fmt::{Display, Formatter};
-use std::io;
-use std::io::{Read, Seek, SeekFrom};
+use std::fmt::{self, Display, Formatter};
+use std::io::{self, Read, Seek, SeekFrom};
 use std::result::Result;
 
 use crate::codetables::{
