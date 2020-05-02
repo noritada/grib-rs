@@ -1,2 +1,2 @@
-# rust-grib2
+# grib-rs
 GRIB2 format parser implemented with Rust.

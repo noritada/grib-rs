@@ -6,7 +6,7 @@ use std::io::{BufReader, Error};
 use std::path::Path;
 use std::result::Result;
 
-use rust_grib2::parser::{Grib2FileReader, GribReader, ParseError};
+use grib::parser::{Grib2FileReader, GribReader, ParseError};
 
 enum CliError {
     ParseError(ParseError),
