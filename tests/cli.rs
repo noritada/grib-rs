@@ -83,24 +83,6 @@ Type of processed data:                 Analysis and forecast products
 }
 
 #[test]
-fn info_without_args() -> Result<(), Box<dyn std::error::Error>> {
-    let mut cmd = Command::cargo_bin(CMD_NAME)?;
-    cmd.arg("info");
-    cmd.assert()
-        .failure()
-        .stdout(predicate::str::is_empty())
-        .stderr(
-            predicate::str::starts_with(
-                "error: The following required arguments were not provided:",
-            )
-            .and(predicate::str::contains("USAGE:"))
-            .and(predicate::str::contains("SUBCOMMANDS:").not()),
-        );
-
-    Ok(())
-}
-
-#[test]
 fn list() -> Result<(), Box<dyn std::error::Error>> {
     let tempfile = utils::jma_tornado_nowcast_file()?;
     let arg_path = tempfile.path();
@@ -247,24 +229,6 @@ fn list() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 #[test]
-fn list_without_args() -> Result<(), Box<dyn std::error::Error>> {
-    let mut cmd = Command::cargo_bin(CMD_NAME)?;
-    cmd.arg("list");
-    cmd.assert()
-        .failure()
-        .stdout(predicate::str::is_empty())
-        .stderr(
-            predicate::str::starts_with(
-                "error: The following required arguments were not provided:",
-            )
-            .and(predicate::str::contains("USAGE:"))
-            .and(predicate::str::contains("SUBCOMMANDS:").not()),
-        );
-
-    Ok(())
-}
-
-#[test]
 fn templates() -> Result<(), Box<dyn std::error::Error>> {
     let tempfile = utils::jma_tornado_nowcast_file()?;
     let arg_path = tempfile.path();
@@ -285,20 +249,30 @@ fn templates() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-#[test]
-fn templates_without_args() -> Result<(), Box<dyn std::error::Error>> {
-    let mut cmd = Command::cargo_bin(CMD_NAME)?;
-    cmd.arg("templates");
-    cmd.assert()
-        .failure()
-        .stdout(predicate::str::is_empty())
-        .stderr(
-            predicate::str::starts_with(
-                "error: The following required arguments were not provided:",
-            )
-            .and(predicate::str::contains("USAGE:"))
-            .and(predicate::str::contains("SUBCOMMANDS:").not()),
-        );
+macro_rules! test_subcommands_without_args {
+    ($(($name:ident, $str:expr),)*) => ($(
+        #[test]
+        fn $name() -> Result<(), Box<dyn std::error::Error>> {
+            let mut cmd = Command::cargo_bin(CMD_NAME)?;
+            cmd.arg($str);
+            cmd.assert()
+                .failure()
+                .stdout(predicate::str::is_empty())
+                .stderr(
+                    predicate::str::starts_with(
+                        "error: The following required arguments were not provided:",
+                    )
+                        .and(predicate::str::contains("USAGE:"))
+                        .and(predicate::str::contains("SUBCOMMANDS:").not()),
+                );
 
-    Ok(())
+            Ok(())
+        }
+    )*);
+}
+
+test_subcommands_without_args! {
+    (info_without_args, "info"),
+    (list_without_args, "list"),
+    (templates_without_args, "templates"),
 }
