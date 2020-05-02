@@ -390,7 +390,8 @@ fn get_templates(sects: &Box<[SectionInfo]>) -> Vec<TemplateInfo> {
 
 pub fn unpack_sect0<R: Read>(f: &mut R) -> Result<usize, ParseError> {
     let mut buf = [0; SECT0_IS_SIZE];
-    f.read_exact(&mut buf[..])?;
+    f.read_exact(&mut buf[..])
+        .map_err(|e| ParseError::FileTypeCheckError(e.to_string()))?;
 
     if &buf[0..SECT0_IS_MAGIC_SIZE] != SECT0_IS_MAGIC {
         return Err(ParseError::NotGRIB);
@@ -549,6 +550,7 @@ pub fn unpack_sect_header<R: Read>(f: &mut R) -> Result<SectionInfo, ParseError>
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum ParseError {
     ReadError(String),
+    FileTypeCheckError(String),
     NotGRIB,
     GRIBVersionMismatch(u8),
     UnknownSectionNumber(u8),
@@ -562,6 +564,7 @@ impl Display for ParseError {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         match self {
             Self::ReadError(s) => write!(f, "Read error: {}", s),
+            Self::FileTypeCheckError(s) => write!(f, "Error in checking file type: {}", s),
             Self::NotGRIB => write!(f, "Not GRIB data"),
             Self::GRIBVersionMismatch(i) => write!(f, "Not GRIB version 2: {}", i),
             Self::UnknownSectionNumber(s) => write!(f, "Unknown section number: {}", s),

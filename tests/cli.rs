@@ -329,3 +329,30 @@ test_subcommands_with_non_grib! {
     (list_with_non_grib, "list"),
     (templates_with_non_grib, "templates"),
 }
+
+macro_rules! test_subcommands_with_too_small_file {
+    ($(($name:ident, $str:expr),)*) => ($(
+        #[test]
+        fn $name() -> Result<(), Box<dyn std::error::Error>> {
+            let tempfile = utils::too_small_file()?;
+            let arg_path = tempfile.path();
+
+            let mut cmd = Command::cargo_bin(CMD_NAME)?;
+            cmd.arg($str).arg(arg_path);
+            cmd.assert()
+                .failure()
+                .stdout(predicate::str::is_empty())
+                .stderr(predicate::str::similar(
+                    "Error in checking file type: failed to fill whole buffer\n",
+                ));
+
+            Ok(())
+        }
+    )*);
+}
+
+test_subcommands_with_too_small_file! {
+    (info_with_too_small_file, "info"),
+    (list_with_too_small_file, "list"),
+    (templates_with_too_small_file, "templates"),
+}
