@@ -1,6 +1,7 @@
 use assert_cmd::prelude::*;
 use predicates::prelude::*;
 use std::process::Command;
+use tempfile::TempDir;
 
 mod utils;
 
@@ -275,4 +276,31 @@ test_subcommands_without_args! {
     (info_without_args, "info"),
     (list_without_args, "list"),
     (templates_without_args, "templates"),
+}
+
+macro_rules! test_subcommands_with_nonexisting_file {
+    ($(($name:ident, $str:expr),)*) => ($(
+        #[test]
+        fn $name() -> Result<(), Box<dyn std::error::Error>> {
+            let dir = TempDir::new()?;
+            let filename = format!("{}/nosuchfile", dir.path().display());
+
+            let mut cmd = Command::cargo_bin(CMD_NAME)?;
+            cmd.arg($str).arg(filename);
+            cmd.assert()
+                .failure()
+                .stdout(predicate::str::is_empty())
+                .stderr(predicate::str::starts_with(
+                    "No such file or directory (os error 2):",
+                ));
+
+            Ok(())
+        }
+    )*);
+}
+
+test_subcommands_with_nonexisting_file! {
+    (info_with_nonexisting_file, "info"),
+    (list_with_nonexisting_file, "list"),
+    (templates_with_nonexisting_file, "templates"),
 }

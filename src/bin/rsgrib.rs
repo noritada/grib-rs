@@ -10,14 +10,14 @@ use rust_grib2::parser::{Grib2FileReader, GribReader, ParseError};
 
 enum CliError {
     ParseError(ParseError),
-    IOError(Error),
+    IOError(Error, String),
 }
 
 impl Display for CliError {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         match self {
             Self::ParseError(e) => write!(f, "{:#?}", e),
-            Self::IOError(e) => write!(f, "{:#?}", e),
+            Self::IOError(e, path) => write!(f, "{}: {}", e, path),
         }
     }
 }
@@ -25,12 +25,6 @@ impl Display for CliError {
 impl From<ParseError> for CliError {
     fn from(e: ParseError) -> Self {
         Self::ParseError(e)
-    }
-}
-
-impl From<Error> for CliError {
-    fn from(e: Error) -> Self {
-        Self::IOError(e)
     }
 }
 
@@ -59,7 +53,7 @@ fn app() -> App<'static, 'static> {
 
 fn grib(file_name: &str) -> Result<Grib2FileReader<BufReader<File>>, CliError> {
     let path = Path::new(file_name);
-    let f = File::open(&path)?;
+    let f = File::open(&path).map_err(|e| CliError::IOError(e, path.display().to_string()))?;
     let f = BufReader::new(f);
     Ok(Grib2FileReader::new(f)?)
 }
