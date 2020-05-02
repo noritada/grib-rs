@@ -1,6 +1,18 @@
 use std::fmt;
 use std::fmt::{Display, Formatter};
 
+pub struct LookupResult(Result<&'static &'static str, ConversionError>);
+
+impl Display for LookupResult {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        let s = match &self.0 {
+            Ok(s) => format!("{}", s),
+            Err(e) => format!("{}", e),
+        };
+        write!(f, "{}", s)
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum ConversionError {
     Unimplemented(u8),
@@ -56,11 +68,9 @@ pub const CODE_TABLE_1_4: &'static [&'static str] = &[
     "Processed radar observations",
 ];
 
-pub fn lookup_table(
-    table: &'static [&'static str],
-    code: u8,
-) -> Result<&'static &'static str, ConversionError> {
-    table
+pub fn lookup_table(table: &'static [&'static str], code: u8) -> LookupResult {
+    let result = table
         .get(code as usize)
-        .ok_or(ConversionError::Unimplemented(code))
+        .ok_or(ConversionError::Unimplemented(code));
+    LookupResult(result)
 }

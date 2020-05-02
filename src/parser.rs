@@ -7,8 +7,7 @@ use std::io::{Read, Seek, SeekFrom};
 use std::result::Result;
 
 use crate::codetables::{
-    lookup_table, ConversionError, CODE_TABLE_1_0, CODE_TABLE_1_1, CODE_TABLE_1_2, CODE_TABLE_1_3,
-    CODE_TABLE_1_4,
+    lookup_table, CODE_TABLE_1_0, CODE_TABLE_1_1, CODE_TABLE_1_2, CODE_TABLE_1_3, CODE_TABLE_1_4,
 };
 
 const SECT0_IS_MAGIC: &'static [u8] = b"GRIB";
@@ -102,20 +101,6 @@ pub struct Identification {
 
 impl Display for Identification {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        fn to_str(result: Result<&'static &'static str, ConversionError>) -> String {
-            match result {
-                Ok(s) => s.to_string(),
-                Err(e) => format!("{}", e),
-            }
-        }
-
-        let master_table_version = to_str(lookup_table(CODE_TABLE_1_0, self.master_table_version));
-        let local_table_version = to_str(lookup_table(CODE_TABLE_1_1, self.local_table_version));
-        let ref_time_significance =
-            to_str(lookup_table(CODE_TABLE_1_2, self.ref_time_significance));
-        let prod_status = to_str(lookup_table(CODE_TABLE_1_3, self.prod_status));
-        let data_type = to_str(lookup_table(CODE_TABLE_1_4, self.data_type));
-
         write!(
             f,
             "\
@@ -130,12 +115,12 @@ Type of processed data:                 {}\
 ",
             self.centre_id,
             self.subcentre_id,
-            master_table_version,
-            local_table_version,
-            ref_time_significance,
-            self.ref_time.to_string(),
-            prod_status,
-            data_type
+            lookup_table(CODE_TABLE_1_0, self.master_table_version),
+            lookup_table(CODE_TABLE_1_1, self.local_table_version),
+            lookup_table(CODE_TABLE_1_2, self.ref_time_significance),
+            self.ref_time,
+            lookup_table(CODE_TABLE_1_3, self.prod_status),
+            lookup_table(CODE_TABLE_1_4, self.data_type)
         )
     }
 }
