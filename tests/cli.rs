@@ -2,6 +2,8 @@ use assert_cmd::prelude::*;
 use predicates::prelude::*;
 use std::process::Command;
 
+mod utils;
+
 const CMD_NAME: &'static str = "rsgrib";
 
 #[test]
@@ -55,6 +57,32 @@ fn no_such_subcommand() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 #[test]
+fn info() -> Result<(), Box<dyn std::error::Error>> {
+    let tempfile = utils::jma_tornado_nowcast_file()?;
+    let arg_path = tempfile.path();
+
+    let out_str = "\
+Originating/generating centre:          34
+Originating/generating sub-centre:      0
+GRIB Master Tables Version Number:      code '5' is not implemented
+GRIB Local Tables Version Number:       code '1' is not implemented
+Significance of Reference Time:         Analysis
+Reference time of data:                 2016-08-22 02:00:00Z
+Production status of processed data:    Operational products
+Type of processed data:                 Analysis and forecast products
+";
+
+    let mut cmd = Command::cargo_bin(CMD_NAME)?;
+    cmd.arg("info").arg(arg_path);
+    cmd.assert()
+        .success()
+        .stdout(predicate::str::similar(out_str))
+        .stderr(predicate::str::is_empty());
+
+    Ok(())
+}
+
+#[test]
 fn info_without_args() -> Result<(), Box<dyn std::error::Error>> {
     let mut cmd = Command::cargo_bin(CMD_NAME)?;
     cmd.arg("info");
@@ -73,6 +101,152 @@ fn info_without_args() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 #[test]
+fn list() -> Result<(), Box<dyn std::error::Error>> {
+    let tempfile = utils::jma_tornado_nowcast_file()?;
+    let arg_path = tempfile.path();
+
+    let out_str = "\
+[
+    SubMessage {
+        section2: None,
+        section3: Some(
+            1,
+        ),
+        section4: Some(
+            2,
+        ),
+        section5: Some(
+            3,
+        ),
+        section6: Some(
+            4,
+        ),
+        section7: Some(
+            5,
+        ),
+    },
+    SubMessage {
+        section2: None,
+        section3: Some(
+            1,
+        ),
+        section4: Some(
+            6,
+        ),
+        section5: Some(
+            7,
+        ),
+        section6: Some(
+            8,
+        ),
+        section7: Some(
+            9,
+        ),
+    },
+    SubMessage {
+        section2: None,
+        section3: Some(
+            1,
+        ),
+        section4: Some(
+            10,
+        ),
+        section5: Some(
+            11,
+        ),
+        section6: Some(
+            12,
+        ),
+        section7: Some(
+            13,
+        ),
+    },
+    SubMessage {
+        section2: None,
+        section3: Some(
+            1,
+        ),
+        section4: Some(
+            14,
+        ),
+        section5: Some(
+            15,
+        ),
+        section6: Some(
+            16,
+        ),
+        section7: Some(
+            17,
+        ),
+    },
+    SubMessage {
+        section2: None,
+        section3: Some(
+            1,
+        ),
+        section4: Some(
+            18,
+        ),
+        section5: Some(
+            19,
+        ),
+        section6: Some(
+            20,
+        ),
+        section7: Some(
+            21,
+        ),
+    },
+    SubMessage {
+        section2: None,
+        section3: Some(
+            1,
+        ),
+        section4: Some(
+            22,
+        ),
+        section5: Some(
+            23,
+        ),
+        section6: Some(
+            24,
+        ),
+        section7: Some(
+            25,
+        ),
+    },
+    SubMessage {
+        section2: None,
+        section3: Some(
+            1,
+        ),
+        section4: Some(
+            26,
+        ),
+        section5: Some(
+            27,
+        ),
+        section6: Some(
+            28,
+        ),
+        section7: Some(
+            29,
+        ),
+    },
+]
+";
+
+    let mut cmd = Command::cargo_bin(CMD_NAME)?;
+    cmd.arg("list").arg(arg_path);
+    cmd.assert()
+        .success()
+        .stdout(predicate::str::similar(out_str))
+        .stderr(predicate::str::is_empty());
+
+    Ok(())
+}
+
+#[test]
 fn list_without_args() -> Result<(), Box<dyn std::error::Error>> {
     let mut cmd = Command::cargo_bin(CMD_NAME)?;
     cmd.arg("list");
@@ -86,6 +260,27 @@ fn list_without_args() -> Result<(), Box<dyn std::error::Error>> {
             .and(predicate::str::contains("USAGE:"))
             .and(predicate::str::contains("SUBCOMMANDS:").not()),
         );
+
+    Ok(())
+}
+
+#[test]
+fn templates() -> Result<(), Box<dyn std::error::Error>> {
+    let tempfile = utils::jma_tornado_nowcast_file()?;
+    let arg_path = tempfile.path();
+
+    let out_str = "\
+3.0
+4.0
+5.200
+";
+
+    let mut cmd = Command::cargo_bin(CMD_NAME)?;
+    cmd.arg("templates").arg(arg_path);
+    cmd.assert()
+        .success()
+        .stdout(predicate::str::similar(out_str))
+        .stderr(predicate::str::is_empty());
 
     Ok(())
 }
