@@ -558,6 +558,21 @@ pub enum ParseError {
     GRIB2WrongIteration(usize),
 }
 
+impl Display for ParseError {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        match self {
+            Self::ReadError(s) => write!(f, "Read error: {}", s),
+            Self::NotGRIB => write!(f, "Not GRIB data"),
+            Self::GRIBVersionMismatch(i) => write!(f, "Not GRIB version 2: {}", i),
+            Self::UnknownSectionNumber(s) => write!(f, "Unknown section number: {}", s),
+            Self::EndSectionMismatch => write!(f, "Content of End Section is not valid"),
+            Self::GRIB2IterationSuddenlyFinished => write!(f, "GRIB2 file suddenly finished"),
+            Self::NoGridDefinition(i) => write!(f, "Grid Definition Section not found at {}", i),
+            Self::GRIB2WrongIteration(i) => write!(f, "GRIB2 sections wrongly ordered at {}", i),
+        }
+    }
+}
+
 impl From<io::Error> for ParseError {
     fn from(e: io::Error) -> Self {
         Self::ReadError(e.to_string())

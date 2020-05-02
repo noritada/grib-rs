@@ -15,7 +15,7 @@ enum CliError {
 impl Display for CliError {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         match self {
-            Self::ParseError(e) => write!(f, "{:#?}", e),
+            Self::ParseError(e) => write!(f, "{}", e),
             Self::IOError(e, path) => write!(f, "{}: {}", e, path),
         }
     }

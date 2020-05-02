@@ -17,3 +17,10 @@ pub(crate) fn jma_tornado_nowcast_file() -> Result<NamedTempFile, io::Error> {
 
     Ok(out)
 }
+
+pub(crate) fn non_grib_file() -> Result<NamedTempFile, io::Error> {
+    let mut out = NamedTempFile::new()?;
+    out.write_all(b"foo foo foo foo foo foo foo foo ")?;
+
+    Ok(out)
+}

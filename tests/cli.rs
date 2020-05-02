@@ -304,3 +304,28 @@ test_subcommands_with_nonexisting_file! {
     (list_with_nonexisting_file, "list"),
     (templates_with_nonexisting_file, "templates"),
 }
+
+macro_rules! test_subcommands_with_non_grib {
+    ($(($name:ident, $str:expr),)*) => ($(
+        #[test]
+        fn $name() -> Result<(), Box<dyn std::error::Error>> {
+            let tempfile = utils::non_grib_file()?;
+            let arg_path = tempfile.path();
+
+            let mut cmd = Command::cargo_bin(CMD_NAME)?;
+            cmd.arg($str).arg(arg_path);
+            cmd.assert()
+                .failure()
+                .stdout(predicate::str::is_empty())
+                .stderr(predicate::str::similar("Not GRIB data\n"));
+
+            Ok(())
+        }
+    )*);
+}
+
+test_subcommands_with_non_grib! {
+    (info_with_non_grib, "info"),
+    (list_with_non_grib, "list"),
+    (templates_with_non_grib, "templates"),
+}
