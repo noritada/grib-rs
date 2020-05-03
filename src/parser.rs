@@ -24,7 +24,7 @@ pub struct SectionInfo {
 }
 
 impl SectionInfo {
-    pub fn read_body<R: Read>(&self, mut f: &mut R) -> Result<SectionBody, ParseError> {
+    pub fn read_body<R: Read + Seek>(&self, mut f: &mut R) -> Result<SectionBody, ParseError> {
         let body_size = self.size - SECT_HEADER_SIZE;
         let body = match self.num {
             1 => unpack_sect1_body(&mut f, body_size)?,
@@ -33,7 +33,7 @@ impl SectionInfo {
             4 => unpack_sect4_body(&mut f, body_size)?,
             5 => unpack_sect5_body(&mut f, body_size)?,
             6 => unpack_sect6_body(&mut f, body_size)?,
-            7 => unpack_sect7_body(&mut f, body_size)?,
+            7 => skip_sect7_body(&mut f, body_size)?,
             _ => return Err(ParseError::UnknownSectionNumber(self.num)),
         };
         Ok(body)
@@ -217,7 +217,7 @@ impl<R: Read> Grib2FileReader<R> {
     }
 }
 
-impl<R: Read> GribReader<R> for Grib2FileReader<R> {
+impl<R: Read + Seek> GribReader<R> for Grib2FileReader<R> {
     fn new(mut f: R) -> Result<Self, ParseError>
     where
         Self: Sized,
@@ -246,7 +246,7 @@ impl<R: Read> Display for Grib2FileReader<R> {
     }
 }
 
-fn scan<R: Read>(mut f: R) -> Result<Box<[SectionInfo]>, ParseError> {
+fn scan<R: Read + Seek>(mut f: R) -> Result<Box<[SectionInfo]>, ParseError> {
     let whole_size = unpack_sect0(&mut f)?;
     let mut rest_size = whole_size - SECT0_IS_SIZE;
     let mut sects = Vec::new();
@@ -508,12 +508,8 @@ pub fn unpack_sect6_body<R: Read>(f: &mut R, body_size: usize) -> Result<Section
     })
 }
 
-pub fn unpack_sect7_body<R: Read>(f: &mut R, body_size: usize) -> Result<SectionBody, ParseError> {
-    let len_extra = body_size;
-    if len_extra > 0 {
-        let mut buf = vec![0; len_extra]; // octet 6-21
-        f.read_exact(&mut buf[..])?;
-    }
+fn skip_sect7_body<R: Seek>(f: &mut R, body_size: usize) -> Result<SectionBody, ParseError> {
+    f.seek(SeekFrom::Current(body_size as i64))?; // < std::io::Seek
 
     Ok(SectionBody::Section7)
 }
@@ -587,7 +583,7 @@ mod tests {
     use super::*;
 
     use std::fs::File;
-    use std::io::BufReader;
+    use std::io::{BufReader, Cursor};
     use xz2::bufread::XzDecoder;
 
     macro_rules! sect_placeholder {
@@ -612,13 +608,16 @@ mod tests {
     }
 
     #[test]
-    fn read_normal() {
+    fn read_normal() -> Result<(), Box<dyn std::error::Error>> {
         let f = File::open(
             "testdata/Z__C_RJTD_20160822020000_NOWC_GPV_Ggis10km_Pphw10_FH0000-0100_grib2.bin.xz",
         )
         .unwrap();
         let f = BufReader::new(f);
-        let f = XzDecoder::new(f);
+        let mut f = XzDecoder::new(f);
+        let mut buf = Vec::new();
+        f.read_to_end(&mut buf)?;
+        let f = Cursor::new(buf);
 
         assert_eq!(
             scan(f),
@@ -887,6 +886,8 @@ mod tests {
             ]
             .into_boxed_slice())
         );
+
+        Ok(())
     }
 
     #[test]
