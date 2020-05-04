@@ -24,27 +24,6 @@ pub struct SectionInfo {
 }
 
 impl SectionInfo {
-    pub fn read_body<R: Read + Seek>(&self, mut f: &mut R) -> Result<SectionBody, ParseError> {
-        let body_size = self.size - SECT_HEADER_SIZE;
-        let body = match self.num {
-            1 => unpack_sect1_body(&mut f, body_size)?,
-            2 => unpack_sect2_body(&mut f, body_size)?,
-            3 => unpack_sect3_body(&mut f, body_size)?,
-            4 => unpack_sect4_body(&mut f, body_size)?,
-            5 => unpack_sect5_body(&mut f, body_size)?,
-            6 => unpack_sect6_body(&mut f, body_size)?,
-            7 => skip_sect7_body(&mut f, body_size)?,
-            _ => return Err(ParseError::UnknownSectionNumber(self.num)),
-        };
-        Ok(body)
-    }
-
-    pub fn skip_body<S: Seek>(&self, f: &mut S) -> Result<(), ParseError> {
-        let body_size = self.size - SECT_HEADER_SIZE;
-        f.seek(SeekFrom::Current(body_size as i64))?; // < std::io::Seek
-        Ok(())
-    }
-
     pub fn get_tmpl_code(&self) -> Option<TemplateInfo> {
         let tmpl_num = self.body.as_ref()?.get_tmpl_num()?;
         Some(TemplateInfo(self.num, tmpl_num))
@@ -195,7 +174,7 @@ impl Display for TemplateInfo {
     }
 }
 
-pub trait GribReader<R: Read> {
+pub trait GribReader<R: Read + Seek> {
     fn new(f: R) -> Result<Self, ParseError>
     where
         Self: Sized;
@@ -218,14 +197,15 @@ impl<R: Read> Grib2FileReader<R> {
 }
 
 impl<R: Read + Seek> GribReader<R> for Grib2FileReader<R> {
-    fn new(mut f: R) -> Result<Self, ParseError>
+    fn new(f: R) -> Result<Self, ParseError>
     where
         Self: Sized,
     {
-        let sects = scan(&mut f)?;
+        let mut f = SeekableGrib2Reader::new(f);
+        let sects = f.scan()?;
         let submessages = get_submessages(&sects)?;
         Ok(Self {
-            reader: f,
+            reader: f.reader,
             sections: sects,
             submessages: submessages,
         })
@@ -246,35 +226,131 @@ impl<R: Read> Display for Grib2FileReader<R> {
     }
 }
 
-fn scan<R: Read + Seek>(mut f: R) -> Result<Box<[SectionInfo]>, ParseError> {
-    let whole_size = unpack_sect0(&mut f)?;
-    let mut rest_size = whole_size - SECT0_IS_SIZE;
-    let mut sects = Vec::new();
+pub trait Grib2Read: Read + Seek {
+    fn scan(&mut self) -> Result<Box<[SectionInfo]>, ParseError> {
+        let whole_size = self.read_sect0()?;
+        let mut rest_size = whole_size - SECT0_IS_SIZE;
+        let mut sects = Vec::new();
 
-    loop {
-        if rest_size == SECT8_ES_SIZE {
-            unpack_sect8(&mut f)?;
-            let sect_info = SectionInfo {
-                num: 8,
-                offset: whole_size - rest_size,
-                size: SECT8_ES_SIZE,
-                body: None,
-            };
+        loop {
+            if rest_size == SECT8_ES_SIZE {
+                self.read_sect8()?;
+                let sect_info = SectionInfo {
+                    num: 8,
+                    offset: whole_size - rest_size,
+                    size: SECT8_ES_SIZE,
+                    body: None,
+                };
+                sects.push(sect_info);
+                break;
+            }
+
+            let mut sect_info = self.read_sect_meta()?;
+            sect_info.offset = whole_size - rest_size;
+            sect_info.body = Some(self.read_sect(&sect_info)?);
+            rest_size -= sect_info.size;
             sects.push(sect_info);
-            break;
         }
 
-        let mut sect_info = unpack_sect_header(&mut f)?;
-        sect_info.offset = whole_size - rest_size;
-        // Some readers such as flate2::gz::read::GzDecoder do not
-        // implement Seek.
-        // let _sect_body = sect_info.skip_body(&mut f)?;
-        sect_info.body = Some(sect_info.read_body(&mut f)?);
-        rest_size -= sect_info.size;
-        sects.push(sect_info);
+        Ok(sects.into_boxed_slice())
     }
 
-    Ok(sects.into_boxed_slice())
+    fn read_sect0(&mut self) -> Result<usize, ParseError>;
+    fn read_sect8(&mut self) -> Result<(), ParseError>;
+    fn read_sect_meta(&mut self) -> Result<SectionInfo, ParseError>;
+    fn read_sect(&mut self, meta: &SectionInfo) -> Result<SectionBody, ParseError>;
+}
+
+pub struct SeekableGrib2Reader<R> {
+    pub reader: R, // FIXME: pub is tentative
+}
+
+impl<R> SeekableGrib2Reader<R> {
+    fn new(r: R) -> Self {
+        Self { reader: r }
+    }
+}
+
+impl<R: Read> Read for SeekableGrib2Reader<R> {
+    fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
+        self.reader.read(buf)
+    }
+
+    fn read_exact(&mut self, buf: &mut [u8]) -> io::Result<()> {
+        self.reader.read_exact(buf)
+    }
+}
+
+impl<S: Seek> Seek for SeekableGrib2Reader<S> {
+    fn seek(&mut self, pos: SeekFrom) -> io::Result<u64> {
+        self.reader.seek(pos)
+    }
+}
+
+impl<R: Read + Seek> Grib2Read for SeekableGrib2Reader<R> {
+    fn read_sect0(&mut self) -> Result<usize, ParseError> {
+        let mut buf = [0; SECT0_IS_SIZE];
+        self.read_exact(&mut buf[..])
+            .map_err(|e| ParseError::FileTypeCheckError(e.to_string()))?;
+
+        if &buf[0..SECT0_IS_MAGIC_SIZE] != SECT0_IS_MAGIC {
+            return Err(ParseError::NotGRIB);
+        }
+        let version = buf[7];
+        if version != 2 {
+            return Err(ParseError::GRIBVersionMismatch(version));
+        }
+
+        let fsize = read_as!(u64, buf, 8);
+
+        Ok(fsize as usize)
+    }
+
+    fn read_sect8(&mut self) -> Result<(), ParseError> {
+        let mut buf = [0; SECT8_ES_SIZE];
+        self.read_exact(&mut buf[..])?;
+
+        if buf[..] != SECT8_ES_MAGIC[..] {
+            return Err(ParseError::EndSectionMismatch);
+        }
+
+        Ok(())
+    }
+
+    /// Reads a common header for sections 1-7 and returns the section
+    /// number and size.  Since offset is not determined within this
+    /// function, the `offset` and `body` fields in returned `SectionInfo`
+    /// struct is set to `0` and `None` respectively.
+    fn read_sect_meta(&mut self) -> Result<SectionInfo, ParseError> {
+        let mut buf = [0; SECT_HEADER_SIZE];
+        self.read_exact(&mut buf[..])?;
+
+        let sect_size = read_as!(u32, buf, 0) as usize;
+        let sect_num = buf[4];
+
+        Ok(SectionInfo {
+            num: sect_num,
+            offset: 0,
+            size: sect_size,
+            body: None,
+        })
+    }
+
+    fn read_sect(&mut self, meta: &SectionInfo) -> Result<SectionBody, ParseError> {
+        let body_size = meta.size - SECT_HEADER_SIZE;
+        let body = match meta.num {
+            1 => unpack_sect1_body(self, body_size)?,
+            2 => unpack_sect2_body(self, body_size)?,
+            3 => unpack_sect3_body(self, body_size)?,
+            4 => unpack_sect4_body(self, body_size)?,
+            5 => unpack_sect5_body(self, body_size)?,
+            6 => unpack_sect6_body(self, body_size)?,
+            7 => skip_sect7_body(self, body_size)?,
+            _ => return Err(ParseError::UnknownSectionNumber(meta.num)),
+        };
+
+        Ok(body)
+    }
 }
 
 /// Validates the section order of sections and split them into a
@@ -388,24 +464,6 @@ fn get_templates(sects: &Box<[SectionInfo]>) -> Vec<TemplateInfo> {
     vec
 }
 
-pub fn unpack_sect0<R: Read>(f: &mut R) -> Result<usize, ParseError> {
-    let mut buf = [0; SECT0_IS_SIZE];
-    f.read_exact(&mut buf[..])
-        .map_err(|e| ParseError::FileTypeCheckError(e.to_string()))?;
-
-    if &buf[0..SECT0_IS_MAGIC_SIZE] != SECT0_IS_MAGIC {
-        return Err(ParseError::NotGRIB);
-    }
-    let version = buf[7];
-    if version != 2 {
-        return Err(ParseError::GRIBVersionMismatch(version));
-    }
-
-    let fsize = read_as!(u64, buf, 8);
-
-    Ok(fsize as usize)
-}
-
 pub fn unpack_sect1_body<R: Read>(f: &mut R, body_size: usize) -> Result<SectionBody, ParseError> {
     let mut buf = [0; 16]; // octet 6-21
     f.read_exact(&mut buf[..])?;
@@ -514,35 +572,6 @@ fn skip_sect7_body<R: Seek>(f: &mut R, body_size: usize) -> Result<SectionBody, 
     Ok(SectionBody::Section7)
 }
 
-pub fn unpack_sect8<R: Read>(f: &mut R) -> Result<(), ParseError> {
-    let mut buf = [0; SECT8_ES_SIZE];
-    f.read_exact(&mut buf[..])?;
-
-    if buf[..] != SECT8_ES_MAGIC[..] {
-        return Err(ParseError::EndSectionMismatch);
-    }
-
-    Ok(())
-}
-
-/// Reads a common header for sections 1-7 and returns the section
-/// number and size.  Since offset is not determined within this
-/// function, the `offset` and `body` fields in returned `SectionInfo`
-/// struct is set to `0` and `None` respectively.
-pub fn unpack_sect_header<R: Read>(f: &mut R) -> Result<SectionInfo, ParseError> {
-    let mut buf = [0; SECT_HEADER_SIZE];
-    f.read_exact(&mut buf[..])?;
-
-    let sect_size = read_as!(u32, buf, 0) as usize;
-    let sect_num = buf[4];
-    Ok(SectionInfo {
-        num: sect_num,
-        offset: 0,
-        size: sect_size,
-        body: None,
-    })
-}
-
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum ParseError {
     ReadError(String),
@@ -620,7 +649,7 @@ mod tests {
         let f = Cursor::new(buf);
 
         assert_eq!(
-            scan(f),
+            SeekableGrib2Reader::new(f).scan(),
             Ok(vec![
                 SectionInfo {
                     num: 1,
