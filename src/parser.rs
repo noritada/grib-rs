@@ -174,33 +174,14 @@ impl Display for TemplateInfo {
     }
 }
 
-pub trait GribReader<R: Read + Seek> {
-    fn new(f: R) -> Result<Self, ParseError>
-    where
-        Self: Sized;
-}
-
-pub struct Grib2FileReader<R: Read> {
+pub struct Grib2<R: Read> {
     reader: R,
     sections: Box<[SectionInfo]>,
     submessages: Box<[SubMessage]>,
 }
 
-impl<R: Read> Grib2FileReader<R> {
-    pub fn submessages(&self) -> &Box<[SubMessage]> {
-        &self.submessages
-    }
-
-    pub fn list_templates(&self) -> Vec<TemplateInfo> {
-        get_templates(&self.sections)
-    }
-}
-
-impl<R: Read + Seek> GribReader<R> for Grib2FileReader<R> {
-    fn new(f: R) -> Result<Self, ParseError>
-    where
-        Self: Sized,
-    {
+impl<R: Read + Seek> Grib2<R> {
+    pub fn read(f: R) -> Result<Self, ParseError> {
         let mut f = SeekableGrib2Reader::new(f);
         let sects = f.scan()?;
         let submessages = get_submessages(&sects)?;
@@ -210,9 +191,17 @@ impl<R: Read + Seek> GribReader<R> for Grib2FileReader<R> {
             submessages: submessages,
         })
     }
+
+    pub fn submessages(&self) -> &Box<[SubMessage]> {
+        &self.submessages
+    }
+
+    pub fn list_templates(&self) -> Vec<TemplateInfo> {
+        get_templates(&self.sections)
+    }
 }
 
-impl<R: Read> Display for Grib2FileReader<R> {
+impl<R: Read> Display for Grib2<R> {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         let err = "No information available".to_string();
         let s = match self.sections.first() {

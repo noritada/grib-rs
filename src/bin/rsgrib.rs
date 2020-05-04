@@ -5,7 +5,7 @@ use std::io::{BufReader, Error};
 use std::path::Path;
 use std::result::Result;
 
-use grib::parser::{Grib2FileReader, GribReader, ParseError};
+use grib::parser::{Grib2, ParseError};
 
 enum CliError {
     ParseError(ParseError),
@@ -50,11 +50,11 @@ fn app() -> App<'static, 'static> {
         )
 }
 
-fn grib(file_name: &str) -> Result<Grib2FileReader<BufReader<File>>, CliError> {
+fn grib(file_name: &str) -> Result<Grib2<BufReader<File>>, CliError> {
     let path = Path::new(file_name);
     let f = File::open(&path).map_err(|e| CliError::IOError(e, path.display().to_string()))?;
     let f = BufReader::new(f);
-    Ok(Grib2FileReader::new(f)?)
+    Ok(Grib2::read(f)?)
 }
 
 fn real_main() -> Result<(), CliError> {
