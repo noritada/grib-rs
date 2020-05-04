@@ -5,7 +5,8 @@ use std::io::{BufReader, Error};
 use std::path::Path;
 use std::result::Result;
 
-use grib::parser::{Grib2, ParseError};
+use grib::data::Grib2;
+use grib::reader::ParseError;
 
 enum CliError {
     ParseError(ParseError),

@@ -1,2 +1,3 @@
 pub mod codetables;
-pub mod parser;
+pub mod data;
+pub mod reader;
