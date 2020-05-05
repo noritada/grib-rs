@@ -23,6 +23,18 @@ impl SectionInfo {
     }
 }
 
+impl Display for SectionInfo {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        write!(
+            f,
+            "{:016x} - {:016x} : Section {}",
+            self.offset,
+            self.offset + self.size,
+            self.num
+        )
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum SectionBody {
     Section1(Identification),
@@ -180,6 +192,10 @@ impl<R: Read + Seek> Grib2<R> {
 
     pub fn submessages(&self) -> &Box<[SubMessage]> {
         &self.submessages
+    }
+
+    pub fn sections(&self) -> &Box<[SectionInfo]> {
+        &self.sections
     }
 
     pub fn list_templates(&self) -> Vec<TemplateInfo> {

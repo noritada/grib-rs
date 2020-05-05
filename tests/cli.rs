@@ -230,6 +230,56 @@ fn list() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 #[test]
+fn struct_subcommand() -> Result<(), Box<dyn std::error::Error>> {
+    let tempfile = utils::jma_tornado_nowcast_file()?;
+    let arg_path = tempfile.path();
+
+    let out_str = "\
+0000000000000000 - 0000000000000010 : Section 0
+0000000000000010 - 0000000000000025 : Section 1
+0000000000000025 - 000000000000006d : Section 3
+000000000000006d - 000000000000008f : Section 4
+000000000000008f - 00000000000000a6 : Section 5
+00000000000000a6 - 00000000000000ac : Section 6
+00000000000000ac - 000000000000061b : Section 7
+000000000000061b - 000000000000063d : Section 4
+000000000000063d - 0000000000000654 : Section 5
+0000000000000654 - 000000000000065a : Section 6
+000000000000065a - 0000000000000bd1 : Section 7
+0000000000000bd1 - 0000000000000bf3 : Section 4
+0000000000000bf3 - 0000000000000c0a : Section 5
+0000000000000c0a - 0000000000000c10 : Section 6
+0000000000000c10 - 000000000000118c : Section 7
+000000000000118c - 00000000000011ae : Section 4
+00000000000011ae - 00000000000011c5 : Section 5
+00000000000011c5 - 00000000000011cb : Section 6
+00000000000011cb - 000000000000173e : Section 7
+000000000000173e - 0000000000001760 : Section 4
+0000000000001760 - 0000000000001777 : Section 5
+0000000000001777 - 000000000000177d : Section 6
+000000000000177d - 0000000000001cf0 : Section 7
+0000000000001cf0 - 0000000000001d12 : Section 4
+0000000000001d12 - 0000000000001d29 : Section 5
+0000000000001d29 - 0000000000001d2f : Section 6
+0000000000001d2f - 00000000000022a4 : Section 7
+00000000000022a4 - 00000000000022c6 : Section 4
+00000000000022c6 - 00000000000022dd : Section 5
+00000000000022dd - 00000000000022e3 : Section 6
+00000000000022e3 - 000000000000284d : Section 7
+000000000000284d - 0000000000002851 : Section 8
+";
+
+    let mut cmd = Command::cargo_bin(CMD_NAME)?;
+    cmd.arg("struct").arg(arg_path);
+    cmd.assert()
+        .success()
+        .stdout(predicate::str::similar(out_str))
+        .stderr(predicate::str::is_empty());
+
+    Ok(())
+}
+
+#[test]
 fn templates() -> Result<(), Box<dyn std::error::Error>> {
     let tempfile = utils::jma_tornado_nowcast_file()?;
     let arg_path = tempfile.path();
@@ -275,6 +325,7 @@ macro_rules! test_subcommands_without_args {
 test_subcommands_without_args! {
     (info_without_args, "info"),
     (list_without_args, "list"),
+    (struct_without_args, "struct"),
     (templates_without_args, "templates"),
 }
 
@@ -302,6 +353,7 @@ macro_rules! test_subcommands_with_nonexisting_file {
 test_subcommands_with_nonexisting_file! {
     (info_with_nonexisting_file, "info"),
     (list_with_nonexisting_file, "list"),
+    (struct_with_nonexisting_file, "struct"),
     (templates_with_nonexisting_file, "templates"),
 }
 
@@ -327,6 +379,7 @@ macro_rules! test_subcommands_with_non_grib {
 test_subcommands_with_non_grib! {
     (info_with_non_grib, "info"),
     (list_with_non_grib, "list"),
+    (struct_with_non_grib, "struct"),
     (templates_with_non_grib, "templates"),
 }
 
@@ -354,5 +407,6 @@ macro_rules! test_subcommands_with_too_small_file {
 test_subcommands_with_too_small_file! {
     (info_with_too_small_file, "info"),
     (list_with_too_small_file, "list"),
+    (struct_with_too_small_file, "struct"),
     (templates_with_too_small_file, "templates"),
 }

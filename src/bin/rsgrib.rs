@@ -45,6 +45,11 @@ fn app() -> App<'static, 'static> {
                 .arg(Arg::with_name("file").required(true)),
         )
         .subcommand(
+            SubCommand::with_name("struct")
+                .about("Inspects and describes the data structure")
+                .arg(Arg::with_name("file").required(true)),
+        )
+        .subcommand(
             SubCommand::with_name("templates")
                 .about("Lists used templates")
                 .arg(Arg::with_name("file").required(true)),
@@ -71,6 +76,13 @@ fn real_main() -> Result<(), CliError> {
             let file_name = subcommand_matches.value_of("file").unwrap();
             let grib = grib(file_name)?;
             println!("{:#?}", grib.submessages());
+        }
+        ("struct", Some(subcommand_matches)) => {
+            let file_name = subcommand_matches.value_of("file").unwrap();
+            let grib = grib(file_name)?;
+            for sect in grib.sections().iter() {
+                println!("{}", sect);
+            }
         }
         ("templates", Some(subcommand_matches)) => {
             let file_name = subcommand_matches.value_of("file").unwrap();
