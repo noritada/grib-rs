@@ -45,14 +45,28 @@ fn app() -> App<'static, 'static> {
                 .arg(Arg::with_name("file").required(true)),
         )
         .subcommand(
-            SubCommand::with_name("struct")
+            SubCommand::with_name("inspect")
                 .about("Inspects and describes the data structure")
-                .arg(Arg::with_name("file").required(true)),
-        )
-        .subcommand(
-            SubCommand::with_name("templates")
-                .about("Lists used templates")
-                .arg(Arg::with_name("file").required(true)),
+                .arg(
+                    Arg::with_name("sections")
+                        .help("Prints sections constructing the GRIB message")
+                        .short("s")
+                        .long("sections"),
+                )
+                .arg(
+                    Arg::with_name("templates")
+                        .help("Prints templates used in the GRIB message")
+                        .short("t")
+                        .long("templates"),
+                )
+                .arg(Arg::with_name("file").required(true))
+                .after_help(
+                    "\
+This subcommand is mainly targeted at (possible) developers and
+engineers, who wants to understand the data structure for the purpose
+of debugging, enhancement, and education.\
+",
+                ),
         )
 }
 
@@ -77,18 +91,47 @@ fn real_main() -> Result<(), CliError> {
             let grib = grib(file_name)?;
             println!("{:#?}", grib.submessages());
         }
-        ("struct", Some(subcommand_matches)) => {
+        ("inspect", Some(subcommand_matches)) => {
             let file_name = subcommand_matches.value_of("file").unwrap();
             let grib = grib(file_name)?;
-            for sect in grib.sections().iter() {
-                println!("{}", sect);
+
+            let has_sect = subcommand_matches.is_present("sections");
+            let has_tmpl = subcommand_matches.is_present("templates");
+
+            let mut count = 0;
+            if has_sect {
+                count += 1;
             }
-        }
-        ("templates", Some(subcommand_matches)) => {
-            let file_name = subcommand_matches.value_of("file").unwrap();
-            let grib = grib(file_name)?;
-            for tmpl in grib.list_templates() {
-                println!("{}", tmpl);
+            if has_tmpl {
+                count += 1;
+            }
+            let has_one = count == 1;
+            let has_all = count == 0;
+
+            let mut first = true;
+
+            if has_sect || has_all {
+                if !has_one {
+                    println!("Sections:");
+                }
+
+                for sect in grib.sections().iter() {
+                    println!("{}", sect);
+                }
+                first = false;
+            }
+
+            if has_tmpl || has_all {
+                if !first {
+                    println!("");
+                }
+                if !has_one {
+                    println!("Templates:");
+                }
+
+                for tmpl in grib.list_templates() {
+                    println!("{}", tmpl);
+                }
             }
         }
         ("", None) => unreachable!(),
