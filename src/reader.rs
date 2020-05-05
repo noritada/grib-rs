@@ -26,7 +26,12 @@ pub trait Grib2Read: Read + Seek {
     fn scan(&mut self) -> Result<Box<[SectionInfo]>, ParseError> {
         let whole_size = self.read_sect0()?;
         let mut rest_size = whole_size - SECT0_IS_SIZE;
-        let mut sects = Vec::new();
+        let mut sects = vec![SectionInfo {
+            num: 0,
+            offset: 0,
+            size: SECT0_IS_SIZE,
+            body: None,
+        }];
 
         loop {
             if rest_size == SECT8_ES_SIZE {
@@ -315,6 +320,12 @@ mod tests {
         assert_eq!(
             SeekableGrib2Reader::new(f).scan(),
             Ok(vec![
+                SectionInfo {
+                    num: 0,
+                    offset: 0,
+                    size: 16,
+                    body: None,
+                },
                 SectionInfo {
                     num: 1,
                     offset: 16,

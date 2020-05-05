@@ -93,127 +93,127 @@ fn list() -> Result<(), Box<dyn std::error::Error>> {
     SubMessage {
         section2: None,
         section3: Some(
-            1,
-        ),
-        section4: Some(
             2,
         ),
-        section5: Some(
+        section4: Some(
             3,
         ),
-        section6: Some(
+        section5: Some(
             4,
         ),
-        section7: Some(
+        section6: Some(
             5,
         ),
-    },
-    SubMessage {
-        section2: None,
-        section3: Some(
-            1,
-        ),
-        section4: Some(
+        section7: Some(
             6,
         ),
-        section5: Some(
+    },
+    SubMessage {
+        section2: None,
+        section3: Some(
+            2,
+        ),
+        section4: Some(
             7,
         ),
-        section6: Some(
+        section5: Some(
             8,
         ),
-        section7: Some(
+        section6: Some(
             9,
         ),
-    },
-    SubMessage {
-        section2: None,
-        section3: Some(
-            1,
-        ),
-        section4: Some(
+        section7: Some(
             10,
         ),
-        section5: Some(
+    },
+    SubMessage {
+        section2: None,
+        section3: Some(
+            2,
+        ),
+        section4: Some(
             11,
         ),
-        section6: Some(
+        section5: Some(
             12,
         ),
-        section7: Some(
+        section6: Some(
             13,
         ),
-    },
-    SubMessage {
-        section2: None,
-        section3: Some(
-            1,
-        ),
-        section4: Some(
+        section7: Some(
             14,
         ),
-        section5: Some(
+    },
+    SubMessage {
+        section2: None,
+        section3: Some(
+            2,
+        ),
+        section4: Some(
             15,
         ),
-        section6: Some(
+        section5: Some(
             16,
         ),
-        section7: Some(
+        section6: Some(
             17,
         ),
-    },
-    SubMessage {
-        section2: None,
-        section3: Some(
-            1,
-        ),
-        section4: Some(
+        section7: Some(
             18,
         ),
-        section5: Some(
+    },
+    SubMessage {
+        section2: None,
+        section3: Some(
+            2,
+        ),
+        section4: Some(
             19,
         ),
-        section6: Some(
+        section5: Some(
             20,
         ),
-        section7: Some(
+        section6: Some(
             21,
         ),
-    },
-    SubMessage {
-        section2: None,
-        section3: Some(
-            1,
-        ),
-        section4: Some(
+        section7: Some(
             22,
         ),
-        section5: Some(
+    },
+    SubMessage {
+        section2: None,
+        section3: Some(
+            2,
+        ),
+        section4: Some(
             23,
         ),
-        section6: Some(
+        section5: Some(
             24,
         ),
-        section7: Some(
+        section6: Some(
             25,
+        ),
+        section7: Some(
+            26,
         ),
     },
     SubMessage {
         section2: None,
         section3: Some(
-            1,
+            2,
         ),
         section4: Some(
-            26,
-        ),
-        section5: Some(
             27,
         ),
-        section6: Some(
+        section5: Some(
             28,
         ),
-        section7: Some(
+        section6: Some(
             29,
+        ),
+        section7: Some(
+            30,
         ),
     },
 ]
