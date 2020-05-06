@@ -5,7 +5,8 @@ use std::io::{self, Read, Seek, SeekFrom};
 use std::result::Result;
 
 use crate::data::{
-    GridDefinition, Identification, ProdDefinition, ReprDefinition, SectionBody, SectionInfo,
+    BitMap, GridDefinition, Identification, ProdDefinition, ReprDefinition, SectionBody,
+    SectionInfo,
 };
 
 const SECT0_IS_MAGIC: &'static [u8] = b"GRIB";
@@ -246,9 +247,9 @@ pub fn unpack_sect6_body<R: Read>(f: &mut R, body_size: usize) -> Result<Section
         f.read_exact(&mut buf[..])?;
     }
 
-    Ok(SectionBody::Section6 {
+    Ok(SectionBody::Section6(BitMap {
         bitmap_indicator: buf[0],
-    })
+    }))
 }
 
 fn skip_sect7_body<R: Seek>(f: &mut R, body_size: usize) -> Result<SectionBody, ParseError> {
@@ -367,9 +368,9 @@ mod tests {
                     num: 6,
                     offset: 166,
                     size: 6,
-                    body: Some(SectionBody::Section6 {
+                    body: Some(SectionBody::Section6(BitMap {
                         bitmap_indicator: 255,
-                    }),
+                    })),
                 },
                 SectionInfo {
                     num: 7,
@@ -399,9 +400,9 @@ mod tests {
                     num: 6,
                     offset: 1620,
                     size: 6,
-                    body: Some(SectionBody::Section6 {
+                    body: Some(SectionBody::Section6(BitMap {
                         bitmap_indicator: 255,
-                    }),
+                    })),
                 },
                 SectionInfo {
                     num: 7,
@@ -431,9 +432,9 @@ mod tests {
                     num: 6,
                     offset: 3082,
                     size: 6,
-                    body: Some(SectionBody::Section6 {
+                    body: Some(SectionBody::Section6(BitMap {
                         bitmap_indicator: 255,
-                    }),
+                    })),
                 },
                 SectionInfo {
                     num: 7,
@@ -463,9 +464,9 @@ mod tests {
                     num: 6,
                     offset: 4549,
                     size: 6,
-                    body: Some(SectionBody::Section6 {
+                    body: Some(SectionBody::Section6(BitMap {
                         bitmap_indicator: 255,
-                    }),
+                    })),
                 },
                 SectionInfo {
                     num: 7,
@@ -495,9 +496,9 @@ mod tests {
                     num: 6,
                     offset: 6007,
                     size: 6,
-                    body: Some(SectionBody::Section6 {
+                    body: Some(SectionBody::Section6(BitMap {
                         bitmap_indicator: 255,
-                    }),
+                    })),
                 },
                 SectionInfo {
                     num: 7,
@@ -527,9 +528,9 @@ mod tests {
                     num: 6,
                     offset: 7465,
                     size: 6,
-                    body: Some(SectionBody::Section6 {
+                    body: Some(SectionBody::Section6(BitMap {
                         bitmap_indicator: 255,
-                    }),
+                    })),
                 },
                 SectionInfo {
                     num: 7,
@@ -559,9 +560,9 @@ mod tests {
                     num: 6,
                     offset: 8925,
                     size: 6,
-                    body: Some(SectionBody::Section6 {
+                    body: Some(SectionBody::Section6(BitMap {
                         bitmap_indicator: 255,
-                    }),
+                    })),
                 },
                 SectionInfo {
                     num: 7,

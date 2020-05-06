@@ -43,10 +43,7 @@ pub enum SectionBody {
     Section3(GridDefinition),
     Section4(ProdDefinition),
     Section5(ReprDefinition),
-    Section6 {
-        /// Bit-map indicator
-        bitmap_indicator: u8,
-    },
+    Section6(BitMap),
     Section7,
 }
 
@@ -132,6 +129,12 @@ pub struct ReprDefinition {
     pub num_points: u32,
     /// Data Representation Template Number
     pub repr_tmpl_num: u16,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct BitMap {
+    /// Bit-map indicator
+    pub bitmap_indicator: u8,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
