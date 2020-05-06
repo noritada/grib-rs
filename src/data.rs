@@ -1,3 +1,4 @@
+use chrono::{DateTime, Utc};
 use std::collections::HashSet;
 use std::fmt::{self, Display, Formatter};
 use std::io::{Read, Seek};
@@ -8,7 +9,7 @@ use crate::codetables::{
 };
 use crate::reader::{Grib2Read, ParseError, SeekableGrib2Reader};
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SectionInfo {
     pub num: u8,
     pub offset: usize,
@@ -35,7 +36,7 @@ impl Display for SectionInfo {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum SectionBody {
     Section1(Identification),
     Section2,
@@ -60,7 +61,7 @@ impl SectionBody {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Identification {
     /// Identification of originating/generating centre (see Common Code Table C-1)
     pub centre_id: u16,
@@ -73,7 +74,7 @@ pub struct Identification {
     /// Significance of Reference Time (see Code Table 1.2)
     pub ref_time_significance: u8,
     /// Reference time of data
-    pub ref_time: RefTime,
+    pub ref_time: DateTime<Utc>,
     /// Production status of processed data in this GRIB message
     /// (see Code Table 1.3)
     pub prod_status: u8,
@@ -131,26 +132,6 @@ pub struct ReprDefinition {
     pub num_points: u32,
     /// Data Representation Template Number
     pub repr_tmpl_num: u16,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct RefTime {
-    pub year: u16,
-    pub month: u8,
-    pub date: u8,
-    pub hour: u8,
-    pub minute: u8,
-    pub second: u8,
-}
-
-impl Display for RefTime {
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        write!(
-            f,
-            "{:04}-{:02}-{:02} {:02}:{:02}:{:02}Z",
-            self.year, self.month, self.date, self.hour, self.minute, self.second
-        )
-    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]

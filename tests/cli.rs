@@ -68,7 +68,7 @@ Originating/generating sub-centre:      0
 GRIB Master Tables Version Number:      code '5' is not implemented
 GRIB Local Tables Version Number:       code '1' is not implemented
 Significance of Reference Time:         Analysis
-Reference time of data:                 2016-08-22 02:00:00Z
+Reference time of data:                 2016-08-22 02:00:00 UTC
 Production status of processed data:    Operational products
 Type of processed data:                 Analysis and forecast products
 ";

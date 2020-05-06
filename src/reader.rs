@@ -1,11 +1,11 @@
+use chrono::{offset::TimeZone, Utc};
 use std::convert::TryInto;
 use std::fmt::{self, Display, Formatter};
 use std::io::{self, Read, Seek, SeekFrom};
 use std::result::Result;
 
 use crate::data::{
-    GridDefinition, Identification, ProdDefinition, RefTime, ReprDefinition, SectionBody,
-    SectionInfo,
+    GridDefinition, Identification, ProdDefinition, ReprDefinition, SectionBody, SectionInfo,
 };
 
 const SECT0_IS_MAGIC: &'static [u8] = b"GRIB";
@@ -170,14 +170,9 @@ pub fn unpack_sect1_body<R: Read>(f: &mut R, body_size: usize) -> Result<Section
         master_table_version: buf[4],
         local_table_version: buf[5],
         ref_time_significance: buf[6],
-        ref_time: RefTime {
-            year: read_as!(u16, buf, 7),
-            month: buf[9],
-            date: buf[10],
-            hour: buf[11],
-            minute: buf[12],
-            second: buf[13],
-        },
+        ref_time: Utc
+            .ymd(read_as!(u16, buf, 7).into(), buf[9].into(), buf[10].into())
+            .and_hms(buf[11].into(), buf[12].into(), buf[13].into()),
         prod_status: buf[14],
         data_type: buf[15],
     }))
@@ -336,14 +331,7 @@ mod tests {
                         master_table_version: 5,
                         local_table_version: 1,
                         ref_time_significance: 0,
-                        ref_time: RefTime {
-                            year: 2016,
-                            month: 8,
-                            date: 22,
-                            hour: 2,
-                            minute: 0,
-                            second: 0,
-                        },
+                        ref_time: Utc.ymd(2016, 8, 22).and_hms(2, 0, 0),
                         prod_status: 0,
                         data_type: 2,
                     })),

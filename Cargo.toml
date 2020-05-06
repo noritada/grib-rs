@@ -6,6 +6,7 @@ edition = "2018"
 
 [dependencies]
 clap = "2.33.0"
+chrono="0.4"
 
 [dev-dependencies]
 xz2 = "0.1"
