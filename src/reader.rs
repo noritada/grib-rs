@@ -252,7 +252,7 @@ pub fn unpack_sect6_body<R: Read>(f: &mut R, body_size: usize) -> Result<Section
 }
 
 fn skip_sect7_body<R: Seek>(f: &mut R, body_size: usize) -> Result<SectionBody, ParseError> {
-    f.seek(SeekFrom::Current(body_size as i64))?; // < std::io::Seek
+    f.seek(SeekFrom::Current(body_size as i64))?;
 
     Ok(SectionBody::Section7)
 }
