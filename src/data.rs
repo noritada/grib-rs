@@ -156,22 +156,28 @@ impl Display for TemplateInfo {
     }
 }
 
-pub struct Grib2<R: Read> {
+pub struct Grib2<R> {
     reader: R,
     sections: Box<[SectionInfo]>,
     submessages: Box<[SubMessage]>,
 }
 
-impl<R: Read + Seek> Grib2<R> {
-    pub fn read(f: R) -> Result<Self, ParseError> {
-        let mut f = SeekableGrib2Reader::new(f);
-        let sects = f.scan()?;
+impl<R: Grib2Read> Grib2<R> {
+    pub fn read(mut r: R) -> Result<Self, ParseError> {
+        let sects = r.scan()?;
         let submessages = get_submessages(&sects)?;
         Ok(Self {
-            reader: f.reader,
+            reader: r,
             sections: sects,
             submessages: submessages,
         })
+    }
+
+    pub fn read_with_seekable<SR: Read + Seek>(
+        r: SR,
+    ) -> Result<Grib2<SeekableGrib2Reader<SR>>, ParseError> {
+        let r = SeekableGrib2Reader::new(r);
+        Grib2::<SeekableGrib2Reader<SR>>::read(r)
     }
 
     pub fn submessages(&self) -> &Box<[SubMessage]> {
@@ -187,7 +193,7 @@ impl<R: Read + Seek> Grib2<R> {
     }
 }
 
-impl<R: Read> Display for Grib2<R> {
+impl<R: Grib2Read> Display for Grib2<R> {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         let err = "No information available".to_string();
         let s = match self.sections.get(1) {

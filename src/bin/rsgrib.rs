@@ -6,7 +6,7 @@ use std::path::Path;
 use std::result::Result;
 
 use grib::data::Grib2;
-use grib::reader::ParseError;
+use grib::reader::{ParseError, SeekableGrib2Reader};
 
 enum CliError {
     ParseError(ParseError),
@@ -70,11 +70,11 @@ of debugging, enhancement, and education.\
         )
 }
 
-fn grib(file_name: &str) -> Result<Grib2<BufReader<File>>, CliError> {
+fn grib(file_name: &str) -> Result<Grib2<SeekableGrib2Reader<BufReader<File>>>, CliError> {
     let path = Path::new(file_name);
     let f = File::open(&path).map_err(|e| CliError::IOError(e, path.display().to_string()))?;
     let f = BufReader::new(f);
-    Ok(Grib2::read(f)?)
+    Ok(Grib2::<SeekableGrib2Reader<BufReader<File>>>::read_with_seekable(f)?)
 }
 
 fn real_main() -> Result<(), CliError> {

@@ -64,7 +64,7 @@ pub trait Grib2Read: Read + Seek {
 }
 
 pub struct SeekableGrib2Reader<R> {
-    pub reader: R, // FIXME: pub is tentative
+    reader: R,
 }
 
 impl<R> SeekableGrib2Reader<R> {
