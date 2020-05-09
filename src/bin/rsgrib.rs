@@ -5,26 +5,26 @@ use std::io::{BufReader, Error};
 use std::path::Path;
 use std::result::Result;
 
-use grib::data::Grib2;
-use grib::reader::{ParseError, SeekableGrib2Reader};
+use grib::data::{Grib2, GribError};
+use grib::reader::SeekableGrib2Reader;
 
 enum CliError {
-    ParseError(ParseError),
+    GribError(GribError),
     IOError(Error, String),
 }
 
 impl Display for CliError {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         match self {
-            Self::ParseError(e) => write!(f, "{}", e),
+            Self::GribError(e) => write!(f, "{}", e),
             Self::IOError(e, path) => write!(f, "{}: {}", e, path),
         }
     }
 }
 
-impl From<ParseError> for CliError {
-    fn from(e: ParseError) -> Self {
-        Self::ParseError(e)
+impl From<GribError> for CliError {
+    fn from(e: GribError) -> Self {
+        Self::GribError(e)
     }
 }
 

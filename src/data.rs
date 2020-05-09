@@ -163,7 +163,7 @@ pub struct Grib2<R> {
 }
 
 impl<R: Grib2Read> Grib2<R> {
-    pub fn read(mut r: R) -> Result<Self, ParseError> {
+    pub fn read(mut r: R) -> Result<Self, GribError> {
         let sects = r.scan()?;
         let submessages = get_submessages(&sects)?;
         Ok(Self {
@@ -175,7 +175,7 @@ impl<R: Grib2Read> Grib2<R> {
 
     pub fn read_with_seekable<SR: Read + Seek>(
         r: SR,
-    ) -> Result<Grib2<SeekableGrib2Reader<SR>>, ParseError> {
+    ) -> Result<Grib2<SeekableGrib2Reader<SR>>, GribError> {
         let r = SeekableGrib2Reader::new(r);
         Grib2::<SeekableGrib2Reader<SR>>::read(r)
     }
@@ -209,7 +209,7 @@ impl<R: Grib2Read> Display for Grib2<R> {
 
 /// Validates the section order of sections and split them into a
 /// vector of section groups.
-fn get_submessages(sects: &Box<[SectionInfo]>) -> Result<Box<[SubMessage]>, ParseError> {
+fn get_submessages(sects: &Box<[SectionInfo]>) -> Result<Box<[SubMessage]>, ValidationError> {
     let mut iter = sects.iter().enumerate();
     let mut starts = Vec::new();
     let mut i2_default = None;
@@ -219,9 +219,9 @@ fn get_submessages(sects: &Box<[SectionInfo]>) -> Result<Box<[SubMessage]>, Pars
         ($num:expr) => {{
             let (i, sect) = iter
                 .next()
-                .ok_or(ParseError::GRIB2IterationSuddenlyFinished)?;
+                .ok_or(ValidationError::GRIB2IterationSuddenlyFinished)?;
             if sect.num != $num {
-                return Err(ParseError::GRIB2WrongIteration(i));
+                return Err(ValidationError::GRIB2WrongIteration(i));
             }
             i
         }};
@@ -275,7 +275,7 @@ fn get_submessages(sects: &Box<[SectionInfo]>) -> Result<Box<[SubMessage]>, Pars
             }
             Some((i, SectionInfo { num: 4, .. })) => {
                 if i3_default == None {
-                    return Err(ParseError::NoGridDefinition(i));
+                    return Err(ValidationError::NoGridDefinition(i));
                 }
                 let (i, _) = sect.unwrap();
                 let i5 = check!(5);
@@ -292,18 +292,18 @@ fn get_submessages(sects: &Box<[SectionInfo]>) -> Result<Box<[SubMessage]>, Pars
             }
             Some((i, SectionInfo { num: 8, .. })) => {
                 if i3_default == None {
-                    return Err(ParseError::NoGridDefinition(i));
+                    return Err(ValidationError::NoGridDefinition(i));
                 }
                 if i < sects.len() - 1 {
-                    return Err(ParseError::GRIB2WrongIteration(i));
+                    return Err(ValidationError::GRIB2WrongIteration(i));
                 }
                 break;
             }
             Some((i, SectionInfo { .. })) => {
-                return Err(ParseError::GRIB2WrongIteration(i));
+                return Err(ValidationError::GRIB2WrongIteration(i));
             }
             None => {
-                return Err(ParseError::GRIB2IterationSuddenlyFinished);
+                return Err(ValidationError::GRIB2IterationSuddenlyFinished);
             }
         };
         starts.push(start);
@@ -317,6 +317,50 @@ fn get_templates(sects: &Box<[SectionInfo]>) -> Vec<TemplateInfo> {
     let mut vec: Vec<_> = uniq.into_iter().collect();
     vec.sort_unstable();
     vec
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum GribError {
+    ParseError(ParseError),
+    ValidationError(ValidationError),
+}
+
+impl From<ParseError> for GribError {
+    fn from(e: ParseError) -> Self {
+        Self::ParseError(e)
+    }
+}
+
+impl From<ValidationError> for GribError {
+    fn from(e: ValidationError) -> Self {
+        Self::ValidationError(e)
+    }
+}
+
+impl Display for GribError {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        match self {
+            Self::ParseError(e) => write!(f, "{}", e),
+            Self::ValidationError(e) => write!(f, "{}", e),
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum ValidationError {
+    GRIB2IterationSuddenlyFinished,
+    NoGridDefinition(usize),
+    GRIB2WrongIteration(usize),
+}
+
+impl Display for ValidationError {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        match self {
+            Self::GRIB2IterationSuddenlyFinished => write!(f, "GRIB2 file suddenly finished"),
+            Self::NoGridDefinition(i) => write!(f, "Grid Definition Section not found at {}", i),
+            Self::GRIB2WrongIteration(i) => write!(f, "GRIB2 sections wrongly ordered at {}", i),
+        }
+    }
 }
 
 #[cfg(test)]
@@ -508,7 +552,7 @@ mod tests {
 
         assert_eq!(
             get_submessages(&sects),
-            Err(ParseError::GRIB2IterationSuddenlyFinished)
+            Err(ValidationError::GRIB2IterationSuddenlyFinished)
         );
     }
 
@@ -518,7 +562,7 @@ mod tests {
 
         assert_eq!(
             get_submessages(&sects),
-            Err(ParseError::GRIB2IterationSuddenlyFinished)
+            Err(ValidationError::GRIB2IterationSuddenlyFinished)
         );
     }
 
@@ -528,7 +572,7 @@ mod tests {
 
         assert_eq!(
             get_submessages(&sects),
-            Err(ParseError::GRIB2IterationSuddenlyFinished)
+            Err(ValidationError::GRIB2IterationSuddenlyFinished)
         );
     }
 
@@ -538,7 +582,7 @@ mod tests {
 
         assert_eq!(
             get_submessages(&sects),
-            Err(ParseError::GRIB2IterationSuddenlyFinished)
+            Err(ValidationError::GRIB2IterationSuddenlyFinished)
         );
     }
 
@@ -548,7 +592,7 @@ mod tests {
 
         assert_eq!(
             get_submessages(&sects),
-            Err(ParseError::GRIB2IterationSuddenlyFinished)
+            Err(ValidationError::GRIB2IterationSuddenlyFinished)
         );
     }
 
@@ -558,7 +602,7 @@ mod tests {
 
         assert_eq!(
             get_submessages(&sects),
-            Err(ParseError::GRIB2IterationSuddenlyFinished)
+            Err(ValidationError::GRIB2IterationSuddenlyFinished)
         );
     }
 
@@ -568,7 +612,7 @@ mod tests {
 
         assert_eq!(
             get_submessages(&sects),
-            Err(ParseError::GRIB2IterationSuddenlyFinished)
+            Err(ValidationError::GRIB2IterationSuddenlyFinished)
         );
     }
 
@@ -578,7 +622,7 @@ mod tests {
 
         assert_eq!(
             get_submessages(&sects),
-            Err(ParseError::NoGridDefinition(2))
+            Err(ValidationError::NoGridDefinition(2))
         );
     }
 
@@ -588,7 +632,7 @@ mod tests {
 
         assert_eq!(
             get_submessages(&sects),
-            Err(ParseError::NoGridDefinition(2))
+            Err(ValidationError::NoGridDefinition(2))
         );
     }
 
@@ -598,7 +642,7 @@ mod tests {
 
         assert_eq!(
             get_submessages(&sects),
-            Err(ParseError::GRIB2WrongIteration(3))
+            Err(ValidationError::GRIB2WrongIteration(3))
         );
     }
 
@@ -608,7 +652,7 @@ mod tests {
 
         assert_eq!(
             get_submessages(&sects),
-            Err(ParseError::GRIB2WrongIteration(3))
+            Err(ValidationError::GRIB2WrongIteration(3))
         );
     }
 
@@ -618,7 +662,7 @@ mod tests {
 
         assert_eq!(
             get_submessages(&sects),
-            Err(ParseError::GRIB2WrongIteration(8))
+            Err(ValidationError::GRIB2WrongIteration(8))
         );
     }
 
