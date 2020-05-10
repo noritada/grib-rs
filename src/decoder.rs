@@ -1,18 +1,111 @@
+use std::cell::RefMut;
+use std::convert::TryInto;
+
+use crate::data::{GribError, SectionBody, SectionInfo};
+use crate::reader::Grib2Read;
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-enum RunLengthEncodingUnpackError {
+pub enum DecodeError {
+    TemplateNumberUnsupported,
+    BitMapIndicatorUnsupported,
+    RunLengthEncodingDecodeError(RunLengthEncodingDecodeError),
+}
+
+impl From<RunLengthEncodingDecodeError> for DecodeError {
+    fn from(e: RunLengthEncodingDecodeError) -> Self {
+        Self::RunLengthEncodingDecodeError(e)
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum RunLengthEncodingDecodeError {
     NotSupported,
     InvalidFirstValue,
     LengthMismatch,
 }
 
+macro_rules! read_as {
+    ($ty:ty, $buf:ident, $start:expr) => {{
+        let end = $start + std::mem::size_of::<$ty>();
+        <$ty>::from_be_bytes($buf[$start..end].try_into().unwrap())
+    }};
+}
+
+pub fn dispatch<R: Grib2Read>(
+    sect5: &SectionInfo,
+    sect6: &SectionInfo,
+    sect7: &SectionInfo,
+    reader: RefMut<R>,
+) -> Result<Box<[u8]>, GribError> {
+    let sect5_body = match &sect5.body {
+        Some(SectionBody::Section5(body)) => body,
+        _ => return Err(GribError::InternalDataError),
+    };
+
+    let decoded = match sect5_body.repr_tmpl_num {
+        200 => RunLengthEncodingDecoder::decode(sect5, sect6, sect7, reader)?,
+        _ => {
+            return Err(GribError::DecodeError(
+                DecodeError::TemplateNumberUnsupported,
+            ))
+        }
+    };
+    Ok(decoded)
+}
+
+trait Grib2DataDecode<R> {
+    fn decode(
+        sect5: &SectionInfo,
+        sect6: &SectionInfo,
+        sect7: &SectionInfo,
+        reader: RefMut<R>,
+    ) -> Result<Box<[u8]>, GribError>;
+}
+
+struct RunLengthEncodingDecoder {}
+
+impl<R: Grib2Read> Grib2DataDecode<R> for RunLengthEncodingDecoder {
+    fn decode(
+        sect5: &SectionInfo,
+        sect6: &SectionInfo,
+        sect7: &SectionInfo,
+        mut reader: RefMut<R>,
+    ) -> Result<Box<[u8]>, GribError> {
+        let (sect5_body, sect6_body) = match (sect5.body.as_ref(), sect6.body.as_ref()) {
+            (Some(SectionBody::Section5(b5)), Some(SectionBody::Section6(b6))) => (b5, b6),
+            _ => return Err(GribError::InternalDataError),
+        };
+
+        if sect6_body.bitmap_indicator != 255 {
+            return Err(GribError::DecodeError(
+                DecodeError::BitMapIndicatorUnsupported,
+            ));
+        }
+
+        let sect5_data = reader.read_sect_body_bytes(sect5)?;
+        let nbit = read_as!(u8, sect5_data, 6);
+        let maxv = read_as!(u16, sect5_data, 7);
+        let sect7_data = reader.read_sect_body_bytes(sect7)?;
+
+        let decoded = rleunpack(
+            &sect7_data,
+            nbit,
+            maxv,
+            Some(sect5_body.num_points as usize),
+        )
+        .map_err(|e| DecodeError::RunLengthEncodingDecodeError(e))?;
+        Ok(decoded)
+    }
+}
+
 fn rleunpack(
     input: &[u8],
     nbit: u8,
-    maxv: u8,
+    maxv: u16,
     expected_len: Option<usize>,
-) -> Result<Box<[u8]>, RunLengthEncodingUnpackError> {
+) -> Result<Box<[u8]>, RunLengthEncodingDecodeError> {
     if nbit != 8 {
-        return Err(RunLengthEncodingUnpackError::NotSupported);
+        return Err(RunLengthEncodingDecodeError::NotSupported);
     }
 
     let mut out_buf = match expected_len {
@@ -21,20 +114,20 @@ fn rleunpack(
     };
 
     let rlbase = maxv + 1;
-    let lngu = (2u16.pow(nbit.into()) - (rlbase as u16)) as usize;
+    let lngu = (2u16.pow(nbit.into()) - rlbase) as usize;
     let mut cached = None;
     let mut exp: usize = 1;
 
     for value in input.iter() {
         let value = *value;
 
-        if value < rlbase {
+        if (value as u16) < rlbase {
             out_buf.push(value);
             cached = Some(value);
             exp = 1;
         } else {
-            let prev = cached.ok_or(RunLengthEncodingUnpackError::InvalidFirstValue)?;
-            let length = ((value - rlbase) as usize) * exp;
+            let prev = cached.ok_or(RunLengthEncodingDecodeError::InvalidFirstValue)?;
+            let length = ((value as u16 - rlbase) as usize) * exp;
             out_buf.append(&mut vec![prev; length as usize]);
             exp *= lngu;
         }
@@ -42,7 +135,7 @@ fn rleunpack(
 
     if let Some(len) = expected_len {
         if len != out_buf.len() {
-            return Err(RunLengthEncodingUnpackError::LengthMismatch);
+            return Err(RunLengthEncodingDecodeError::LengthMismatch);
         }
     }
 

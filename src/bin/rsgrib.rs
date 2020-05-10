@@ -2,6 +2,7 @@ use clap::{crate_authors, crate_name, crate_version, App, AppSettings, Arg, SubC
 use std::fmt::{self, Display, Formatter};
 use std::fs::File;
 use std::io::{BufReader, Error};
+use std::num::ParseIntError;
 use std::path::Path;
 use std::result::Result;
 
@@ -10,6 +11,7 @@ use grib::reader::SeekableGrib2Reader;
 
 enum CliError {
     GribError(GribError),
+    ParseNumberError(ParseIntError),
     IOError(Error, String),
 }
 
@@ -17,6 +19,7 @@ impl Display for CliError {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         match self {
             Self::GribError(e) => write!(f, "{}", e),
+            Self::ParseNumberError(e) => write!(f, "{:#?}", e),
             Self::IOError(e, path) => write!(f, "{}: {}", e, path),
         }
     }
@@ -25,6 +28,12 @@ impl Display for CliError {
 impl From<GribError> for CliError {
     fn from(e: GribError) -> Self {
         Self::GribError(e)
+    }
+}
+
+impl From<ParseIntError> for CliError {
+    fn from(e: ParseIntError) -> Self {
+        Self::ParseNumberError(e)
     }
 }
 
@@ -67,6 +76,12 @@ engineers, who wants to understand the data structure for the purpose
 of debugging, enhancement, and education.\
 ",
                 ),
+        )
+        .subcommand(
+            SubCommand::with_name("decode")
+                .about("Exports decoded data")
+                .arg(Arg::with_name("file").required(true))
+                .arg(Arg::with_name("index").required(true)),
         )
 }
 
@@ -133,6 +148,13 @@ fn real_main() -> Result<(), CliError> {
                     println!("{}", tmpl);
                 }
             }
+        }
+        ("decode", Some(subcommand_matches)) => {
+            let file_name = subcommand_matches.value_of("file").unwrap();
+            let grib = grib(file_name)?;
+            let index: usize = subcommand_matches.value_of("index").unwrap().parse()?;
+            let values = grib.get_values(index)?;
+            println!("{:#?}", values);
         }
         ("", None) => unreachable!(),
         _ => unreachable!(),

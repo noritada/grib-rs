@@ -61,6 +61,7 @@ pub trait Grib2Read: Read + Seek {
     fn read_sect8(&mut self) -> Result<(), ParseError>;
     fn read_sect_meta(&mut self) -> Result<SectionInfo, ParseError>;
     fn read_sect(&mut self, meta: &SectionInfo) -> Result<SectionBody, ParseError>;
+    fn read_sect_body_bytes(&mut self, meta: &SectionInfo) -> Result<Box<[u8]>, ParseError>;
 }
 
 pub struct SeekableGrib2Reader<R> {
@@ -152,6 +153,17 @@ impl<R: Read + Seek> Grib2Read for SeekableGrib2Reader<R> {
         };
 
         Ok(body)
+    }
+
+    fn read_sect_body_bytes(&mut self, meta: &SectionInfo) -> Result<Box<[u8]>, ParseError> {
+        let body_offset = meta.offset + SECT_HEADER_SIZE;
+        self.seek(SeekFrom::Start(body_offset as u64))?;
+
+        let body_size = meta.size - SECT_HEADER_SIZE;
+        let mut buf = vec![0; body_size];
+        self.read_exact(&mut buf.as_mut_slice())?;
+
+        Ok(buf.into_boxed_slice())
     }
 }
 

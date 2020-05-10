@@ -1,4 +1,5 @@
 use chrono::{DateTime, Utc};
+use std::cell::RefCell;
 use std::collections::HashSet;
 use std::fmt::{self, Display, Formatter};
 use std::io::{Read, Seek};
@@ -7,6 +8,7 @@ use std::result::Result;
 use crate::codetables::{
     lookup_table, CODE_TABLE_1_0, CODE_TABLE_1_1, CODE_TABLE_1_2, CODE_TABLE_1_3, CODE_TABLE_1_4,
 };
+use crate::decoder::{self, DecodeError};
 use crate::reader::{Grib2Read, ParseError, SeekableGrib2Reader};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -157,7 +159,7 @@ impl Display for TemplateInfo {
 }
 
 pub struct Grib2<R> {
-    reader: R,
+    reader: RefCell<R>,
     sections: Box<[SectionInfo]>,
     submessages: Box<[SubMessage]>,
 }
@@ -167,7 +169,7 @@ impl<R: Grib2Read> Grib2<R> {
         let sects = r.scan()?;
         let submessages = get_submessages(&sects)?;
         Ok(Self {
-            reader: r,
+            reader: RefCell::new(r),
             sections: sects,
             submessages: submessages,
         })
@@ -182,6 +184,25 @@ impl<R: Grib2Read> Grib2<R> {
 
     pub fn submessages(&self) -> &Box<[SubMessage]> {
         &self.submessages
+    }
+
+    /// Decodes grid values of a surface specified by the index `i`.
+    pub fn get_values(&self, i: usize) -> Result<Box<[u8]>, GribError> {
+        let (sect5, sect6, sect7) = self
+            .submessages
+            .get(i)
+            .and_then(|submsg| {
+                Some((
+                    submsg.section5.and_then(|i| self.sections.get(i))?,
+                    submsg.section6.and_then(|i| self.sections.get(i))?,
+                    submsg.section7.and_then(|i| self.sections.get(i))?,
+                ))
+            })
+            .ok_or(GribError::InternalDataError)?;
+
+        let reader = self.reader.borrow_mut();
+        let values = decoder::dispatch(sect5, sect6, sect7, reader)?;
+        Ok(values)
     }
 
     pub fn sections(&self) -> &Box<[SectionInfo]> {
@@ -321,8 +342,10 @@ fn get_templates(sects: &Box<[SectionInfo]>) -> Vec<TemplateInfo> {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum GribError {
+    InternalDataError,
     ParseError(ParseError),
     ValidationError(ValidationError),
+    DecodeError(DecodeError),
 }
 
 impl From<ParseError> for GribError {
@@ -337,11 +360,19 @@ impl From<ValidationError> for GribError {
     }
 }
 
+impl From<DecodeError> for GribError {
+    fn from(e: DecodeError) -> Self {
+        Self::DecodeError(e)
+    }
+}
+
 impl Display for GribError {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         match self {
+            Self::InternalDataError => write!(f, "Something unexpected happend"),
             Self::ParseError(e) => write!(f, "{}", e),
             Self::ValidationError(e) => write!(f, "{}", e),
+            Self::DecodeError(e) => write!(f, "{:#?}", e),
         }
     }
 }
