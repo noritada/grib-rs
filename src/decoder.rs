@@ -21,9 +21,9 @@ fn rleunpack(
     };
 
     let rlbase = maxv + 1;
-    let lngu = (2u16.pow(nbit.into()) - (rlbase as u16)) as u8;
+    let lngu = (2u16.pow(nbit.into()) - (rlbase as u16)) as usize;
     let mut cached = None;
-    let mut exp = 1;
+    let mut exp: usize = 1;
 
     for value in input.iter() {
         let value = *value;
@@ -34,7 +34,7 @@ fn rleunpack(
             exp = 1;
         } else {
             let prev = cached.ok_or(RunLengthEncodingUnpackError::InvalidFirstValue)?;
-            let length = (value - rlbase) * exp;
+            let length = ((value - rlbase) as usize) * exp;
             out_buf.append(&mut vec![prev; length as usize]);
             exp *= lngu;
         }
@@ -66,5 +66,13 @@ mod tests {
             rleunpack(&input, 8, 250, Some(21)),
             Ok(output.into_boxed_slice())
         );
+    }
+
+    #[test]
+    fn rleunpack_u8_long_length() {
+        let input: Vec<u8> = vec![0x00, 0x14, 0x1c];
+        let output: Vec<u8> = vec![0; 6065];
+
+        assert_eq!(rleunpack(&input, 8, 3, None), Ok(output.into_boxed_slice()));
     }
 }
