@@ -53,6 +53,9 @@ fn rleunpack(
 mod tests {
     use super::*;
 
+    // This test data is based on 4-bit numbers of sample data
+    // provided in JMBSC's document available in the following URL:
+    // http://www.jmbsc.or.jp/jp/online/joho-sample/Run-Length_Encoding.pdf
     #[test]
     fn rleunpack_u8() {
         let input: Vec<u8> = vec![3, 9, 12, 6, 4, 15, 2, 1, 0, 13, 12, 2, 3];
