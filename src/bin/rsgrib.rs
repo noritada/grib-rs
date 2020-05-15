@@ -1,4 +1,5 @@
 use clap::{crate_authors, crate_name, crate_version, App, AppSettings, Arg, SubCommand};
+use pager::Pager;
 use std::fmt::{self, Display, Formatter};
 use std::fs::File;
 use std::io::{BufReader, Error};
@@ -109,6 +110,7 @@ fn real_main() -> Result<(), CliError> {
         ("inspect", Some(subcommand_matches)) => {
             let file_name = subcommand_matches.value_of("file").unwrap();
             let grib = grib(file_name)?;
+            Pager::new().setup();
 
             let has_sect = subcommand_matches.is_present("sections");
             let has_tmpl = subcommand_matches.is_present("templates");
