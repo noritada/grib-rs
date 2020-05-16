@@ -7,8 +7,40 @@ use std::num::ParseIntError;
 use std::path::Path;
 use std::result::Result;
 
-use grib::data::{Grib2, GribError};
+use grib::data::{Grib2, GribError, SectionInfo, TemplateInfo};
 use grib::reader::SeekableGrib2Reader;
+
+struct InspectView<'i> {
+    items: Vec<InspectItem<'i>>,
+}
+
+impl<'i> InspectView<'i> {
+    fn new() -> Self {
+        Self { items: Vec::new() }
+    }
+
+    fn add(&mut self, item: InspectItem<'i>) {
+        self.items.push(item);
+    }
+
+    fn with_headers(&self) -> bool {
+        !(self.items.len() < 2)
+    }
+}
+
+enum InspectItem<'i> {
+    Sections(&'i Box<[SectionInfo]>),
+    Templates(Vec<TemplateInfo>),
+}
+
+impl<'i> InspectItem<'i> {
+    fn title(&self) -> &'static str {
+        match self {
+            InspectItem::Sections(_) => "Sections",
+            InspectItem::Templates(_) => "Templates",
+        }
+    }
+}
 
 enum CliError {
     GribError(GribError),
@@ -112,42 +144,47 @@ fn real_main() -> Result<(), CliError> {
             let grib = grib(file_name)?;
             Pager::new().setup();
 
-            let has_sect = subcommand_matches.is_present("sections");
-            let has_tmpl = subcommand_matches.is_present("templates");
-
-            let mut count = 0;
-            if has_sect {
-                count += 1;
+            let mut view = InspectView::new();
+            if subcommand_matches.is_present("sections") {
+                view.add(InspectItem::Sections(grib.sections()));
             }
-            if has_tmpl {
-                count += 1;
+            if subcommand_matches.is_present("templates") {
+                let tmpls = grib.list_templates();
+                view.add(InspectItem::Templates(tmpls));
             }
-            let has_one = count == 1;
-            let has_all = count == 0;
+            if view.items.len() == 0 {
+                view.add(InspectItem::Sections(grib.sections()));
+                let tmpls = grib.list_templates();
+                view.add(InspectItem::Templates(tmpls));
+            }
 
-            let mut first = true;
+            let with_header = view.with_headers();
+            let mut items = view.items.into_iter().peekable();
+            loop {
+                let item = match items.next() {
+                    None => break,
+                    Some(i) => i,
+                };
 
-            if has_sect || has_all {
-                if !has_one {
-                    println!("Sections:");
+                if with_header {
+                    println!("{}:", item.title());
                 }
 
-                for sect in grib.sections().iter() {
-                    println!("{}", sect);
+                match item {
+                    InspectItem::Sections(sects) => {
+                        for sect in sects.iter() {
+                            println!("{}", sect);
+                        }
+                    }
+                    InspectItem::Templates(tmpls) => {
+                        for tmpl in tmpls.iter() {
+                            println!("{}", tmpl);
+                        }
+                    }
                 }
-                first = false;
-            }
 
-            if has_tmpl || has_all {
-                if !first {
+                if let Some(_) = items.peek() {
                     println!("");
-                }
-                if !has_one {
-                    println!("Templates:");
-                }
-
-                for tmpl in grib.list_templates() {
-                    println!("{}", tmpl);
                 }
             }
         }
