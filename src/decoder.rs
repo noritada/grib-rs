@@ -144,21 +144,21 @@ fn rleunpack(
     };
 
     let rlbase = maxv + 1;
-    let lngu = (2u16.pow(nbit.into()) - rlbase) as usize;
+    let lngu: usize = (2u16.pow(nbit.into()) - rlbase).into();
     let mut cached = None;
     let mut exp: usize = 1;
 
     for value in input.iter() {
         let value = *value;
 
-        if (value as u16) < rlbase {
+        if rlbase > value.into() {
             out_buf.push(value);
             cached = Some(value);
             exp = 1;
         } else {
             let prev = cached.ok_or(RunLengthEncodingDecodeError::InvalidFirstValue)?;
-            let length = ((value as u16 - rlbase) as usize) * exp;
-            out_buf.append(&mut vec![prev; length as usize]);
+            let length: usize = ((value as u16 - rlbase) as usize) * exp;
+            out_buf.append(&mut vec![prev; length]);
             exp *= lngu;
         }
     }
