@@ -22,6 +22,7 @@ pub enum RunLengthEncodingDecodeError {
     NotSupported,
     InvalidFirstValue,
     LengthMismatch,
+    InvalidLevelValue(u8),
 }
 
 macro_rules! read_as {
@@ -36,7 +37,7 @@ pub fn dispatch<R: Grib2Read>(
     sect6: &SectionInfo,
     sect7: &SectionInfo,
     reader: RefMut<R>,
-) -> Result<Box<[u8]>, GribError> {
+) -> Result<Box<[Option<f32>]>, GribError> {
     let sect5_body = match &sect5.body {
         Some(SectionBody::Section5(body)) => body,
         _ => return Err(GribError::InternalDataError),
@@ -59,7 +60,7 @@ trait Grib2DataDecode<R> {
         sect6: &SectionInfo,
         sect7: &SectionInfo,
         reader: RefMut<R>,
-    ) -> Result<Box<[u8]>, GribError>;
+    ) -> Result<Box<[Option<f32>]>, GribError>;
 }
 
 struct RunLengthEncodingDecoder {}
@@ -70,7 +71,7 @@ impl<R: Grib2Read> Grib2DataDecode<R> for RunLengthEncodingDecoder {
         sect6: &SectionInfo,
         sect7: &SectionInfo,
         mut reader: RefMut<R>,
-    ) -> Result<Box<[u8]>, GribError> {
+    ) -> Result<Box<[Option<f32>]>, GribError> {
         let (sect5_body, sect6_body) = match (sect5.body.as_ref(), sect6.body.as_ref()) {
             (Some(SectionBody::Section5(b5)), Some(SectionBody::Section6(b6))) => (b5, b6),
             _ => return Err(GribError::InternalDataError),
@@ -85,15 +86,44 @@ impl<R: Grib2Read> Grib2DataDecode<R> for RunLengthEncodingDecoder {
         let sect5_data = reader.read_sect_body_bytes(sect5)?;
         let nbit = read_as!(u8, sect5_data, 6);
         let maxv = read_as!(u16, sect5_data, 7);
+        let max_level = read_as!(u16, sect5_data, 9);
+        let num_digits = read_as!(u8, sect5_data, 11);
+
+        let mut level_map = Vec::with_capacity(max_level.into());
+        level_map.push(None);
+        let mut pos = 12;
+
+        for _ in 0..max_level {
+            let val: f32 = read_as!(u16, sect5_data, pos).into();
+            let num_digits: f32 = num_digits.into();
+            let factor = 10_f32.powf(-num_digits);
+            let val = val * factor;
+            level_map.push(Some(val));
+            pos += std::mem::size_of::<u16>();
+        }
+
         let sect7_data = reader.read_sect_body_bytes(sect7)?;
 
-        let decoded = rleunpack(
+        let decoded_levels = rleunpack(
             &sect7_data,
             nbit,
             maxv,
             Some(sect5_body.num_points as usize),
         )
         .map_err(|e| DecodeError::RunLengthEncodingDecodeError(e))?;
+
+        let level_to_value = |level: &u8| -> Result<Option<f32>, DecodeError> {
+            let index: usize = (*level).into();
+            level_map
+                .get(index)
+                .map(|l| *l)
+                .ok_or(DecodeError::RunLengthEncodingDecodeError(
+                    RunLengthEncodingDecodeError::InvalidLevelValue(*level),
+                ))
+        };
+
+        let decoded: Result<Vec<_>, _> = (*decoded_levels).iter().map(level_to_value).collect();
+        let decoded = decoded?.into_boxed_slice();
         Ok(decoded)
     }
 }
