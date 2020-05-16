@@ -1,5 +1,5 @@
 use clap::{crate_authors, crate_name, crate_version, App, AppSettings, Arg, SubCommand};
-use console::Term;
+use console::{Style, Term};
 use pager::Pager;
 use std::fmt::{self, Display, Formatter};
 use std::fs::File;
@@ -192,7 +192,9 @@ fn real_main() -> Result<(), CliError> {
                 };
 
                 if with_header {
-                    println!("{}:", item.title());
+                    let yellow = Style::new().yellow().bold();
+                    let s = format!("{}:", item.title());
+                    println!("{}", yellow.apply_to(s));
                 }
 
                 match item {
