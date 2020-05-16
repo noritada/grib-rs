@@ -1,4 +1,5 @@
 use clap::{crate_authors, crate_name, crate_version, App, AppSettings, Arg, SubCommand};
+use console::Term;
 use pager::Pager;
 use std::fmt::{self, Display, Formatter};
 use std::fs::File;
@@ -26,6 +27,18 @@ impl<'i> InspectView<'i> {
     fn with_headers(&self) -> bool {
         !(self.items.len() < 2)
     }
+
+    fn num_lines(&self) -> usize {
+        let mut count = 0;
+        for item in self.items.iter() {
+            if self.with_headers() {
+                count += 1;
+            }
+            count += item.len();
+        }
+        count += self.items.len() - 1; // empty lines
+        count
+    }
 }
 
 enum InspectItem<'i> {
@@ -38,6 +51,13 @@ impl<'i> InspectItem<'i> {
         match self {
             InspectItem::Sections(_) => "Sections",
             InspectItem::Templates(_) => "Templates",
+        }
+    }
+
+    fn len(&self) -> usize {
+        match self {
+            InspectItem::Sections(sects) => sects.len(),
+            InspectItem::Templates(tmpls) => tmpls.len(),
         }
     }
 }
@@ -142,7 +162,6 @@ fn real_main() -> Result<(), CliError> {
         ("inspect", Some(subcommand_matches)) => {
             let file_name = subcommand_matches.value_of("file").unwrap();
             let grib = grib(file_name)?;
-            Pager::new().setup();
 
             let mut view = InspectView::new();
             if subcommand_matches.is_present("sections") {
@@ -156,6 +175,12 @@ fn real_main() -> Result<(), CliError> {
                 view.add(InspectItem::Sections(grib.sections()));
                 let tmpls = grib.list_templates();
                 view.add(InspectItem::Templates(tmpls));
+            }
+
+            let term = Term::stdout();
+            let (height, _width) = term.size();
+            if view.num_lines() > height.into() {
+                Pager::new().setup();
             }
 
             let with_header = view.with_headers();

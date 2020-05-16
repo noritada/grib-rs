@@ -8,6 +8,7 @@ edition = "2018"
 clap = "2.33.0"
 chrono="0.4"
 pager="0.15"
+console = "0.11"
 
 [dev-dependencies]
 xz2 = "0.1"
