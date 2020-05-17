@@ -18,6 +18,21 @@ pub(crate) fn jma_tornado_nowcast_file() -> Result<NamedTempFile, io::Error> {
     Ok(out)
 }
 
+pub(crate) fn jma_kousa_file() -> Result<NamedTempFile, io::Error> {
+    let mut buf = Vec::new();
+    let mut out = NamedTempFile::new()?;
+
+    let f = File::open(
+        "testdata/Z__C_RJTD_20170221120000_MSG_GPV_Gll0p5deg_Pys_B20170221120000_F2017022115-2017022212_grib2.bin.xz",
+    )?;
+    let f = BufReader::new(f);
+    let mut f = XzDecoder::new(f);
+    f.read_to_end(&mut buf)?;
+    out.write_all(&buf)?;
+
+    Ok(out)
+}
+
 pub(crate) fn too_small_file() -> Result<NamedTempFile, io::Error> {
     let mut out = NamedTempFile::new()?;
     out.write_all(b"foo")?;

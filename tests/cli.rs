@@ -376,6 +376,30 @@ fn inspect_with_all_opts() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
+#[test]
+fn decode_tornado() -> Result<(), Box<dyn std::error::Error>> {
+    let tempfile = utils::jma_tornado_nowcast_file()?;
+    let arg_path = tempfile.path();
+
+    let mut cmd = Command::cargo_bin(CMD_NAME)?;
+    cmd.arg("decode").arg(arg_path).arg("3");
+    cmd.assert().success().stderr(predicate::str::is_empty());
+
+    Ok(())
+}
+
+#[test]
+fn decode_kousa() -> Result<(), Box<dyn std::error::Error>> {
+    let tempfile = utils::jma_kousa_file()?;
+    let arg_path = tempfile.path();
+
+    let mut cmd = Command::cargo_bin(CMD_NAME)?;
+    cmd.arg("decode").arg(arg_path).arg("3");
+    cmd.assert().success().stderr(predicate::str::is_empty());
+
+    Ok(())
+}
+
 macro_rules! test_subcommands_without_args {
     ($(($name:ident, $str:expr),)*) => ($(
         #[test]
