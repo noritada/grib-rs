@@ -111,8 +111,8 @@ impl<R: Grib2Read> Grib2DataDecode<R> for RunLengthEncodingDecoder {
 
         for _ in 0..max_level {
             let val: f32 = read_as!(u16, sect5_data, pos).into();
-            let num_digits: f32 = num_digits.into();
-            let factor = 10_f32.powf(-num_digits);
+            let num_digits: i32 = num_digits.into();
+            let factor = 10_f32.powi(-num_digits);
             let val = val * factor;
             level_map.push(Some(val));
             pos += std::mem::size_of::<u16>();
@@ -258,15 +258,15 @@ fn unpack_simple_packing(
         None => Vec::new(),
     };
 
-    let dig: f32 = dig.into();
+    let dig: i32 = dig.into();
     let mut pos = 0;
 
     while pos < input.len() {
         let encoded = read_as!(u16, input, pos) as f32;
         pos += std::mem::size_of::<u16>();
 
-        let diff = (encoded * 2_f32.powf(exp.into())) as f32;
-        let dig_factor = 10_f32.powf(-dig);
+        let diff = (encoded * 2_f32.powi(exp.into())) as f32;
+        let dig_factor = 10_f32.powi(-dig);
         let value: f32 = (ref_val + diff) * dig_factor;
         out_buf.push(value);
     }
