@@ -8,13 +8,27 @@ use crate::reader::Grib2Read;
 pub enum DecodeError {
     TemplateNumberUnsupported,
     BitMapIndicatorUnsupported,
+    SimplePackingDecodeError(SimplePackingDecodeError),
     RunLengthEncodingDecodeError(RunLengthEncodingDecodeError),
+}
+
+impl From<SimplePackingDecodeError> for DecodeError {
+    fn from(e: SimplePackingDecodeError) -> Self {
+        Self::SimplePackingDecodeError(e)
+    }
 }
 
 impl From<RunLengthEncodingDecodeError> for DecodeError {
     fn from(e: RunLengthEncodingDecodeError) -> Self {
         Self::RunLengthEncodingDecodeError(e)
     }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum SimplePackingDecodeError {
+    NotSupported,
+    OriginalFieldValueTypeNotSupported,
+    LengthMismatch,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -44,6 +58,7 @@ pub fn dispatch<R: Grib2Read>(
     };
 
     let decoded = match sect5_body.repr_tmpl_num {
+        0 => SimplePackingDecoder::decode(sect5, sect6, sect7, reader)?,
         200 => RunLengthEncodingDecoder::decode(sect5, sect6, sect7, reader)?,
         _ => {
             return Err(GribError::DecodeError(
@@ -166,6 +181,98 @@ fn rleunpack(
     if let Some(len) = expected_len {
         if len != out_buf.len() {
             return Err(RunLengthEncodingDecodeError::LengthMismatch);
+        }
+    }
+
+    Ok(out_buf.into_boxed_slice())
+}
+
+struct SimplePackingDecoder {}
+
+impl<R: Grib2Read> Grib2DataDecode<R> for SimplePackingDecoder {
+    fn decode(
+        sect5: &SectionInfo,
+        sect6: &SectionInfo,
+        sect7: &SectionInfo,
+        mut reader: RefMut<R>,
+    ) -> Result<Box<[Option<f32>]>, GribError> {
+        let (sect5_body, sect6_body) = match (sect5.body.as_ref(), sect6.body.as_ref()) {
+            (Some(SectionBody::Section5(b5)), Some(SectionBody::Section6(b6))) => (b5, b6),
+            _ => return Err(GribError::InternalDataError),
+        };
+
+        if sect6_body.bitmap_indicator != 255 {
+            return Err(GribError::DecodeError(
+                DecodeError::BitMapIndicatorUnsupported,
+            ));
+        }
+
+        let sect5_data = reader.read_sect_body_bytes(sect5)?;
+        let ref_val = read_as!(f32, sect5_data, 6);
+        let exp = read_as!(u16, sect5_data, 10);
+        let dig = read_as!(u16, sect5_data, 12);
+        let nbit = read_as!(u8, sect5_data, 14);
+        let value_type = read_as!(u8, sect5_data, 15);
+
+        if value_type != 0 {
+            return Err(GribError::DecodeError(
+                DecodeError::SimplePackingDecodeError(
+                    SimplePackingDecodeError::OriginalFieldValueTypeNotSupported,
+                ),
+            ));
+        }
+
+        let sect7_data = reader.read_sect_body_bytes(sect7)?;
+
+        let decoded = unpack_simple_packing(
+            &sect7_data,
+            nbit,
+            ref_val,
+            exp,
+            dig,
+            Some(sect5_body.num_points as usize),
+        )
+        .map_err(|e| DecodeError::SimplePackingDecodeError(e))?;
+
+        let decoded: Vec<_> = (*decoded).iter().map(|v| Some(*v)).collect();
+        let decoded = decoded.into_boxed_slice();
+        Ok(decoded)
+    }
+}
+
+fn unpack_simple_packing(
+    input: &[u8],
+    nbit: u8,
+    ref_val: f32,
+    exp: u16,
+    dig: u16,
+    expected_len: Option<usize>,
+) -> Result<Box<[f32]>, SimplePackingDecodeError> {
+    if nbit != 16 {
+        return Err(SimplePackingDecodeError::NotSupported);
+    }
+
+    let mut out_buf = match expected_len {
+        Some(sz) => Vec::with_capacity(sz),
+        None => Vec::new(),
+    };
+
+    let dig: f32 = dig.into();
+    let mut pos = 0;
+
+    while pos < input.len() {
+        let encoded: u32 = read_as!(u16, input, pos).into();
+        pos += std::mem::size_of::<u16>();
+
+        let diff = (encoded * 2_u32.pow(exp.into())) as f32;
+        let dig_factor = 10_f32.powf(-dig);
+        let value: f32 = (ref_val + diff) * dig_factor;
+        out_buf.push(value);
+    }
+
+    if let Some(len) = expected_len {
+        if len != out_buf.len() {
+            return Err(SimplePackingDecodeError::LengthMismatch);
         }
     }
 
