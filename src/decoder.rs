@@ -3,6 +3,7 @@ use std::convert::TryInto;
 
 use crate::data::{GribError, SectionBody, SectionInfo};
 use crate::reader::Grib2Read;
+use crate::utils::GribInt;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum DecodeError {
@@ -209,8 +210,8 @@ impl<R: Grib2Read> Grib2DataDecode<R> for SimplePackingDecoder {
 
         let sect5_data = reader.read_sect_body_bytes(sect5)?;
         let ref_val = read_as!(f32, sect5_data, 6);
-        let exp = read_as!(u16, sect5_data, 10);
-        let dig = read_as!(u16, sect5_data, 12);
+        let exp = read_as!(u16, sect5_data, 10).into_grib_int();
+        let dig = read_as!(u16, sect5_data, 12).into_grib_int();
         let nbit = read_as!(u8, sect5_data, 14);
         let value_type = read_as!(u8, sect5_data, 15);
 
@@ -244,8 +245,8 @@ fn unpack_simple_packing(
     input: &[u8],
     nbit: u8,
     ref_val: f32,
-    exp: u16,
-    dig: u16,
+    exp: i16,
+    dig: i16,
     expected_len: Option<usize>,
 ) -> Result<Box<[f32]>, SimplePackingDecodeError> {
     if nbit != 16 {
@@ -261,10 +262,10 @@ fn unpack_simple_packing(
     let mut pos = 0;
 
     while pos < input.len() {
-        let encoded: u32 = read_as!(u16, input, pos).into();
+        let encoded = read_as!(u16, input, pos) as f32;
         pos += std::mem::size_of::<u16>();
 
-        let diff = (encoded * 2_u32.pow(exp.into())) as f32;
+        let diff = (encoded * 2_f32.powf(exp.into())) as f32;
         let dig_factor = 10_f32.powf(-dig);
         let value: f32 = (ref_val + diff) * dig_factor;
         out_buf.push(value);
