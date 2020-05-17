@@ -309,4 +309,32 @@ mod tests {
 
         assert_eq!(rleunpack(&input, 8, 3, None), Ok(output.into_boxed_slice()));
     }
+
+    #[test]
+    fn simple_packing_u8() {
+        let ref_val_bytes = vec![0x35, 0x3e, 0x6b, 0xf6];
+        let exp = 0x801a;
+        let dig = 0x0000;
+        let input: Vec<u8> = vec![0x00, 0x06, 0x00, 0x0d];
+        let expected: Vec<f32> = vec![7.98783162e-07, 9.03091291e-07];
+
+        let ref_val = f32::from_be_bytes(ref_val_bytes[..].try_into().unwrap());
+        let actual = unpack_simple_packing(
+            &input,
+            16,
+            ref_val,
+            exp.into_grib_int(),
+            dig.into_grib_int(),
+            Some(2),
+        )
+        .unwrap();
+
+        assert_eq!(actual.len(), expected.len());
+        let mut i = 0;
+        while i < actual.len() {
+            assert!(actual[i] < expected[i] + 0.00000001);
+            assert!(actual[i] > expected[i] - 0.00000001);
+            i += 1;
+        }
+    }
 }
