@@ -400,6 +400,58 @@ fn decode_kousa() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
+#[test]
+fn decode_kousa_big_endian() -> Result<(), Box<dyn std::error::Error>> {
+    let tempfile = utils::jma_kousa_file()?;
+    let arg_path = tempfile.path();
+
+    let dir = TempDir::new()?;
+    let out_path = format!("{}/out.bin", dir.path().display());
+
+    let mut cmd = Command::cargo_bin(CMD_NAME)?;
+    cmd.arg("decode")
+        .arg(arg_path)
+        .arg("3")
+        .arg("-b")
+        .arg(&out_path);
+    cmd.assert()
+        .success()
+        .stdout(predicate::str::is_empty())
+        .stderr(predicate::str::is_empty());
+
+    let expected = utils::kousa_be_bin_bytes()?;
+    let actual = utils::cat_as_bytes(&out_path)?;
+    assert_eq!(actual, expected);
+
+    Ok(())
+}
+
+#[test]
+fn decode_kousa_little_endian() -> Result<(), Box<dyn std::error::Error>> {
+    let tempfile = utils::jma_kousa_file()?;
+    let arg_path = tempfile.path();
+
+    let dir = TempDir::new()?;
+    let out_path = format!("{}/out.bin", dir.path().display());
+
+    let mut cmd = Command::cargo_bin(CMD_NAME)?;
+    cmd.arg("decode")
+        .arg(arg_path)
+        .arg("3")
+        .arg("-l")
+        .arg(&out_path);
+    cmd.assert()
+        .success()
+        .stdout(predicate::str::is_empty())
+        .stderr(predicate::str::is_empty());
+
+    let expected = utils::kousa_le_bin_bytes()?;
+    let actual = utils::cat_as_bytes(&out_path)?;
+    assert_eq!(actual, expected);
+
+    Ok(())
+}
+
 macro_rules! test_subcommands_without_args {
     ($(($name:ident, $str:expr),)*) => ($(
         #[test]

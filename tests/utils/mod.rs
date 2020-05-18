@@ -28,6 +28,25 @@ fn unxz_to_tempfile(file_name: &str) -> Result<NamedTempFile, io::Error> {
     Ok(out)
 }
 
+pub(crate) fn kousa_be_bin_bytes() -> Result<Vec<u8>, io::Error> {
+    unxz_as_bytes("testdata/gen/kousa-wgrib2-be.bin.xz")
+}
+
+pub(crate) fn kousa_le_bin_bytes() -> Result<Vec<u8>, io::Error> {
+    unxz_as_bytes("testdata/gen/kousa-wgrib2-le.bin.xz")
+}
+
+fn unxz_as_bytes(file_name: &str) -> Result<Vec<u8>, io::Error> {
+    let mut buf = Vec::new();
+
+    let f = File::open(file_name)?;
+    let f = BufReader::new(f);
+    let mut f = XzDecoder::new(f);
+    f.read_to_end(&mut buf)?;
+
+    Ok(buf)
+}
+
 pub(crate) fn too_small_file() -> Result<NamedTempFile, io::Error> {
     let mut out = NamedTempFile::new()?;
     out.write_all(b"foo")?;
@@ -40,4 +59,14 @@ pub(crate) fn non_grib_file() -> Result<NamedTempFile, io::Error> {
     out.write_all(b"foo foo foo foo foo foo foo foo ")?;
 
     Ok(out)
+}
+
+pub(crate) fn cat_as_bytes(file_name: &str) -> Result<Vec<u8>, io::Error> {
+    let mut buf = Vec::new();
+
+    let f = File::open(file_name)?;
+    let mut f = BufReader::new(f);
+    f.read_to_end(&mut buf)?;
+
+    Ok(buf)
 }
