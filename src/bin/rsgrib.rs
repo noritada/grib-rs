@@ -219,6 +219,7 @@ fn real_main() -> Result<(), CliError> {
             let grib = grib(file_name)?;
             let index: usize = subcommand_matches.value_of("index").unwrap().parse()?;
             let values = grib.get_values(index)?;
+            Pager::new().setup();
             println!("{:#?}", values);
         }
         ("", None) => unreachable!(),
