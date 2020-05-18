@@ -5,7 +5,7 @@ use tempfile::TempDir;
 
 mod utils;
 
-const CMD_NAME: &'static str = "rsgrib";
+const CMD_NAME: &'static str = "gribber";
 
 #[test]
 fn help() -> Result<(), Box<dyn std::error::Error>> {
