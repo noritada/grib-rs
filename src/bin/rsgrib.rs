@@ -1,4 +1,4 @@
-use clap::{crate_authors, crate_name, crate_version, App, AppSettings, Arg, SubCommand};
+use clap::{crate_name, crate_version, App, AppSettings, Arg, SubCommand};
 use console::{Style, Term};
 use pager::Pager;
 use std::fmt::{self, Display, Formatter};
@@ -93,7 +93,6 @@ impl From<ParseIntError> for CliError {
 fn app() -> App<'static, 'static> {
     App::new(crate_name!())
         .version(crate_version!())
-        .author(crate_authors!())
         .setting(AppSettings::ArgRequiredElseHelp)
         .setting(AppSettings::ColoredHelp)
         .subcommand(
