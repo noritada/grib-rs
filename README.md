@@ -19,12 +19,12 @@ A world where everyone can read weather data easily although its interpretation 
 * Rust library `grib`
   * Read and basic format checks
   * Supports of some code tables
-* CLI application `rsgrib` built on the top of the Rust library
+* CLI application `gribber` built on the top of the Rust library
   * Display of some information of GRIB2 files
+  * Data export as flat binary files
 
 ## Planned features
 
-* Data export as flat binary files
 * WebAssembly application
 * Efficient read from cloud sources such as S3
 * More supports of code tables and templates
@@ -32,19 +32,20 @@ A world where everyone can read weather data easily although its interpretation 
 * Format conversion to other popular formats
 * Providing interface to other languages
 
-## CLI application `rsgrib`
+## CLI application `gribber`
 
 ```
 USAGE:
-    rsgrib [SUBCOMMAND]
+    gribber [SUBCOMMAND]
 
 FLAGS:
     -h, --help       Prints help information
     -V, --version    Prints version information
 
 SUBCOMMANDS:
-    help         Prints this message or the help of the given subcommand(s)
-    info         Shows identification information
-    list         Lists contained data
-    templates    Lists used templates
+    decode     Exports decoded data
+    help       Prints this message or the help of the given subcommand(s)
+    info       Shows identification information
+    inspect    Inspects and describes the data structure
+    list       Lists contained data
 ```
