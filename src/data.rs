@@ -187,7 +187,7 @@ impl<R: Grib2Read> Grib2<R> {
     }
 
     /// Decodes grid values of a surface specified by the index `i`.
-    pub fn get_values(&self, i: usize) -> Result<Box<[Option<f32>]>, GribError> {
+    pub fn get_values(&self, i: usize) -> Result<Box<[f32]>, GribError> {
         let (sect5, sect6, sect7) = self
             .submessages
             .get(i)

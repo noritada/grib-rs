@@ -52,7 +52,7 @@ pub fn dispatch<R: Grib2Read>(
     sect6: &SectionInfo,
     sect7: &SectionInfo,
     reader: RefMut<R>,
-) -> Result<Box<[Option<f32>]>, GribError> {
+) -> Result<Box<[f32]>, GribError> {
     let sect5_body = match &sect5.body {
         Some(SectionBody::Section5(body)) => body,
         _ => return Err(GribError::InternalDataError),
@@ -76,7 +76,7 @@ trait Grib2DataDecode<R> {
         sect6: &SectionInfo,
         sect7: &SectionInfo,
         reader: RefMut<R>,
-    ) -> Result<Box<[Option<f32>]>, GribError>;
+    ) -> Result<Box<[f32]>, GribError>;
 }
 
 struct RunLengthEncodingDecoder {}
@@ -87,7 +87,7 @@ impl<R: Grib2Read> Grib2DataDecode<R> for RunLengthEncodingDecoder {
         sect6: &SectionInfo,
         sect7: &SectionInfo,
         mut reader: RefMut<R>,
-    ) -> Result<Box<[Option<f32>]>, GribError> {
+    ) -> Result<Box<[f32]>, GribError> {
         let (sect5_body, sect6_body) = match (sect5.body.as_ref(), sect6.body.as_ref()) {
             (Some(SectionBody::Section5(b5)), Some(SectionBody::Section6(b6))) => (b5, b6),
             _ => return Err(GribError::InternalDataError),
@@ -106,7 +106,7 @@ impl<R: Grib2Read> Grib2DataDecode<R> for RunLengthEncodingDecoder {
         let num_digits = read_as!(u8, sect5_data, 11);
 
         let mut level_map = Vec::with_capacity(max_level.into());
-        level_map.push(None);
+        level_map.push(f32::NAN);
         let mut pos = 12;
 
         for _ in 0..max_level {
@@ -114,7 +114,7 @@ impl<R: Grib2Read> Grib2DataDecode<R> for RunLengthEncodingDecoder {
             let num_digits: i32 = num_digits.into();
             let factor = 10_f32.powi(-num_digits);
             let val = val * factor;
-            level_map.push(Some(val));
+            level_map.push(val);
             pos += std::mem::size_of::<u16>();
         }
 
@@ -128,7 +128,7 @@ impl<R: Grib2Read> Grib2DataDecode<R> for RunLengthEncodingDecoder {
         )
         .map_err(|e| DecodeError::RunLengthEncodingDecodeError(e))?;
 
-        let level_to_value = |level: &u8| -> Result<Option<f32>, DecodeError> {
+        let level_to_value = |level: &u8| -> Result<f32, DecodeError> {
             let index: usize = (*level).into();
             level_map
                 .get(index)
@@ -196,7 +196,7 @@ impl<R: Grib2Read> Grib2DataDecode<R> for SimplePackingDecoder {
         sect6: &SectionInfo,
         sect7: &SectionInfo,
         mut reader: RefMut<R>,
-    ) -> Result<Box<[Option<f32>]>, GribError> {
+    ) -> Result<Box<[f32]>, GribError> {
         let (sect5_body, sect6_body) = match (sect5.body.as_ref(), sect6.body.as_ref()) {
             (Some(SectionBody::Section5(b5)), Some(SectionBody::Section6(b6))) => (b5, b6),
             _ => return Err(GribError::InternalDataError),
@@ -234,9 +234,6 @@ impl<R: Grib2Read> Grib2DataDecode<R> for SimplePackingDecoder {
             Some(sect5_body.num_points as usize),
         )
         .map_err(|e| DecodeError::SimplePackingDecodeError(e))?;
-
-        let decoded: Vec<_> = (*decoded).iter().map(|v| Some(*v)).collect();
-        let decoded = decoded.into_boxed_slice();
         Ok(decoded)
     }
 }
