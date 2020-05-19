@@ -50,6 +50,8 @@ SUBCOMMANDS:
     list       Lists contained data
 ```
 
+Note that binaries exported from `gribber decode --big-endian` use `0x7fc00000` as a missing value, although those from `wgrib` use `0x6258d19a`.
+
 ## License
 
 This project is licensed under either of
