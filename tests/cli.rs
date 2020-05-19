@@ -401,6 +401,76 @@ fn decode_kousa() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 #[test]
+fn decode_tornado_big_endian() -> Result<(), Box<dyn std::error::Error>> {
+    let tempfile = utils::jma_tornado_nowcast_file()?;
+    let arg_path = tempfile.path();
+
+    let dir = TempDir::new()?;
+    let out_path = format!("{}/out.bin", dir.path().display());
+
+    let mut cmd = Command::cargo_bin(CMD_NAME)?;
+    cmd.arg("decode")
+        .arg(arg_path)
+        .arg("3")
+        .arg("-b")
+        .arg(&out_path);
+    cmd.assert()
+        .success()
+        .stdout(predicate::str::is_empty())
+        .stderr(predicate::str::is_empty());
+
+    let expected = utils::tornado_nowcast_be_bin_bytes()?;
+    let expected: Vec<_> = expected
+        .chunks(4)
+        .into_iter()
+        .map(|b| match b {
+            [0x62, 0x58, 0xd1, 0x9a] => vec![0x7f, 0xc0, 0x00, 0x00],
+            b => b.to_vec(),
+        })
+        .flatten()
+        .collect();
+    let actual = utils::cat_as_bytes(&out_path)?;
+    assert_eq!(actual, expected);
+
+    Ok(())
+}
+
+#[test]
+fn decode_tornado_little_endian() -> Result<(), Box<dyn std::error::Error>> {
+    let tempfile = utils::jma_tornado_nowcast_file()?;
+    let arg_path = tempfile.path();
+
+    let dir = TempDir::new()?;
+    let out_path = format!("{}/out.bin", dir.path().display());
+
+    let mut cmd = Command::cargo_bin(CMD_NAME)?;
+    cmd.arg("decode")
+        .arg(arg_path)
+        .arg("3")
+        .arg("-l")
+        .arg(&out_path);
+    cmd.assert()
+        .success()
+        .stdout(predicate::str::is_empty())
+        .stderr(predicate::str::is_empty());
+
+    let expected = utils::tornado_nowcast_le_bin_bytes()?;
+    let expected: Vec<_> = expected
+        .chunks(4)
+        .into_iter()
+        .map(|b| match b {
+            [0x9a, 0xd1, 0x58, 0x62] => vec![0x00, 0x00, 0xc0, 0x7f],
+            b => b.to_vec(),
+        })
+        .flatten()
+        .collect();
+    let actual = utils::cat_as_bytes(&out_path)?;
+    assert_eq!(actual, expected);
+
+    Ok(())
+}
+
+#[test]
 fn decode_kousa_big_endian() -> Result<(), Box<dyn std::error::Error>> {
     let tempfile = utils::jma_kousa_file()?;
     let arg_path = tempfile.path();

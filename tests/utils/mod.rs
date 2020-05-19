@@ -28,6 +28,14 @@ fn unxz_to_tempfile(file_name: &str) -> Result<NamedTempFile, io::Error> {
     Ok(out)
 }
 
+pub(crate) fn tornado_nowcast_be_bin_bytes() -> Result<Vec<u8>, io::Error> {
+    unxz_as_bytes("testdata/gen/tornado-wgrib2-be.bin.xz")
+}
+
+pub(crate) fn tornado_nowcast_le_bin_bytes() -> Result<Vec<u8>, io::Error> {
+    unxz_as_bytes("testdata/gen/tornado-wgrib2-le.bin.xz")
+}
+
 pub(crate) fn kousa_be_bin_bytes() -> Result<Vec<u8>, io::Error> {
     unxz_as_bytes("testdata/gen/kousa-wgrib2-be.bin.xz")
 }
