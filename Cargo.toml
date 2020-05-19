@@ -11,10 +11,15 @@ homepage = "https://github.com/noritada/grib-rs"
 categories = ["Science"]
 keywords = ["GRIB", "weather", "meteorology"]
 
-[dependencies]
+[target.'cfg(unix)'.dependencies]
 clap = "2.33.0"
 chrono="0.4"
 pager="0.15"
+console = "0.11"
+
+[target.'cfg(not(unix))'.dependencies]
+clap = "2.33.0"
+chrono="0.4"
 console = "0.11"
 
 [dev-dependencies]

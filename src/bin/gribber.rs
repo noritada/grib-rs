@@ -1,5 +1,6 @@
 use clap::{crate_name, crate_version, App, AppSettings, Arg, SubCommand};
 use console::{Style, Term};
+#[cfg(unix)]
 use pager::Pager;
 use std::fmt::{self, Display, Formatter};
 use std::fs::File;
@@ -159,6 +160,14 @@ fn grib(file_name: &str) -> Result<Grib2<SeekableGrib2Reader<BufReader<File>>>, 
     Ok(Grib2::<SeekableGrib2Reader<BufReader<File>>>::read_with_seekable(f)?)
 }
 
+#[cfg(unix)]
+fn start_pager() {
+    Pager::new().setup();
+}
+
+#[cfg(not(unix))]
+fn start_pager() {}
+
 fn real_main() -> Result<(), CliError> {
     let matches = app().get_matches();
 
@@ -194,7 +203,7 @@ fn real_main() -> Result<(), CliError> {
             let term = Term::stdout();
             let (height, _width) = term.size();
             if view.num_lines() > height.into() {
-                Pager::new().setup();
+                start_pager();
             }
 
             let with_header = view.with_headers();
@@ -256,7 +265,7 @@ fn real_main() -> Result<(), CliError> {
                     })
                     .map_err(|e| CliError::IOError(e, out_path.to_string()))?;
             } else {
-                Pager::new().setup();
+                start_pager();
                 println!("{:#?}", values);
             }
         }
