@@ -56,6 +56,10 @@ SUBCOMMANDS:
 
 Note that binaries exported from `gribber decode --big-endian` use `0x7fc00000` as a missing value, although those from `wgrib` use `0x6258d19a`.
 
+## Contributing
+
+Contribution is always welcome.  Please check [CONTRIBUTING.md](CONTRIBUTING.md) if you are interested.
+
 ## License
 
 This project is licensed under either of
