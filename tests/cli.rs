@@ -406,7 +406,8 @@ fn decode_tornado_big_endian() -> Result<(), Box<dyn std::error::Error>> {
     let arg_path = tempfile.path();
 
     let dir = TempDir::new()?;
-    let out_path = format!("{}/out.bin", dir.path().display());
+    let out_path = dir.path().join("out.bin");
+    let out_path = format!("{}", out_path.display());
 
     let mut cmd = Command::cargo_bin(CMD_NAME)?;
     cmd.arg("decode")
@@ -441,7 +442,8 @@ fn decode_tornado_little_endian() -> Result<(), Box<dyn std::error::Error>> {
     let arg_path = tempfile.path();
 
     let dir = TempDir::new()?;
-    let out_path = format!("{}/out.bin", dir.path().display());
+    let out_path = dir.path().join("out.bin");
+    let out_path = format!("{}", out_path.display());
 
     let mut cmd = Command::cargo_bin(CMD_NAME)?;
     cmd.arg("decode")
@@ -476,7 +478,8 @@ fn decode_kousa_big_endian() -> Result<(), Box<dyn std::error::Error>> {
     let arg_path = tempfile.path();
 
     let dir = TempDir::new()?;
-    let out_path = format!("{}/out.bin", dir.path().display());
+    let out_path = dir.path().join("out.bin");
+    let out_path = format!("{}", out_path.display());
 
     let mut cmd = Command::cargo_bin(CMD_NAME)?;
     cmd.arg("decode")
@@ -502,7 +505,8 @@ fn decode_kousa_little_endian() -> Result<(), Box<dyn std::error::Error>> {
     let arg_path = tempfile.path();
 
     let dir = TempDir::new()?;
-    let out_path = format!("{}/out.bin", dir.path().display());
+    let out_path = dir.path().join("out.bin");
+    let out_path = format!("{}", out_path.display());
 
     let mut cmd = Command::cargo_bin(CMD_NAME)?;
     cmd.arg("decode")
@@ -555,10 +559,11 @@ macro_rules! test_subcommands_with_nonexisting_file {
         #[test]
         fn $name() -> Result<(), Box<dyn std::error::Error>> {
             let dir = TempDir::new()?;
-            let filename = format!("{}/nosuchfile", dir.path().display());
+            let file_path = dir.path().join("nosuchfile");
+            let file_path = format!("{}", file_path.display());
 
             let mut cmd = Command::cargo_bin(CMD_NAME)?;
-            cmd.arg($str).arg(filename);
+            cmd.arg($str).arg(file_path);
             cmd.assert()
                 .failure()
                 .stdout(predicate::str::is_empty())
