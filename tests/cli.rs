@@ -566,10 +566,7 @@ macro_rules! test_subcommands_with_nonexisting_file {
             cmd.arg($str).arg(file_path);
             cmd.assert()
                 .failure()
-                .stdout(predicate::str::is_empty())
-                .stderr(predicate::str::starts_with(
-                    "No such file or directory (os error 2):",
-                ));
+                .stdout(predicate::str::is_empty());
 
             Ok(())
         }
