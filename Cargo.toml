@@ -8,7 +8,7 @@ description = "GRIB format parser for Rust"
 readme = "README.md"
 repository = "https://github.com/noritada/grib-rs"
 homepage = "https://github.com/noritada/grib-rs"
-categories = ["Science"]
+categories = ["science"]
 keywords = ["GRIB", "weather", "meteorology"]
 
 [target.'cfg(unix)'.dependencies]
