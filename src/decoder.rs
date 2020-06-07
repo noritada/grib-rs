@@ -1,7 +1,7 @@
 use std::cell::RefMut;
 use std::convert::TryInto;
 
-use crate::data::{GribError, SectionBody, SectionInfo};
+use crate::context::{GribError, SectionBody, SectionInfo};
 use crate::reader::Grib2Read;
 use crate::utils::GribInt;
 

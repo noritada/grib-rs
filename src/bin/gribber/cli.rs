@@ -6,7 +6,7 @@ use std::io::{BufReader, Error};
 use std::num::ParseIntError;
 use std::path::Path;
 
-use grib::data::{Grib2, GribError};
+use grib::context::{Grib2, GribError};
 use grib::reader::SeekableGrib2Reader;
 
 pub enum CliError {

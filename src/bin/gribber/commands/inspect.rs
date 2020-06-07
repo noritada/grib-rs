@@ -1,7 +1,7 @@
 use clap::{App, Arg, ArgMatches, SubCommand};
 use console::{Style, Term};
 
-use grib::data::{SectionInfo, TemplateInfo};
+use grib::context::{SectionInfo, TemplateInfo};
 
 use crate::cli;
 

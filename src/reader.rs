@@ -4,7 +4,7 @@ use std::fmt::{self, Display, Formatter};
 use std::io::{self, Read, Seek, SeekFrom};
 use std::result::Result;
 
-use crate::data::{
+use crate::context::{
     BitMap, GridDefinition, Identification, ProdDefinition, ReprDefinition, SectionBody,
     SectionInfo,
 };
