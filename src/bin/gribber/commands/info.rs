@@ -8,8 +8,8 @@ pub fn cli() -> App<'static, 'static> {
         .arg(Arg::with_name("file").required(true))
 }
 
-pub fn exec(subcommand_matches: &ArgMatches<'static>) -> Result<(), cli::CliError> {
-    let file_name = subcommand_matches.value_of("file").unwrap();
+pub fn exec(args: &ArgMatches<'static>) -> Result<(), cli::CliError> {
+    let file_name = args.value_of("file").unwrap();
     let grib = cli::grib(file_name)?;
     println!("{}", grib);
     Ok(())

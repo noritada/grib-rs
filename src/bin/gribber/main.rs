@@ -1,5 +1,4 @@
 use clap::{crate_name, crate_version, App, AppSettings};
-use std::result::Result;
 
 mod cli;
 mod commands;

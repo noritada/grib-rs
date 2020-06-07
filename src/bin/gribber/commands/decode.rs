@@ -26,14 +26,14 @@ pub fn cli() -> App<'static, 'static> {
         )
 }
 
-pub fn exec(subcommand_matches: &ArgMatches<'static>) -> Result<(), cli::CliError> {
-    let file_name = subcommand_matches.value_of("file").unwrap();
+pub fn exec(args: &ArgMatches<'static>) -> Result<(), cli::CliError> {
+    let file_name = args.value_of("file").unwrap();
     let grib = cli::grib(file_name)?;
-    let index: usize = subcommand_matches.value_of("index").unwrap().parse()?;
+    let index: usize = args.value_of("index").unwrap().parse()?;
     let values = grib.get_values(index)?;
 
-    if subcommand_matches.is_present("big-endian") {
-        let out_path = subcommand_matches.value_of("big-endian").unwrap();
+    if args.is_present("big-endian") {
+        let out_path = args.value_of("big-endian").unwrap();
         File::create(out_path)
             .and_then(|mut f| {
                 for value in values.iter() {
@@ -42,8 +42,8 @@ pub fn exec(subcommand_matches: &ArgMatches<'static>) -> Result<(), cli::CliErro
                 Ok(())
             })
             .map_err(|e| cli::CliError::IOError(e, out_path.to_string()))?;
-    } else if subcommand_matches.is_present("little-endian") {
-        let out_path = subcommand_matches.value_of("little-endian").unwrap();
+    } else if args.is_present("little-endian") {
+        let out_path = args.value_of("little-endian").unwrap();
         File::create(out_path)
             .and_then(|mut f| {
                 for value in values.iter() {

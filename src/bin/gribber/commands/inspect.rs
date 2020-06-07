@@ -30,15 +30,15 @@ of debugging, enhancement, and education.\
         )
 }
 
-pub fn exec(subcommand_matches: &ArgMatches<'static>) -> Result<(), cli::CliError> {
-    let file_name = subcommand_matches.value_of("file").unwrap();
+pub fn exec(args: &ArgMatches<'static>) -> Result<(), cli::CliError> {
+    let file_name = args.value_of("file").unwrap();
     let grib = cli::grib(file_name)?;
 
     let mut view = InspectView::new();
-    if subcommand_matches.is_present("sections") {
+    if args.is_present("sections") {
         view.add(InspectItem::Sections(grib.sections()));
     }
-    if subcommand_matches.is_present("templates") {
+    if args.is_present("templates") {
         let tmpls = grib.list_templates();
         view.add(InspectItem::Templates(tmpls));
     }
