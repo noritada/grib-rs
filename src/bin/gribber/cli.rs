@@ -5,6 +5,8 @@ use std::fs::File;
 use std::io::{BufReader, Error};
 use std::num::ParseIntError;
 use std::path::Path;
+#[cfg(unix)]
+use which::which;
 
 use grib::context::{Grib2, GribError};
 use grib::reader::SeekableGrib2Reader;
@@ -46,7 +48,11 @@ pub fn grib(file_name: &str) -> Result<Grib2<SeekableGrib2Reader<BufReader<File>
 
 #[cfg(unix)]
 pub fn start_pager() {
-    Pager::new().setup();
+    if which("less").is_ok() {
+        Pager::with_pager("less -R").setup();
+    } else {
+        Pager::new().setup();
+    }
 }
 
 #[cfg(not(unix))]

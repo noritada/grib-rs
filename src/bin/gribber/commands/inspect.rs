@@ -48,10 +48,16 @@ pub fn exec(args: &ArgMatches<'static>) -> Result<(), cli::CliError> {
         view.add(InspectItem::Templates(tmpls));
     }
 
+    let user_attended = console::user_attended();
+
     let term = Term::stdout();
     let (height, _width) = term.size();
     if view.num_lines() > height.into() {
         cli::start_pager();
+    }
+
+    if user_attended {
+        console::set_colors_enabled(true);
     }
 
     let with_header = view.with_headers();
