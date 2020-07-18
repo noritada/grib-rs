@@ -7,6 +7,7 @@ use std::result::Result;
 
 use crate::codetables::{
     lookup_table, CODE_TABLE_1_0, CODE_TABLE_1_1, CODE_TABLE_1_2, CODE_TABLE_1_3, CODE_TABLE_1_4,
+    COMMON_CODE_TABLE_11,
 };
 use crate::decoder::{self, DecodeError};
 use crate::reader::{Grib2Read, ParseError, SeekableGrib2Reader};
@@ -95,14 +96,14 @@ Reference time of data:                 {}
 Production status of processed data:    {}
 Type of processed data:                 {}\
 ",
-            self.centre_id,
+            lookup_table(COMMON_CODE_TABLE_11, self.centre_id as usize),
             self.subcentre_id,
-            lookup_table(CODE_TABLE_1_0, self.master_table_version),
-            lookup_table(CODE_TABLE_1_1, self.local_table_version),
-            lookup_table(CODE_TABLE_1_2, self.ref_time_significance),
+            lookup_table(CODE_TABLE_1_0, self.master_table_version as usize),
+            lookup_table(CODE_TABLE_1_1, self.local_table_version as usize),
+            lookup_table(CODE_TABLE_1_2, self.ref_time_significance as usize),
             self.ref_time,
-            lookup_table(CODE_TABLE_1_3, self.prod_status),
-            lookup_table(CODE_TABLE_1_4, self.data_type)
+            lookup_table(CODE_TABLE_1_3, self.prod_status as usize),
+            lookup_table(CODE_TABLE_1_4, self.data_type as usize)
         )
     }
 }

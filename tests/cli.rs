@@ -63,7 +63,7 @@ fn info() -> Result<(), Box<dyn std::error::Error>> {
     let arg_path = tempfile.path();
 
     let out_str = "\
-Originating/generating centre:          34
+Originating/generating centre:          Tokyo (RSMC), Japan Meteorological Agency
 Originating/generating sub-centre:      0
 GRIB Master Tables Version Number:      code '5' is not implemented
 GRIB Local Tables Version Number:       code '1' is not implemented

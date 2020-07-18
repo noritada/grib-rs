@@ -14,7 +14,7 @@ impl Display for LookupResult {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum ConversionError {
-    Unimplemented(u8),
+    Unimplemented(usize),
 }
 
 impl Display for ConversionError {
@@ -24,6 +24,8 @@ impl Display for ConversionError {
         }
     }
 }
+
+include!(concat!(env!("OUT_DIR"), "/cct11.rs"));
 
 /// Implements "Code Table 1.0: GRIB Master Tables Version Number"
 pub const CODE_TABLE_1_0: &'static [&'static str] = &[
@@ -67,9 +69,7 @@ pub const CODE_TABLE_1_4: &'static [&'static str] = &[
     "Processed radar observations",
 ];
 
-pub fn lookup_table(table: &'static [&'static str], code: u8) -> LookupResult {
-    let result = table
-        .get(code as usize)
-        .ok_or(ConversionError::Unimplemented(code));
+pub fn lookup_table(table: &'static [&'static str], code: usize) -> LookupResult {
+    let result = table.get(code).ok_or(ConversionError::Unimplemented(code));
     LookupResult(result)
 }
