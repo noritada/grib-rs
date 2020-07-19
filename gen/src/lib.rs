@@ -185,3 +185,62 @@ pub fn rebuild_cct11(input: Vec<(String, String)>) -> Vec<String> {
 
     output
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use std::path::Path;
+
+    #[test]
+    fn parse_cct11_all() {
+        let path = Path::new("testdata").join("cct.xml");
+        assert_eq!(
+            parse_cct11(path),
+            vec![
+                ("0", "A"),
+                ("1", "B"),
+                ("2", ")"),
+                ("3", "C"),
+                ("4", "Reserved"),
+                ("5", "D"),
+                ("6", "Reserved for other centres"),
+                ("7-9", "E"),
+                ("10-14", "Reserved"),
+                ("15", "F"),
+                ("16-65534", "Reserved for other centres"),
+                ("65535", "Missing value"),
+                ("Not applicable", "Not used"),
+            ]
+            .iter()
+            .map(|(a, b)| (a.to_string(), b.to_string()))
+            .collect::<Vec<_>>()
+        );
+    }
+
+    #[test]
+    fn rebuild_cct11_all() {
+        let input = vec![
+            ("0", "A"),
+            ("1", "B"),
+            ("2", ")"),
+            ("3", "C"),
+            ("4", "Reserved"),
+            ("5", "D"),
+            ("6", "Reserved for other centres"),
+            ("7-9", "E"),
+            ("10-14", "Reserved"),
+            ("15", "F"),
+            ("16-65534", "Reserved for other centres"),
+            ("65535", "Missing value"),
+            ("Not applicable", "Not used"),
+        ]
+        .iter()
+        .map(|(a, b)| (a.to_string(), b.to_string()))
+        .collect::<Vec<_>>();
+        assert_eq!(
+            rebuild_cct11(input),
+            vec!["A", "B", "", "C", "", "D", "", "E", "E", "E", "", "", "", "", "", "F",]
+        );
+    }
+}
