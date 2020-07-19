@@ -1,0 +1,8 @@
+[package]
+name = "gen"
+version = "0.1.0"
+authors = ["Noritada Kobayashi <noritada.kobayashi@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+quick-xml = "0.18"

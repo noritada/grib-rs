@@ -29,5 +29,5 @@ assert_cmd = "1.0.*"
 predicates = "1.0.*"
 tempfile = "3"
 
-[build-dependencies]
-quick-xml = "0.18"
+[build-dependencies.gen]
+path = "gen"
