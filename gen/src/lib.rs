@@ -48,6 +48,13 @@ impl FromStr for CodeRange {
         }
 
         let (start, pos) = read_number(input, pos)?;
+        if pos == input.len() {
+            return Ok(CodeRange {
+                start: start,
+                end: start,
+            });
+        }
+
         let pos = read_hyphen(input, pos)?;
         let (end, _pos) = read_number(input, pos)?;
 
@@ -138,16 +145,6 @@ pub fn rebuild_cct11(input: Vec<(String, String)>) -> Vec<String> {
     let mut count = 0;
     let mut empty_count = 0;
 
-    macro_rules! flush {
-        () => {{
-            while empty_count > 0 {
-                output.push(String::new());
-                count += 1;
-                empty_count -= 1;
-            }
-        }};
-    }
-
     for entry in input {
         let (id, string) = entry;
         let string = match string.as_str() {
@@ -158,25 +155,23 @@ pub fn rebuild_cct11(input: Vec<(String, String)>) -> Vec<String> {
             _ => Some(string),
         };
 
-        if let Ok(number) = id.parse::<usize>() {
+        if let Ok(range) = id.parse::<CodeRange>() {
             if let Some(string) = string {
-                flush!();
-
-                assert_eq!(count, number);
-                output.push(string);
-                count += 1;
-            } else {
-                empty_count += 1;
-            }
-        } else if let Ok(range) = id.parse::<CodeRange>() {
-            if let Some(string) = string {
-                flush!();
-
-                for _i in range.start..=range.end {
-                    assert_eq!(count, _i);
-                    output.push(string.clone());
+                while empty_count > 0 {
+                    output.push(String::new());
                     count += 1;
+                    empty_count -= 1;
                 }
+
+                assert_eq!(count, range.start);
+                if range.size() == 1 {
+                    output.push(string);
+                } else {
+                    for _i in range.start..=range.end {
+                        output.push(string.clone());
+                    }
+                }
+                count += range.size();
             } else {
                 empty_count += range.size();
             }
