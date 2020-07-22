@@ -8,8 +8,8 @@ fn main() {
     let out_dir = env::var_os("OUT_DIR").unwrap();
     let output_path = Path::new(&out_dir).join("cct11.rs");
 
-    let parsed = gen::parse_cct11(input_path);
-    let built = gen::rebuild_cct11(parsed);
+    let parsed = gen::cct11::parse(input_path);
+    let built = gen::cct11::rebuild(parsed);
     fs::write(
         &output_path,
         format!(
