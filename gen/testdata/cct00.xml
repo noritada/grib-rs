@@ -1,0 +1,59 @@
+<?xml version="1.0" ?>
+<dataroot>
+  <C00>
+    <GRIB-version-number>0</GRIB-version-number>
+    <BUFR-version-number>0</BUFR-version-number>
+    <CREX-version-number>0</CREX-version-number>
+    <Effective-date>Experimental</Effective-date>
+    <Status>Operational</Status>
+  </C00>
+  <C00>
+    <GRIB-version-number/>
+    <BUFR-version-number>1</BUFR-version-number>
+    <CREX-version-number/>
+    <Effective-date>1 January 1998</Effective-date>
+    <Status>Operational</Status>
+  </C00>
+  <C00>
+    <GRIB-version-number/>
+    <BUFR-version-number>2</BUFR-version-number>
+    <CREX-version-number>1</CREX-version-number>
+    <Effective-date>1 January 1999</Effective-date>
+    <Status>Operational</Status>
+  </C00>
+  <C00>
+    <GRIB-version-number>1</GRIB-version-number>
+    <BUFR-version-number>3</BUFR-version-number>
+    <CREX-version-number>2</CREX-version-number>
+    <Effective-date>1 January 2000</Effective-date>
+    <Status>Operational</Status>
+  </C00>
+  <C00>
+    <GRIB-version-number>2</GRIB-version-number>
+    <BUFR-version-number>4</BUFR-version-number>
+    <CREX-version-number>3</CREX-version-number>
+    <Effective-date>1 January 2001</Effective-date>
+    <Status>Operational</Status>
+  </C00>
+  <C00>
+    <GRIB-version-number>3</GRIB-version-number>
+    <BUFR-version-number>5</BUFR-version-number>
+    <CREX-version-number>4</CREX-version-number>
+    <Effective-date>Pre-operational to be implemented by next amendment</Effective-date>
+    <Status>Operational</Status>
+  </C00>
+  <C00>
+    <GRIB-version-number>4-254</GRIB-version-number>
+    <BUFR-version-number>6-254</BUFR-version-number>
+    <CREX-version-number>5-254</CREX-version-number>
+    <Effective-date>Future versions</Effective-date>
+    <Status>Operational</Status>
+  </C00>
+  <C00>
+    <GRIB-version-number>255</GRIB-version-number>
+    <BUFR-version-number>255</BUFR-version-number>
+    <CREX-version-number>255</CREX-version-number>
+    <Effective-date>Missing</Effective-date>
+    <Status>Operational</Status>
+  </C00>
+</dataroot>

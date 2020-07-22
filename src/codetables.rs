@@ -25,16 +25,8 @@ impl Display for ConversionError {
     }
 }
 
+include!(concat!(env!("OUT_DIR"), "/cct00.rs"));
 include!(concat!(env!("OUT_DIR"), "/cct11.rs"));
-
-/// Implements "Code Table 1.0: GRIB Master Tables Version Number"
-pub const CODE_TABLE_1_0: &'static [&'static str] = &[
-    "Experimental",
-    "Version implemented on 7 November 2001",
-    "Version implemented on 4 November 2003",
-    "Version implemented on 2 November 2005",
-    "Version implemented on 7 November 2007",
-];
 
 /// Implements "Code Table 1.1: GRIB Local Tables Version Number"
 pub const CODE_TABLE_1_1: &'static [&'static str] = &[

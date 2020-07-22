@@ -65,7 +65,7 @@ fn info() -> Result<(), Box<dyn std::error::Error>> {
     let out_str = "\
 Originating/generating centre:          Tokyo (RSMC), Japan Meteorological Agency
 Originating/generating sub-centre:      0
-GRIB Master Tables Version Number:      code '5' is not implemented
+GRIB Master Tables Version Number:      5 (4 November 2009)
 GRIB Local Tables Version Number:       code '1' is not implemented
 Significance of Reference Time:         Analysis
 Reference time of data:                 2016-08-22 02:00:00 UTC
