@@ -17,7 +17,7 @@ jobs:
 
     steps:
     - name: Setup Rust
-      uses: hecrj/setup-rust-action@v1.3.3
+      uses: hecrj/setup-rust-action@v1.3.4
       with:
         rust-version: ${{ matrix.rust }}
     - name: Checkout
