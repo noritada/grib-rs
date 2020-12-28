@@ -71,3 +71,5 @@ This project is licensed under either of
    http://opensource.org/licenses/MIT)
 
 at your option.
+
+`SPDX-License-Identifier: Apache-2.0 OR MIT`
