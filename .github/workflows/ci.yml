@@ -22,6 +22,8 @@ jobs:
         rust-version: ${{ matrix.rust }}
     - name: Checkout
       uses: actions/checkout@v2
+      with:
+        submodules: 'true'
     - name: Build
       run: cargo build --verbose
     - name: Run tests
