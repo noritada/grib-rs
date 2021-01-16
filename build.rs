@@ -6,7 +6,7 @@ use std::path::Path;
 fn main() {
     let out_dir = env::var_os("OUT_DIR").unwrap();
 
-    let input_path = Path::new("def").join("CCT").join("C11.xml");
+    let input_path = Path::new("def").join("CCT").join("xml").join("C11.xml");
     let output_path = Path::new(&out_dir).join("cct11.rs");
     let parsed = gen::cct11::parse(input_path);
     let built = gen::cct11::rebuild(parsed);
@@ -19,7 +19,7 @@ fn main() {
     )
     .unwrap();
 
-    let input_path = Path::new("def").join("CCT").join("C00.xml");
+    let input_path = Path::new("def").join("CCT").join("xml").join("C00.xml");
     let output_path = Path::new(&out_dir).join("cct00.rs");
     let parsed = gen::cct00::parse(input_path);
     let built = gen::cct00::rebuild(parsed);

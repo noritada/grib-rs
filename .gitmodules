@@ -1,0 +1,3 @@
+[submodule "def/CCT"]
+	path = def/CCT
+	url = https://github.com/wmo-im/CCT.git
