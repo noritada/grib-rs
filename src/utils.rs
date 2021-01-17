@@ -24,6 +24,58 @@ add_impl_for_ints! {
     (u64, i64),
 }
 
+pub(crate) struct BitwiseIterator<'a> {
+    slice: &'a [u8],
+    size: usize,
+    pos: usize,
+    offset: usize,
+}
+
+impl<'a> BitwiseIterator<'a> {
+    pub(crate) fn new(slice: &'a [u8], size: usize) -> Self {
+        Self {
+            slice: slice,
+            size: size,
+            pos: 0,
+            offset: 0,
+        }
+    }
+}
+
+impl<'a> Iterator for BitwiseIterator<'a> {
+    type Item = u32;
+
+    fn next(&mut self) -> Option<u32> {
+        let new_offset = self.offset + self.size;
+        let (new_pos, new_offset) = (self.pos + new_offset / 8, new_offset % 8);
+
+        if new_pos > self.slice.len() || (new_pos == self.slice.len() && new_offset > 0) {
+            return None;
+        }
+
+        let val = self.slice[self.pos] << self.offset >> self.offset;
+        let mut val: u32 = u32::from(val);
+        if new_pos == self.pos {
+            val >>= 8 - new_offset;
+        } else {
+            let mut pos = self.pos + 1;
+            while pos < new_pos {
+                val = (val << 8) | u32::from(self.slice[pos]);
+                pos += 1;
+            }
+            if new_offset > 0 {
+                let shift = 8 - new_offset;
+                let last_val = u32::from(self.slice[pos]) >> shift;
+                val = (val << new_offset) | last_val;
+            }
+        }
+
+        self.pos = new_pos;
+        self.offset = new_offset;
+        Some(val)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -65,5 +117,58 @@ mod tests {
         }
 
         assert_eq!(actual, output);
+    }
+
+    #[test]
+    fn bitwise_iterator_u2() {
+        let slice: [u8; 5] = [0, 255, 255, 0, 0];
+
+        let mut iter = BitwiseIterator::new(&slice, 2);
+        assert_eq!(iter.next(), Some(0b00));
+        assert_eq!(iter.next(), Some(0b00));
+        assert_eq!(iter.next(), Some(0b00));
+        assert_eq!(iter.next(), Some(0b00));
+        assert_eq!(iter.next(), Some(0b11));
+        assert_eq!(iter.next(), Some(0b11));
+    }
+
+    #[test]
+    fn bitwise_iterator_u5() {
+        let slice: [u8; 5] = [0, 255, 255, 0, 0];
+
+        let mut iter = BitwiseIterator::new(&slice, 5);
+        assert_eq!(iter.next(), Some(0b00000));
+        assert_eq!(iter.next(), Some(0b00011));
+        assert_eq!(iter.next(), Some(0b11111));
+        assert_eq!(iter.next(), Some(0b11111));
+        assert_eq!(iter.next(), Some(0b11110));
+        assert_eq!(iter.next(), Some(0b00000));
+        assert_eq!(iter.next(), Some(0b00000));
+        assert_eq!(iter.next(), Some(0b00000));
+        assert_eq!(iter.next(), None);
+        assert_eq!(iter.next(), None);
+    }
+
+    #[test]
+    fn bitwise_iterator_u9() {
+        let slice: [u8; 5] = [0, 255, 255, 0, 0];
+
+        let mut iter = BitwiseIterator::new(&slice, 9);
+        assert_eq!(iter.next(), Some(0b000000001));
+        assert_eq!(iter.next(), Some(0b111111111));
+        assert_eq!(iter.next(), Some(0b111111000));
+        assert_eq!(iter.next(), Some(0b000000000));
+        assert_eq!(iter.next(), None);
+    }
+
+    #[test]
+    fn bitwise_iterator_u13() {
+        let slice: [u8; 5] = [0, 255, 255, 0, 0];
+
+        let mut iter = BitwiseIterator::new(&slice, 13);
+        assert_eq!(iter.next(), Some(0b0000000011111));
+        assert_eq!(iter.next(), Some(0b1111111111100));
+        assert_eq!(iter.next(), Some(0b0000000000000));
+        assert_eq!(iter.next(), None);
     }
 }
