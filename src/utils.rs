@@ -24,14 +24,14 @@ add_impl_for_ints! {
     (u64, i64),
 }
 
-pub(crate) struct BitwiseIterator<'a> {
+pub(crate) struct NBitwiseIterator<'a> {
     slice: &'a [u8],
     size: usize,
     pos: usize,
     offset: usize,
 }
 
-impl<'a> BitwiseIterator<'a> {
+impl<'a> NBitwiseIterator<'a> {
     pub(crate) fn new(slice: &'a [u8], size: usize) -> Self {
         Self {
             slice: slice,
@@ -49,7 +49,7 @@ impl<'a> BitwiseIterator<'a> {
     }
 }
 
-impl<'a> Iterator for BitwiseIterator<'a> {
+impl<'a> Iterator for NBitwiseIterator<'a> {
     type Item = u32;
 
     fn next(&mut self) -> Option<u32> {
@@ -127,10 +127,10 @@ mod tests {
     }
 
     #[test]
-    fn bitwise_iterator_u2() {
+    fn nbitwise_iterator_u2() {
         let slice: [u8; 5] = [0, 255, 255, 0, 0];
 
-        let mut iter = BitwiseIterator::new(&slice, 2);
+        let mut iter = NBitwiseIterator::new(&slice, 2);
         assert_eq!(iter.next(), Some(0b00));
         assert_eq!(iter.next(), Some(0b00));
         assert_eq!(iter.next(), Some(0b00));
@@ -140,10 +140,10 @@ mod tests {
     }
 
     #[test]
-    fn bitwise_iterator_u5() {
+    fn nbitwise_iterator_u5() {
         let slice: [u8; 5] = [0, 255, 255, 0, 0];
 
-        let mut iter = BitwiseIterator::new(&slice, 5);
+        let mut iter = NBitwiseIterator::new(&slice, 5);
         assert_eq!(iter.next(), Some(0b00000));
         assert_eq!(iter.next(), Some(0b00011));
         assert_eq!(iter.next(), Some(0b11111));
@@ -157,10 +157,10 @@ mod tests {
     }
 
     #[test]
-    fn bitwise_iterator_u9() {
+    fn nbitwise_iterator_u9() {
         let slice: [u8; 5] = [0, 255, 255, 0, 0];
 
-        let mut iter = BitwiseIterator::new(&slice, 9);
+        let mut iter = NBitwiseIterator::new(&slice, 9);
         assert_eq!(iter.next(), Some(0b000000001));
         assert_eq!(iter.next(), Some(0b111111111));
         assert_eq!(iter.next(), Some(0b111111000));
@@ -169,10 +169,10 @@ mod tests {
     }
 
     #[test]
-    fn bitwise_iterator_u13() {
+    fn nbitwise_iterator_u13() {
         let slice: [u8; 5] = [0, 255, 255, 0, 0];
 
-        let mut iter = BitwiseIterator::new(&slice, 13);
+        let mut iter = NBitwiseIterator::new(&slice, 13);
         assert_eq!(iter.next(), Some(0b0000000011111));
         assert_eq!(iter.next(), Some(0b1111111111100));
         assert_eq!(iter.next(), Some(0b0000000000000));
@@ -180,10 +180,10 @@ mod tests {
     }
 
     #[test]
-    fn bitwise_iterator_with_offset() {
+    fn nbitwise_iterator_with_offset() {
         let slice: [u8; 5] = [0, 255, 255, 0, 0];
 
-        let mut iter = BitwiseIterator::new(&slice, 2).with_offset(7);
+        let mut iter = NBitwiseIterator::new(&slice, 2).with_offset(7);
         assert_eq!(iter.next(), Some(0b01));
     }
 }
