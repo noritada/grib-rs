@@ -40,6 +40,13 @@ impl<'a> BitwiseIterator<'a> {
             offset: 0,
         }
     }
+
+    pub(crate) fn with_offset(self, offset_bits: usize) -> Self {
+        Self {
+            offset: offset_bits,
+            ..self
+        }
+    }
 }
 
 impl<'a> Iterator for BitwiseIterator<'a> {
@@ -170,5 +177,13 @@ mod tests {
         assert_eq!(iter.next(), Some(0b1111111111100));
         assert_eq!(iter.next(), Some(0b0000000000000));
         assert_eq!(iter.next(), None);
+    }
+
+    #[test]
+    fn bitwise_iterator_with_offset() {
+        let slice: [u8; 5] = [0, 255, 255, 0, 0];
+
+        let mut iter = BitwiseIterator::new(&slice, 2).with_offset(7);
+        assert_eq!(iter.next(), Some(0b01));
     }
 }
