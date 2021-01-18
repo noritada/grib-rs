@@ -260,22 +260,16 @@ fn unpack_simple_packing(
     dig: i16,
     expected_len: Option<usize>,
 ) -> Result<Box<[f32]>, SimplePackingDecodeError> {
-    if nbit != 16 {
-        return Err(SimplePackingDecodeError::NotSupported);
-    }
-
     let mut out_buf = match expected_len {
         Some(sz) => Vec::with_capacity(sz),
         None => Vec::new(),
     };
 
     let dig: i32 = dig.into();
-    let mut pos = 0;
+    let mut iter = NBitwiseIterator::new(input, usize::from(nbit));
 
-    while pos < input.len() {
-        let encoded = read_as!(u16, input, pos) as f32;
-        pos += std::mem::size_of::<u16>();
-
+    while let Some(encoded) = iter.next() {
+        let encoded = encoded as f32;
         let diff = (encoded * 2_f32.powi(exp.into())) as f32;
         let dig_factor = 10_f32.powi(-dig);
         let value: f32 = (ref_val + diff) * dig_factor;
