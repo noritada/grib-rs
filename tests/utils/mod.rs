@@ -18,6 +18,13 @@ pub(crate) fn jma_kousa_file() -> Result<NamedTempFile, io::Error> {
     )
 }
 
+pub(crate) fn jma_meps_file() -> Result<NamedTempFile, io::Error> {
+    unxz_to_tempfile(
+        testdata_dir()
+            .join("Z__C_RJTD_20190605000000_MEPS_GPV_Rjp_L-pall_FH00-15_grib2.bin.0-20.xz"),
+    )
+}
+
 fn unxz_to_tempfile(file_path: PathBuf) -> Result<NamedTempFile, io::Error> {
     let mut buf = Vec::new();
     let mut out = NamedTempFile::new()?;
@@ -45,6 +52,10 @@ pub(crate) fn kousa_be_bin_bytes() -> Result<Vec<u8>, io::Error> {
 
 pub(crate) fn kousa_le_bin_bytes() -> Result<Vec<u8>, io::Error> {
     unxz_as_bytes(testdata_dir().join("gen").join("kousa-wgrib2-le.bin.xz"))
+}
+
+pub(crate) fn meps_le_bin_bytes() -> Result<Vec<u8>, io::Error> {
+    unxz_as_bytes(testdata_dir().join("gen").join("meps-wgrib2-le.bin.xz"))
 }
 
 fn unxz_as_bytes(file_path: PathBuf) -> Result<Vec<u8>, io::Error> {

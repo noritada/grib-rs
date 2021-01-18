@@ -13,6 +13,14 @@ from zip archives and compressed.
 * `Z__C_RJTD_20170221120000_MSG_GPV_Gll0p5deg_Pys_B20170221120000_F2017022115-2017022212_grib2.bin.xz`
   (originally in `kousa_170301.zip` for "黄砂予測モデルGPV")
 
+Following data file is based on files downloaded from the above page:
+
+* `Z__C_RJTD_20190605000000_MEPS_GPV_Rjp_L-pall_FH00-15_grib2.bin.0-20.xz`
+  (Only the first 20 of the 2520 submessages from file
+  `Z__C_RJTD_20190605000000_MEPS_GPV_Rjp_L-pall_FH00-15_grib2.bin`,
+  originally included in `meps_190627.zip` for "メソアンサンブル予報シ
+  ステム（ＭＥＰＳ）ＧＰＶ", were extracted as GRIB2 and compressed.)
+
 ## Data files generated
 
 Files under the directory `gen` is generated with third-party tools
@@ -26,4 +34,6 @@ $ wgrib2 -d 1.4 -order we:ns -no_header -bin tornado-wgrib2-le.bin Z__C_RJTD_201
 $ wgrib2 -d 1.4 -order we:ns -no_header -ieee kousa-wgrib2-be.bin Z__C_RJTD_20170221120000_MSG_GPV_Gll0p5deg_Pys_B20170221120000_F2017022115-2017022212_grib2.bin
 
 $ wgrib2 -d 1.4 -order we:ns -no_header -bin kousa-wgrib2-le.bin Z__C_RJTD_20170221120000_MSG_GPV_Gll0p5deg_Pys_B20170221120000_F2017022115-2017022212_grib2.bin
+
+$ wgrib2 -d 1.3 -order we:ns -no_header -bin meps-wgrib2-le.bin Z__C_RJTD_20190605000000_MEPS_GPV_Rjp_L-pall_FH00-15_grib2.bin.0-20
 ```

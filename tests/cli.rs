@@ -401,6 +401,18 @@ fn decode_kousa() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 #[test]
+fn decode_meps() -> Result<(), Box<dyn std::error::Error>> {
+    let tempfile = utils::jma_meps_file()?;
+    let arg_path = tempfile.path();
+
+    let mut cmd = Command::cargo_bin(CMD_NAME)?;
+    cmd.arg("decode").arg(arg_path).arg("2");
+    cmd.assert().success().stderr(predicate::str::is_empty());
+
+    Ok(())
+}
+
+#[test]
 fn decode_tornado_big_endian() -> Result<(), Box<dyn std::error::Error>> {
     let tempfile = utils::jma_tornado_nowcast_file()?;
     let arg_path = tempfile.path();
@@ -520,6 +532,33 @@ fn decode_kousa_little_endian() -> Result<(), Box<dyn std::error::Error>> {
         .stderr(predicate::str::is_empty());
 
     let expected = utils::kousa_le_bin_bytes()?;
+    let actual = utils::cat_as_bytes(&out_path)?;
+    assert_eq!(actual, expected);
+
+    Ok(())
+}
+
+#[test]
+fn decode_meps_little_endian() -> Result<(), Box<dyn std::error::Error>> {
+    let tempfile = utils::jma_meps_file()?;
+    let arg_path = tempfile.path();
+
+    let dir = TempDir::new()?;
+    let out_path = dir.path().join("out.bin");
+    let out_path = format!("{}", out_path.display());
+
+    let mut cmd = Command::cargo_bin(CMD_NAME)?;
+    cmd.arg("decode")
+        .arg(arg_path)
+        .arg("2")
+        .arg("-l")
+        .arg(&out_path);
+    cmd.assert()
+        .success()
+        .stdout(predicate::str::is_empty())
+        .stderr(predicate::str::is_empty());
+
+    let expected = utils::meps_le_bin_bytes()?;
     let actual = utils::cat_as_bytes(&out_path)?;
     assert_eq!(actual, expected);
 
