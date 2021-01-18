@@ -490,7 +490,7 @@ mod tests {
     // provided in JMBSC's document available in the following URL:
     // http://www.jmbsc.or.jp/jp/online/joho-sample/Run-Length_Encoding.pdf
     #[test]
-    fn rleunpack_u8() {
+    fn decode_data_with_run_length_encoding() {
         let input: Vec<u8> = vec![3, 9, 12, 6, 4, 15, 2, 1, 0, 13, 12, 2, 3];
         let output: Vec<u8> = vec![
             3, 9, 9, 6, 4, 4, 4, 4, 4, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 2, 3,
@@ -505,7 +505,7 @@ mod tests {
     }
 
     #[test]
-    fn rleunpack_u8_long_length() {
+    fn decode_data_with_run_length_encoding_with_multibyte_length() {
         let input: Vec<u8> = vec![0x00, 0x14, 0x1c];
         let output: Vec<u8> = vec![0; 6065];
 
@@ -513,7 +513,7 @@ mod tests {
     }
 
     #[test]
-    fn simple_packing_u8() {
+    fn decode_simple_packing() {
         let ref_val_bytes = vec![0x35, 0x3e, 0x6b, 0xf6];
         let exp = 0x801a;
         let dig = 0x0000;

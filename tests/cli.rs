@@ -377,7 +377,7 @@ fn inspect_with_all_opts() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 #[test]
-fn decode_tornado() -> Result<(), Box<dyn std::error::Error>> {
+fn decode_run_length_encoding() -> Result<(), Box<dyn std::error::Error>> {
     let tempfile = utils::jma_tornado_nowcast_file()?;
     let arg_path = tempfile.path();
 
@@ -389,7 +389,7 @@ fn decode_tornado() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 #[test]
-fn decode_kousa() -> Result<(), Box<dyn std::error::Error>> {
+fn decode_simple_packing() -> Result<(), Box<dyn std::error::Error>> {
     let tempfile = utils::jma_kousa_file()?;
     let arg_path = tempfile.path();
 
@@ -401,7 +401,7 @@ fn decode_kousa() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 #[test]
-fn decode_meps() -> Result<(), Box<dyn std::error::Error>> {
+fn decode_complex_packing() -> Result<(), Box<dyn std::error::Error>> {
     let tempfile = utils::jma_meps_file()?;
     let arg_path = tempfile.path();
 
@@ -413,7 +413,7 @@ fn decode_meps() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 #[test]
-fn decode_tornado_big_endian() -> Result<(), Box<dyn std::error::Error>> {
+fn decode_run_length_packing_as_big_endian() -> Result<(), Box<dyn std::error::Error>> {
     let tempfile = utils::jma_tornado_nowcast_file()?;
     let arg_path = tempfile.path();
 
@@ -449,7 +449,7 @@ fn decode_tornado_big_endian() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 #[test]
-fn decode_tornado_little_endian() -> Result<(), Box<dyn std::error::Error>> {
+fn decode_run_length_packing_as_little_endian() -> Result<(), Box<dyn std::error::Error>> {
     let tempfile = utils::jma_tornado_nowcast_file()?;
     let arg_path = tempfile.path();
 
@@ -485,7 +485,7 @@ fn decode_tornado_little_endian() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 #[test]
-fn decode_kousa_big_endian() -> Result<(), Box<dyn std::error::Error>> {
+fn decode_simple_packing_as_big_endian() -> Result<(), Box<dyn std::error::Error>> {
     let tempfile = utils::jma_kousa_file()?;
     let arg_path = tempfile.path();
 
@@ -512,7 +512,7 @@ fn decode_kousa_big_endian() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 #[test]
-fn decode_kousa_little_endian() -> Result<(), Box<dyn std::error::Error>> {
+fn decode_simple_packing_as_little_endian() -> Result<(), Box<dyn std::error::Error>> {
     let tempfile = utils::jma_kousa_file()?;
     let arg_path = tempfile.path();
 
@@ -539,7 +539,7 @@ fn decode_kousa_little_endian() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 #[test]
-fn decode_meps_little_endian() -> Result<(), Box<dyn std::error::Error>> {
+fn decode_complex_packing_as_little_endian() -> Result<(), Box<dyn std::error::Error>> {
     let tempfile = utils::jma_meps_file()?;
     let arg_path = tempfile.path();
 
