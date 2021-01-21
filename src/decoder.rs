@@ -50,7 +50,7 @@ pub enum RunLengthEncodingDecodeError {
     NotSupported,
     InvalidFirstValue,
     LengthMismatch,
-    InvalidLevelValue(u8),
+    InvalidLevelValue(u16),
 }
 
 macro_rules! read_as {
@@ -142,7 +142,7 @@ impl<R: Grib2Read> Grib2DataDecode<R> for RunLengthEncodingDecoder {
         )
         .map_err(|e| DecodeError::RunLengthEncodingDecodeError(e))?;
 
-        let level_to_value = |level: &u8| -> Result<f32, DecodeError> {
+        let level_to_value = |level: &u16| -> Result<f32, DecodeError> {
             let index: usize = (*level).into();
             level_map
                 .get(index)
@@ -158,16 +158,13 @@ impl<R: Grib2Read> Grib2DataDecode<R> for RunLengthEncodingDecoder {
     }
 }
 
+// Since maxv is represented as a 16-bit integer, values are 16 bits or less.
 fn rleunpack(
     input: &[u8],
     nbit: u8,
     maxv: u16,
     expected_len: Option<usize>,
-) -> Result<Box<[u8]>, RunLengthEncodingDecodeError> {
-    if nbit != 8 {
-        return Err(RunLengthEncodingDecodeError::NotSupported);
-    }
-
+) -> Result<Box<[u16]>, RunLengthEncodingDecodeError> {
     let mut out_buf = match expected_len {
         Some(sz) => Vec::with_capacity(sz),
         None => Vec::new(),
@@ -177,11 +174,11 @@ fn rleunpack(
     let lngu: usize = (2u16.pow(nbit.into()) - rlbase).into();
     let mut cached = None;
     let mut exp: usize = 1;
+    let iter = NBitwiseIterator::new(input, usize::from(nbit));
 
-    for value in input.iter() {
-        let value = *value;
-
-        if rlbase > value.into() {
+    for value in iter {
+        let value = value as u16;
+        if rlbase > value {
             out_buf.push(value);
             cached = Some(value);
             exp = 1;
@@ -486,11 +483,11 @@ mod tests {
     #[test]
     fn decode_data_with_run_length_encoding() {
         let input: Vec<u8> = vec![3, 9, 12, 6, 4, 15, 2, 1, 0, 13, 12, 2, 3];
-        let output: Vec<u8> = vec![
+        let output: Vec<u16> = vec![
             3, 9, 9, 6, 4, 4, 4, 4, 4, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 2, 3,
         ];
         let input: Vec<u8> = input.iter().map(|n| n + 240).collect();
-        let output: Vec<u8> = output.iter().map(|n| n + 240).collect();
+        let output: Vec<u16> = output.iter().map(|n| n + 240).collect();
 
         assert_eq!(
             rleunpack(&input, 8, 250, Some(21)),
@@ -501,7 +498,7 @@ mod tests {
     #[test]
     fn decode_data_with_run_length_encoding_with_multibyte_length() {
         let input: Vec<u8> = vec![0x00, 0x14, 0x1c];
-        let output: Vec<u8> = vec![0; 6065];
+        let output: Vec<u16> = vec![0; 6065];
 
         assert_eq!(rleunpack(&input, 8, 3, None), Ok(output.into_boxed_slice()));
     }
