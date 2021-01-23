@@ -404,31 +404,8 @@ impl<R: Grib2Read> Grib2DataDecode<R> for ComplexPackingDecoder {
             [i32::from(z1), i32::from(z2)]
         );
 
-        let (len, _) = spdiff_packed_iter.size_hint();
-        let mut spdiff_unpacked = Vec::with_capacity(len);
-        let mut value_p2 = 0;
-        let mut value_p1 = 0;
-
-        for (i, value) in spdiff_packed_iter.enumerate() {
-            let result = match i {
-                0 => {
-                    value_p2 = value;
-                    value
-                }
-                1 => {
-                    value_p1 = value;
-                    value
-                }
-                _ => {
-                    let value = value + 2 * value_p1 - value_p2;
-                    value_p2 = value_p1;
-                    value_p1 = value;
-                    value
-                }
-            };
-            spdiff_unpacked.push(result);
-        }
-
+        let spdiff_unpacked =
+            SpatialDiff2ndOrderDecodeIterator::new(spdiff_packed_iter).collect::<Vec<_>>();
         let decoded = unpack_simple_packing2(
             &spdiff_unpacked,
             ref_val,
@@ -471,6 +448,50 @@ fn unpack_simple_packing2(
     }
 
     Ok(out_buf.into_boxed_slice())
+}
+
+struct SpatialDiff2ndOrderDecodeIterator<I> {
+    iter: I,
+    count: u32,
+    prev1: i32,
+    prev2: i32,
+}
+
+impl<I> SpatialDiff2ndOrderDecodeIterator<I> {
+    fn new(iter: I) -> Self {
+        Self {
+            iter: iter,
+            count: 0,
+            prev1: 0,
+            prev2: 0,
+        }
+    }
+}
+
+impl<I: Iterator<Item = i32>> Iterator for SpatialDiff2ndOrderDecodeIterator<I> {
+    type Item = i32;
+
+    fn next(&mut self) -> Option<i32> {
+        let count = self.count;
+        self.count += 1;
+        match (count, self.iter.next()) {
+            (_, None) => None,
+            (0, Some(v)) => {
+                self.prev2 = v;
+                Some(v)
+            }
+            (1, Some(v)) => {
+                self.prev1 = v;
+                Some(v)
+            }
+            (_, Some(v)) => {
+                let v = v + 2 * self.prev1 - self.prev2;
+                self.prev2 = self.prev1;
+                self.prev1 = v;
+                Some(v)
+            }
+        }
+    }
 }
 
 #[cfg(test)]
