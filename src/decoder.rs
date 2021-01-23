@@ -330,27 +330,14 @@ impl<R: Grib2Read> Grib2DataDecode<R> for ComplexPackingDecoder {
             .collect::<Vec<_>>();
         group_lens.push(group_len_last);
 
-        let mut pos = group_lens_end_octet;
-        let mut start_offset_bits = 0;
-        let mut unpacked_data = Vec::with_capacity(ngroup as usize);
-        for ((_ref, width), len) in group_refs_iter
-            .zip(group_widths_iter)
-            .zip(group_lens.into_iter())
-        {
-            let (_ref, width, len) = (_ref as i32, width as usize, len as usize);
-            let bits = width * len;
-            let (pos_end, offset_bit) = (pos + bits / 8, bits % 8);
-            let offset_byte = if offset_bit > 0 { 1 } else { 0 };
-            let group_values =
-                NBitwiseIterator::new(&sect7_data[pos..pos_end + offset_byte], width)
-                    .with_offset(start_offset_bits)
-                    .take(len)
-                    .map(|v| v.into_grib_int() + _ref + i32::from(z_min))
-                    .collect::<Vec<_>>();
-            unpacked_data.push(group_values);
-            pos = pos_end;
-            start_offset_bits = offset_byte;
-        }
+        let unpacked_data = ComplexPackingValueDecodeIterator::new(
+            group_refs_iter,
+            group_widths_iter,
+            group_lens.into_iter(),
+            z_min,
+            &sect7_data[group_lens_end_octet..],
+        );
+        let unpacked_data = unpacked_data.collect::<Vec<_>>();
 
         if spdiff_level != 2 {
             return Err(GribError::DecodeError(
@@ -412,6 +399,71 @@ impl<I: Iterator<Item = N>, N: ToPrimitive> Iterator for SimplePackingDecodeIter
                 let dig_factor = 10_f32.powi(-self.dig);
                 let value: f32 = (self.ref_val + diff) * dig_factor;
                 Some(value)
+            }
+        }
+    }
+}
+
+struct ComplexPackingValueDecodeIterator<'a, I, J, K> {
+    ref_iter: I,
+    width_iter: J,
+    length_iter: K,
+    z_min: i32,
+    data: &'a [u8],
+    pos: usize,
+    start_offset_bits: usize,
+}
+
+impl<'a, I, J, K> ComplexPackingValueDecodeIterator<'a, I, J, K> {
+    fn new(ref_iter: I, width_iter: J, length_iter: K, z_min: i16, data: &'a [u8]) -> Self {
+        Self {
+            ref_iter: ref_iter,
+            width_iter: width_iter,
+            length_iter: length_iter,
+            z_min: i32::from(z_min),
+            data: data,
+            pos: 0,
+            start_offset_bits: 0,
+        }
+    }
+}
+
+impl<'a, I: Iterator<Item = N>, J: Iterator<Item = O>, K: Iterator<Item = P>, N, O, P> Iterator
+    for ComplexPackingValueDecodeIterator<'a, I, J, K>
+where
+    N: ToPrimitive,
+    O: ToPrimitive,
+    P: ToPrimitive,
+{
+    type Item = Vec<i32>;
+
+    fn next(&mut self) -> Option<Vec<i32>> {
+        match (
+            self.ref_iter.next(),
+            self.width_iter.next(),
+            self.length_iter.next(),
+        ) {
+            (None, _, _) => None,
+            (_, None, _) => None,
+            (_, _, None) => None,
+            (Some(_ref), Some(width), Some(length)) => {
+                let (_ref, width, length) = (
+                    _ref.to_i32().unwrap(),
+                    width.to_usize().unwrap(),
+                    length.to_usize().unwrap(),
+                );
+                let bits = width * length;
+                let (pos_end, offset_bit) = (self.pos + bits / 8, bits % 8);
+                let offset_byte = if offset_bit > 0 { 1 } else { 0 };
+                let group_values =
+                    NBitwiseIterator::new(&self.data[self.pos..pos_end + offset_byte], width)
+                        .with_offset(self.start_offset_bits)
+                        .take(length)
+                        .map(|v| v.into_grib_int() + _ref + self.z_min)
+                        .collect::<Vec<i32>>();
+                self.pos = pos_end;
+                self.start_offset_bits = offset_byte;
+                Some(group_values)
             }
         }
     }
