@@ -337,7 +337,7 @@ impl<R: Grib2Read> Grib2DataDecode<R> for ComplexPackingDecoder {
             .zip(group_widths_iter)
             .zip(group_lens.into_iter())
         {
-            let (width, len) = (width as usize, len as usize);
+            let (_ref, width, len) = (_ref as i32, width as usize, len as usize);
             let bits = width * len;
             let (pos_end, offset_bit) = (pos + bits / 8, bits % 8);
             let offset_byte = if offset_bit > 0 { 1 } else { 0 };
@@ -345,7 +345,7 @@ impl<R: Grib2Read> Grib2DataDecode<R> for ComplexPackingDecoder {
                 NBitwiseIterator::new(&sect7_data[pos..pos_end + offset_byte], width)
                     .with_offset(start_offset_bits)
                     .take(len)
-                    .map(|v| v.into_grib_int() + (_ref as i32) + (z_min as i32))
+                    .map(|v| v.into_grib_int() + _ref + i32::from(z_min))
                     .collect::<Vec<_>>();
             unpacked_data.push(group_values);
             pos = pos_end;
