@@ -1,3 +1,4 @@
+use num::ToPrimitive;
 use std::cell::RefMut;
 use std::convert::TryInto;
 
@@ -247,41 +248,6 @@ impl<R: Grib2Read> Grib2DataDecode<R> for SimplePackingDecoder {
     }
 }
 
-struct SimplePackingDecodeIterator<I> {
-    iter: I,
-    ref_val: f32,
-    exp: i32,
-    dig: i32,
-}
-
-impl<I> SimplePackingDecodeIterator<I> {
-    fn new(iter: I, ref_val: f32, exp: i16, dig: i16) -> Self {
-        Self {
-            iter: iter,
-            ref_val: ref_val,
-            exp: exp.into(),
-            dig: dig.into(),
-        }
-    }
-}
-
-impl<I: Iterator<Item = u32>> Iterator for SimplePackingDecodeIterator<I> {
-    type Item = f32;
-
-    fn next(&mut self) -> Option<f32> {
-        match self.iter.next() {
-            None => None,
-            Some(encoded) => {
-                let encoded = encoded as f32;
-                let diff = (encoded * 2_f32.powi(self.exp)) as f32;
-                let dig_factor = 10_f32.powi(-self.dig);
-                let value: f32 = (self.ref_val + diff) * dig_factor;
-                Some(value)
-            }
-        }
-    }
-}
-
 struct ComplexPackingDecoder {}
 
 impl<R: Grib2Read> Grib2DataDecode<R> for ComplexPackingDecoder {
@@ -405,7 +371,7 @@ impl<R: Grib2Read> Grib2DataDecode<R> for ComplexPackingDecoder {
         );
 
         let spdiff_unpacked = SpatialDiff2ndOrderDecodeIterator::new(spdiff_packed_iter);
-        let decoded = SimplePackingDecodeIterator2::new(spdiff_unpacked, ref_val, exp, dig)
+        let decoded = SimplePackingDecodeIterator::new(spdiff_unpacked, ref_val, exp, dig)
             .collect::<Vec<_>>();
         if decoded.len() != sect5_body.num_points as usize {
             return Err(GribError::DecodeError(
@@ -416,14 +382,14 @@ impl<R: Grib2Read> Grib2DataDecode<R> for ComplexPackingDecoder {
     }
 }
 
-struct SimplePackingDecodeIterator2<I> {
+struct SimplePackingDecodeIterator<I> {
     iter: I,
     ref_val: f32,
     exp: i32,
     dig: i32,
 }
 
-impl<I> SimplePackingDecodeIterator2<I> {
+impl<I> SimplePackingDecodeIterator<I> {
     fn new(iter: I, ref_val: f32, exp: i16, dig: i16) -> Self {
         Self {
             iter: iter,
@@ -434,14 +400,14 @@ impl<I> SimplePackingDecodeIterator2<I> {
     }
 }
 
-impl<I: Iterator<Item = i32>> Iterator for SimplePackingDecodeIterator2<I> {
+impl<I: Iterator<Item = N>, N: ToPrimitive> Iterator for SimplePackingDecodeIterator<I> {
     type Item = f32;
 
     fn next(&mut self) -> Option<f32> {
         match self.iter.next() {
             None => None,
             Some(encoded) => {
-                let encoded = encoded as f32;
+                let encoded = encoded.to_f32().unwrap();
                 let diff = (encoded * 2_f32.powi(self.exp)) as f32;
                 let dig_factor = 10_f32.powi(-self.dig);
                 let value: f32 = (self.ref_val + diff) * dig_factor;
