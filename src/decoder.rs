@@ -337,7 +337,6 @@ impl<R: Grib2Read> Grib2DataDecode<R> for ComplexPackingDecoder {
             z_min,
             &sect7_data[group_lens_end_octet..],
         );
-        let unpacked_data = unpacked_data.collect::<Vec<_>>();
 
         if spdiff_level != 2 {
             return Err(GribError::DecodeError(
@@ -351,7 +350,7 @@ impl<R: Grib2Read> Grib2DataDecode<R> for ComplexPackingDecoder {
             ));
         }
 
-        let spdiff_packed_iter = unpacked_data.into_iter().flatten();
+        let spdiff_packed_iter = unpacked_data.flatten();
         assert_eq!(
             spdiff_packed_iter.clone().take(2).collect::<Vec<_>>(),
             [i32::from(z1), i32::from(z2)]
@@ -404,6 +403,7 @@ impl<I: Iterator<Item = N>, N: ToPrimitive> Iterator for SimplePackingDecodeIter
     }
 }
 
+#[derive(Clone)]
 struct ComplexPackingValueDecodeIterator<'a, I, J, K> {
     ref_iter: I,
     width_iter: J,

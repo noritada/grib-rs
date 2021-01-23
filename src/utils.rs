@@ -24,6 +24,7 @@ add_impl_for_ints! {
     (u64, i64),
 }
 
+#[derive(Clone)]
 pub(crate) struct NBitwiseIterator<'a> {
     slice: &'a [u8],
     size: usize,
