@@ -236,50 +236,50 @@ impl<R: Grib2Read> Grib2DataDecode<R> for SimplePackingDecoder {
 
         let sect7_data = reader.read_sect_body_bytes(sect7)?;
 
-        let decoded = unpack_simple_packing(
-            &sect7_data,
-            nbit,
-            ref_val,
-            exp,
-            dig,
-            Some(sect5_body.num_points as usize),
-        )
-        .map_err(|e| DecodeError::SimplePackingDecodeError(e))?;
-        Ok(decoded)
+        let iter = NBitwiseIterator::new(&sect7_data, usize::from(nbit));
+        let decoded = SimplePackingDecodeIterator::new(iter, ref_val, exp, dig).collect::<Vec<_>>();
+        if decoded.len() != sect5_body.num_points as usize {
+            return Err(GribError::DecodeError(
+                DecodeError::SimplePackingDecodeError(SimplePackingDecodeError::LengthMismatch),
+            ));
+        }
+        Ok(decoded.into_boxed_slice())
     }
 }
 
-fn unpack_simple_packing(
-    input: &[u8],
-    nbit: u8,
+struct SimplePackingDecodeIterator<I> {
+    iter: I,
     ref_val: f32,
-    exp: i16,
-    dig: i16,
-    expected_len: Option<usize>,
-) -> Result<Box<[f32]>, SimplePackingDecodeError> {
-    let mut out_buf = match expected_len {
-        Some(sz) => Vec::with_capacity(sz),
-        None => Vec::new(),
-    };
+    exp: i32,
+    dig: i32,
+}
 
-    let dig: i32 = dig.into();
-    let mut iter = NBitwiseIterator::new(input, usize::from(nbit));
-
-    while let Some(encoded) = iter.next() {
-        let encoded = encoded as f32;
-        let diff = (encoded * 2_f32.powi(exp.into())) as f32;
-        let dig_factor = 10_f32.powi(-dig);
-        let value: f32 = (ref_val + diff) * dig_factor;
-        out_buf.push(value);
-    }
-
-    if let Some(len) = expected_len {
-        if len != out_buf.len() {
-            return Err(SimplePackingDecodeError::LengthMismatch);
+impl<I> SimplePackingDecodeIterator<I> {
+    fn new(iter: I, ref_val: f32, exp: i16, dig: i16) -> Self {
+        Self {
+            iter: iter,
+            ref_val: ref_val,
+            exp: exp.into(),
+            dig: dig.into(),
         }
     }
+}
 
-    Ok(out_buf.into_boxed_slice())
+impl<I: Iterator<Item = u32>> Iterator for SimplePackingDecodeIterator<I> {
+    type Item = f32;
+
+    fn next(&mut self) -> Option<f32> {
+        match self.iter.next() {
+            None => None,
+            Some(encoded) => {
+                let encoded = encoded as f32;
+                let diff = (encoded * 2_f32.powi(self.exp)) as f32;
+                let dig_factor = 10_f32.powi(-self.dig);
+                let value: f32 = (self.ref_val + diff) * dig_factor;
+                Some(value)
+            }
+        }
+    }
 }
 
 struct ComplexPackingDecoder {}
@@ -404,50 +404,51 @@ impl<R: Grib2Read> Grib2DataDecode<R> for ComplexPackingDecoder {
             [i32::from(z1), i32::from(z2)]
         );
 
-        let spdiff_unpacked =
-            SpatialDiff2ndOrderDecodeIterator::new(spdiff_packed_iter).collect::<Vec<_>>();
-        let decoded = unpack_simple_packing2(
-            &spdiff_unpacked,
-            ref_val,
-            exp,
-            dig,
-            Some(sect5_body.num_points as usize),
-        )
-        .map_err(|e| DecodeError::SimplePackingDecodeError(e))?;
-        Ok(decoded)
+        let spdiff_unpacked = SpatialDiff2ndOrderDecodeIterator::new(spdiff_packed_iter);
+        let decoded = SimplePackingDecodeIterator2::new(spdiff_unpacked, ref_val, exp, dig)
+            .collect::<Vec<_>>();
+        if decoded.len() != sect5_body.num_points as usize {
+            return Err(GribError::DecodeError(
+                DecodeError::SimplePackingDecodeError(SimplePackingDecodeError::LengthMismatch),
+            ));
+        }
+        Ok(decoded.into_boxed_slice())
     }
 }
 
-fn unpack_simple_packing2(
-    input: &[i32],
+struct SimplePackingDecodeIterator2<I> {
+    iter: I,
     ref_val: f32,
-    exp: i16,
-    dig: i16,
-    expected_len: Option<usize>,
-) -> Result<Box<[f32]>, SimplePackingDecodeError> {
-    let mut out_buf = match expected_len {
-        Some(sz) => Vec::with_capacity(sz),
-        None => Vec::new(),
-    };
+    exp: i32,
+    dig: i32,
+}
 
-    let dig: i32 = dig.into();
-
-    for &encoded in input {
-        let encoded = encoded as f32;
-
-        let diff = (encoded * 2_f32.powi(exp.into())) as f32;
-        let dig_factor = 10_f32.powi(-dig);
-        let value: f32 = (ref_val + diff) * dig_factor;
-        out_buf.push(value);
-    }
-
-    if let Some(len) = expected_len {
-        if len != out_buf.len() {
-            return Err(SimplePackingDecodeError::LengthMismatch);
+impl<I> SimplePackingDecodeIterator2<I> {
+    fn new(iter: I, ref_val: f32, exp: i16, dig: i16) -> Self {
+        Self {
+            iter: iter,
+            ref_val: ref_val,
+            exp: exp.into(),
+            dig: dig.into(),
         }
     }
+}
 
-    Ok(out_buf.into_boxed_slice())
+impl<I: Iterator<Item = i32>> Iterator for SimplePackingDecodeIterator2<I> {
+    type Item = f32;
+
+    fn next(&mut self) -> Option<f32> {
+        match self.iter.next() {
+            None => None,
+            Some(encoded) => {
+                let encoded = encoded as f32;
+                let diff = (encoded * 2_f32.powi(self.exp)) as f32;
+                let dig_factor = 10_f32.powi(-self.dig);
+                let value: f32 = (self.ref_val + diff) * dig_factor;
+                Some(value)
+            }
+        }
+    }
 }
 
 struct SpatialDiff2ndOrderDecodeIterator<I> {
@@ -533,15 +534,14 @@ mod tests {
         let expected: Vec<f32> = vec![7.98783162e-07, 9.03091291e-07];
 
         let ref_val = f32::from_be_bytes(ref_val_bytes[..].try_into().unwrap());
-        let actual = unpack_simple_packing(
-            &input,
-            16,
+        let iter = NBitwiseIterator::new(&input, 16);
+        let actual = SimplePackingDecodeIterator::new(
+            iter,
             ref_val,
             exp.into_grib_int(),
             dig.into_grib_int(),
-            Some(2),
         )
-        .unwrap();
+        .collect::<Vec<_>>();
 
         assert_eq!(actual.len(), expected.len());
         let mut i = 0;
