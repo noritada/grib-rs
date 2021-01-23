@@ -306,25 +306,25 @@ impl<R: Grib2Read> Grib2DataDecode<R> for ComplexPackingDecoder {
         let z2 = read_as!(u16, sect7_data, 2).into_grib_int();
         let z_min = read_as!(u16, sect7_data, 4).into_grib_int();
 
-        let group_ref_iter = NBitwiseIterator::new(
+        let group_refs_iter = NBitwiseIterator::new(
             &sect7_data[params_end_octet..group_refs_end_octet],
             usize::from(nbit),
         );
-        let group_refs_iter = group_ref_iter.take(ngroup as usize);
+        let group_refs_iter = group_refs_iter.take(ngroup as usize);
 
-        let group_width_iter = NBitwiseIterator::new(
+        let group_widths_iter = NBitwiseIterator::new(
             &sect7_data[group_refs_end_octet..group_widths_end_octet],
             usize::from(group_width_nbit),
         );
-        let group_widths_iter = group_width_iter
+        let group_widths_iter = group_widths_iter
             .take(ngroup as usize)
             .map(|v| u32::from(group_width_ref) + v);
 
-        let group_len_iter = NBitwiseIterator::new(
+        let group_lens_iter = NBitwiseIterator::new(
             &sect7_data[group_widths_end_octet..group_lens_end_octet],
             usize::from(group_len_nbit),
         );
-        let mut group_lens = group_len_iter
+        let mut group_lens = group_lens_iter
             .take((ngroup - 1) as usize)
             .map(|v| u32::from(group_len_ref) + u32::from(group_len_inc) * v)
             .collect::<Vec<_>>();
