@@ -1,6 +1,7 @@
 use num::ToPrimitive;
 use std::cell::RefMut;
 use std::convert::TryInto;
+use std::iter;
 
 use crate::context::{GribError, SectionBody, SectionInfo};
 use crate::reader::Grib2Read;
@@ -324,16 +325,15 @@ impl<R: Grib2Read> Grib2DataDecode<R> for ComplexPackingDecoder {
             &sect7_data[group_widths_end_octet..group_lens_end_octet],
             usize::from(group_len_nbit),
         );
-        let mut group_lens = group_lens_iter
+        let group_lens_iter = group_lens_iter
             .take((ngroup - 1) as usize)
             .map(|v| u32::from(group_len_ref) + u32::from(group_len_inc) * v)
-            .collect::<Vec<_>>();
-        group_lens.push(group_len_last);
+            .chain(iter::once(group_len_last));
 
         let unpacked_data = ComplexPackingValueDecodeIterator::new(
             group_refs_iter,
             group_widths_iter,
-            group_lens.into_iter(),
+            group_lens_iter,
             z_min,
             &sect7_data[group_lens_end_octet..],
         );
