@@ -20,11 +20,18 @@ A world where everyone can read weather data easily although its interpretation 
 ## Features
 
 * Rust library `grib`
-  * Read and basic format checks
-  * Supports of some code tables
+  * Ability to read and check the basic structure of GRIB2
+  * Support for Common Code Table C-0 and C-11
+  * Decoding feature supporting following templates:
+    * Template 5.0/7.0 (simple packing)
+    * Template 5.3/7.3 (complex packing)
+    * Template 5.200/7.200 (run-length encoding)
 * CLI application `gribber` built on the top of the Rust library
-  * Display of some information of GRIB2 files
-  * Data export as flat binary files
+  * 4 subcommends:
+    * decode: data export as text and flat binary files
+    * info: display of identification information
+    * inspect: display of information mainly for development purpose such as template numbers
+    * list: display of a list of sections (the style is still tentative)
 
 ## Planned features
 
