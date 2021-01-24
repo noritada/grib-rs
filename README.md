@@ -13,8 +13,6 @@ This is a GRIB format parser library written in [Rust](https://www.rust-lang.org
 
 GRIB is a concise data format commonly used in meteorology to store historical and forecast weather data. It is intended to be a container of a collection of records of 2D data. GRIB files are huge and binary and should be processed efficiently. Also, since GRIB is designed to support various grid types and data compression using parameters defined in external code tables and templates, some popular existing softwares cannot handle some GRIB data.
 
-Rust is a modern programming language that offers the performance of C and C++ but with safeguards. It has great documentation and user-friendly toolchains including a compiler with useful error messages and a package manager integrated with a build tool. Rust has been the "most loved programming language" in the [Stack Overflow Developer Survey](https://insights.stackoverflow.com/survey) every year since 2016.
-
 ## Vision
 
 A world where everyone can read weather data easily although its interpretation needs some specific knowledge and experience.
