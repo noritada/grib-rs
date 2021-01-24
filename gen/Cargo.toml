@@ -1,5 +1,5 @@
 [package]
-name = "gen"
+name = "grib-build"
 version = "0.1.0"
 authors = ["Noritada Kobayashi <noritada.kobayashi@gmail.com>"]
 edition = "2018"

@@ -31,5 +31,5 @@ assert_cmd = "1.0.*"
 predicates = "1.0.*"
 tempfile = "3"
 
-[build-dependencies.gen]
-path = "gen"
+[build-dependencies]
+grib-build = { path = "gen", version = "0.1.0" }

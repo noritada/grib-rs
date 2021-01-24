@@ -1,4 +1,4 @@
-use gen;
+use grib_build;
 use std::env;
 use std::fs;
 use std::path::Path;
@@ -8,8 +8,8 @@ fn main() {
 
     let input_path = Path::new("def").join("CCT").join("xml").join("C11.xml");
     let output_path = Path::new(&out_dir).join("cct11.rs");
-    let parsed = gen::cct11::parse(input_path);
-    let built = gen::cct11::rebuild(parsed);
+    let parsed = grib_build::cct11::parse(input_path);
+    let built = grib_build::cct11::rebuild(parsed);
     fs::write(
         &output_path,
         format!(
@@ -21,8 +21,8 @@ fn main() {
 
     let input_path = Path::new("def").join("CCT").join("xml").join("C00.xml");
     let output_path = Path::new(&out_dir).join("cct00.rs");
-    let parsed = gen::cct00::parse(input_path);
-    let built = gen::cct00::rebuild(parsed);
+    let parsed = grib_build::cct00::parse(input_path);
+    let built = grib_build::cct00::rebuild(parsed);
     fs::write(
         &output_path,
         format!(
