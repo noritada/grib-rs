@@ -11,8 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial release
 - Library `grib`
   - Ability to read and check the basic structure of GRIB2
-  - Decoding feature supporting Templates 5.0 (simple packing) and
-    5.200 (run-length encoding packing)
+  - Decoding feature supporting Templates 5.0/7.0 (simple packing) and
+    5.200/7.200 (run-length encoding)
 - CLI application `gribber` built on the top of the Rust library
   - 4 subcommends:
     - decode: data export as text and flat binary files
