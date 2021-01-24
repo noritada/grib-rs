@@ -3,6 +3,11 @@ name = "grib-build"
 version = "0.1.0"
 authors = ["Noritada Kobayashi <noritada.kobayashi@gmail.com>"]
 edition = "2018"
+license = "MIT OR Apache-2.0"
+description = "Data definition parsers for the grib crate, used internally as a build-dependency"
+readme = "../README.md"
+repository = "https://github.com/noritada/grib-rs"
+homepage = "https://github.com/noritada/grib-rs"
 
 [dependencies]
 quick-xml = "0.18"
