@@ -391,7 +391,6 @@ impl<I: Iterator<Item = N>, N: ToPrimitive> Iterator for SimplePackingDecodeIter
 
     fn next(&mut self) -> Option<f32> {
         match self.iter.next() {
-            None => None,
             Some(encoded) => {
                 let encoded = encoded.to_f32().unwrap();
                 let diff = (encoded * 2_f32.powi(self.exp)) as f32;
@@ -399,6 +398,7 @@ impl<I: Iterator<Item = N>, N: ToPrimitive> Iterator for SimplePackingDecodeIter
                 let value: f32 = (self.ref_val + diff) * dig_factor;
                 Some(value)
             }
+            _ => None,
         }
     }
 }
@@ -443,9 +443,6 @@ where
             self.width_iter.next(),
             self.length_iter.next(),
         ) {
-            (None, _, _) => None,
-            (_, None, _) => None,
-            (_, _, None) => None,
             (Some(_ref), Some(width), Some(length)) => {
                 let (_ref, width, length) = (
                     _ref.to_i32().unwrap(),
@@ -465,6 +462,7 @@ where
                 self.start_offset_bits = offset_byte;
                 Some(group_values)
             }
+            _ => None,
         }
     }
 }
