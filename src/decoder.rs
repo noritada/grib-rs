@@ -284,28 +284,24 @@ impl<R: Grib2Read> Grib2DataDecode<R> for ComplexPackingDecoder {
         let spdiff_level = read_as!(u8, sect5_data, 42);
         let spdiff_param_octet = read_as!(u8, sect5_data, 43);
 
-        let params_end_octet = 6;
-
-        let group_refs_nbit: u32 = ngroup * u32::from(nbit);
-        let group_refs_noctet: f32 = group_refs_nbit as f32 / 8_f32;
-        let group_refs_noctet = group_refs_noctet.ceil() as usize;
-        let group_refs_end_octet = params_end_octet + group_refs_noctet;
-
-        let group_widths_nbit: u32 = ngroup * u32::from(group_width_nbit);
-        let group_widths_noctet: f32 = group_widths_nbit as f32 / 8_f32;
-        let group_widths_noctet = group_widths_noctet.ceil() as usize;
-        let group_widths_end_octet = group_refs_end_octet + group_widths_noctet;
-
-        let group_lens_nbit: u32 = ngroup * u32::from(group_len_nbit);
-        let group_lens_noctet: f32 = group_lens_nbit as f32 / 8_f32;
-        let group_lens_noctet = group_lens_noctet.ceil() as usize;
-        let group_lens_end_octet = group_widths_end_octet + group_lens_noctet;
-
         let sect7_data = reader.read_sect_body_bytes(sect7)?;
 
         let z1 = read_as!(u16, sect7_data, 0).into_grib_int();
         let z2 = read_as!(u16, sect7_data, 2).into_grib_int();
         let z_min = read_as!(u16, sect7_data, 4).into_grib_int();
+
+        fn get_octet_length(nbit: u8, ngroup: u32) -> usize {
+            let total_bit: u32 = ngroup * u32::from(nbit);
+            let total_octet: f32 = total_bit as f32 / 8_f32;
+            total_octet.ceil() as usize
+        }
+
+        let params_end_octet = 6;
+        let group_refs_end_octet = params_end_octet + get_octet_length(nbit, ngroup);
+        let group_widths_end_octet =
+            group_refs_end_octet + get_octet_length(group_width_nbit, ngroup);
+        let group_lens_end_octet =
+            group_widths_end_octet + get_octet_length(group_len_nbit, ngroup);
 
         let group_refs_iter = NBitwiseIterator::new(
             &sect7_data[params_end_octet..group_refs_end_octet],
