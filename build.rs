@@ -52,7 +52,7 @@ fn main() {
     .unwrap();
 
     println!("cargo:rerun-if-changed=build.rs");
-    println!("cargo:rerun-if-changed=def/CCT/C00.xml");
-    println!("cargo:rerun-if-changed=def/CCT/C11.xml");
+    println!("cargo:rerun-if-changed=def/CCT/xml/C00.xml");
+    println!("cargo:rerun-if-changed=def/CCT/xml/C11.xml");
     println!("cargo:rerun-if-changed=def/GRIB2/xml/CodeFlag.xml");
 }
