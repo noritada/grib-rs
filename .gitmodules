@@ -1,3 +1,6 @@
 [submodule "def/CCT"]
 	path = def/CCT
 	url = https://github.com/wmo-im/CCT.git
+[submodule "def/GRIB2"]
+	path = def/GRIB2
+	url = https://github.com/wmo-im/GRIB2.git
