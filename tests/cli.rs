@@ -270,9 +270,9 @@ Sections:
 000000000000284d - 0000000000002851 : Section 8
 
 Templates:
-3.0
-4.0
-5.200
+3.0      - Latitude/longitude
+4.0      - Analysis or forecast at a horizontal level or in a horizontal layer at a point in time
+5.200    - Run length packing with level values
 ";
 
     let mut cmd = Command::cargo_bin(CMD_NAME)?;
@@ -341,9 +341,9 @@ fn inspect_with_opt_t() -> Result<(), Box<dyn std::error::Error>> {
     let arg_path = tempfile.path();
 
     let out_str = "\
-3.0
-4.0
-5.200
+3.0      - Latitude/longitude
+4.0      - Analysis or forecast at a horizontal level or in a horizontal layer at a point in time
+5.200    - Run length packing with level values
 ";
 
     let mut cmd = Command::cargo_bin(CMD_NAME)?;

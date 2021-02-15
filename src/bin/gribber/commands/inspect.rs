@@ -82,7 +82,14 @@ pub fn exec(args: &ArgMatches<'static>) -> Result<(), cli::CliError> {
             }
             InspectItem::Templates(tmpls) => {
                 for tmpl in tmpls.iter() {
-                    println!("{}", tmpl);
+                    match tmpl.describe() {
+                        Some(s) => {
+                            println!("{:<8} - {}", tmpl.to_string(), s);
+                        }
+                        None => {
+                            println!("{}", tmpl);
+                        }
+                    }
                 }
             }
         }

@@ -6,8 +6,8 @@ use std::io::{Read, Seek};
 use std::result::Result;
 
 use crate::codetables::{
-    lookup_table, CODE_TABLE_1_1, CODE_TABLE_1_2, CODE_TABLE_1_3, CODE_TABLE_1_4,
-    COMMON_CODE_TABLE_00, COMMON_CODE_TABLE_11,
+    lookup_table, CODE_TABLE_1_1, CODE_TABLE_1_2, CODE_TABLE_1_3, CODE_TABLE_1_4, CODE_TABLE_3_1,
+    CODE_TABLE_4_0, CODE_TABLE_5_0, COMMON_CODE_TABLE_00, COMMON_CODE_TABLE_11,
 };
 use crate::decoder::{self, DecodeError};
 use crate::reader::{Grib2Read, ParseError, SeekableGrib2Reader};
@@ -153,6 +153,17 @@ pub struct SubMessage {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct TemplateInfo(pub u8, pub u16);
+
+impl TemplateInfo {
+    pub fn describe(&self) -> Option<String> {
+        match self.0 {
+            3 => Some(lookup_table(CODE_TABLE_3_1, usize::from(self.1)).to_string()),
+            4 => Some(lookup_table(CODE_TABLE_4_0, usize::from(self.1)).to_string()),
+            5 => Some(lookup_table(CODE_TABLE_5_0, usize::from(self.1)).to_string()),
+            _ => None,
+        }
+    }
+}
 
 impl Display for TemplateInfo {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
