@@ -5,7 +5,7 @@ use std::io::{self, Read, Seek, SeekFrom};
 use std::result::Result;
 
 use crate::context::{
-    BitMap, GridDefinition, Identification, ProdDefinition, ReprDefinition, SectionBody,
+    BitMap, GridDefinition, Identification, Indicator, ProdDefinition, ReprDefinition, SectionBody,
     SectionInfo,
 };
 
@@ -25,13 +25,14 @@ macro_rules! read_as {
 
 pub trait Grib2Read: Read + Seek {
     fn scan(&mut self) -> Result<Box<[SectionInfo]>, ParseError> {
-        let whole_size = self.read_sect0()?;
+        let indicator = self.read_sect0()?;
+        let whole_size = indicator.total_length as usize;
         let mut rest_size = whole_size - SECT0_IS_SIZE;
         let mut sects = vec![SectionInfo {
             num: 0,
             offset: 0,
             size: SECT0_IS_SIZE,
-            body: None,
+            body: Some(SectionBody::Section0(indicator)),
         }];
 
         loop {
@@ -57,7 +58,7 @@ pub trait Grib2Read: Read + Seek {
         Ok(sects.into_boxed_slice())
     }
 
-    fn read_sect0(&mut self) -> Result<usize, ParseError>;
+    fn read_sect0(&mut self) -> Result<Indicator, ParseError>;
     fn read_sect8(&mut self) -> Result<(), ParseError>;
     fn read_sect_meta(&mut self) -> Result<SectionInfo, ParseError>;
     fn read_sect(&mut self, meta: &SectionInfo) -> Result<SectionBody, ParseError>;
@@ -91,7 +92,7 @@ impl<S: Seek> Seek for SeekableGrib2Reader<S> {
 }
 
 impl<R: Read + Seek> Grib2Read for SeekableGrib2Reader<R> {
-    fn read_sect0(&mut self) -> Result<usize, ParseError> {
+    fn read_sect0(&mut self) -> Result<Indicator, ParseError> {
         let mut buf = [0; SECT0_IS_SIZE];
         self.read_exact(&mut buf[..])
             .map_err(|e| ParseError::FileTypeCheckError(e.to_string()))?;
@@ -99,6 +100,7 @@ impl<R: Read + Seek> Grib2Read for SeekableGrib2Reader<R> {
         if &buf[0..SECT0_IS_MAGIC_SIZE] != SECT0_IS_MAGIC {
             return Err(ParseError::NotGRIB);
         }
+        let discipline = buf[6];
         let version = buf[7];
         if version != 2 {
             return Err(ParseError::GRIBVersionMismatch(version));
@@ -106,7 +108,10 @@ impl<R: Read + Seek> Grib2Read for SeekableGrib2Reader<R> {
 
         let fsize = read_as!(u64, buf, 8);
 
-        Ok(fsize as usize)
+        Ok(Indicator {
+            discipline: discipline,
+            total_length: fsize,
+        })
     }
 
     fn read_sect8(&mut self) -> Result<(), ParseError> {
@@ -326,7 +331,10 @@ mod tests {
                     num: 0,
                     offset: 0,
                     size: 16,
-                    body: None,
+                    body: Some(SectionBody::Section0(Indicator {
+                        discipline: 0,
+                        total_length: 10321,
+                    })),
                 },
                 SectionInfo {
                     num: 1,

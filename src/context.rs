@@ -41,6 +41,7 @@ impl Display for SectionInfo {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum SectionBody {
+    Section0(Indicator),
     Section1(Identification),
     Section2,
     Section3(GridDefinition),
@@ -59,6 +60,14 @@ impl SectionBody {
             _ => None,
         }
     }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Indicator {
+    /// Discipline - GRIB Master Table Number (see Code Table 0.0)
+    pub discipline: u8,
+    /// Total length of GRIB message in octets (including Section 0)
+    pub total_length: u64,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
