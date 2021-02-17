@@ -6,8 +6,8 @@ use std::io::{Read, Seek};
 use std::result::Result;
 
 use crate::codetables::{
-    lookup_table, CODE_TABLE_1_1, CODE_TABLE_1_2, CODE_TABLE_1_3, CODE_TABLE_1_4, CODE_TABLE_3_1,
-    CODE_TABLE_4_0, CODE_TABLE_5_0, COMMON_CODE_TABLE_00, COMMON_CODE_TABLE_11,
+    lookup_table, CODE_TABLE_0_0, CODE_TABLE_1_1, CODE_TABLE_1_2, CODE_TABLE_1_3, CODE_TABLE_1_4,
+    CODE_TABLE_3_1, CODE_TABLE_4_0, CODE_TABLE_5_0, COMMON_CODE_TABLE_00, COMMON_CODE_TABLE_11,
 };
 use crate::decoder::{self, DecodeError};
 use crate::reader::{Grib2Read, ParseError, SeekableGrib2Reader};
@@ -68,6 +68,20 @@ pub struct Indicator {
     pub discipline: u8,
     /// Total length of GRIB message in octets (including Section 0)
     pub total_length: u64,
+}
+
+impl Display for Indicator {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        write!(
+            f,
+            "\
+Discipline:                             {}
+Total Length:                           {}\
+",
+            lookup_table(CODE_TABLE_0_0, self.discipline as usize),
+            self.total_length,
+        )
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -239,11 +253,19 @@ impl<R: Grib2Read> Grib2<R> {
 impl<R: Grib2Read> Display for Grib2<R> {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         let err = "No information available".to_string();
-        let s = match self.sections.get(1) {
-            Some(SectionInfo {
-                body: Some(SectionBody::Section1(body)),
-                ..
-            }) => format!("{}", body),
+        let s = match (self.sections.get(0), self.sections.get(1)) {
+            (
+                Some(SectionInfo {
+                    body: Some(SectionBody::Section0(sect0_body)),
+                    ..
+                }),
+                Some(SectionInfo {
+                    body: Some(SectionBody::Section1(sect1_body)),
+                    ..
+                }),
+            ) => {
+                format!("{}\n{}", sect0_body, sect1_body)
+            }
             _ => err,
         };
         write!(f, "{}", s)

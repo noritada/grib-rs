@@ -63,6 +63,8 @@ fn info() -> Result<(), Box<dyn std::error::Error>> {
     let arg_path = tempfile.path();
 
     let out_str = "\
+Discipline:                             Meteorological products
+Total Length:                           10321
 Originating/generating centre:          Tokyo (RSMC), Japan Meteorological Agency
 Originating/generating sub-centre:      0
 GRIB Master Tables Version Number:      5 (4 November 2009)

@@ -41,12 +41,14 @@ fn main() {
     fs::write(
         &output_path,
         format!(
-            "pub const CODE_TABLE_1_2: &'static [&'static str] = &{:#?};
+            "pub const CODE_TABLE_0_0: &'static [&'static str] = &{:#?};
+            pub const CODE_TABLE_1_2: &'static [&'static str] = &{:#?};
             pub const CODE_TABLE_1_3: &'static [&'static str] = &{:#?};
             pub const CODE_TABLE_1_4: &'static [&'static str] = &{:#?};
             pub const CODE_TABLE_3_1: &'static [&'static str] = &{:#?};
             pub const CODE_TABLE_4_0: &'static [&'static str] = &{:#?};
             pub const CODE_TABLE_5_0: &'static [&'static str] = &{:#?};",
+            code_db.export("0.0"),
             code_db.export("1.2"),
             code_db.export("1.3"),
             code_db.export("1.4"),
