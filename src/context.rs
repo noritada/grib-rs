@@ -222,6 +222,28 @@ impl<R: Grib2Read> Grib2<R> {
         &self.submessages
     }
 
+    pub fn describe_submessage(&self, submessage: &SubMessage) -> String {
+        let sect3 = submessage.section3;
+        let sect4 = submessage.section4;
+        let sect5 = submessage.section5;
+        format!(
+            "\
+Grid:                                   {}
+Product:                                {}
+Data Representation:                    {}
+",
+            sect3
+                .and_then(|id| self.describe_section(id))
+                .unwrap_or(String::new()),
+            sect4
+                .and_then(|id| self.describe_section(id))
+                .unwrap_or(String::new()),
+            sect5
+                .and_then(|id| self.describe_section(id))
+                .unwrap_or(String::new()),
+        )
+    }
+
     /// Decodes grid values of a surface specified by the index `i`.
     pub fn get_values(&self, i: usize) -> Result<Box<[f32]>, GribError> {
         let (sect5, sect6, sect7) = self
@@ -243,6 +265,12 @@ impl<R: Grib2Read> Grib2<R> {
 
     pub fn sections(&self) -> &Box<[SectionInfo]> {
         &self.sections
+    }
+
+    pub fn describe_section(&self, section_id: usize) -> Option<String> {
+        self.sections
+            .get(section_id)
+            .and_then(|s| s.get_tmpl_code()?.describe())
     }
 
     pub fn list_templates(&self) -> Vec<TemplateInfo> {

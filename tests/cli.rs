@@ -91,134 +91,41 @@ fn list() -> Result<(), Box<dyn std::error::Error>> {
     let arg_path = tempfile.path();
 
     let out_str = "\
-[
-    SubMessage {
-        section2: None,
-        section3: Some(
-            2,
-        ),
-        section4: Some(
-            3,
-        ),
-        section5: Some(
-            4,
-        ),
-        section6: Some(
-            5,
-        ),
-        section7: Some(
-            6,
-        ),
-    },
-    SubMessage {
-        section2: None,
-        section3: Some(
-            2,
-        ),
-        section4: Some(
-            7,
-        ),
-        section5: Some(
-            8,
-        ),
-        section6: Some(
-            9,
-        ),
-        section7: Some(
-            10,
-        ),
-    },
-    SubMessage {
-        section2: None,
-        section3: Some(
-            2,
-        ),
-        section4: Some(
-            11,
-        ),
-        section5: Some(
-            12,
-        ),
-        section6: Some(
-            13,
-        ),
-        section7: Some(
-            14,
-        ),
-    },
-    SubMessage {
-        section2: None,
-        section3: Some(
-            2,
-        ),
-        section4: Some(
-            15,
-        ),
-        section5: Some(
-            16,
-        ),
-        section6: Some(
-            17,
-        ),
-        section7: Some(
-            18,
-        ),
-    },
-    SubMessage {
-        section2: None,
-        section3: Some(
-            2,
-        ),
-        section4: Some(
-            19,
-        ),
-        section5: Some(
-            20,
-        ),
-        section6: Some(
-            21,
-        ),
-        section7: Some(
-            22,
-        ),
-    },
-    SubMessage {
-        section2: None,
-        section3: Some(
-            2,
-        ),
-        section4: Some(
-            23,
-        ),
-        section5: Some(
-            24,
-        ),
-        section6: Some(
-            25,
-        ),
-        section7: Some(
-            26,
-        ),
-    },
-    SubMessage {
-        section2: None,
-        section3: Some(
-            2,
-        ),
-        section4: Some(
-            27,
-        ),
-        section5: Some(
-            28,
-        ),
-        section6: Some(
-            29,
-        ),
-        section7: Some(
-            30,
-        ),
-    },
-]
+0
+Grid:                                   Latitude/longitude
+Product:                                Analysis or forecast at a horizontal level or in a horizontal layer at a point in time
+Data Representation:                    Run length packing with level values
+
+1
+Grid:                                   Latitude/longitude
+Product:                                Analysis or forecast at a horizontal level or in a horizontal layer at a point in time
+Data Representation:                    Run length packing with level values
+
+2
+Grid:                                   Latitude/longitude
+Product:                                Analysis or forecast at a horizontal level or in a horizontal layer at a point in time
+Data Representation:                    Run length packing with level values
+
+3
+Grid:                                   Latitude/longitude
+Product:                                Analysis or forecast at a horizontal level or in a horizontal layer at a point in time
+Data Representation:                    Run length packing with level values
+
+4
+Grid:                                   Latitude/longitude
+Product:                                Analysis or forecast at a horizontal level or in a horizontal layer at a point in time
+Data Representation:                    Run length packing with level values
+
+5
+Grid:                                   Latitude/longitude
+Product:                                Analysis or forecast at a horizontal level or in a horizontal layer at a point in time
+Data Representation:                    Run length packing with level values
+
+6
+Grid:                                   Latitude/longitude
+Product:                                Analysis or forecast at a horizontal level or in a horizontal layer at a point in time
+Data Representation:                    Run length packing with level values
+
 ";
 
     let mut cmd = Command::cargo_bin(CMD_NAME)?;
