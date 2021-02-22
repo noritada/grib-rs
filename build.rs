@@ -38,23 +38,24 @@ fn main() {
         .join("CodeFlag.xml");
     let output_path = Path::new(&out_dir).join("grib2_codeflag.rs");
     let code_db = grib_build::grib2_codeflag::CodeDB::load(input_path);
+    let targets = vec![
+        ("0.0", "CODE_TABLE_0_0"),
+        ("1.2", "CODE_TABLE_1_2"),
+        ("1.3", "CODE_TABLE_1_3"),
+        ("1.4", "CODE_TABLE_1_4"),
+        ("3.1", "CODE_TABLE_3_1"),
+        ("4.0", "CODE_TABLE_4_0"),
+        ("5.0", "CODE_TABLE_5_0"),
+    ];
     fs::write(
         &output_path,
         format!(
-            "{}
-            {}
-            {}
-            {}
-            {}
-            {}
-            {}",
-            code_db.export("0.0", "CODE_TABLE_0_0"),
-            code_db.export("1.2", "CODE_TABLE_1_2"),
-            code_db.export("1.3", "CODE_TABLE_1_3"),
-            code_db.export("1.4", "CODE_TABLE_1_4"),
-            code_db.export("3.1", "CODE_TABLE_3_1"),
-            code_db.export("4.0", "CODE_TABLE_4_0"),
-            code_db.export("5.0", "CODE_TABLE_5_0"),
+            "{}",
+            targets
+                .iter()
+                .map(|(num, var)| code_db.export(num, var))
+                .collect::<Vec<_>>()
+                .join("\n\n"),
         ),
     )
     .unwrap();
