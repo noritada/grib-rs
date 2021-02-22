@@ -116,10 +116,10 @@ impl CodeDB {
         output
     }
 
-    pub fn export(&self, name: &str) -> Vec<String> {
-        match self.get(name) {
-            Some(code_table) => code_table.export(),
-            None => Vec::new(),
+    pub fn export(&self, table_num: &str, variable_name: &str) -> String {
+        match self.get(table_num) {
+            Some(code_table) => code_table.export(variable_name),
+            None => "[]".to_string(),
         }
     }
 
@@ -139,7 +139,15 @@ impl CodeTable {
         Self { data: vec![pair] }
     }
 
-    fn export(&self) -> Vec<String> {
+    fn export(&self, name: &str) -> String {
+        format!(
+            "pub const {}: &'static [&'static str] = &{:#?};",
+            name,
+            self.to_vec(),
+        )
+    }
+
+    fn to_vec(&self) -> Vec<String> {
         let mut output = Vec::new();
 
         let mut count = 0;
@@ -230,6 +238,20 @@ mod tests {
     fn export() {
         let path = Path::new("testdata").join("grib2_codeflag.xml");
         let db = CodeDB::load(path);
-        assert_eq!(db.export("1.0"), vec!["1A", "1B",]);
+        assert_eq!(
+            db.export("1.0", "CODE_TABLE_1_0"),
+            "\
+pub const CODE_TABLE_1_0: &'static [&'static str] = &[
+    \"1A\",
+    \"1B\",
+];"
+        );
+    }
+
+    #[test]
+    fn codetable_to_vec() {
+        let path = Path::new("testdata").join("grib2_codeflag.xml");
+        let db = CodeDB::load(path);
+        assert_eq!(db.get("1.0").unwrap().to_vec(), vec!["1A", "1B",]);
     }
 }
