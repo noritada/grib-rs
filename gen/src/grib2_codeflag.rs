@@ -1,5 +1,6 @@
 use quick_xml::events::Event;
 use quick_xml::Reader;
+use std::collections::HashMap;
 use std::fs::File;
 use std::io::BufReader;
 use std::path::PathBuf;
@@ -7,22 +8,28 @@ use std::path::PathBuf;
 use crate::*;
 
 pub struct CodeDB {
-    data: Vec<(String, String, String)>,
+    data: HashMap<String, CodeTable>,
 }
 
 impl CodeDB {
+    pub fn new() -> Self {
+        Self {
+            data: HashMap::new(),
+        }
+    }
+
     pub fn load(path: PathBuf) -> Self {
         Self {
             data: Self::parse_file(path),
         }
     }
 
-    pub fn parse_file(path: PathBuf) -> Vec<(String, String, String)> {
+    pub fn parse_file(path: PathBuf) -> HashMap<String, CodeTable> {
         let f = File::open(&path).unwrap();
         let f = BufReader::new(f);
         let mut reader = Reader::from_reader(f);
 
-        let mut output = Vec::new();
+        let mut output: HashMap<String, CodeTable> = HashMap::new();
 
         let mut buf = Vec::new();
         let mut texts = Vec::new();
@@ -82,7 +89,15 @@ impl CodeDB {
                                 )
                                     }
                                     (Some(table_id), Some(code), Some(desc)) => {
-                                        output.push((table_id.to_owned(), code, desc));
+                                        let triplet = (table_id.to_owned(), code, desc);
+                                        if let Some(v) = output.get_mut(table_id) {
+                                            v.data.push(triplet)
+                                        } else {
+                                            output.insert(
+                                                table_id.to_owned(),
+                                                CodeTable::new_with(triplet),
+                                            );
+                                        }
                                     }
                                 }
                             }
@@ -102,6 +117,31 @@ impl CodeDB {
     }
 
     pub fn export(&self, name: &str) -> Vec<String> {
+        match self.get(name) {
+            Some(code_table) => code_table.export(name),
+            None => Vec::new(),
+        }
+    }
+
+    pub fn get(&self, name: &str) -> Option<&CodeTable> {
+        let target_table_id = format!("Code table {}", name);
+        self.data.get(&target_table_id)
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct CodeTable {
+    data: Vec<(String, String, String)>,
+}
+
+impl CodeTable {
+    fn new_with(triplet: (String, String, String)) -> Self {
+        Self {
+            data: vec![triplet],
+        }
+    }
+
+    fn export(&self, name: &str) -> Vec<String> {
         let target_table_id = format!("Code table {}", name);
         let mut output = Vec::new();
 
@@ -156,13 +196,22 @@ mod tests {
     #[test]
     fn parse_file() {
         let path = Path::new("testdata").join("grib2_codeflag.xml");
+        let db = CodeDB::parse_file(path);
         assert_eq!(
-            CodeDB::parse_file(path),
+            db.get("Code table 0.0").unwrap().data,
             vec![
                 ("Code table 0.0", "0", "0A"),
                 ("Code table 0.0", "1", "0B"),
                 ("Code table 0.0", "2-254", "Reserved"),
                 ("Code table 0.0", "255", "Missing"),
+            ]
+            .iter()
+            .map(|(a, b, c)| (a.to_string(), b.to_string(), c.to_string()))
+            .collect::<Vec<_>>()
+        );
+        assert_eq!(
+            db.get("Code table 1.0").unwrap().data,
+            vec![
                 ("Code table 1.0", "0", "1A"),
                 ("Code table 1.0", "1", "1B"),
                 ("Code table 1.0", "2-191", "Reserved"),
@@ -173,6 +222,15 @@ mod tests {
             .map(|(a, b, c)| (a.to_string(), b.to_string(), c.to_string()))
             .collect::<Vec<_>>()
         );
+    }
+
+    #[test]
+    fn codedb_getting_code_table() {
+        let mut db = CodeDB::new();
+        let triplet = ("A".to_owned(), "0".to_owned(), "0".to_owned());
+        let table = CodeTable::new_with(triplet);
+        db.data.insert("Code table 0.0".to_owned(), table.clone());
+        assert_eq!(db.get("0.0").unwrap(), &table);
     }
 
     #[test]
