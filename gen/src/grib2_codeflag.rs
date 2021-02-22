@@ -74,7 +74,9 @@ impl CodeDB {
                             let desc = std::mem::replace(&mut desc, None);
 
                             if let Some(title) = title {
-                                let table_id = title.split(" - ").next();
+                                let mut substrings = title.split(" - ");
+                                let table_id = substrings.next();
+                                let table_desc = substrings.next().unwrap_or("");
                                 match (table_id, code, desc) {
                                     (None, _, _) => {
                                         panic!("<Title> is missing (position: {})", pos)
@@ -95,7 +97,7 @@ impl CodeDB {
                                         } else {
                                             output.insert(
                                                 table_id.to_owned(),
-                                                CodeTable::new_with(pair),
+                                                CodeTable::new_with(pair, table_desc.to_owned()),
                                             );
                                         }
                                     }
@@ -131,17 +133,24 @@ impl CodeDB {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct CodeTable {
+    desc: String,
     data: Vec<(String, String)>,
 }
 
 impl CodeTable {
-    fn new_with(pair: (String, String)) -> Self {
-        Self { data: vec![pair] }
+    fn new_with(pair: (String, String), desc: String) -> Self {
+        Self {
+            desc: desc,
+            data: vec![pair],
+        }
     }
 
     fn export(&self, name: &str) -> String {
         format!(
-            "pub const {}: &'static [&'static str] = &{:#?};",
+            "\
+/// {}
+pub const {}: &'static [&'static str] = &{:#?};",
+            self.desc,
             name,
             self.to_vec(),
         )
@@ -229,7 +238,7 @@ mod tests {
     fn codedb_getting_code_table() {
         let mut db = CodeDB::new();
         let pair = ("0".to_owned(), "0".to_owned());
-        let table = CodeTable::new_with(pair);
+        let table = CodeTable::new_with(pair, "".to_owned());
         db.data.insert("Code table 0.0".to_owned(), table.clone());
         assert_eq!(db.get("0.0").unwrap(), &table);
     }
