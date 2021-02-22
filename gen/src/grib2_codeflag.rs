@@ -11,13 +11,13 @@ pub struct CodeDB {
 }
 
 impl CodeDB {
-    pub fn new(path: PathBuf) -> Self {
+    pub fn load(path: PathBuf) -> Self {
         Self {
-            data: Self::load(path),
+            data: Self::parse_file(path),
         }
     }
 
-    pub fn load(path: PathBuf) -> Vec<(String, String, String)> {
+    pub fn parse_file(path: PathBuf) -> Vec<(String, String, String)> {
         let f = File::open(&path).unwrap();
         let f = BufReader::new(f);
         let mut reader = Reader::from_reader(f);
@@ -154,10 +154,10 @@ mod tests {
     use std::path::Path;
 
     #[test]
-    fn parse_all() {
+    fn parse_file() {
         let path = Path::new("testdata").join("grib2_codeflag.xml");
         assert_eq!(
-            CodeDB::load(path),
+            CodeDB::parse_file(path),
             vec![
                 ("Code table 0.0", "0", "0A"),
                 ("Code table 0.0", "1", "0B"),
@@ -176,9 +176,9 @@ mod tests {
     }
 
     #[test]
-    fn rebuild_all() {
+    fn export() {
         let path = Path::new("testdata").join("grib2_codeflag.xml");
-        let db = CodeDB::new(path);
+        let db = CodeDB::load(path);
         assert_eq!(db.export("1.0"), vec!["1A", "1B",]);
     }
 }

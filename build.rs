@@ -37,7 +37,7 @@ fn main() {
         .join("xml")
         .join("CodeFlag.xml");
     let output_path = Path::new(&out_dir).join("grib2_codeflag.rs");
-    let code_db = grib_build::grib2_codeflag::CodeDB::new(input_path);
+    let code_db = grib_build::grib2_codeflag::CodeDB::load(input_path);
     fs::write(
         &output_path,
         format!(
