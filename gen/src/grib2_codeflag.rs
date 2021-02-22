@@ -89,13 +89,13 @@ impl CodeDB {
                                 )
                                     }
                                     (Some(table_id), Some(code), Some(desc)) => {
-                                        let triplet = (table_id.to_owned(), code, desc);
+                                        let pair = (code, desc);
                                         if let Some(v) = output.get_mut(table_id) {
-                                            v.data.push(triplet)
+                                            v.data.push(pair)
                                         } else {
                                             output.insert(
                                                 table_id.to_owned(),
-                                                CodeTable::new_with(triplet),
+                                                CodeTable::new_with(pair),
                                             );
                                         }
                                     }
@@ -118,7 +118,7 @@ impl CodeDB {
 
     pub fn export(&self, name: &str) -> Vec<String> {
         match self.get(name) {
-            Some(code_table) => code_table.export(name),
+            Some(code_table) => code_table.export(),
             None => Vec::new(),
         }
     }
@@ -131,29 +131,22 @@ impl CodeDB {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct CodeTable {
-    data: Vec<(String, String, String)>,
+    data: Vec<(String, String)>,
 }
 
 impl CodeTable {
-    fn new_with(triplet: (String, String, String)) -> Self {
-        Self {
-            data: vec![triplet],
-        }
+    fn new_with(pair: (String, String)) -> Self {
+        Self { data: vec![pair] }
     }
 
-    fn export(&self, name: &str) -> Vec<String> {
-        let target_table_id = format!("Code table {}", name);
+    fn export(&self) -> Vec<String> {
         let mut output = Vec::new();
 
         let mut count = 0;
         let mut empty_count = 0;
 
         for entry in self.data.iter() {
-            let (table_id, id, string) = entry;
-            if table_id.as_str() != target_table_id {
-                continue;
-            }
-
+            let (id, string) = entry;
             let string = match string.as_str() {
                 "Reserved" => None,
                 "Reserved for local use" => None,
@@ -200,26 +193,26 @@ mod tests {
         assert_eq!(
             db.get("Code table 0.0").unwrap().data,
             vec![
-                ("Code table 0.0", "0", "0A"),
-                ("Code table 0.0", "1", "0B"),
-                ("Code table 0.0", "2-254", "Reserved"),
-                ("Code table 0.0", "255", "Missing"),
+                ("0", "0A"),
+                ("1", "0B"),
+                ("2-254", "Reserved"),
+                ("255", "Missing"),
             ]
             .iter()
-            .map(|(a, b, c)| (a.to_string(), b.to_string(), c.to_string()))
+            .map(|(a, b)| (a.to_string(), b.to_string()))
             .collect::<Vec<_>>()
         );
         assert_eq!(
             db.get("Code table 1.0").unwrap().data,
             vec![
-                ("Code table 1.0", "0", "1A"),
-                ("Code table 1.0", "1", "1B"),
-                ("Code table 1.0", "2-191", "Reserved"),
-                ("Code table 1.0", "192-254", "Reserved for local use"),
-                ("Code table 1.0", "255", "Missing"),
+                ("0", "1A"),
+                ("1", "1B"),
+                ("2-191", "Reserved"),
+                ("192-254", "Reserved for local use"),
+                ("255", "Missing"),
             ]
             .iter()
-            .map(|(a, b, c)| (a.to_string(), b.to_string(), c.to_string()))
+            .map(|(a, b)| (a.to_string(), b.to_string()))
             .collect::<Vec<_>>()
         );
     }
@@ -227,8 +220,8 @@ mod tests {
     #[test]
     fn codedb_getting_code_table() {
         let mut db = CodeDB::new();
-        let triplet = ("A".to_owned(), "0".to_owned(), "0".to_owned());
-        let table = CodeTable::new_with(triplet);
+        let pair = ("0".to_owned(), "0".to_owned());
+        let table = CodeTable::new_with(pair);
         db.data.insert("Code table 0.0".to_owned(), table.clone());
         assert_eq!(db.get("0.0").unwrap(), &table);
     }
