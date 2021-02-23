@@ -178,7 +178,13 @@ impl<'i> InspectSectionsItem<'i> {
 impl<'i> Display for InspectSectionsItem<'i> {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         for sect in self.data.iter() {
-            write!(f, "{}\n", sect)?;
+            write!(
+                f,
+                "{:016x} - {:016x} : Section {}\n",
+                sect.offset,
+                sect.offset + sect.size,
+                sect.num
+            )?
         }
         Ok(())
     }

@@ -27,18 +27,6 @@ impl SectionInfo {
     }
 }
 
-impl Display for SectionInfo {
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        write!(
-            f,
-            "{:016x} - {:016x} : Section {}",
-            self.offset,
-            self.offset + self.size,
-            self.num
-        )
-    }
-}
-
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum SectionBody {
     Section0(Indicator),
