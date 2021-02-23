@@ -5,10 +5,7 @@ use std::fmt::{self, Display, Formatter};
 use std::io::{Read, Seek};
 use std::result::Result;
 
-use crate::codetables::{
-    lookup_table, CODE_TABLE_0_0, CODE_TABLE_1_1, CODE_TABLE_1_2, CODE_TABLE_1_3, CODE_TABLE_1_4,
-    CODE_TABLE_3_1, CODE_TABLE_4_0, CODE_TABLE_5_0, COMMON_CODE_TABLE_00, COMMON_CODE_TABLE_11,
-};
+use crate::codetables::{lookup_table, CODE_TABLE_3_1, CODE_TABLE_4_0, CODE_TABLE_5_0};
 use crate::decoder::{self, DecodeError};
 use crate::reader::{Grib2Read, ParseError, SeekableGrib2Reader};
 
@@ -58,20 +55,6 @@ pub struct Indicator {
     pub total_length: u64,
 }
 
-impl Display for Indicator {
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        write!(
-            f,
-            "\
-Discipline:                             {}
-Total Length:                           {}\
-",
-            lookup_table(CODE_TABLE_0_0, self.discipline as usize),
-            self.total_length,
-        )
-    }
-}
-
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Identification {
     /// Identification of originating/generating centre (see Common Code Table C-1)
@@ -91,33 +74,6 @@ pub struct Identification {
     pub prod_status: u8,
     /// Type of processed data in this GRIB message (see Code Table 1.4)
     pub data_type: u8,
-}
-
-impl Display for Identification {
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        write!(
-            f,
-            "\
-Originating/generating centre:          {}
-Originating/generating sub-centre:      {}
-GRIB Master Tables Version Number:      {} ({})
-GRIB Local Tables Version Number:       {}
-Significance of Reference Time:         {}
-Reference time of data:                 {}
-Production status of processed data:    {}
-Type of processed data:                 {}\
-",
-            lookup_table(COMMON_CODE_TABLE_11, self.centre_id as usize),
-            self.subcentre_id,
-            self.master_table_version,
-            lookup_table(COMMON_CODE_TABLE_00, self.master_table_version as usize),
-            lookup_table(CODE_TABLE_1_1, self.local_table_version as usize),
-            lookup_table(CODE_TABLE_1_2, self.ref_time_significance as usize),
-            self.ref_time,
-            lookup_table(CODE_TABLE_1_3, self.prod_status as usize),
-            lookup_table(CODE_TABLE_1_4, self.data_type as usize)
-        )
-    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
