@@ -166,12 +166,12 @@ pub struct BitMap {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct SubMessage {
-    section2: Option<usize>,
-    section3: Option<usize>,
-    section4: Option<usize>,
-    section5: Option<usize>,
-    section6: Option<usize>,
-    section7: Option<usize>,
+    pub section2: Option<usize>,
+    pub section3: Option<usize>,
+    pub section4: Option<usize>,
+    pub section5: Option<usize>,
+    pub section6: Option<usize>,
+    pub section7: Option<usize>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]

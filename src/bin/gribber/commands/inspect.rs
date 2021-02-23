@@ -1,7 +1,7 @@
 use clap::{App, Arg, ArgMatches, SubCommand};
 use console::{Style, Term};
 
-use grib::context::{SectionInfo, TemplateInfo};
+use grib::context::{SectionInfo, SubMessage, TemplateInfo};
 
 use crate::cli;
 
@@ -13,6 +13,12 @@ pub fn cli() -> App<'static, 'static> {
                 .help("Prints sections constructing the GRIB message")
                 .short("s")
                 .long("sections"),
+        )
+        .arg(
+            Arg::with_name("submessages")
+                .help("Prints submessages in the GRIB message")
+                .short("m")
+                .long("submessages"),
         )
         .arg(
             Arg::with_name("templates")
@@ -38,12 +44,16 @@ pub fn exec(args: &ArgMatches<'static>) -> Result<(), cli::CliError> {
     if args.is_present("sections") {
         view.add(InspectItem::Sections(grib.sections()));
     }
+    if args.is_present("submessages") {
+        view.add(InspectItem::SubMessages(grib.submessages()));
+    }
     if args.is_present("templates") {
         let tmpls = grib.list_templates();
         view.add(InspectItem::Templates(tmpls));
     }
     if view.items.len() == 0 {
         view.add(InspectItem::Sections(grib.sections()));
+        view.add(InspectItem::SubMessages(grib.submessages()));
         let tmpls = grib.list_templates();
         view.add(InspectItem::Templates(tmpls));
     }
@@ -78,6 +88,28 @@ pub fn exec(args: &ArgMatches<'static>) -> Result<(), cli::CliError> {
             InspectItem::Sections(sects) => {
                 for sect in sects.iter() {
                     println!("{}", sect);
+                }
+            }
+            InspectItem::SubMessages(submessages) => {
+                fn format_section(section: Option<usize>) -> String {
+                    let s = match section {
+                        None => "-".to_string(),
+                        Some(id) => id.to_string(),
+                    };
+                    format!("{:>5}", s)
+                }
+
+                println!("    S2    S3    S4    S5    S6    S7",);
+                for submessage in submessages.iter() {
+                    println!(
+                        " {} {} {} {} {} {}",
+                        format_section(submessage.section2),
+                        format_section(submessage.section3),
+                        format_section(submessage.section4),
+                        format_section(submessage.section5),
+                        format_section(submessage.section6),
+                        format_section(submessage.section7),
+                    );
                 }
             }
             InspectItem::Templates(tmpls) => {
@@ -134,6 +166,7 @@ impl<'i> InspectView<'i> {
 
 enum InspectItem<'i> {
     Sections(&'i Box<[SectionInfo]>),
+    SubMessages(&'i Box<[SubMessage]>),
     Templates(Vec<TemplateInfo>),
 }
 
@@ -141,6 +174,7 @@ impl<'i> InspectItem<'i> {
     fn title(&self) -> &'static str {
         match self {
             InspectItem::Sections(_) => "Sections",
+            InspectItem::SubMessages(_) => "SubMessages",
             InspectItem::Templates(_) => "Templates",
         }
     }
@@ -148,6 +182,7 @@ impl<'i> InspectItem<'i> {
     fn len(&self) -> usize {
         match self {
             InspectItem::Sections(sects) => sects.len(),
+            InspectItem::SubMessages(submessages) => submessages.len(),
             InspectItem::Templates(tmpls) => tmpls.len(),
         }
     }

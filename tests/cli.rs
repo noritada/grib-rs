@@ -178,6 +178,16 @@ Sections:
 00000000000022e3 - 000000000000284d : Section 7
 000000000000284d - 0000000000002851 : Section 8
 
+SubMessages:
+    S2    S3    S4    S5    S6    S7
+     -     2     3     4     5     6
+     -     2     7     8     9    10
+     -     2    11    12    13    14
+     -     2    15    16    17    18
+     -     2    19    20    21    22
+     -     2    23    24    25    26
+     -     2    27    28    29    30
+
 Templates:
 3.0      - Latitude/longitude
 4.0      - Analysis or forecast at a horizontal level or in a horizontal layer at a point in time
@@ -245,6 +255,31 @@ fn inspect_with_opt_s() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 #[test]
+fn inspect_with_opt_m() -> Result<(), Box<dyn std::error::Error>> {
+    let tempfile = utils::jma_tornado_nowcast_file()?;
+    let arg_path = tempfile.path();
+
+    let out_str = "    S2    S3    S4    S5    S6    S7
+     -     2     3     4     5     6
+     -     2     7     8     9    10
+     -     2    11    12    13    14
+     -     2    15    16    17    18
+     -     2    19    20    21    22
+     -     2    23    24    25    26
+     -     2    27    28    29    30
+";
+
+    let mut cmd = Command::cargo_bin(CMD_NAME)?;
+    cmd.arg("inspect").arg("-m").arg(arg_path);
+    cmd.assert()
+        .success()
+        .stdout(predicate::str::similar(out_str))
+        .stderr(predicate::str::is_empty());
+
+    Ok(())
+}
+
+#[test]
 fn inspect_with_opt_t() -> Result<(), Box<dyn std::error::Error>> {
     let tempfile = utils::jma_tornado_nowcast_file()?;
     let arg_path = tempfile.path();
@@ -276,7 +311,11 @@ fn inspect_with_all_opts() -> Result<(), Box<dyn std::error::Error>> {
     let msg_no_opt = format!("{}", String::from_utf8(msg_no_opt)?);
 
     let mut cmd = Command::cargo_bin(CMD_NAME)?;
-    cmd.arg("inspect").arg("-s").arg("-t").arg(arg_path);
+    cmd.arg("inspect")
+        .arg("-s")
+        .arg("-m")
+        .arg("-t")
+        .arg(arg_path);
     cmd.assert()
         .success()
         .stdout(predicate::str::similar(msg_no_opt))
