@@ -177,10 +177,11 @@ impl<'i> InspectSectionsItem<'i> {
 
 impl<'i> Display for InspectSectionsItem<'i> {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        for sect in self.data.iter() {
+        for (i, sect) in self.data.iter().enumerate() {
             write!(
                 f,
-                "{:016x} - {:016x} : Section {}\n",
+                "{:>5} │ {:016x} - {:016x} │ Section {}\n",
+                i,
                 sect.offset,
                 sect.offset + sect.size,
                 sect.num
@@ -214,11 +215,12 @@ impl<'i> Display for InspectSubMessagesItem<'i> {
             format!("{:>5}", s)
         }
 
-        write!(f, "    S2    S3    S4    S5    S6    S7\n",)?;
-        for submessage in self.data.iter() {
+        write!(f, "   id │    S2    S3    S4    S5    S6    S7\n",)?;
+        for (i, submessage) in self.data.iter().enumerate() {
             write!(
                 f,
-                " {} {} {} {} {} {}\n",
+                "{:>5} │ {} {} {} {} {} {}\n",
+                i,
                 format_section(submessage.section2),
                 format_section(submessage.section3),
                 format_section(submessage.section4),
