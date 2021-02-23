@@ -1,5 +1,6 @@
 use clap::{App, Arg, ArgMatches, SubCommand};
 use console::{Style, Term};
+use std::fmt::{self, Display, Formatter};
 
 use grib::context::{SectionInfo, SubMessage, TemplateInfo};
 
@@ -42,20 +43,28 @@ pub fn exec(args: &ArgMatches<'static>) -> Result<(), cli::CliError> {
 
     let mut view = InspectView::new();
     if args.is_present("sections") {
-        view.add(InspectItem::Sections(grib.sections()));
+        view.add(InspectItem::Sections(InspectSectionsItem::new(
+            grib.sections(),
+        )));
     }
     if args.is_present("submessages") {
-        view.add(InspectItem::SubMessages(grib.submessages()));
+        view.add(InspectItem::SubMessages(InspectSubMessagesItem::new(
+            grib.submessages(),
+        )));
     }
     if args.is_present("templates") {
         let tmpls = grib.list_templates();
-        view.add(InspectItem::Templates(tmpls));
+        view.add(InspectItem::Templates(InspectTemplatesItem::new(tmpls)));
     }
     if view.items.len() == 0 {
-        view.add(InspectItem::Sections(grib.sections()));
-        view.add(InspectItem::SubMessages(grib.submessages()));
+        view.add(InspectItem::Sections(InspectSectionsItem::new(
+            grib.sections(),
+        )));
+        view.add(InspectItem::SubMessages(InspectSubMessagesItem::new(
+            grib.submessages(),
+        )));
         let tmpls = grib.list_templates();
-        view.add(InspectItem::Templates(tmpls));
+        view.add(InspectItem::Templates(InspectTemplatesItem::new(tmpls)));
     }
 
     let user_attended = console::user_attended();
@@ -85,45 +94,9 @@ pub fn exec(args: &ArgMatches<'static>) -> Result<(), cli::CliError> {
         }
 
         match item {
-            InspectItem::Sections(sects) => {
-                for sect in sects.iter() {
-                    println!("{}", sect);
-                }
-            }
-            InspectItem::SubMessages(submessages) => {
-                fn format_section(section: Option<usize>) -> String {
-                    let s = match section {
-                        None => "-".to_string(),
-                        Some(id) => id.to_string(),
-                    };
-                    format!("{:>5}", s)
-                }
-
-                println!("    S2    S3    S4    S5    S6    S7",);
-                for submessage in submessages.iter() {
-                    println!(
-                        " {} {} {} {} {} {}",
-                        format_section(submessage.section2),
-                        format_section(submessage.section3),
-                        format_section(submessage.section4),
-                        format_section(submessage.section5),
-                        format_section(submessage.section6),
-                        format_section(submessage.section7),
-                    );
-                }
-            }
-            InspectItem::Templates(tmpls) => {
-                for tmpl in tmpls.iter() {
-                    match tmpl.describe() {
-                        Some(s) => {
-                            println!("{:<8} - {}", tmpl.to_string(), s);
-                        }
-                        None => {
-                            println!("{}", tmpl);
-                        }
-                    }
-                }
-            }
+            InspectItem::Sections(item) => print!("{}", item),
+            InspectItem::SubMessages(item) => print!("{}", item),
+            InspectItem::Templates(item) => print!("{}", item),
         }
 
         if let Some(_) = items.peek() {
@@ -165,9 +138,9 @@ impl<'i> InspectView<'i> {
 }
 
 enum InspectItem<'i> {
-    Sections(&'i Box<[SectionInfo]>),
-    SubMessages(&'i Box<[SubMessage]>),
-    Templates(Vec<TemplateInfo>),
+    Sections(InspectSectionsItem<'i>),
+    SubMessages(InspectSubMessagesItem<'i>),
+    Templates(InspectTemplatesItem),
 }
 
 impl<'i> InspectItem<'i> {
@@ -181,9 +154,103 @@ impl<'i> InspectItem<'i> {
 
     fn len(&self) -> usize {
         match self {
-            InspectItem::Sections(sects) => sects.len(),
-            InspectItem::SubMessages(submessages) => submessages.len(),
-            InspectItem::Templates(tmpls) => tmpls.len(),
+            InspectItem::Sections(item) => item.len(),
+            InspectItem::SubMessages(item) => item.len(),
+            InspectItem::Templates(item) => item.len(),
         }
+    }
+}
+
+struct InspectSectionsItem<'i> {
+    data: &'i Box<[SectionInfo]>,
+}
+
+impl<'i> InspectSectionsItem<'i> {
+    fn new(data: &'i Box<[SectionInfo]>) -> Self {
+        Self { data: data }
+    }
+
+    fn len(&self) -> usize {
+        self.data.len()
+    }
+}
+
+impl<'i> Display for InspectSectionsItem<'i> {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        for sect in self.data.iter() {
+            write!(f, "{}\n", sect)?;
+        }
+        Ok(())
+    }
+}
+
+struct InspectSubMessagesItem<'i> {
+    data: &'i Box<[SubMessage]>,
+}
+
+impl<'i> InspectSubMessagesItem<'i> {
+    fn new(data: &'i Box<[SubMessage]>) -> Self {
+        Self { data: data }
+    }
+
+    fn len(&self) -> usize {
+        self.data.len()
+    }
+}
+
+impl<'i> Display for InspectSubMessagesItem<'i> {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        fn format_section(section: Option<usize>) -> String {
+            let s = match section {
+                None => "-".to_string(),
+                Some(id) => id.to_string(),
+            };
+            format!("{:>5}", s)
+        }
+
+        write!(f, "    S2    S3    S4    S5    S6    S7\n",)?;
+        for submessage in self.data.iter() {
+            write!(
+                f,
+                " {} {} {} {} {} {}\n",
+                format_section(submessage.section2),
+                format_section(submessage.section3),
+                format_section(submessage.section4),
+                format_section(submessage.section5),
+                format_section(submessage.section6),
+                format_section(submessage.section7),
+            )?;
+        }
+        Ok(())
+    }
+}
+
+struct InspectTemplatesItem {
+    data: Vec<TemplateInfo>,
+}
+
+impl InspectTemplatesItem {
+    fn new(data: Vec<TemplateInfo>) -> Self {
+        Self { data: data }
+    }
+
+    fn len(&self) -> usize {
+        self.data.len()
+    }
+}
+
+impl Display for InspectTemplatesItem {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        for tmpl in self.data.iter() {
+            match tmpl.describe() {
+                Some(s) => {
+                    write!(f, "{:<8} - {}\n", tmpl.to_string(), s)?;
+                }
+                None => {
+                    write!(f, "{}\n", tmpl)?;
+                }
+            }
+        }
+        Ok(())
     }
 }
