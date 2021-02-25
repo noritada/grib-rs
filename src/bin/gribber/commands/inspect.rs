@@ -215,7 +215,9 @@ impl<'i> Display for InspectSubMessagesItem<'i> {
             format!("{:>5}", s)
         }
 
-        write!(f, "   id │    S2    S3    S4    S5    S6    S7\n",)?;
+        let header = "   id │    S2    S3    S4    S5    S6    S7\n";
+        let style = Style::new().bold();
+        write!(f, "{}", style.apply_to(header))?;
         for (i, submessage) in self.data.iter().enumerate() {
             write!(
                 f,
