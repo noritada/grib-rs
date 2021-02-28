@@ -207,7 +207,11 @@ impl<'i> InspectSubMessagesItem<'i> {
 
 impl<'i> Display for InspectSubMessagesItem<'i> {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        fn format_section(section: Option<usize>) -> String {
+        fn format_section(s: usize) -> String {
+            format!("{:>5}", s.to_string())
+        }
+
+        fn format_section_optional(section: Option<usize>) -> String {
             let s = match section {
                 None => "-".to_string(),
                 Some(id) => id.to_string(),
@@ -223,7 +227,7 @@ impl<'i> Display for InspectSubMessagesItem<'i> {
                 f,
                 "{:>5} │ {} {} {} {} {} {}\n",
                 i,
-                format_section(submessage.section2),
+                format_section_optional(submessage.section2),
                 format_section(submessage.section3),
                 format_section(submessage.section4),
                 format_section(submessage.section5),

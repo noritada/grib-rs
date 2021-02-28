@@ -111,11 +111,11 @@ pub struct BitMap {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct SubMessageIndex {
     pub section2: Option<usize>,
-    pub section3: Option<usize>,
-    pub section4: Option<usize>,
-    pub section5: Option<usize>,
-    pub section6: Option<usize>,
-    pub section7: Option<usize>,
+    pub section3: usize,
+    pub section4: usize,
+    pub section5: usize,
+    pub section6: usize,
+    pub section7: usize,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -191,11 +191,11 @@ impl<R: Grib2Read> Grib2<R> {
             submessage_index
                 .section2
                 .and_then(|i| self.new_submessage_section(i)),
-            self.new_submessage_section(submessage_index.section3?),
-            self.new_submessage_section(submessage_index.section4?),
-            self.new_submessage_section(submessage_index.section5?),
-            self.new_submessage_section(submessage_index.section6?),
-            self.new_submessage_section(submessage_index.section7?),
+            self.new_submessage_section(submessage_index.section3),
+            self.new_submessage_section(submessage_index.section4),
+            self.new_submessage_section(submessage_index.section5),
+            self.new_submessage_section(submessage_index.section6),
+            self.new_submessage_section(submessage_index.section7),
             self.new_submessage_section(self.sections.len() - 1),
         ))
     }
@@ -211,9 +211,9 @@ impl<R: Grib2Read> Grib2<R> {
             .get(i)
             .and_then(|submsg| {
                 Some((
-                    submsg.section5.and_then(|i| self.sections.get(i))?,
-                    submsg.section6.and_then(|i| self.sections.get(i))?,
-                    submsg.section7.and_then(|i| self.sections.get(i))?,
+                    self.sections.get(submsg.section5)?,
+                    self.sections.get(submsg.section6)?,
+                    self.sections.get(submsg.section7)?,
                 ))
             })
             .ok_or(GribError::InternalDataError)?;
@@ -258,7 +258,7 @@ fn index_submessages(
         ($submessage:expr) => {{
             let submessage = $submessage;
             i2_default = submessage.section2;
-            i3_default = submessage.section3;
+            i3_default = Some(submessage.section3);
             submessage
         }};
     }
@@ -278,11 +278,11 @@ fn index_submessages(
                 let i7 = check!(7);
                 update_default!(SubMessageIndex {
                     section2: Some(i),
-                    section3: Some(i3),
-                    section4: Some(i4),
-                    section5: Some(i5),
-                    section6: Some(i6),
-                    section7: Some(i7),
+                    section3: i3,
+                    section4: i4,
+                    section5: i5,
+                    section6: i6,
+                    section7: i7,
                 })
             }
             Some((_i, SectionInfo { num: 3, .. })) => {
@@ -293,28 +293,26 @@ fn index_submessages(
                 let i7 = check!(7);
                 update_default!(SubMessageIndex {
                     section2: i2_default,
-                    section3: Some(i),
-                    section4: Some(i4),
-                    section5: Some(i5),
-                    section6: Some(i6),
-                    section7: Some(i7),
+                    section3: i,
+                    section4: i4,
+                    section5: i5,
+                    section6: i6,
+                    section7: i7,
                 })
             }
             Some((i, SectionInfo { num: 4, .. })) => {
-                if i3_default == None {
-                    return Err(ValidationError::NoGridDefinition(i));
-                }
+                let i3 = i3_default.ok_or(ValidationError::NoGridDefinition(i))?;
                 let (i, _) = sect.unwrap();
                 let i5 = check!(5);
                 let i6 = check!(6);
                 let i7 = check!(7);
                 update_default!(SubMessageIndex {
                     section2: i2_default,
-                    section3: i3_default,
-                    section4: Some(i),
-                    section5: Some(i5),
-                    section6: Some(i6),
-                    section7: Some(i7),
+                    section3: i3,
+                    section4: i,
+                    section5: i5,
+                    section6: i6,
+                    section7: i7,
                 })
             }
             Some((i, SectionInfo { num: 8, .. })) => {
@@ -486,11 +484,11 @@ mod tests {
             index_submessages(&sects),
             Ok(vec![SubMessageIndex {
                 section2: Some(2),
-                section3: Some(3),
-                section4: Some(4),
-                section5: Some(5),
-                section6: Some(6),
-                section7: Some(7),
+                section3: 3,
+                section4: 4,
+                section5: 5,
+                section6: 6,
+                section7: 7,
             },]
             .into_boxed_slice())
         );
@@ -505,19 +503,19 @@ mod tests {
             Ok(vec![
                 SubMessageIndex {
                     section2: Some(2),
-                    section3: Some(3),
-                    section4: Some(4),
-                    section5: Some(5),
-                    section6: Some(6),
-                    section7: Some(7),
+                    section3: 3,
+                    section4: 4,
+                    section5: 5,
+                    section6: 6,
+                    section7: 7,
                 },
                 SubMessageIndex {
                     section2: Some(8),
-                    section3: Some(9),
-                    section4: Some(10),
-                    section5: Some(11),
-                    section6: Some(12),
-                    section7: Some(13),
+                    section3: 9,
+                    section4: 10,
+                    section5: 11,
+                    section6: 12,
+                    section7: 13,
                 },
             ]
             .into_boxed_slice())
@@ -533,19 +531,19 @@ mod tests {
             Ok(vec![
                 SubMessageIndex {
                     section2: Some(2),
-                    section3: Some(3),
-                    section4: Some(4),
-                    section5: Some(5),
-                    section6: Some(6),
-                    section7: Some(7),
+                    section3: 3,
+                    section4: 4,
+                    section5: 5,
+                    section6: 6,
+                    section7: 7,
                 },
                 SubMessageIndex {
                     section2: Some(2),
-                    section3: Some(8),
-                    section4: Some(9),
-                    section5: Some(10),
-                    section6: Some(11),
-                    section7: Some(12),
+                    section3: 8,
+                    section4: 9,
+                    section5: 10,
+                    section6: 11,
+                    section7: 12,
                 },
             ]
             .into_boxed_slice())
@@ -561,19 +559,19 @@ mod tests {
             Ok(vec![
                 SubMessageIndex {
                     section2: None,
-                    section3: Some(2),
-                    section4: Some(3),
-                    section5: Some(4),
-                    section6: Some(5),
-                    section7: Some(6),
+                    section3: 2,
+                    section4: 3,
+                    section5: 4,
+                    section6: 5,
+                    section7: 6,
                 },
                 SubMessageIndex {
                     section2: None,
-                    section3: Some(7),
-                    section4: Some(8),
-                    section5: Some(9),
-                    section6: Some(10),
-                    section7: Some(11),
+                    section3: 7,
+                    section4: 8,
+                    section5: 9,
+                    section6: 10,
+                    section7: 11,
                 },
             ]
             .into_boxed_slice())
@@ -589,19 +587,19 @@ mod tests {
             Ok(vec![
                 SubMessageIndex {
                     section2: Some(2),
-                    section3: Some(3),
-                    section4: Some(4),
-                    section5: Some(5),
-                    section6: Some(6),
-                    section7: Some(7),
+                    section3: 3,
+                    section4: 4,
+                    section5: 5,
+                    section6: 6,
+                    section7: 7,
                 },
                 SubMessageIndex {
                     section2: Some(2),
-                    section3: Some(3),
-                    section4: Some(8),
-                    section5: Some(9),
-                    section6: Some(10),
-                    section7: Some(11),
+                    section3: 3,
+                    section4: 8,
+                    section5: 9,
+                    section6: 10,
+                    section7: 11,
                 },
             ]
             .into_boxed_slice())
@@ -617,19 +615,19 @@ mod tests {
             Ok(vec![
                 SubMessageIndex {
                     section2: None,
-                    section3: Some(2),
-                    section4: Some(3),
-                    section5: Some(4),
-                    section6: Some(5),
-                    section7: Some(6),
+                    section3: 2,
+                    section4: 3,
+                    section5: 4,
+                    section6: 5,
+                    section7: 6,
                 },
                 SubMessageIndex {
                     section2: None,
-                    section3: Some(2),
-                    section4: Some(7),
-                    section5: Some(8),
-                    section6: Some(9),
-                    section7: Some(10),
+                    section3: 2,
+                    section4: 7,
+                    section5: 8,
+                    section6: 9,
+                    section7: 10,
                 },
             ]
             .into_boxed_slice())
