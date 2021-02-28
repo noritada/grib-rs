@@ -225,16 +225,16 @@ impl<'i> Display for InspectSubMessagesItem<'i> {
                 None => "-".to_string(),
                 Some(info) => format!("{}", info),
             };
-            format!("{:<5}", s)
+            format!("{:<7}", s)
         }
 
-        let header = "   id │    S2    S3    S4    S5    S6    S7 | Tmpl3 Tmpl4 Tmpl5\n";
+        let header = "   id │    S2    S3    S4    S5    S6    S7 │ Tmpl3   Tmpl4   Tmpl5\n";
         let style = Style::new().bold();
         write!(f, "{}", style.apply_to(header))?;
         for (i, submessage) in self.data.clone().enumerate() {
             write!(
                 f,
-                "{:>5} │ {} {} {} {} {} {} | {} {} {}\n",
+                "{:>5} │ {} {} {} {} {} {} │ {} {} {}\n",
                 i,
                 format_section_index_optional(&submessage.2),
                 format_section_index(&submessage.3),
