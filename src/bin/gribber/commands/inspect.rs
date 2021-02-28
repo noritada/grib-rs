@@ -208,11 +208,11 @@ impl<'i> InspectSubMessagesItem<'i> {
 
 impl<'i> Display for InspectSubMessagesItem<'i> {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        fn format_section_index(s: SubMessageSection) -> String {
+        fn format_section_index(s: &SubMessageSection) -> String {
             format!("{:>5}", s.index.to_string())
         }
 
-        fn format_section_index_optional(section: Option<SubMessageSection>) -> String {
+        fn format_section_index_optional(section: &Option<SubMessageSection>) -> String {
             let s = match section {
                 None => "-".to_string(),
                 Some(id) => id.index.to_string(),
@@ -220,20 +220,31 @@ impl<'i> Display for InspectSubMessagesItem<'i> {
             format!("{:>5}", s)
         }
 
-        let header = "   id │    S2    S3    S4    S5    S6    S7\n";
+        fn format_template(template: Option<TemplateInfo>) -> String {
+            let s = match template {
+                None => "-".to_string(),
+                Some(info) => format!("{}", info),
+            };
+            format!("{:<5}", s)
+        }
+
+        let header = "   id │    S2    S3    S4    S5    S6    S7 | Tmpl3 Tmpl4 Tmpl5\n";
         let style = Style::new().bold();
         write!(f, "{}", style.apply_to(header))?;
         for (i, submessage) in self.data.clone().enumerate() {
             write!(
                 f,
-                "{:>5} │ {} {} {} {} {} {}\n",
+                "{:>5} │ {} {} {} {} {} {} | {} {} {}\n",
                 i,
-                format_section_index_optional(submessage.2),
-                format_section_index(submessage.3),
-                format_section_index(submessage.4),
-                format_section_index(submessage.5),
-                format_section_index(submessage.6),
-                format_section_index(submessage.7),
+                format_section_index_optional(&submessage.2),
+                format_section_index(&submessage.3),
+                format_section_index(&submessage.4),
+                format_section_index(&submessage.5),
+                format_section_index(&submessage.6),
+                format_section_index(&submessage.7),
+                format_template(submessage.3.template_code()),
+                format_template(submessage.4.template_code()),
+                format_template(submessage.5.template_code()),
             )?;
         }
         Ok(())

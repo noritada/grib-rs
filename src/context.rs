@@ -415,8 +415,13 @@ impl<'a> SubMessageSection<'a> {
             body: body,
         }
     }
+
+    pub fn template_code(&self) -> Option<TemplateInfo> {
+        self.body.get_tmpl_code()
+    }
+
     pub fn describe(&self) -> Option<String> {
-        self.body.get_tmpl_code().and_then(|code| code.describe())
+        self.template_code().and_then(|code| code.describe())
     }
 }
 
