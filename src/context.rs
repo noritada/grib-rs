@@ -186,17 +186,17 @@ impl<R: Grib2Read> Grib2<R> {
         let submessage_index = self.submessages.get(index)?;
 
         Some(SubMessage(
-            self.new_submessage_section(0),
-            self.new_submessage_section(1),
+            self.new_submessage_section(0)?,
+            self.new_submessage_section(1)?,
             submessage_index
                 .section2
                 .and_then(|i| self.new_submessage_section(i)),
-            self.new_submessage_section(submessage_index.section3),
-            self.new_submessage_section(submessage_index.section4),
-            self.new_submessage_section(submessage_index.section5),
-            self.new_submessage_section(submessage_index.section6),
-            self.new_submessage_section(submessage_index.section7),
-            self.new_submessage_section(self.sections.len() - 1),
+            self.new_submessage_section(submessage_index.section3)?,
+            self.new_submessage_section(submessage_index.section4)?,
+            self.new_submessage_section(submessage_index.section5)?,
+            self.new_submessage_section(submessage_index.section6)?,
+            self.new_submessage_section(submessage_index.section7)?,
+            self.new_submessage_section(self.sections.len() - 1)?,
         ))
     }
 
@@ -345,15 +345,15 @@ fn get_templates(sects: &Box<[SectionInfo]>) -> Vec<TemplateInfo> {
 }
 
 pub struct SubMessage<'a>(
+    pub SubMessageSection<'a>,
+    pub SubMessageSection<'a>,
     pub Option<SubMessageSection<'a>>,
-    pub Option<SubMessageSection<'a>>,
-    pub Option<SubMessageSection<'a>>,
-    pub Option<SubMessageSection<'a>>,
-    pub Option<SubMessageSection<'a>>,
-    pub Option<SubMessageSection<'a>>,
-    pub Option<SubMessageSection<'a>>,
-    pub Option<SubMessageSection<'a>>,
-    pub Option<SubMessageSection<'a>>,
+    pub SubMessageSection<'a>,
+    pub SubMessageSection<'a>,
+    pub SubMessageSection<'a>,
+    pub SubMessageSection<'a>,
+    pub SubMessageSection<'a>,
+    pub SubMessageSection<'a>,
 );
 
 impl<'a> SubMessage<'a> {
@@ -364,18 +364,9 @@ Grid:                                   {}
 Product:                                {}
 Data Representation:                    {}
 ",
-            self.3
-                .as_ref()
-                .and_then(|section| section.describe())
-                .unwrap_or(String::new()),
-            self.4
-                .as_ref()
-                .and_then(|section| section.describe())
-                .unwrap_or(String::new()),
-            self.5
-                .as_ref()
-                .and_then(|section| section.describe())
-                .unwrap_or(String::new()),
+            self.3.describe().unwrap_or(String::new()),
+            self.4.describe().unwrap_or(String::new()),
+            self.5.describe().unwrap_or(String::new()),
         )
     }
 }
