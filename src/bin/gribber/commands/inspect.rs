@@ -2,7 +2,7 @@ use clap::{App, Arg, ArgMatches, SubCommand};
 use console::{Style, Term};
 use std::fmt::{self, Display, Formatter};
 
-use grib::context::{SectionInfo, SubMessage, TemplateInfo};
+use grib::context::{SectionInfo, SubMessageIndex, TemplateInfo};
 
 use crate::cli;
 
@@ -192,11 +192,11 @@ impl<'i> Display for InspectSectionsItem<'i> {
 }
 
 struct InspectSubMessagesItem<'i> {
-    data: &'i Box<[SubMessage]>,
+    data: &'i Box<[SubMessageIndex]>,
 }
 
 impl<'i> InspectSubMessagesItem<'i> {
-    fn new(data: &'i Box<[SubMessage]>) -> Self {
+    fn new(data: &'i Box<[SubMessageIndex]>) -> Self {
         Self { data: data }
     }
 

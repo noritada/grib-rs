@@ -109,7 +109,7 @@ pub struct BitMap {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct SubMessage {
+pub struct SubMessageIndex {
     pub section2: Option<usize>,
     pub section3: Option<usize>,
     pub section4: Option<usize>,
@@ -141,13 +141,13 @@ impl Display for TemplateInfo {
 pub struct Grib2<R> {
     reader: RefCell<R>,
     sections: Box<[SectionInfo]>,
-    submessages: Box<[SubMessage]>,
+    submessages: Box<[SubMessageIndex]>,
 }
 
 impl<R: Grib2Read> Grib2<R> {
     pub fn read(mut r: R) -> Result<Self, GribError> {
         let sects = r.scan()?;
-        let submessages = get_submessages(&sects)?;
+        let submessages = index_submessages(&sects)?;
         Ok(Self {
             reader: RefCell::new(r),
             sections: sects,
@@ -178,11 +178,11 @@ impl<R: Grib2Read> Grib2<R> {
         }
     }
 
-    pub fn submessages(&self) -> &Box<[SubMessage]> {
+    pub fn submessages(&self) -> &Box<[SubMessageIndex]> {
         &self.submessages
     }
 
-    pub fn describe_submessage(&self, submessage: &SubMessage) -> String {
+    pub fn describe_submessage(&self, submessage: &SubMessageIndex) -> String {
         let sect3 = submessage.section3;
         let sect4 = submessage.section4;
         let sect5 = submessage.section5;
@@ -240,7 +240,9 @@ Data Representation:                    {}
 
 /// Validates the section order of sections and split them into a
 /// vector of section groups.
-fn get_submessages(sects: &Box<[SectionInfo]>) -> Result<Box<[SubMessage]>, ValidationError> {
+fn index_submessages(
+    sects: &Box<[SectionInfo]>,
+) -> Result<Box<[SubMessageIndex]>, ValidationError> {
     let mut iter = sects.iter().enumerate();
     let mut starts = Vec::new();
     let mut i2_default = None;
@@ -280,7 +282,7 @@ fn get_submessages(sects: &Box<[SectionInfo]>) -> Result<Box<[SubMessage]>, Vali
                 let i5 = check!(5);
                 let i6 = check!(6);
                 let i7 = check!(7);
-                update_default!(SubMessage {
+                update_default!(SubMessageIndex {
                     section2: Some(i),
                     section3: Some(i3),
                     section4: Some(i4),
@@ -295,7 +297,7 @@ fn get_submessages(sects: &Box<[SectionInfo]>) -> Result<Box<[SubMessage]>, Vali
                 let i5 = check!(5);
                 let i6 = check!(6);
                 let i7 = check!(7);
-                update_default!(SubMessage {
+                update_default!(SubMessageIndex {
                     section2: i2_default,
                     section3: Some(i),
                     section4: Some(i4),
@@ -312,7 +314,7 @@ fn get_submessages(sects: &Box<[SectionInfo]>) -> Result<Box<[SubMessage]>, Vali
                 let i5 = check!(5);
                 let i6 = check!(6);
                 let i7 = check!(7);
-                update_default!(SubMessage {
+                update_default!(SubMessageIndex {
                     section2: i2_default,
                     section3: i3_default,
                     section4: Some(i),
@@ -430,12 +432,12 @@ mod tests {
     }
 
     #[test]
-    fn get_submessages_simple() {
+    fn index_submessages_simple() {
         let sects = sect_list![0, 1, 2, 3, 4, 5, 6, 7, 8,];
 
         assert_eq!(
-            get_submessages(&sects),
-            Ok(vec![SubMessage {
+            index_submessages(&sects),
+            Ok(vec![SubMessageIndex {
                 section2: Some(2),
                 section3: Some(3),
                 section4: Some(4),
@@ -448,13 +450,13 @@ mod tests {
     }
 
     #[test]
-    fn get_submessages_sect2_loop() {
+    fn index_submessages_sect2_loop() {
         let sects = sect_list![0, 1, 2, 3, 4, 5, 6, 7, 2, 3, 4, 5, 6, 7, 8,];
 
         assert_eq!(
-            get_submessages(&sects),
+            index_submessages(&sects),
             Ok(vec![
-                SubMessage {
+                SubMessageIndex {
                     section2: Some(2),
                     section3: Some(3),
                     section4: Some(4),
@@ -462,7 +464,7 @@ mod tests {
                     section6: Some(6),
                     section7: Some(7),
                 },
-                SubMessage {
+                SubMessageIndex {
                     section2: Some(8),
                     section3: Some(9),
                     section4: Some(10),
@@ -476,13 +478,13 @@ mod tests {
     }
 
     #[test]
-    fn get_submessages_sect3_loop() {
+    fn index_submessages_sect3_loop() {
         let sects = sect_list![0, 1, 2, 3, 4, 5, 6, 7, 3, 4, 5, 6, 7, 8,];
 
         assert_eq!(
-            get_submessages(&sects),
+            index_submessages(&sects),
             Ok(vec![
-                SubMessage {
+                SubMessageIndex {
                     section2: Some(2),
                     section3: Some(3),
                     section4: Some(4),
@@ -490,7 +492,7 @@ mod tests {
                     section6: Some(6),
                     section7: Some(7),
                 },
-                SubMessage {
+                SubMessageIndex {
                     section2: Some(2),
                     section3: Some(8),
                     section4: Some(9),
@@ -504,13 +506,13 @@ mod tests {
     }
 
     #[test]
-    fn get_submessages_sect3_loop_no_sect2() {
+    fn index_submessages_sect3_loop_no_sect2() {
         let sects = sect_list![0, 1, 3, 4, 5, 6, 7, 3, 4, 5, 6, 7, 8,];
 
         assert_eq!(
-            get_submessages(&sects),
+            index_submessages(&sects),
             Ok(vec![
-                SubMessage {
+                SubMessageIndex {
                     section2: None,
                     section3: Some(2),
                     section4: Some(3),
@@ -518,7 +520,7 @@ mod tests {
                     section6: Some(5),
                     section7: Some(6),
                 },
-                SubMessage {
+                SubMessageIndex {
                     section2: None,
                     section3: Some(7),
                     section4: Some(8),
@@ -532,13 +534,13 @@ mod tests {
     }
 
     #[test]
-    fn get_submessages_sect4_loop() {
+    fn index_submessages_sect4_loop() {
         let sects = sect_list![0, 1, 2, 3, 4, 5, 6, 7, 4, 5, 6, 7, 8,];
 
         assert_eq!(
-            get_submessages(&sects),
+            index_submessages(&sects),
             Ok(vec![
-                SubMessage {
+                SubMessageIndex {
                     section2: Some(2),
                     section3: Some(3),
                     section4: Some(4),
@@ -546,7 +548,7 @@ mod tests {
                     section6: Some(6),
                     section7: Some(7),
                 },
-                SubMessage {
+                SubMessageIndex {
                     section2: Some(2),
                     section3: Some(3),
                     section4: Some(8),
@@ -560,13 +562,13 @@ mod tests {
     }
 
     #[test]
-    fn get_submessages_sect4_loop_no_sect2() {
+    fn index_submessages_sect4_loop_no_sect2() {
         let sects = sect_list![0, 1, 3, 4, 5, 6, 7, 4, 5, 6, 7, 8,];
 
         assert_eq!(
-            get_submessages(&sects),
+            index_submessages(&sects),
             Ok(vec![
-                SubMessage {
+                SubMessageIndex {
                     section2: None,
                     section3: Some(2),
                     section4: Some(3),
@@ -574,7 +576,7 @@ mod tests {
                     section6: Some(5),
                     section7: Some(6),
                 },
-                SubMessage {
+                SubMessageIndex {
                     section2: None,
                     section3: Some(2),
                     section4: Some(7),
@@ -588,121 +590,121 @@ mod tests {
     }
 
     #[test]
-    fn get_submessages_end_after_sect1() {
+    fn index_submessages_end_after_sect1() {
         let sects = sect_list![0, 1,];
 
         assert_eq!(
-            get_submessages(&sects),
+            index_submessages(&sects),
             Err(ValidationError::GRIB2IterationSuddenlyFinished)
         );
     }
 
     #[test]
-    fn get_submessages_end_in_sect2_loop_1() {
+    fn index_submessages_end_in_sect2_loop_1() {
         let sects = sect_list![0, 1, 2,];
 
         assert_eq!(
-            get_submessages(&sects),
+            index_submessages(&sects),
             Err(ValidationError::GRIB2IterationSuddenlyFinished)
         );
     }
 
     #[test]
-    fn get_submessages_end_in_sect2_loop_2() {
+    fn index_submessages_end_in_sect2_loop_2() {
         let sects = sect_list![0, 1, 2, 3,];
 
         assert_eq!(
-            get_submessages(&sects),
+            index_submessages(&sects),
             Err(ValidationError::GRIB2IterationSuddenlyFinished)
         );
     }
 
     #[test]
-    fn get_submessages_end_in_sect3_loop_1() {
+    fn index_submessages_end_in_sect3_loop_1() {
         let sects = sect_list![0, 1, 3,];
 
         assert_eq!(
-            get_submessages(&sects),
+            index_submessages(&sects),
             Err(ValidationError::GRIB2IterationSuddenlyFinished)
         );
     }
 
     #[test]
-    fn get_submessages_end_in_sect3_loop_2() {
+    fn index_submessages_end_in_sect3_loop_2() {
         let sects = sect_list![0, 1, 3, 4,];
 
         assert_eq!(
-            get_submessages(&sects),
+            index_submessages(&sects),
             Err(ValidationError::GRIB2IterationSuddenlyFinished)
         );
     }
 
     #[test]
-    fn get_submessages_end_in_sect4_loop_1() {
+    fn index_submessages_end_in_sect4_loop_1() {
         let sects = sect_list![0, 1, 2, 3, 4, 5, 6, 7, 4,];
 
         assert_eq!(
-            get_submessages(&sects),
+            index_submessages(&sects),
             Err(ValidationError::GRIB2IterationSuddenlyFinished)
         );
     }
 
     #[test]
-    fn get_submessages_end_in_sect4_loop_2() {
+    fn index_submessages_end_in_sect4_loop_2() {
         let sects = sect_list![0, 1, 2, 3, 4, 5, 6, 7, 4, 5,];
 
         assert_eq!(
-            get_submessages(&sects),
+            index_submessages(&sects),
             Err(ValidationError::GRIB2IterationSuddenlyFinished)
         );
     }
 
     #[test]
-    fn get_submessages_no_grid_in_sect4() {
+    fn index_submessages_no_grid_in_sect4() {
         let sects = sect_list![0, 1, 4, 5, 6, 7, 8,];
 
         assert_eq!(
-            get_submessages(&sects),
+            index_submessages(&sects),
             Err(ValidationError::NoGridDefinition(2))
         );
     }
 
     #[test]
-    fn get_submessages_no_grid_in_sect8() {
+    fn index_submessages_no_grid_in_sect8() {
         let sects = sect_list![0, 1, 8,];
 
         assert_eq!(
-            get_submessages(&sects),
+            index_submessages(&sects),
             Err(ValidationError::NoGridDefinition(2))
         );
     }
 
     #[test]
-    fn get_submessages_wrong_order_in_sect2() {
+    fn index_submessages_wrong_order_in_sect2() {
         let sects = sect_list![0, 1, 2, 4, 3, 5, 6, 7, 8,];
 
         assert_eq!(
-            get_submessages(&sects),
+            index_submessages(&sects),
             Err(ValidationError::GRIB2WrongIteration(3))
         );
     }
 
     #[test]
-    fn get_submessages_wrong_order_in_sect3() {
+    fn index_submessages_wrong_order_in_sect3() {
         let sects = sect_list![0, 1, 3, 5, 4, 6, 7, 8,];
 
         assert_eq!(
-            get_submessages(&sects),
+            index_submessages(&sects),
             Err(ValidationError::GRIB2WrongIteration(3))
         );
     }
 
     #[test]
-    fn get_submessages_wrong_order_in_sect4() {
+    fn index_submessages_wrong_order_in_sect4() {
         let sects = sect_list![0, 1, 3, 4, 5, 6, 7, 4, 6, 5, 7, 8,];
 
         assert_eq!(
-            get_submessages(&sects),
+            index_submessages(&sects),
             Err(ValidationError::GRIB2WrongIteration(8))
         );
     }
