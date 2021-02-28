@@ -178,30 +178,8 @@ impl<R: Grib2Read> Grib2<R> {
         }
     }
 
-    pub fn submessages(&self) -> &Box<[SubMessageIndex]> {
-        &self.submessages
-    }
-
-    pub fn get_submessage(&self, index: usize) -> Option<SubMessage> {
-        let submessage_index = self.submessages.get(index)?;
-
-        Some(SubMessage(
-            self.new_submessage_section(0)?,
-            self.new_submessage_section(1)?,
-            submessage_index
-                .section2
-                .and_then(|i| self.new_submessage_section(i)),
-            self.new_submessage_section(submessage_index.section3)?,
-            self.new_submessage_section(submessage_index.section4)?,
-            self.new_submessage_section(submessage_index.section5)?,
-            self.new_submessage_section(submessage_index.section6)?,
-            self.new_submessage_section(submessage_index.section7)?,
-            self.new_submessage_section(self.sections.len() - 1)?,
-        ))
-    }
-
-    fn new_submessage_section(&self, index: usize) -> Option<SubMessageSection> {
-        Some(SubMessageSection::new(index, self.sections.get(index)?))
+    pub fn submessages(&self) -> SubMessageIterator {
+        SubMessageIterator::new(&self.submessages, &self.sections)
     }
 
     /// Decodes grid values of a surface specified by the index `i`.
@@ -342,6 +320,60 @@ fn get_templates(sects: &Box<[SectionInfo]>) -> Vec<TemplateInfo> {
     let mut vec: Vec<_> = uniq.into_iter().collect();
     vec.sort_unstable();
     vec
+}
+
+#[derive(Clone)]
+pub struct SubMessageIterator<'a> {
+    indices: &'a Box<[SubMessageIndex]>,
+    sections: &'a Box<[SectionInfo]>,
+    pos: usize,
+}
+
+impl<'a> SubMessageIterator<'a> {
+    fn new(indices: &'a Box<[SubMessageIndex]>, sections: &'a Box<[SectionInfo]>) -> Self {
+        Self {
+            indices: indices,
+            sections: sections,
+            pos: 0,
+        }
+    }
+
+    fn new_submessage_section(&self, index: usize) -> Option<SubMessageSection<'a>> {
+        Some(SubMessageSection::new(index, self.sections.get(index)?))
+    }
+}
+
+impl<'a> Iterator for SubMessageIterator<'a> {
+    type Item = SubMessage<'a>;
+
+    fn next(&mut self) -> Option<SubMessage<'a>> {
+        let submessage_index = self.indices.get(self.pos)?;
+        self.pos += 1;
+
+        Some(SubMessage(
+            self.new_submessage_section(0)?,
+            self.new_submessage_section(1)?,
+            submessage_index
+                .section2
+                .and_then(|i| self.new_submessage_section(i)),
+            self.new_submessage_section(submessage_index.section3)?,
+            self.new_submessage_section(submessage_index.section4)?,
+            self.new_submessage_section(submessage_index.section5)?,
+            self.new_submessage_section(submessage_index.section6)?,
+            self.new_submessage_section(submessage_index.section7)?,
+            self.new_submessage_section(self.sections.len() - 1)?,
+        ))
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        let size = self.indices.len();
+        (size, Some(size))
+    }
+
+    fn nth(&mut self, n: usize) -> Option<SubMessage<'a>> {
+        self.pos = n;
+        self.next()
+    }
 }
 
 pub struct SubMessage<'a>(

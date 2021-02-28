@@ -2,7 +2,7 @@ use clap::{App, Arg, ArgMatches, SubCommand};
 use console::{Style, Term};
 use std::fmt::{self, Display, Formatter};
 
-use grib::context::{SectionInfo, SubMessageIndex, TemplateInfo};
+use grib::context::{SectionInfo, SubMessageIterator, SubMessageSection, TemplateInfo};
 
 use crate::cli;
 
@@ -192,29 +192,30 @@ impl<'i> Display for InspectSectionsItem<'i> {
 }
 
 struct InspectSubMessagesItem<'i> {
-    data: &'i Box<[SubMessageIndex]>,
+    data: SubMessageIterator<'i>,
 }
 
 impl<'i> InspectSubMessagesItem<'i> {
-    fn new(data: &'i Box<[SubMessageIndex]>) -> Self {
+    fn new(data: SubMessageIterator<'i>) -> Self {
         Self { data: data }
     }
 
     fn len(&self) -> usize {
-        self.data.len()
+        let (size, _) = self.data.size_hint();
+        size
     }
 }
 
 impl<'i> Display for InspectSubMessagesItem<'i> {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        fn format_section(s: usize) -> String {
-            format!("{:>5}", s.to_string())
+        fn format_section_index(s: SubMessageSection) -> String {
+            format!("{:>5}", s.index.to_string())
         }
 
-        fn format_section_optional(section: Option<usize>) -> String {
+        fn format_section_index_optional(section: Option<SubMessageSection>) -> String {
             let s = match section {
                 None => "-".to_string(),
-                Some(id) => id.to_string(),
+                Some(id) => id.index.to_string(),
             };
             format!("{:>5}", s)
         }
@@ -222,17 +223,17 @@ impl<'i> Display for InspectSubMessagesItem<'i> {
         let header = "   id │    S2    S3    S4    S5    S6    S7\n";
         let style = Style::new().bold();
         write!(f, "{}", style.apply_to(header))?;
-        for (i, submessage) in self.data.iter().enumerate() {
+        for (i, submessage) in self.data.clone().enumerate() {
             write!(
                 f,
                 "{:>5} │ {} {} {} {} {} {}\n",
                 i,
-                format_section_optional(submessage.section2),
-                format_section(submessage.section3),
-                format_section(submessage.section4),
-                format_section(submessage.section5),
-                format_section(submessage.section6),
-                format_section(submessage.section7),
+                format_section_index_optional(submessage.2),
+                format_section_index(submessage.3),
+                format_section_index(submessage.4),
+                format_section_index(submessage.5),
+                format_section_index(submessage.6),
+                format_section_index(submessage.7),
             )?;
         }
         Ok(())
