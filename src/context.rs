@@ -182,26 +182,26 @@ impl<R: Grib2Read> Grib2<R> {
         &self.submessages
     }
 
-    pub fn describe_submessage(&self, submessage: &SubMessageIndex) -> String {
-        let sect3 = submessage.section3;
-        let sect4 = submessage.section4;
-        let sect5 = submessage.section5;
-        format!(
-            "\
-Grid:                                   {}
-Product:                                {}
-Data Representation:                    {}
-",
-            sect3
-                .and_then(|id| self.describe_section(id))
-                .unwrap_or(String::new()),
-            sect4
-                .and_then(|id| self.describe_section(id))
-                .unwrap_or(String::new()),
-            sect5
-                .and_then(|id| self.describe_section(id))
-                .unwrap_or(String::new()),
-        )
+    pub fn get_submessage(&self, index: usize) -> Option<SubMessage> {
+        let submessage_index = self.submessages.get(index)?;
+
+        Some(SubMessage(
+            self.new_submessage_section(0),
+            self.new_submessage_section(1),
+            submessage_index
+                .section2
+                .and_then(|i| self.new_submessage_section(i)),
+            self.new_submessage_section(submessage_index.section3?),
+            self.new_submessage_section(submessage_index.section4?),
+            self.new_submessage_section(submessage_index.section5?),
+            self.new_submessage_section(submessage_index.section6?),
+            self.new_submessage_section(submessage_index.section7?),
+            self.new_submessage_section(self.sections.len() - 1),
+        ))
+    }
+
+    fn new_submessage_section(&self, index: usize) -> Option<SubMessageSection> {
+        Some(SubMessageSection::new(index, self.sections.get(index)?))
     }
 
     /// Decodes grid values of a surface specified by the index `i`.
@@ -225,12 +225,6 @@ Data Representation:                    {}
 
     pub fn sections(&self) -> &Box<[SectionInfo]> {
         &self.sections
-    }
-
-    pub fn describe_section(&self, section_id: usize) -> Option<String> {
-        self.sections
-            .get(section_id)
-            .and_then(|s| s.get_tmpl_code()?.describe())
     }
 
     pub fn list_templates(&self) -> Vec<TemplateInfo> {
@@ -350,6 +344,59 @@ fn get_templates(sects: &Box<[SectionInfo]>) -> Vec<TemplateInfo> {
     let mut vec: Vec<_> = uniq.into_iter().collect();
     vec.sort_unstable();
     vec
+}
+
+pub struct SubMessage<'a>(
+    pub Option<SubMessageSection<'a>>,
+    pub Option<SubMessageSection<'a>>,
+    pub Option<SubMessageSection<'a>>,
+    pub Option<SubMessageSection<'a>>,
+    pub Option<SubMessageSection<'a>>,
+    pub Option<SubMessageSection<'a>>,
+    pub Option<SubMessageSection<'a>>,
+    pub Option<SubMessageSection<'a>>,
+    pub Option<SubMessageSection<'a>>,
+);
+
+impl<'a> SubMessage<'a> {
+    pub fn describe(&self) -> String {
+        format!(
+            "\
+Grid:                                   {}
+Product:                                {}
+Data Representation:                    {}
+",
+            self.3
+                .as_ref()
+                .and_then(|section| section.describe())
+                .unwrap_or(String::new()),
+            self.4
+                .as_ref()
+                .and_then(|section| section.describe())
+                .unwrap_or(String::new()),
+            self.5
+                .as_ref()
+                .and_then(|section| section.describe())
+                .unwrap_or(String::new()),
+        )
+    }
+}
+
+pub struct SubMessageSection<'a> {
+    pub index: usize,
+    pub body: &'a SectionInfo,
+}
+
+impl<'a> SubMessageSection<'a> {
+    pub fn new(index: usize, body: &'a SectionInfo) -> Self {
+        Self {
+            index: index,
+            body: body,
+        }
+    }
+    pub fn describe(&self) -> Option<String> {
+        self.body.get_tmpl_code().and_then(|code| code.describe())
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
