@@ -109,13 +109,13 @@ pub struct BitMap {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct SubMessageIndex {
-    pub section2: Option<usize>,
-    pub section3: usize,
-    pub section4: usize,
-    pub section5: usize,
-    pub section6: usize,
-    pub section7: usize,
+struct SubMessageIndex {
+    section2: Option<usize>,
+    section3: usize,
+    section4: usize,
+    section5: usize,
+    section6: usize,
+    section7: usize,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
