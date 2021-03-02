@@ -250,6 +250,7 @@ mod tests {
         assert_eq!(
             db.export("1.0", "CODE_TABLE_1_0"),
             "\
+/// Foo
 pub const CODE_TABLE_1_0: &'static [&'static str] = &[
     \"1A\",
     \"1B\",
