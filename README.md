@@ -62,6 +62,21 @@ SUBCOMMANDS:
 
 Note that binaries exported from `gribber decode --big-endian` use `0x7fc00000` as a missing value, although those from `wgrib` use `0x6258d19a`.
 
+## Building
+
+This repository uses the submodules functionality of Git. So, before running `cargo build`, please add submodules in one of following ways:
+
+* Cloning with submodules:
+  adding `--recursive` to `git clone` will automatically clone submodules in addition to this repository
+* Adding submodules after cloning:
+  running `git submodule update --init --recursive` after cloning will update the repository to have submodules
+
+Then you can build it in the usual way in the Rust world.
+
+```
+cargo build
+```
+
 ## Contributing
 
 Contribution is always welcome.  Please check [CONTRIBUTING.md](CONTRIBUTING.md) if you are interested.
