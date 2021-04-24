@@ -61,6 +61,13 @@ impl CodeDB {
         Ok(codetable)
     }
 
+    pub fn export(&self, id: (u8, u8), variable_name: &str) -> String {
+        match self.get(id) {
+            Some(code_table) => code_table.export(variable_name),
+            None => "[]".to_string(),
+        }
+    }
+
     pub fn get(&self, id: (u8, u8)) -> Option<&CodeTable> {
         self.data.get(&id)
     }
@@ -98,6 +105,21 @@ mod tests {
         let table = CodeTable::new_with(pair, "".to_owned());
         db.data.insert((0, 0), table.clone());
         assert_eq!(db.get((0, 0)).unwrap(), &table);
+    }
+
+    #[test]
+    fn export() {
+        let path = Path::new("testdata").join("grib2_codeflag_no_subtitle.csv");
+        let db = CodeDB::load(path).unwrap();
+        assert_eq!(
+            db.export((0, 0), "CODE_TABLE_0_0"),
+            "\
+/// Foo
+pub const CODE_TABLE_0_0: &'static [&'static str] = &[
+    \"0A\",
+    \"0B\",
+];"
+        );
     }
 
     #[test]
