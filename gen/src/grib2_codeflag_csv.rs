@@ -38,19 +38,17 @@ impl CodeDB {
         }
     }
 
-    pub fn load(path: PathBuf) -> Result<Self, Box<dyn Error>> {
-        let mut instance = Self::new();
-
+    pub fn load(&mut self, path: PathBuf) -> Result<(), Box<dyn Error>> {
         let basename = path.file_stem().ok_or(PathError)?.to_string_lossy();
         let words: Vec<_> = basename.split("_").take(4).collect();
         if let ["GRIB2", "CodeFlag", section, number] = words[..] {
-            instance.data.insert(
+            self.data.insert(
                 (section.parse::<u8>()?, number.parse::<u8>()?),
                 Self::parse_file(path)?,
             );
         };
 
-        Ok(instance)
+        Ok(())
     }
 
     pub fn parse_file(path: PathBuf) -> Result<CodeTable, Box<dyn Error>> {
@@ -135,7 +133,8 @@ mod tests {
     #[test]
     fn export() {
         let path = Path::new("testdata").join("GRIB2_CodeFlag_0_0_CodeTable_no_subtitle.csv");
-        let db = CodeDB::load(path).unwrap();
+        let mut db = CodeDB::new();
+        db.load(path).unwrap();
         assert_eq!(
             db.export((0, 0), "CODE_TABLE_0_0"),
             "\
@@ -150,7 +149,8 @@ pub const CODE_TABLE_0_0: &'static [&'static str] = &[
     #[test]
     fn codetable_to_vec() {
         let path = Path::new("testdata").join("GRIB2_CodeFlag_0_0_CodeTable_no_subtitle.csv");
-        let db = CodeDB::load(path).unwrap();
+        let mut db = CodeDB::new();
+        db.load(path).unwrap();
         assert_eq!(db.get((0, 0)).unwrap().to_vec(), vec!["0A", "0B",]);
     }
 }
