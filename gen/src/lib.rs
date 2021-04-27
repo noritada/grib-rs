@@ -3,7 +3,6 @@ use std::str::FromStr;
 
 pub mod cct00;
 pub mod cct11;
-pub mod grib2_codeflag;
 pub mod grib2_codeflag_csv;
 
 pub struct CodeRange {

@@ -1,7 +1,7 @@
 use grib_build;
 use std::env;
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 fn main() {
     let out_dir = env::var_os("OUT_DIR").unwrap();
@@ -32,36 +32,27 @@ fn main() {
     )
     .unwrap();
 
-    let input_path = Path::new("def")
-        .join("GRIB2")
-        .join("xml")
-        .join("CodeFlag.xml");
-    let output_path = Path::new(&out_dir).join("grib2_codeflag.rs");
-    let code_db = grib_build::grib2_codeflag::CodeDB::load(input_path);
-    let targets = vec![
-        ("0.0", "CODE_TABLE_0_0"),
-        ("1.2", "CODE_TABLE_1_2"),
-        ("1.3", "CODE_TABLE_1_3"),
-        ("1.4", "CODE_TABLE_1_4"),
-        ("3.1", "CODE_TABLE_3_1"),
-        ("4.0", "CODE_TABLE_4_0"),
-        ("5.0", "CODE_TABLE_5_0"),
+    let input_file_names = [
+        "def/GRIB2/GRIB2_CodeFlag_0_0_CodeTable_en.csv",
+        "def/GRIB2/GRIB2_CodeFlag_1_2_CodeTable_en.csv",
+        "def/GRIB2/GRIB2_CodeFlag_1_3_CodeTable_en.csv",
+        "def/GRIB2/GRIB2_CodeFlag_1_4_CodeTable_en.csv",
+        "def/GRIB2/GRIB2_CodeFlag_3_1_CodeTable_en.csv",
+        "def/GRIB2/GRIB2_CodeFlag_4_0_CodeTable_en.csv",
+        "def/GRIB2/GRIB2_CodeFlag_5_0_CodeTable_en.csv",
     ];
-    fs::write(
-        &output_path,
-        format!(
-            "{}",
-            targets
-                .iter()
-                .map(|(num, var)| code_db.export(num, var))
-                .collect::<Vec<_>>()
-                .join("\n\n"),
-        ),
-    )
-    .unwrap();
+    let mut db = grib_build::grib2_codeflag_csv::CodeDB::new();
+    let output_path = Path::new(&out_dir).join("grib2_codeflag.rs");
+    for file_name in &input_file_names {
+        let path = PathBuf::from(file_name);
+        db.load(path).unwrap();
+    }
+    fs::write(&output_path, format!("{}", db)).unwrap();
 
     println!("cargo:rerun-if-changed=build.rs");
     println!("cargo:rerun-if-changed=def/CCT/xml/C00.xml");
     println!("cargo:rerun-if-changed=def/CCT/xml/C11.xml");
-    println!("cargo:rerun-if-changed=def/GRIB2/xml/CodeFlag.xml");
+    for file_name in &input_file_names {
+        println!("cargo:rerun-if-changed={}", file_name);
+    }
 }
