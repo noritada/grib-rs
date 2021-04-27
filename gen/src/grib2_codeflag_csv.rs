@@ -69,15 +69,39 @@ impl CodeDB {
         Ok(codetable)
     }
 
-    pub fn export(&self, id: (u8, u8), variable_name: &str) -> String {
+    pub fn export(&self, id: (u8, u8)) -> String {
         match self.get(id) {
-            Some(code_table) => code_table.export(variable_name),
+            Some(code_table) => {
+                let variable_name = self.get_variable_name(id);
+                code_table.export(&variable_name)
+            }
             None => "[]".to_string(),
         }
     }
 
+    fn get_variable_name(&self, id: (u8, u8)) -> String {
+        format!("CODE_TABLE_{}_{}", id.0, id.1)
+    }
+
     pub fn get(&self, id: (u8, u8)) -> Option<&CodeTable> {
         self.data.get(&id)
+    }
+}
+
+impl fmt::Display for CodeDB {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let mut first = true;
+        for (id, code_table) in &self.data {
+            if first {
+                first = false;
+            } else {
+                write!(f, "\n\n")?;
+            }
+
+            let variable_name = self.get_variable_name(*id);
+            write!(f, "{}", code_table.export(&variable_name))?;
+        }
+        Ok(())
     }
 }
 
@@ -136,12 +160,40 @@ mod tests {
         let mut db = CodeDB::new();
         db.load(path).unwrap();
         assert_eq!(
-            db.export((0, 0), "CODE_TABLE_0_0"),
+            db.export((0, 0)),
             "\
 /// Foo
 pub const CODE_TABLE_0_0: &'static [&'static str] = &[
     \"0A\",
     \"0B\",
+];"
+        );
+    }
+
+    #[test]
+    fn format() {
+        let mut db = CodeDB::new();
+        db.load(PathBuf::from(
+            "testdata/GRIB2_CodeFlag_1_0_CodeTable_no_subtitle.csv",
+        ))
+        .unwrap();
+        db.load(PathBuf::from(
+            "testdata/GRIB2_CodeFlag_0_0_CodeTable_no_subtitle.csv",
+        ))
+        .unwrap();
+        assert_eq!(
+            format!("{}", db),
+            "\
+/// Foo
+pub const CODE_TABLE_0_0: &'static [&'static str] = &[
+    \"0A\",
+    \"0B\",
+];
+
+/// Bar
+pub const CODE_TABLE_1_0: &'static [&'static str] = &[
+    \"1A\",
+    \"1B\",
 ];"
         );
     }
