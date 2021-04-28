@@ -132,15 +132,6 @@ mod tests {
     }
 
     #[test]
-    fn codedb_getting_code_table() {
-        let mut db = CodeDB::new();
-        let pair = ("0".to_owned(), "0".to_owned());
-        let table = CodeTable::new_with(pair, "".to_owned());
-        db.data.insert((0, 0), table.clone());
-        assert_eq!(db.get((0, 0)).unwrap(), &table);
-    }
-
-    #[test]
     fn export() {
         let mut db = CodeDB::new();
         db.load(PathBuf::from(PATH_STR_0)).unwrap();
