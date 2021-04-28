@@ -109,11 +109,12 @@ impl fmt::Display for CodeDB {
 mod tests {
     use super::*;
 
-    use std::path::Path;
+    const PATH_STR_0: &str = "testdata/GRIB2_CodeFlag_0_0_CodeTable_no_subtitle.csv";
+    const PATH_STR_1: &str = "testdata/GRIB2_CodeFlag_1_0_CodeTable_no_subtitle.csv";
 
     #[test]
     fn parse_file() {
-        let path = Path::new("testdata").join("GRIB2_CodeFlag_0_0_CodeTable_no_subtitle.csv");
+        let path = PathBuf::from(PATH_STR_0);
         let table = CodeDB::parse_file(path).unwrap();
         assert_eq!(table.desc, "Foo");
         assert_eq!(
@@ -141,9 +142,8 @@ mod tests {
 
     #[test]
     fn export() {
-        let path = Path::new("testdata").join("GRIB2_CodeFlag_0_0_CodeTable_no_subtitle.csv");
         let mut db = CodeDB::new();
-        db.load(path).unwrap();
+        db.load(PathBuf::from(PATH_STR_0)).unwrap();
         assert_eq!(
             db.export((0, 0)),
             "\
@@ -158,14 +158,8 @@ pub const CODE_TABLE_0_0: &'static [&'static str] = &[
     #[test]
     fn format() {
         let mut db = CodeDB::new();
-        db.load(PathBuf::from(
-            "testdata/GRIB2_CodeFlag_1_0_CodeTable_no_subtitle.csv",
-        ))
-        .unwrap();
-        db.load(PathBuf::from(
-            "testdata/GRIB2_CodeFlag_0_0_CodeTable_no_subtitle.csv",
-        ))
-        .unwrap();
+        db.load(PathBuf::from(PATH_STR_0)).unwrap();
+        db.load(PathBuf::from(PATH_STR_1)).unwrap();
         assert_eq!(
             format!("{}", db),
             "\
@@ -185,9 +179,8 @@ pub const CODE_TABLE_1_0: &'static [&'static str] = &[
 
     #[test]
     fn codetable_to_vec() {
-        let path = Path::new("testdata").join("GRIB2_CodeFlag_0_0_CodeTable_no_subtitle.csv");
         let mut db = CodeDB::new();
-        db.load(path).unwrap();
+        db.load(PathBuf::from(PATH_STR_0)).unwrap();
         assert_eq!(db.get((0, 0)).unwrap().to_vec(), vec!["0A", "0B",]);
     }
 }
