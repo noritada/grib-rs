@@ -39,7 +39,7 @@ impl CodeDB {
     }
 
     pub fn load(&mut self, path: PathBuf) -> Result<(), Box<dyn Error>> {
-        let basename = path.file_stem().ok_or(PathError)?.to_string_lossy();
+        let basename = path.file_stem().ok_or("unexpected path")?.to_string_lossy();
         let words: Vec<_> = basename.split("_").take(4).collect();
         if let ["GRIB2", "CodeFlag", section, number] = words[..] {
             self.data.insert(
@@ -102,21 +102,6 @@ impl fmt::Display for CodeDB {
             write!(f, "{}", code_table.export(&variable_name))?;
         }
         Ok(())
-    }
-}
-
-#[derive(Debug)]
-struct PathError;
-
-impl fmt::Display for PathError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "PathError")
-    }
-}
-
-impl Error for PathError {
-    fn source(&self) -> Option<&(dyn Error + 'static)> {
-        None
     }
 }
 
