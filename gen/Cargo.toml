@@ -10,6 +10,5 @@ repository = "https://github.com/noritada/grib-rs"
 homepage = "https://github.com/noritada/grib-rs"
 
 [dependencies]
-quick-xml = "0.18"
 csv = "^1.1"
 serde = { version = "1", features = ["derive"] }
