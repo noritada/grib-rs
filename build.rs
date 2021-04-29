@@ -19,18 +19,18 @@ fn main() {
     )
     .unwrap();
 
-    let input_path = Path::new("def").join("CCT").join("xml").join("C00.xml");
+    let input_file_names = ["def/CCT/C00.csv"];
+    let mut db = grib_build::cct_csv::CodeDB::new();
     let output_path = Path::new(&out_dir).join("cct00.rs");
-    let parsed = grib_build::cct00::parse(input_path);
-    let built = grib_build::cct00::rebuild(parsed);
-    fs::write(
-        &output_path,
-        format!(
-            "pub const COMMON_CODE_TABLE_00: &'static [&'static str] = &{:#?};",
-            built
-        ),
-    )
-    .unwrap();
+    for file_name in &input_file_names {
+        let path = PathBuf::from(file_name);
+        db.load(path).unwrap();
+    }
+    fs::write(&output_path, format!("{}", db)).unwrap();
+
+    for file_name in &input_file_names {
+        println!("cargo:rerun-if-changed={}", file_name);
+    }
 
     let input_file_names = [
         "def/GRIB2/GRIB2_CodeFlag_0_0_CodeTable_en.csv",
@@ -50,7 +50,6 @@ fn main() {
     fs::write(&output_path, format!("{}", db)).unwrap();
 
     println!("cargo:rerun-if-changed=build.rs");
-    println!("cargo:rerun-if-changed=def/CCT/xml/C00.xml");
     println!("cargo:rerun-if-changed=def/CCT/xml/C11.xml");
     for file_name in &input_file_names {
         println!("cargo:rerun-if-changed={}", file_name);
