@@ -1,9 +1,8 @@
 use std::str::from_utf8;
 use std::str::FromStr;
 
-pub mod cct00;
-pub mod cct11;
-pub mod grib2_codeflag;
+pub mod cct_csv;
+pub mod grib2_codeflag_csv;
 
 pub struct CodeRange {
     start: usize,
@@ -67,4 +66,74 @@ impl FromStr for CodeRange {
 pub enum CodeRangeParseError {
     NumberNotFound,
     HyphenNotFound,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct CodeTable {
+    desc: String,
+    data: Vec<(String, String)>,
+}
+
+impl CodeTable {
+    fn new_with(pair: (String, String), desc: String) -> Self {
+        Self {
+            desc: desc,
+            data: vec![pair],
+        }
+    }
+
+    fn export(&self, name: &str) -> String {
+        format!(
+            "\
+/// {}
+pub const {}: &'static [&'static str] = &{:#?};",
+            self.desc,
+            name,
+            self.to_vec(),
+        )
+    }
+
+    fn to_vec(&self) -> Vec<String> {
+        let mut output = Vec::new();
+
+        let mut count = 0;
+        let mut empty_count = 0;
+
+        for entry in self.data.iter() {
+            let (id, string) = entry;
+            let string = match string.as_str() {
+                "Future versions" => None,
+                "Reserved" => None,
+                "Reserved for local use" => None,
+                "Reserved for other centres" => None,
+                "Missing" => None,
+                "Missing value" => None,
+                ")" => None,
+                _ => Some(string),
+            };
+
+            if let Ok(range) = id.parse::<CodeRange>() {
+                if let Some(string) = string {
+                    while empty_count > 0 {
+                        output.push(String::new());
+                        count += 1;
+                        empty_count -= 1;
+                    }
+
+                    assert_eq!(count, range.start);
+                    if range.size() == 1 {
+                        output.push(string.to_string());
+                    } else {
+                        for _i in range.start..=range.end {
+                            output.push(string.clone());
+                        }
+                    }
+                    count += range.size();
+                } else {
+                    empty_count += range.size();
+                }
+            }
+        }
+        output
+    }
 }

@@ -1,0 +1,9 @@
+GRIB version number,BUFR version number,CREX version number,Effective date,Status
+0,0,0,Experimental,Operational
+,1,,1 January 1998,Operational
+,2,1,1 January 1999,Operational
+1,3,2,1 January 2000,Operational
+2,4,3,1 January 2001,Operational
+3,5,4,Pre-operational to be implemented by next amendment,Operational
+4-254,6-254,5-254,Future versions,Operational
+255,255,255,Missing,Operational

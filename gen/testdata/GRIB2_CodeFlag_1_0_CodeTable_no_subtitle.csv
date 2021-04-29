@@ -1,0 +1,5 @@
+Title_en,SubTitle_en,CodeFlag,Value,MeaningParameterDescription_en,Note_en,UnitComments_en,Status
+"Bar",,0,,1A,,,Operational
+"Bar",,1,,1B,,,Operational
+"Bar",,2-254,,Reserved,,,Operational
+"Bar",,255,,Missing,,,Operational
