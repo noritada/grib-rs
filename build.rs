@@ -12,12 +12,9 @@ fn main() {
     for file_name in &input_file_names {
         let path = PathBuf::from(file_name);
         db.load(path).unwrap();
-    }
-    fs::write(&output_path, format!("{}", db)).unwrap();
-
-    for file_name in &input_file_names {
         println!("cargo:rerun-if-changed={}", file_name);
     }
+    fs::write(&output_path, format!("{}", db)).unwrap();
 
     let input_file_names = [
         "def/GRIB2/GRIB2_CodeFlag_0_0_CodeTable_en.csv",
@@ -33,11 +30,9 @@ fn main() {
     for file_name in &input_file_names {
         let path = PathBuf::from(file_name);
         db.load(path).unwrap();
+        println!("cargo:rerun-if-changed={}", file_name);
     }
     fs::write(&output_path, format!("{}", db)).unwrap();
 
     println!("cargo:rerun-if-changed=build.rs");
-    for file_name in &input_file_names {
-        println!("cargo:rerun-if-changed={}", file_name);
-    }
 }
