@@ -4,6 +4,7 @@ use std::error::Error;
 use std::fmt;
 use std::fs::File;
 use std::path::PathBuf;
+use std::str::FromStr;
 
 use crate::*;
 
@@ -29,6 +30,38 @@ struct Record {
 
 pub struct CodeDB {
     data: BTreeMap<(u8, u8), CodeTable>,
+}
+
+#[derive(Debug, PartialEq, Eq)]
+struct Category(Option<(u8, u8)>);
+
+impl FromStr for Category {
+    type Err = ParseError;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "" => Ok(Category(None)),
+            s => {
+                let mut splitted = s.split(", ");
+
+                let first = splitted.next().ok_or(ParseError)?;
+                let words: Vec<_> = first.split(" ").take(3).collect();
+                let discipline = match words[..] {
+                    ["Product", "discipline", num] => u8::from_str(num).map_err(|_| ParseError),
+                    _ => Err(ParseError),
+                }?;
+
+                let second = splitted.next().ok_or(ParseError)?;
+                let second = second.split(":").next().ok_or(ParseError)?;
+                let words: Vec<_> = second.split(" ").take(3).collect();
+                let parameter = match words[..] {
+                    ["parameter", "category", num] => u8::from_str(num).map_err(|_| ParseError),
+                    _ => Err(ParseError),
+                }?;
+
+                Ok(Category(Some((discipline, parameter))))
+            }
+        }
+    }
 }
 
 impl CodeDB {
@@ -105,12 +138,35 @@ impl fmt::Display for CodeDB {
     }
 }
 
+#[derive(Debug)]
+pub struct ParseError;
+
+impl fmt::Display for ParseError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "ParseError")
+    }
+}
+
+impl Error for ParseError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        None
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
     const PATH_STR_0: &str = "testdata/GRIB2_CodeFlag_0_0_CodeTable_no_subtitle.csv";
     const PATH_STR_1: &str = "testdata/GRIB2_CodeFlag_1_0_CodeTable_no_subtitle.csv";
+
+    #[test]
+    fn parse_subtitle() {
+        let string =
+            "Product discipline 0 - Meteorological products, parameter category 0: temperature";
+        let category = string.parse::<Category>().unwrap();
+        assert_eq!(category, Category(Some((0, 0))));
+    }
 
     #[test]
     fn parse_file() {
