@@ -25,8 +25,7 @@ impl Display for ConversionError {
     }
 }
 
-include!(concat!(env!("OUT_DIR"), "/cct00.rs"));
-include!(concat!(env!("OUT_DIR"), "/cct11.rs"));
+include!(concat!(env!("OUT_DIR"), "/cct.rs"));
 include!(concat!(env!("OUT_DIR"), "/grib2_codeflag.rs"));
 
 /// Implements "Code Table 1.1: GRIB Local Tables Version Number"

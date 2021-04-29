@@ -1,7 +1,6 @@
 use std::str::from_utf8;
 use std::str::FromStr;
 
-pub mod cct11;
 pub mod cct_csv;
 pub mod grib2_codeflag_csv;
 
