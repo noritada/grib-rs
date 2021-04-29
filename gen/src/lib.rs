@@ -3,6 +3,7 @@ use std::str::FromStr;
 
 pub mod cct00;
 pub mod cct11;
+pub mod cct_csv;
 pub mod grib2_codeflag_csv;
 
 pub struct CodeRange {
@@ -103,6 +104,7 @@ pub const {}: &'static [&'static str] = &{:#?};",
         for entry in self.data.iter() {
             let (id, string) = entry;
             let string = match string.as_str() {
+                "Future versions" => None,
                 "Reserved" => None,
                 "Reserved for local use" => None,
                 "Missing" => None,
