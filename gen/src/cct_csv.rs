@@ -21,6 +21,18 @@ struct C00Record {
     status: String,
 }
 
+#[derive(Debug, Deserialize)]
+struct C11Record {
+    #[serde(rename = "CREX2")]
+    crex2: String,
+    #[serde(rename = "GRIB2_BUFR4")]
+    grib2_bufr4: String,
+    #[serde(rename = "OriginatingGeneratingCentre_en")]
+    center: String,
+    #[serde(rename = "Status")]
+    status: String,
+}
+
 pub struct CodeDB {
     data: BTreeMap<u8, CodeTable>,
 }
@@ -37,6 +49,9 @@ impl CodeDB {
         match &*basename {
             "C00" => {
                 self.data.insert(0, Self::parse_file_c00(path)?);
+            }
+            "C11" => {
+                self.data.insert(11, Self::parse_file_c11(path)?);
             }
             _ => {}
         }
@@ -59,6 +74,26 @@ impl CodeDB {
         for record in iter {
             let record: C00Record = record?;
             codetable.data.push((record.grib_version, record.date));
+        }
+
+        Ok(codetable)
+    }
+
+    pub fn parse_file_c11(path: PathBuf) -> Result<CodeTable, Box<dyn Error>> {
+        let f = File::open(&path)?;
+        let mut reader = csv::Reader::from_reader(f);
+        let mut iter = reader.deserialize();
+
+        let record = iter.next().ok_or("CSV does not have a body")?;
+        let record: C11Record = record?;
+        let mut codetable = CodeTable::new_with(
+            (record.grib2_bufr4, record.center),
+            "Common Code Table C-11".to_owned(),
+        );
+
+        for record in iter {
+            let record: C11Record = record?;
+            codetable.data.push((record.grib2_bufr4, record.center));
         }
 
         Ok(codetable)
@@ -105,6 +140,7 @@ mod tests {
     use super::*;
 
     const PATH_STR_C00: &str = "testdata/C00.csv";
+    const PATH_STR_C11: &str = "testdata/C11.csv";
 
     #[test]
     fn parse_file_c00() {
@@ -122,6 +158,35 @@ mod tests {
                 ("3", "Pre-operational to be implemented by next amendment"),
                 ("4-254", "Future versions"),
                 ("255", "Missing"),
+            ]
+            .iter()
+            .map(|(a, b)| (a.to_string(), b.to_string()))
+            .collect::<Vec<_>>()
+        );
+    }
+
+    #[test]
+    fn parse_file_c11() {
+        let path = PathBuf::from(PATH_STR_C11);
+        let table = CodeDB::parse_file_c11(path).unwrap();
+        assert_eq!(table.desc, "Common Code Table C-11");
+        assert_eq!(
+            table.data,
+            vec![
+                ("0", "A"),
+                ("", "Comment"),
+                ("1", "B"),
+                ("2", ")"),
+                ("3", "C"),
+                ("4", "Reserved"),
+                ("5", "D"),
+                ("6", "Reserved for other centres"),
+                ("7-9", "E"),
+                ("10-14", "Reserved"),
+                ("15", "F"),
+                ("16-65534", "Reserved for other centres"),
+                ("65535", "Missing value"),
+                ("Not applicable", "Not used"),
             ]
             .iter()
             .map(|(a, b)| (a.to_string(), b.to_string()))
@@ -150,6 +215,7 @@ pub const COMMON_CODE_TABLE_00: &'static [&'static str] = &[
     fn format() {
         let mut db = CodeDB::new();
         db.load(PathBuf::from(PATH_STR_C00)).unwrap();
+        db.load(PathBuf::from(PATH_STR_C11)).unwrap();
         assert_eq!(
             format!("{}", db),
             "\
@@ -159,6 +225,26 @@ pub const COMMON_CODE_TABLE_00: &'static [&'static str] = &[
     \"1 January 2000\",
     \"1 January 2001\",
     \"Pre-operational to be implemented by next amendment\",
+];
+
+/// Common Code Table C-11
+pub const COMMON_CODE_TABLE_11: &'static [&'static str] = &[
+    \"A\",
+    \"B\",
+    \"\",
+    \"C\",
+    \"\",
+    \"D\",
+    \"\",
+    \"E\",
+    \"E\",
+    \"E\",
+    \"\",
+    \"\",
+    \"\",
+    \"\",
+    \"\",
+    \"F\",
 ];"
         );
     }
@@ -167,6 +253,7 @@ pub const COMMON_CODE_TABLE_00: &'static [&'static str] = &[
     fn codetable_to_vec() {
         let mut db = CodeDB::new();
         db.load(PathBuf::from(PATH_STR_C00)).unwrap();
+        db.load(PathBuf::from(PATH_STR_C11)).unwrap();
         assert_eq!(
             db.get(0).unwrap().to_vec(),
             vec![
@@ -175,6 +262,10 @@ pub const COMMON_CODE_TABLE_00: &'static [&'static str] = &[
                 "1 January 2001",
                 "Pre-operational to be implemented by next amendment",
             ]
+        );
+        assert_eq!(
+            db.get(11).unwrap().to_vec(),
+            vec!["A", "B", "", "C", "", "D", "", "E", "E", "E", "", "", "", "", "", "F",]
         );
     }
 }

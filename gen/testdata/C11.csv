@@ -1,0 +1,15 @@
+CREX2,GRIB2_BUFR4,OriginatingGeneratingCentre_en,Status
+00000,0,A,Operational
+,,Comment,Operational
+00001,1,B,Operational
+00002,2,),Operational
+00003,3,C,Operational
+00004,4,Reserved,Operational
+00005,5,D,Operational
+00006,6,Reserved for other centres,Operational
+00007-00009,7-9,E,Operational
+00010-00014,10-14,Reserved,Operational
+00015,15,F,Operational
+00016-65534,16-65534,Reserved for other centres,Operational
+65535,65535,Missing value,Operational
+65536-99999,Not applicable,Not used,Operational

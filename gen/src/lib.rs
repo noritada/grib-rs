@@ -106,7 +106,10 @@ pub const {}: &'static [&'static str] = &{:#?};",
                 "Future versions" => None,
                 "Reserved" => None,
                 "Reserved for local use" => None,
+                "Reserved for other centres" => None,
                 "Missing" => None,
+                "Missing value" => None,
+                ")" => None,
                 _ => Some(string),
             };
 
