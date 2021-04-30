@@ -1,0 +1,17 @@
+Title_en,SubTitle_en,CodeFlag,Value,MeaningParameterDescription_en,Note_en,UnitComments_en,Status
+Baz,Product discipline 0 - Meteorological products,0,,Temperature,,,Operational
+Baz,Product discipline 0 - Meteorological products,1-2,,Reserved,,,Operational
+Baz,Product discipline 0 - Meteorological products,3,,Mass,,,Operational
+Baz,Product discipline 0 - Meteorological products,4-191,,Reserved,,,Operational
+Baz,Product discipline 0 - Meteorological products,192-254,,Reserved for local use,,,Operational
+Baz,Product discipline 0 - Meteorological products,255,,Missing,,,Operational
+Baz,"Product discipline 3 - Satellite remote sensing products (formerly ""Space products"")",0,,Image format products,(see Note 1),,Operational
+Baz,"Product discipline 3 - Satellite remote sensing products (formerly ""Space products"")",1,,Quantitative products,(see Note 2),,Operational
+Baz,"Product discipline 3 - Satellite remote sensing products (formerly ""Space products"")",2,,Cloud properties,,,Operational
+Baz,"Product discipline 3 - Satellite remote sensing products (formerly ""Space products"")",3-191,,Reserved,,,Operational
+Baz,"Product discipline 3 - Satellite remote sensing products (formerly ""Space products"")",192-254,,Reserved for local use,,,Operational
+Baz,"Product discipline 3 - Satellite remote sensing products (formerly ""Space products"")",255,,Missing,,,Operational
+Baz,Product discipline 20 - Health and socioeconomic impact,0,,Health indicators,,,Operational
+Baz,Product discipline 20 - Health and socioeconomic impact,1-191,,Reserved,,,Operational
+Baz,Product discipline 20 - Health and socioeconomic impact,192-254,,Reserved for local use,,,Operational
+Baz,Product discipline 20 - Health and socioeconomic impact,255,,Missing,,,Operational

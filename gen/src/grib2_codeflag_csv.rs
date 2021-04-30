@@ -92,6 +92,9 @@ impl CodeDB {
     fn get_variable_name(&self, id: (u8, u8, OptArg)) -> String {
         match id {
             (section, number, OptArg::None) => format!("CODE_TABLE_{}_{}", section, number),
+            (section, number, OptArg::L1(discipline)) => {
+                format!("CODE_TABLE_{}_{}_{}", section, number, discipline)
+            }
             (section, number, OptArg::L2(discipline, category)) => format!(
                 "CODE_TABLE_{}_{}_{}_{}",
                 section, number, discipline, category
@@ -124,6 +127,7 @@ impl fmt::Display for CodeDB {
 #[derive(Debug, Clone, Copy, PartialOrd, Ord, PartialEq, Eq)]
 pub enum OptArg {
     None,
+    L1(u8),
     L2(u8, u8),
 }
 
@@ -142,15 +146,18 @@ impl FromStr for OptArg {
                     _ => Err(ParseError),
                 }?;
 
-                let second = splitted.next().ok_or(ParseError)?;
-                let second = second.split(":").next().ok_or(ParseError)?;
-                let words: Vec<_> = second.split(" ").take(3).collect();
-                let parameter = match words[..] {
-                    ["parameter", "category", num] => u8::from_str(num).map_err(|_| ParseError),
-                    _ => Err(ParseError),
-                }?;
+                if let Some(second) = splitted.next() {
+                    let second = second.split(":").next().ok_or(ParseError)?;
+                    let words: Vec<_> = second.split(" ").take(3).collect();
+                    let parameter = match words[..] {
+                        ["parameter", "category", num] => u8::from_str(num).map_err(|_| ParseError),
+                        _ => Err(ParseError),
+                    }?;
 
-                Ok(OptArg::L2(discipline, parameter))
+                    Ok(OptArg::L2(discipline, parameter))
+                } else {
+                    Ok(OptArg::L1(discipline))
+                }
             }
         }
     }
@@ -177,7 +184,8 @@ mod tests {
 
     const PATH_STR_0: &str = "testdata/GRIB2_CodeFlag_0_0_CodeTable_no_subtitle.csv";
     const PATH_STR_1: &str = "testdata/GRIB2_CodeFlag_1_0_CodeTable_no_subtitle.csv";
-    const PATH_STR_2: &str = "testdata/GRIB2_CodeFlag_4_2_CodeTable_with_subtitle.csv";
+    const PATH_STR_2: &str = "testdata/GRIB2_CodeFlag_4_1_CodeTable_with_subtitle.csv";
+    const PATH_STR_3: &str = "testdata/GRIB2_CodeFlag_4_2_CodeTable_with_subtitle.csv";
 
     #[test]
     fn parse_subtitle() {
@@ -223,8 +231,67 @@ mod tests {
     }
 
     #[test]
-    fn parse_file_with_subtitle() {
+    fn parse_file_with_subtitle_l1() {
         let path = PathBuf::from(PATH_STR_2);
+        let tables = CodeDB::parse_file(path).unwrap();
+
+        let expected_title = "Baz".to_owned();
+        let expected_data = vec![
+            (
+                OptArg::L1(0),
+                vec![
+                    ("0", "Temperature"),
+                    ("1-2", "Reserved"),
+                    ("3", "Mass"),
+                    ("4-191", "Reserved"),
+                    ("192-254", "Reserved for local use"),
+                    ("255", "Missing"),
+                ],
+            ),
+            (
+                OptArg::L1(3),
+                vec![
+                    ("0", "Image format products"),
+                    ("1", "Quantitative products"),
+                    ("2", "Cloud properties"),
+                    ("3-191", "Reserved"),
+                    ("192-254", "Reserved for local use"),
+                    ("255", "Missing"),
+                ],
+            ),
+            (
+                OptArg::L1(20),
+                vec![
+                    ("0", "Health indicators"),
+                    ("1-191", "Reserved"),
+                    ("192-254", "Reserved for local use"),
+                    ("255", "Missing"),
+                ],
+            ),
+        ];
+
+        let expected = expected_data
+            .iter()
+            .map(|(c, table)| {
+                (
+                    *c,
+                    CodeTable {
+                        desc: expected_title.clone(),
+                        data: table
+                            .iter()
+                            .map(|(a, b)| (a.to_string(), b.to_string()))
+                            .collect::<Vec<_>>(),
+                    },
+                )
+            })
+            .collect::<Vec<_>>();
+
+        assert_eq!(tables, expected);
+    }
+
+    #[test]
+    fn parse_file_with_subtitle_l2() {
+        let path = PathBuf::from(PATH_STR_3);
         let tables = CodeDB::parse_file(path).unwrap();
 
         let expected_title = "Baz".to_owned();
@@ -307,6 +374,7 @@ pub const CODE_TABLE_0_0: &'static [&'static str] = &[
         db.load(PathBuf::from(PATH_STR_0)).unwrap();
         db.load(PathBuf::from(PATH_STR_1)).unwrap();
         db.load(PathBuf::from(PATH_STR_2)).unwrap();
+        db.load(PathBuf::from(PATH_STR_3)).unwrap();
         assert_eq!(
             format!("{}", db),
             "\
@@ -320,6 +388,26 @@ pub const CODE_TABLE_0_0: &'static [&'static str] = &[
 pub const CODE_TABLE_1_0: &'static [&'static str] = &[
     \"1A\",
     \"1B\",
+];
+
+/// Baz
+pub const CODE_TABLE_4_1_0: &'static [&'static str] = &[
+    \"Temperature\",
+    \"\",
+    \"\",
+    \"Mass\",
+];
+
+/// Baz
+pub const CODE_TABLE_4_1_3: &'static [&'static str] = &[
+    \"Image format products\",
+    \"Quantitative products\",
+    \"Cloud properties\",
+];
+
+/// Baz
+pub const CODE_TABLE_4_1_20: &'static [&'static str] = &[
+    \"Health indicators\",
 ];
 
 /// Baz
