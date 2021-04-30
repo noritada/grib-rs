@@ -251,6 +251,10 @@ mod tests {
                 ],
             ),
             (
+                Some((3, 2)),
+                vec![("0", "Clear sky probability"), ("30", "Measurement cost")],
+            ),
+            (
                 Some((20, 0)),
                 vec![
                     ("0", "Universal thermal climate index"),
@@ -335,6 +339,9 @@ pub const CODE_TABLE_4_2_0_0: &'static [&'static str] = &[
 pub const CODE_TABLE_4_2_0_191: &'static [&'static str] = &[
     \"Seconds prior to initial reference time (defined in Section 1)\",
 ];
+
+/// Baz
+pub const CODE_TABLE_4_2_3_2: &'static [&'static str] = &[];
 
 /// Baz
 pub const CODE_TABLE_4_2_20_0: &'static [&'static str] = &[

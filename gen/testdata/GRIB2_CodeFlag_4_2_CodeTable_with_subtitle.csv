@@ -9,6 +9,8 @@ Baz,"Product discipline 0 - Meteorological products, parameter category 191: mis
 Baz,"Product discipline 0 - Meteorological products, parameter category 191: miscellaneous",1-191,,Reserved,,,Operational
 Baz,"Product discipline 0 - Meteorological products, parameter category 191: miscellaneous",192-254,,Reserved for local use,,,Operational
 Baz,"Product discipline 0 - Meteorological products, parameter category 191: miscellaneous",255,,Missing,,,Operational
+Baz,"Product discipline 3 - Space products, parameter category 2: cloud properties",0,,Clear sky probability,,%,Operational
+Baz,"Product discipline 3 - Space products, parameter category 2: cloud properties",30,,Measurement cost,,Numeric,Operational
 Baz,"Product discipline 20 - Health and socioeconomic impacts, parameter category 0: health indicators",0,,Universal thermal climate index,,K,Operational
 Baz,"Product discipline 20 - Health and socioeconomic impacts, parameter category 0: health indicators",1-191,,Reserved,,,Operational
 Baz,"Product discipline 20 - Health and socioeconomic impacts, parameter category 0: health indicators",192-254,,Reserved for local use,,,Operational
