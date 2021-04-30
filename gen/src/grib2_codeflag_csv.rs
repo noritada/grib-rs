@@ -32,38 +32,6 @@ pub struct CodeDB {
     data: BTreeMap<(u8, u8, Option<(u8, u8)>), CodeTable>,
 }
 
-#[derive(Debug, PartialEq, Eq)]
-struct Category(Option<(u8, u8)>);
-
-impl FromStr for Category {
-    type Err = ParseError;
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "" => Ok(Category(None)),
-            s => {
-                let mut splitted = s.split(", ");
-
-                let first = splitted.next().ok_or(ParseError)?;
-                let words: Vec<_> = first.split(" ").take(3).collect();
-                let discipline = match words[..] {
-                    ["Product", "discipline", num] => u8::from_str(num).map_err(|_| ParseError),
-                    _ => Err(ParseError),
-                }?;
-
-                let second = splitted.next().ok_or(ParseError)?;
-                let second = second.split(":").next().ok_or(ParseError)?;
-                let words: Vec<_> = second.split(" ").take(3).collect();
-                let parameter = match words[..] {
-                    ["parameter", "category", num] => u8::from_str(num).map_err(|_| ParseError),
-                    _ => Err(ParseError),
-                }?;
-
-                Ok(Category(Some((discipline, parameter))))
-            }
-        }
-    }
-}
-
 impl CodeDB {
     pub fn new() -> Self {
         Self {
@@ -124,11 +92,11 @@ impl CodeDB {
 
     fn get_variable_name(&self, id: (u8, u8, Option<(u8, u8)>)) -> String {
         match id {
+            (section, number, None) => format!("CODE_TABLE_{}_{}", section, number),
             (section, number, Some((discipline, category))) => format!(
                 "CODE_TABLE_{}_{}_{}_{}",
                 section, number, discipline, category
             ),
-            (section, number, None) => format!("CODE_TABLE_{}_{}", section, number),
         }
     }
 
@@ -151,6 +119,38 @@ impl fmt::Display for CodeDB {
             write!(f, "{}", code_table.export(&variable_name))?;
         }
         Ok(())
+    }
+}
+
+#[derive(Debug, PartialEq, Eq)]
+struct Category(Option<(u8, u8)>);
+
+impl FromStr for Category {
+    type Err = ParseError;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "" => Ok(Category(None)),
+            s => {
+                let mut splitted = s.split(", ");
+
+                let first = splitted.next().ok_or(ParseError)?;
+                let words: Vec<_> = first.split(" ").take(3).collect();
+                let discipline = match words[..] {
+                    ["Product", "discipline", num] => u8::from_str(num).map_err(|_| ParseError),
+                    _ => Err(ParseError),
+                }?;
+
+                let second = splitted.next().ok_or(ParseError)?;
+                let second = second.split(":").next().ok_or(ParseError)?;
+                let words: Vec<_> = second.split(" ").take(3).collect();
+                let parameter = match words[..] {
+                    ["parameter", "category", num] => u8::from_str(num).map_err(|_| ParseError),
+                    _ => Err(ParseError),
+                }?;
+
+                Ok(Category(Some((discipline, parameter))))
+            }
+        }
     }
 }
 
