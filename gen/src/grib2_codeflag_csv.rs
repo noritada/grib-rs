@@ -29,7 +29,7 @@ struct Record {
 }
 
 pub struct CodeDB {
-    data: BTreeMap<(u8, u8, Option<(u8, u8)>), CodeTable>,
+    data: BTreeMap<(u8, u8, OptArg), CodeTable>,
 }
 
 impl CodeDB {
@@ -46,7 +46,6 @@ impl CodeDB {
             let section = section.parse::<u8>()?;
             let number = number.parse::<u8>()?;
             for (category, table) in Self::parse_file(path)? {
-                let Category(category) = category;
                 self.data.insert((section, number, category), table);
             }
         };
@@ -54,14 +53,14 @@ impl CodeDB {
         Ok(())
     }
 
-    fn parse_file(path: PathBuf) -> Result<Vec<(Category, CodeTable)>, Box<dyn Error>> {
+    fn parse_file(path: PathBuf) -> Result<Vec<(OptArg, CodeTable)>, Box<dyn Error>> {
         let f = File::open(&path)?;
         let mut reader = csv::Reader::from_reader(f);
-        let mut out_tables = Vec::<(Category, CodeTable)>::new();
+        let mut out_tables = Vec::<(OptArg, CodeTable)>::new();
 
         for record in reader.deserialize() {
             let record: Record = record?;
-            let category = record.subtitle.parse::<Category>()?;
+            let category = record.subtitle.parse::<OptArg>()?;
 
             let current = out_tables.last();
             if current.is_none() || category != current.unwrap().0 {
@@ -80,7 +79,7 @@ impl CodeDB {
         Ok(out_tables)
     }
 
-    pub fn export(&self, id: (u8, u8, Option<(u8, u8)>)) -> String {
+    pub fn export(&self, id: (u8, u8, OptArg)) -> String {
         match self.get(id) {
             Some(code_table) => {
                 let variable_name = self.get_variable_name(id);
@@ -90,17 +89,17 @@ impl CodeDB {
         }
     }
 
-    fn get_variable_name(&self, id: (u8, u8, Option<(u8, u8)>)) -> String {
+    fn get_variable_name(&self, id: (u8, u8, OptArg)) -> String {
         match id {
-            (section, number, None) => format!("CODE_TABLE_{}_{}", section, number),
-            (section, number, Some((discipline, category))) => format!(
+            (section, number, OptArg::None) => format!("CODE_TABLE_{}_{}", section, number),
+            (section, number, OptArg::L2(discipline, category)) => format!(
                 "CODE_TABLE_{}_{}_{}_{}",
                 section, number, discipline, category
             ),
         }
     }
 
-    pub fn get(&self, id: (u8, u8, Option<(u8, u8)>)) -> Option<&CodeTable> {
+    pub fn get(&self, id: (u8, u8, OptArg)) -> Option<&CodeTable> {
         self.data.get(&id)
     }
 }
@@ -122,14 +121,17 @@ impl fmt::Display for CodeDB {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
-struct Category(Option<(u8, u8)>);
+#[derive(Debug, Clone, Copy, PartialOrd, Ord, PartialEq, Eq)]
+pub enum OptArg {
+    None,
+    L2(u8, u8),
+}
 
-impl FromStr for Category {
+impl FromStr for OptArg {
     type Err = ParseError;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "" => Ok(Category(None)),
+            "" => Ok(OptArg::None),
             s => {
                 let mut splitted = s.split(", ");
 
@@ -148,7 +150,7 @@ impl FromStr for Category {
                     _ => Err(ParseError),
                 }?;
 
-                Ok(Category(Some((discipline, parameter))))
+                Ok(OptArg::L2(discipline, parameter))
             }
         }
     }
@@ -181,8 +183,8 @@ mod tests {
     fn parse_subtitle() {
         let string =
             "Product discipline 0 - Meteorological products, parameter category 0: temperature";
-        let category = string.parse::<Category>().unwrap();
-        assert_eq!(category, Category(Some((0, 0))));
+        let category = string.parse::<OptArg>().unwrap();
+        assert_eq!(category, OptArg::L2(0, 0));
     }
 
     #[test]
@@ -192,7 +194,7 @@ mod tests {
 
         let expected_title = "Foo".to_owned();
         let expected_data = vec![(
-            None,
+            OptArg::None,
             vec![
                 ("0", "0A"),
                 ("1", "0B"),
@@ -205,7 +207,7 @@ mod tests {
             .iter()
             .map(|(c, table)| {
                 (
-                    Category(*c),
+                    *c,
                     CodeTable {
                         desc: expected_title.clone(),
                         data: table
@@ -228,7 +230,7 @@ mod tests {
         let expected_title = "Baz".to_owned();
         let expected_data = vec![
             (
-                Some((0, 0)),
+                OptArg::L2(0, 0),
                 vec![
                     ("0", "Temperature"),
                     ("1-9", "Reserved"),
@@ -239,7 +241,7 @@ mod tests {
                 ],
             ),
             (
-                Some((0, 191)),
+                OptArg::L2(0, 191),
                 vec![
                     (
                         "0",
@@ -251,11 +253,11 @@ mod tests {
                 ],
             ),
             (
-                Some((3, 2)),
+                OptArg::L2(3, 2),
                 vec![("0", "Clear sky probability"), ("30", "Measurement cost")],
             ),
             (
-                Some((20, 0)),
+                OptArg::L2(20, 0),
                 vec![
                     ("0", "Universal thermal climate index"),
                     ("1-191", "Reserved"),
@@ -269,7 +271,7 @@ mod tests {
             .iter()
             .map(|(c, table)| {
                 (
-                    Category(*c),
+                    *c,
                     CodeTable {
                         desc: expected_title.clone(),
                         data: table
@@ -289,7 +291,7 @@ mod tests {
         let mut db = CodeDB::new();
         db.load(PathBuf::from(PATH_STR_0)).unwrap();
         assert_eq!(
-            db.export((0, 0, None)),
+            db.export((0, 0, OptArg::None)),
             "\
 /// Foo
 pub const CODE_TABLE_0_0: &'static [&'static str] = &[
@@ -354,6 +356,9 @@ pub const CODE_TABLE_4_2_20_0: &'static [&'static str] = &[
     fn codetable_to_vec() {
         let mut db = CodeDB::new();
         db.load(PathBuf::from(PATH_STR_0)).unwrap();
-        assert_eq!(db.get((0, 0, None)).unwrap().to_vec(), vec!["0A", "0B",]);
+        assert_eq!(
+            db.get((0, 0, OptArg::None)).unwrap().to_vec(),
+            vec!["0A", "0B",]
+        );
     }
 }
