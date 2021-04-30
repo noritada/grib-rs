@@ -29,7 +29,7 @@ struct Record {
 }
 
 pub struct CodeDB {
-    data: BTreeMap<(u8, u8), CodeTable>,
+    data: BTreeMap<(u8, u8, Option<(u8, u8)>), CodeTable>,
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -75,19 +75,23 @@ impl CodeDB {
         let basename = path.file_stem().ok_or("unexpected path")?.to_string_lossy();
         let words: Vec<_> = basename.split("_").take(4).collect();
         if let ["GRIB2", "CodeFlag", section, number] = words[..] {
-            self.data.insert(
-                (section.parse::<u8>()?, number.parse::<u8>()?),
-                Self::parse_file(path)?,
-            );
+            let section = section.parse::<u8>()?;
+            let number = number.parse::<u8>()?;
+            for (category, table) in Self::parse_file(path)? {
+                let Category(category) = category;
+                self.data.insert((section, number, category), table);
+            }
         };
 
         Ok(())
     }
 
-    pub fn parse_file(path: PathBuf) -> Result<CodeTable, Box<dyn Error>> {
+    fn parse_file(path: PathBuf) -> Result<Vec<(Category, CodeTable)>, Box<dyn Error>> {
         let f = File::open(&path)?;
         let mut reader = csv::Reader::from_reader(f);
         let mut iter = reader.deserialize();
+
+        let mut out_tables = Vec::new();
 
         let record = iter.next().ok_or("CSV does not have a body")?;
         let record: Record = record?;
@@ -99,10 +103,12 @@ impl CodeDB {
             codetable.data.push((record.code_flag, record.description));
         }
 
-        Ok(codetable)
+        out_tables.push((Category(None), codetable));
+
+        Ok(out_tables)
     }
 
-    pub fn export(&self, id: (u8, u8)) -> String {
+    pub fn export(&self, id: (u8, u8, Option<(u8, u8)>)) -> String {
         match self.get(id) {
             Some(code_table) => {
                 let variable_name = self.get_variable_name(id);
@@ -112,11 +118,17 @@ impl CodeDB {
         }
     }
 
-    fn get_variable_name(&self, id: (u8, u8)) -> String {
-        format!("CODE_TABLE_{}_{}", id.0, id.1)
+    fn get_variable_name(&self, id: (u8, u8, Option<(u8, u8)>)) -> String {
+        match id {
+            (section, number, Some((discipline, category))) => format!(
+                "CODE_TABLE_{}_{}_{}_{}",
+                section, number, discipline, category
+            ),
+            (section, number, None) => format!("CODE_TABLE_{}_{}", section, number),
+        }
     }
 
-    pub fn get(&self, id: (u8, u8)) -> Option<&CodeTable> {
+    pub fn get(&self, id: (u8, u8, Option<(u8, u8)>)) -> Option<&CodeTable> {
         self.data.get(&id)
     }
 }
@@ -171,19 +183,27 @@ mod tests {
     #[test]
     fn parse_file() {
         let path = PathBuf::from(PATH_STR_0);
-        let table = CodeDB::parse_file(path).unwrap();
-        assert_eq!(table.desc, "Foo");
+        let tables = CodeDB::parse_file(path).unwrap();
+
+        let expected_data_0 = vec![
+            ("0", "0A"),
+            ("1", "0B"),
+            ("2-254", "Reserved"),
+            ("255", "Missing"),
+        ]
+        .iter()
+        .map(|(a, b)| (a.to_string(), b.to_string()))
+        .collect::<Vec<_>>();
+
         assert_eq!(
-            table.data,
-            vec![
-                ("0", "0A"),
-                ("1", "0B"),
-                ("2-254", "Reserved"),
-                ("255", "Missing"),
-            ]
-            .iter()
-            .map(|(a, b)| (a.to_string(), b.to_string()))
-            .collect::<Vec<_>>()
+            tables,
+            vec![(
+                Category(None),
+                CodeTable {
+                    desc: "Foo".to_owned(),
+                    data: expected_data_0,
+                }
+            )]
         );
     }
 
@@ -192,7 +212,7 @@ mod tests {
         let mut db = CodeDB::new();
         db.load(PathBuf::from(PATH_STR_0)).unwrap();
         assert_eq!(
-            db.export((0, 0)),
+            db.export((0, 0, None)),
             "\
 /// Foo
 pub const CODE_TABLE_0_0: &'static [&'static str] = &[
@@ -228,6 +248,6 @@ pub const CODE_TABLE_1_0: &'static [&'static str] = &[
     fn codetable_to_vec() {
         let mut db = CodeDB::new();
         db.load(PathBuf::from(PATH_STR_0)).unwrap();
-        assert_eq!(db.get((0, 0)).unwrap().to_vec(), vec!["0A", "0B",]);
+        assert_eq!(db.get((0, 0, None)).unwrap().to_vec(), vec!["0A", "0B",]);
     }
 }
