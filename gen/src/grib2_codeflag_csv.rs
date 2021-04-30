@@ -89,21 +89,25 @@ impl CodeDB {
     fn parse_file(path: PathBuf) -> Result<Vec<(Category, CodeTable)>, Box<dyn Error>> {
         let f = File::open(&path)?;
         let mut reader = csv::Reader::from_reader(f);
-        let mut iter = reader.deserialize();
+        let mut out_tables = Vec::<(Category, CodeTable)>::new();
 
-        let mut out_tables = Vec::new();
-
-        let record = iter.next().ok_or("CSV does not have a body")?;
-        let record: Record = record?;
-        let mut codetable =
-            CodeTable::new_with((record.code_flag, record.description), record.title);
-
-        for record in iter {
+        for record in reader.deserialize() {
             let record: Record = record?;
-            codetable.data.push((record.code_flag, record.description));
-        }
+            let category = record.subtitle.parse::<Category>()?;
 
-        out_tables.push((Category(None), codetable));
+            let current = out_tables.last();
+            if current.is_none() || category != current.unwrap().0 {
+                let new_codetable = CodeTable::new(record.title);
+                out_tables.push((category, new_codetable));
+            }
+
+            out_tables
+                .last_mut()
+                .unwrap()
+                .1
+                .data
+                .push((record.code_flag, record.description));
+        }
 
         Ok(out_tables)
     }
@@ -171,6 +175,7 @@ mod tests {
 
     const PATH_STR_0: &str = "testdata/GRIB2_CodeFlag_0_0_CodeTable_no_subtitle.csv";
     const PATH_STR_1: &str = "testdata/GRIB2_CodeFlag_1_0_CodeTable_no_subtitle.csv";
+    const PATH_STR_2: &str = "testdata/GRIB2_CodeFlag_4_2_CodeTable_with_subtitle.csv";
 
     #[test]
     fn parse_subtitle() {
@@ -181,30 +186,98 @@ mod tests {
     }
 
     #[test]
-    fn parse_file() {
+    fn parse_file_no_subtitle() {
         let path = PathBuf::from(PATH_STR_0);
         let tables = CodeDB::parse_file(path).unwrap();
 
-        let expected_data_0 = vec![
-            ("0", "0A"),
-            ("1", "0B"),
-            ("2-254", "Reserved"),
-            ("255", "Missing"),
-        ]
-        .iter()
-        .map(|(a, b)| (a.to_string(), b.to_string()))
-        .collect::<Vec<_>>();
+        let expected_title = "Foo".to_owned();
+        let expected_data = vec![(
+            None,
+            vec![
+                ("0", "0A"),
+                ("1", "0B"),
+                ("2-254", "Reserved"),
+                ("255", "Missing"),
+            ],
+        )];
 
-        assert_eq!(
-            tables,
-            vec![(
-                Category(None),
-                CodeTable {
-                    desc: "Foo".to_owned(),
-                    data: expected_data_0,
-                }
-            )]
-        );
+        let expected = expected_data
+            .iter()
+            .map(|(c, table)| {
+                (
+                    Category(*c),
+                    CodeTable {
+                        desc: expected_title.clone(),
+                        data: table
+                            .iter()
+                            .map(|(a, b)| (a.to_string(), b.to_string()))
+                            .collect::<Vec<_>>(),
+                    },
+                )
+            })
+            .collect::<Vec<_>>();
+
+        assert_eq!(tables, expected);
+    }
+
+    #[test]
+    fn parse_file_with_subtitle() {
+        let path = PathBuf::from(PATH_STR_2);
+        let tables = CodeDB::parse_file(path).unwrap();
+
+        let expected_title = "Baz".to_owned();
+        let expected_data = vec![
+            (
+                Some((0, 0)),
+                vec![
+                    ("0", "Temperature"),
+                    ("1-9", "Reserved"),
+                    ("10", "Latent heat net flux"),
+                    ("11-191", "Reserved"),
+                    ("192-254", "Reserved for local use"),
+                    ("255", "Missing"),
+                ],
+            ),
+            (
+                Some((0, 191)),
+                vec![
+                    (
+                        "0",
+                        "Seconds prior to initial reference time (defined in Section 1)",
+                    ),
+                    ("1-191", "Reserved"),
+                    ("192-254", "Reserved for local use"),
+                    ("255", "Missing"),
+                ],
+            ),
+            (
+                Some((20, 0)),
+                vec![
+                    ("0", "Universal thermal climate index"),
+                    ("1-191", "Reserved"),
+                    ("192-254", "Reserved for local use"),
+                    ("255", "Missing"),
+                ],
+            ),
+        ];
+
+        let expected = expected_data
+            .iter()
+            .map(|(c, table)| {
+                (
+                    Category(*c),
+                    CodeTable {
+                        desc: expected_title.clone(),
+                        data: table
+                            .iter()
+                            .map(|(a, b)| (a.to_string(), b.to_string()))
+                            .collect::<Vec<_>>(),
+                    },
+                )
+            })
+            .collect::<Vec<_>>();
+
+        assert_eq!(tables, expected);
     }
 
     #[test]
@@ -227,6 +300,7 @@ pub const CODE_TABLE_0_0: &'static [&'static str] = &[
         let mut db = CodeDB::new();
         db.load(PathBuf::from(PATH_STR_0)).unwrap();
         db.load(PathBuf::from(PATH_STR_1)).unwrap();
+        db.load(PathBuf::from(PATH_STR_2)).unwrap();
         assert_eq!(
             format!("{}", db),
             "\
@@ -240,6 +314,31 @@ pub const CODE_TABLE_0_0: &'static [&'static str] = &[
 pub const CODE_TABLE_1_0: &'static [&'static str] = &[
     \"1A\",
     \"1B\",
+];
+
+/// Baz
+pub const CODE_TABLE_4_2_0_0: &'static [&'static str] = &[
+    \"Temperature\",
+    \"\",
+    \"\",
+    \"\",
+    \"\",
+    \"\",
+    \"\",
+    \"\",
+    \"\",
+    \"\",
+    \"Latent heat net flux\",
+];
+
+/// Baz
+pub const CODE_TABLE_4_2_0_191: &'static [&'static str] = &[
+    \"Seconds prior to initial reference time (defined in Section 1)\",
+];
+
+/// Baz
+pub const CODE_TABLE_4_2_20_0: &'static [&'static str] = &[
+    \"Universal thermal climate index\",
 ];"
         );
     }

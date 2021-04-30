@@ -1,0 +1,15 @@
+Title_en,SubTitle_en,CodeFlag,Value,MeaningParameterDescription_en,Note_en,UnitComments_en,Status
+Baz,"Product discipline 0 - Meteorological products, parameter category 0: temperature",0,,Temperature,,K,Operational
+Baz,"Product discipline 0 - Meteorological products, parameter category 0: temperature",1-9,,Reserved,,,Operational
+Baz,"Product discipline 0 - Meteorological products, parameter category 0: temperature",10,,Latent heat net flux,,W m-2,Operational
+Baz,"Product discipline 0 - Meteorological products, parameter category 0: temperature",11-191,,Reserved,,,Operational
+Baz,"Product discipline 0 - Meteorological products, parameter category 0: temperature",192-254,,Reserved for local use,,,Operational
+Baz,"Product discipline 0 - Meteorological products, parameter category 0: temperature",255,,Missing,,,Operational
+Baz,"Product discipline 0 - Meteorological products, parameter category 191: miscellaneous",0,,Seconds prior to initial reference time (defined in Section 1),,s,Operational
+Baz,"Product discipline 0 - Meteorological products, parameter category 191: miscellaneous",1-191,,Reserved,,,Operational
+Baz,"Product discipline 0 - Meteorological products, parameter category 191: miscellaneous",192-254,,Reserved for local use,,,Operational
+Baz,"Product discipline 0 - Meteorological products, parameter category 191: miscellaneous",255,,Missing,,,Operational
+Baz,"Product discipline 20 - Health and socioeconomic impacts, parameter category 0: health indicators",0,,Universal thermal climate index,,K,Operational
+Baz,"Product discipline 20 - Health and socioeconomic impacts, parameter category 0: health indicators",1-191,,Reserved,,,Operational
+Baz,"Product discipline 20 - Health and socioeconomic impacts, parameter category 0: health indicators",192-254,,Reserved for local use,,,Operational
+Baz,"Product discipline 20 - Health and socioeconomic impacts, parameter category 0: health indicators",255,,Missing,,,Operational

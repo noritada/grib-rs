@@ -75,6 +75,13 @@ pub struct CodeTable {
 }
 
 impl CodeTable {
+    fn new(desc: String) -> Self {
+        Self {
+            desc: desc,
+            data: Vec::new(),
+        }
+    }
+
     fn new_with(pair: (String, String), desc: String) -> Self {
         Self {
             desc: desc,
