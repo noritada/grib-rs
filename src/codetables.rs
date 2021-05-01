@@ -105,6 +105,105 @@ impl ArrayLookup for CodeTable4_0 {
     }
 }
 
+pub struct CodeTable4_1 {
+    discipline: u8,
+}
+
+impl CodeTable4_1 {
+    pub fn new(discipline: u8) -> Self {
+        Self { discipline }
+    }
+}
+
+impl ArrayLookup for CodeTable4_1 {
+    fn data(&self) -> &'static [&'static str] {
+        match self.discipline {
+            0 => CODE_TABLE_4_1_0,
+            1 => CODE_TABLE_4_1_1,
+            2 => CODE_TABLE_4_1_2,
+            3 => CODE_TABLE_4_1_3,
+            4 => CODE_TABLE_4_1_4,
+            10 => CODE_TABLE_4_1_10,
+            20 => CODE_TABLE_4_1_20,
+            _ => CODE_TABLE_4_1_0, // FIXME
+        }
+    }
+}
+
+pub struct CodeTable4_2 {
+    discipline: u8,
+    parameter: u8,
+}
+
+impl CodeTable4_2 {
+    pub fn new(discipline: u8, parameter: u8) -> Self {
+        Self {
+            discipline,
+            parameter,
+        }
+    }
+}
+
+impl ArrayLookup for CodeTable4_2 {
+    fn data(&self) -> &'static [&'static str] {
+        match (self.discipline, self.parameter) {
+            (0, 0) => CODE_TABLE_4_2_0_0,
+            (0, 1) => CODE_TABLE_4_2_0_1,
+            (0, 2) => CODE_TABLE_4_2_0_2,
+            (0, 3) => CODE_TABLE_4_2_0_3,
+            (0, 4) => CODE_TABLE_4_2_0_4,
+            (0, 5) => CODE_TABLE_4_2_0_5,
+            (0, 6) => CODE_TABLE_4_2_0_6,
+            (0, 7) => CODE_TABLE_4_2_0_7,
+            (0, 13) => CODE_TABLE_4_2_0_13,
+            (0, 14) => CODE_TABLE_4_2_0_14,
+            (0, 15) => CODE_TABLE_4_2_0_15,
+            (0, 16) => CODE_TABLE_4_2_0_16,
+            (0, 17) => CODE_TABLE_4_2_0_17,
+            (0, 18) => CODE_TABLE_4_2_0_18,
+            (0, 19) => CODE_TABLE_4_2_0_19,
+            (0, 20) => CODE_TABLE_4_2_0_20,
+            (0, 190) => CODE_TABLE_4_2_0_190,
+            (0, 191) => CODE_TABLE_4_2_0_191,
+            (1, 0) => CODE_TABLE_4_2_1_0,
+            (1, 1) => CODE_TABLE_4_2_1_1,
+            (1, 2) => CODE_TABLE_4_2_1_2,
+            (2, 0) => CODE_TABLE_4_2_2_0,
+            (2, 3) => CODE_TABLE_4_2_2_3,
+            (2, 4) => CODE_TABLE_4_2_2_4,
+            (2, 5) => CODE_TABLE_4_2_2_5,
+            (3, 0) => CODE_TABLE_4_2_3_0,
+            (3, 1) => CODE_TABLE_4_2_3_1,
+            (3, 2) => CODE_TABLE_4_2_3_2,
+            (3, 3) => CODE_TABLE_4_2_3_3,
+            (3, 4) => CODE_TABLE_4_2_3_4,
+            (3, 5) => CODE_TABLE_4_2_3_5,
+            (3, 6) => CODE_TABLE_4_2_3_6,
+            (4, 0) => CODE_TABLE_4_2_4_0,
+            (4, 1) => CODE_TABLE_4_2_4_1,
+            (4, 2) => CODE_TABLE_4_2_4_2,
+            (4, 3) => CODE_TABLE_4_2_4_3,
+            (4, 4) => CODE_TABLE_4_2_4_4,
+            (4, 5) => CODE_TABLE_4_2_4_5,
+            (4, 6) => CODE_TABLE_4_2_4_6,
+            (4, 7) => CODE_TABLE_4_2_4_7,
+            (4, 8) => CODE_TABLE_4_2_4_8,
+            (4, 9) => CODE_TABLE_4_2_4_9,
+            (4, 10) => CODE_TABLE_4_2_4_10,
+            (10, 0) => CODE_TABLE_4_2_10_0,
+            (10, 1) => CODE_TABLE_4_2_10_1,
+            (10, 2) => CODE_TABLE_4_2_10_2,
+            (10, 3) => CODE_TABLE_4_2_10_3,
+            (10, 4) => CODE_TABLE_4_2_10_4,
+            (10, 191) => CODE_TABLE_4_2_10_191,
+            (20, 0) => CODE_TABLE_4_2_20_0,
+            (20, 1) => CODE_TABLE_4_2_20_1,
+            (20, 2) => CODE_TABLE_4_2_20_2,
+            _ => CODE_TABLE_4_2_0_0, // FIXME
+        }
+    }
+}
+
 pub struct CodeTable5_0;
 
 impl ArrayLookup for CodeTable5_0 {
