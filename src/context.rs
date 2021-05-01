@@ -5,7 +5,7 @@ use std::fmt::{self, Display, Formatter};
 use std::io::{Read, Seek};
 use std::result::Result;
 
-use crate::codetables::{lookup_table, CODE_TABLE_3_1, CODE_TABLE_4_0, CODE_TABLE_5_0};
+use crate::codetables::{CodeTable3_1, CodeTable4_0, CodeTable5_0, Lookup};
 use crate::decoder::{self, DecodeError};
 use crate::reader::{Grib2Read, ParseError, SeekableGrib2Reader};
 
@@ -124,9 +124,9 @@ pub struct TemplateInfo(pub u8, pub u16);
 impl TemplateInfo {
     pub fn describe(&self) -> Option<String> {
         match self.0 {
-            3 => Some(lookup_table(CODE_TABLE_3_1, usize::from(self.1)).to_string()),
-            4 => Some(lookup_table(CODE_TABLE_4_0, usize::from(self.1)).to_string()),
-            5 => Some(lookup_table(CODE_TABLE_5_0, usize::from(self.1)).to_string()),
+            3 => Some(CodeTable3_1.lookup(usize::from(self.1)).to_string()),
+            4 => Some(CodeTable4_0.lookup(usize::from(self.1)).to_string()),
+            5 => Some(CodeTable5_0.lookup(usize::from(self.1)).to_string()),
             _ => None,
         }
     }
