@@ -75,10 +75,10 @@ pub struct CodeTable {
 }
 
 impl CodeTable {
-    fn new_with(pair: (String, String), desc: String) -> Self {
+    fn new(desc: String) -> Self {
         Self {
             desc: desc,
-            data: vec![pair],
+            data: Vec::new(),
         }
     }
 
@@ -120,7 +120,9 @@ pub const {}: &'static [&'static str] = &{:#?};",
                         empty_count -= 1;
                     }
 
-                    assert_eq!(count, range.start);
+                    if count != range.start {
+                        return Vec::new(); // Sparse code tables are not supported at the moment.
+                    }
                     if range.size() == 1 {
                         output.push(string.to_string());
                     } else {
