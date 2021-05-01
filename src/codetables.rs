@@ -43,20 +43,14 @@ pub trait Lookup {
     fn lookup(&self, code: usize) -> LookupResult;
 }
 
-pub struct ArrayCodeTable {
-    data: &'static [&'static str],
+pub trait ArrayLookup: Lookup {
+    fn data(&self) -> &'static [&'static str];
 }
 
-impl ArrayCodeTable {
-    fn new(data: &'static [&'static str]) -> Self {
-        ArrayCodeTable { data: data }
-    }
-}
-
-impl Lookup for ArrayCodeTable {
+impl<T: ArrayLookup> Lookup for T {
     fn lookup(&self, code: usize) -> LookupResult {
         let result = self
-            .data
+            .data()
             .get(code)
             .ok_or(ConversionError::Unimplemented(code));
         LookupResult(result)
