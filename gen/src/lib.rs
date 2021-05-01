@@ -86,7 +86,7 @@ impl CodeTable {
         format!(
             "\
 /// {}
-pub const {}: &'static [&'static str] = &{:#?};",
+const {}: &'static [&'static str] = &{:#?};",
             self.desc,
             name,
             self.to_vec(),
