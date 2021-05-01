@@ -62,16 +62,9 @@ impl CodeDB {
     pub fn parse_file_c00(path: PathBuf) -> Result<CodeTable, Box<dyn Error>> {
         let f = File::open(&path)?;
         let mut reader = csv::Reader::from_reader(f);
-        let mut iter = reader.deserialize();
+        let mut codetable = CodeTable::new("Common Code Table C-0".to_owned());
 
-        let record = iter.next().ok_or("CSV does not have a body")?;
-        let record: C00Record = record?;
-        let mut codetable = CodeTable::new_with(
-            (record.grib_version, record.date),
-            "Common Code Table C-0".to_owned(),
-        );
-
-        for record in iter {
+        for record in reader.deserialize() {
             let record: C00Record = record?;
             codetable.data.push((record.grib_version, record.date));
         }
@@ -82,16 +75,9 @@ impl CodeDB {
     pub fn parse_file_c11(path: PathBuf) -> Result<CodeTable, Box<dyn Error>> {
         let f = File::open(&path)?;
         let mut reader = csv::Reader::from_reader(f);
-        let mut iter = reader.deserialize();
+        let mut codetable = CodeTable::new("Common Code Table C-11".to_owned());
 
-        let record = iter.next().ok_or("CSV does not have a body")?;
-        let record: C11Record = record?;
-        let mut codetable = CodeTable::new_with(
-            (record.grib2_bufr4, record.center),
-            "Common Code Table C-11".to_owned(),
-        );
-
-        for record in iter {
+        for record in reader.deserialize() {
             let record: C11Record = record?;
             codetable.data.push((record.grib2_bufr4, record.center));
         }

@@ -82,13 +82,6 @@ impl CodeTable {
         }
     }
 
-    fn new_with(pair: (String, String), desc: String) -> Self {
-        Self {
-            desc: desc,
-            data: vec![pair],
-        }
-    }
-
     fn export(&self, name: &str) -> String {
         format!(
             "\
