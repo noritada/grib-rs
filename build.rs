@@ -22,6 +22,8 @@ fn main() {
         "def/GRIB2/GRIB2_CodeFlag_1_3_CodeTable_en.csv",
         "def/GRIB2/GRIB2_CodeFlag_1_4_CodeTable_en.csv",
         "def/GRIB2/GRIB2_CodeFlag_3_1_CodeTable_en.csv",
+        "def/GRIB2/GRIB2_CodeFlag_4_1_CodeTable_en.csv",
+        "def/GRIB2/GRIB2_CodeFlag_4_2_CodeTable_en.csv",
         "def/GRIB2/GRIB2_CodeFlag_4_0_CodeTable_en.csv",
         "def/GRIB2/GRIB2_CodeFlag_5_0_CodeTable_en.csv",
     ];
