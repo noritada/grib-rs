@@ -93,17 +93,24 @@ pub struct ProdDefinition {
     /// Product Definition Template Number
     pub prod_tmpl_num: u16,
     pub(crate) templated: Box<[u8]>,
+    pub(crate) template_supported: bool,
 }
 
 impl ProdDefinition {
     pub fn parameter_category(&self) -> Option<&u8> {
-        // FIXME: need to check if the template is supported
-        self.templated.get(0)
+        if self.template_supported {
+            self.templated.get(0)
+        } else {
+            None
+        }
     }
 
     pub fn parameter_number(&self) -> Option<&u8> {
-        // FIXME: need to check if the template is supported
-        self.templated.get(1)
+        if self.template_supported {
+            self.templated.get(1)
+        } else {
+            None
+        }
     }
 }
 
@@ -865,6 +872,7 @@ mod tests {
                     num_coordinates: 0,
                     prod_tmpl_num: 0,
                     templated: Vec::new().into_boxed_slice(),
+                    template_supported: true,
                 })),
             },
             SectionInfo {
@@ -895,6 +903,7 @@ mod tests {
                     num_coordinates: 0,
                     prod_tmpl_num: 0,
                     templated: Vec::new().into_boxed_slice(),
+                    template_supported: true,
                 })),
             },
             SectionInfo {
@@ -933,6 +942,7 @@ mod tests {
                 255, 255, 255, 255,
             ]
             .into_boxed_slice(),
+            template_supported: true,
         };
 
         assert_eq!(data.parameter_category(), Some(&193));
