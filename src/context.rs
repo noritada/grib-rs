@@ -1034,5 +1034,6 @@ mod tests {
 
         assert_eq!(data.parameter_category(), Some(&193));
         assert_eq!(data.parameter_number(), Some(&0));
+        assert_eq!(data.forecast_time(), Some((0, 40)));
     }
 }
