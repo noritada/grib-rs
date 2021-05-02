@@ -18,6 +18,7 @@ fn main() {
 
     let input_file_names = [
         "def/GRIB2/GRIB2_CodeFlag_0_0_CodeTable_en.csv",
+        "def/GRIB2/GRIB2_CodeFlag_1_1_CodeTable_en.csv",
         "def/GRIB2/GRIB2_CodeFlag_1_2_CodeTable_en.csv",
         "def/GRIB2/GRIB2_CodeFlag_1_3_CodeTable_en.csv",
         "def/GRIB2/GRIB2_CodeFlag_1_4_CodeTable_en.csv",
