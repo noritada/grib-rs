@@ -1,12 +1,14 @@
 use chrono::{DateTime, Utc};
 use std::cell::RefCell;
 use std::collections::HashSet;
+use std::convert::TryInto;
 use std::fmt::{self, Display, Formatter};
 use std::io::{Read, Seek};
 use std::result::Result;
 
 use crate::codetables::{
-    CodeTable3_1, CodeTable4_0, CodeTable4_1, CodeTable4_2, CodeTable4_3, CodeTable5_0, Lookup,
+    CodeTable3_1, CodeTable4_0, CodeTable4_1, CodeTable4_2, CodeTable4_3, CodeTable4_4,
+    CodeTable5_0, Lookup,
 };
 use crate::decoder::{self, DecodeError};
 use crate::reader::{Grib2Read, ParseError, SeekableGrib2Reader};
@@ -142,6 +144,43 @@ impl ProdDefinition {
                 _ => None,
             }?;
             self.templated.get(index)
+        } else {
+            None
+        }
+    }
+
+    pub fn forecast_time(&self) -> Option<(u8, u32)> {
+        if self.template_supported {
+            let unit_index = match self.prod_tmpl_num {
+                0..=15 => Some(8),
+                32..=34 => Some(8),
+                40..=43 => Some(10),
+                44..=47 => Some(21),
+                48..=49 => Some(32),
+                51 => Some(8),
+                // 53 and 54 is variable and not supported as of now
+                55..=56 => Some(14),
+                // 57 and 58 is variable and not supported as of now
+                59 => Some(14),
+                60..=61 => Some(8),
+                62..=63 => Some(14),
+                // 67 and 68 is variable and not supported as of now
+                70..=73 => Some(13),
+                76..=79 => Some(11),
+                80..=81 => Some(33),
+                82..=84 => Some(22),
+                85 => Some(21),
+                86..=87 => Some(8),
+                88 => Some(26),
+                91 => Some(8),
+                1000..=1101 => Some(8),
+                _ => None,
+            }?;
+            let unit = self.templated.get(unit_index).map(|v| *v);
+            let start = unit_index + 1;
+            let end = unit_index + 5;
+            let time = u32::from_be_bytes(self.templated[start..end].try_into().unwrap());
+            unit.zip(Some(time))
         } else {
             None
         }
@@ -463,6 +502,7 @@ impl<'a> SubMessage<'a> {
 
     pub fn describe(&self) -> String {
         let category = self.prod_def().parameter_category();
+        let forecast_time = self.prod_def().forecast_time();
         format!(
             "\
 Grid:                                   {}
@@ -470,6 +510,8 @@ Product:                                {}
   Parameter Category:                   {}
   Parameter:                            {}
   Generating Proceess:                  {}
+  Forecast Time:                        {}
+  Forecast Time Unit:                   {}
 Data Representation:                    {}
 ",
             self.3.describe().unwrap_or(String::new()),
@@ -489,6 +531,12 @@ Data Representation:                    {}
             self.prod_def()
                 .generating_process()
                 .map(|v| CodeTable4_3.lookup(usize::from(*v)).to_string())
+                .unwrap_or(String::new()),
+            forecast_time
+                .map(|(_, v)| v.to_string())
+                .unwrap_or(String::new()),
+            forecast_time
+                .map(|(unit, _)| CodeTable4_4.lookup(usize::from(unit)).to_string())
                 .unwrap_or(String::new()),
             self.5.describe().unwrap_or(String::new()),
         )
