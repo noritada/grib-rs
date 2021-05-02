@@ -227,14 +227,13 @@ pub fn unpack_sect4_body<R: Read>(f: &mut R, body_size: usize) -> Result<Section
     f.read_exact(&mut buf[..])?;
 
     let len_extra = body_size - buf.len();
-    if len_extra > 0 {
-        let mut buf = vec![0; len_extra];
-        f.read_exact(&mut buf[..])?;
-    }
+    let mut templated = vec![0; len_extra];
+    f.read_exact(&mut templated[..])?;
 
     Ok(SectionBody::Section4(ProdDefinition {
         num_coordinates: read_as!(u16, buf, 0),
         prod_tmpl_num: read_as!(u16, buf, 2),
+        templated: templated.into_boxed_slice(),
     }))
 }
 
@@ -367,6 +366,11 @@ mod tests {
                     body: Some(SectionBody::Section4(ProdDefinition {
                         num_coordinates: 0,
                         prod_tmpl_num: 0,
+                        templated: vec![
+                            193, 0, 0, 153, 255, 0, 0, 0, 0, 0, 0, 0, 0, 1, 255, 255, 255, 255,
+                            255, 255, 255, 255, 255, 255, 255,
+                        ]
+                        .into_boxed_slice(),
                     })),
                 },
                 SectionInfo {
@@ -399,6 +403,11 @@ mod tests {
                     body: Some(SectionBody::Section4(ProdDefinition {
                         num_coordinates: 0,
                         prod_tmpl_num: 0,
+                        templated: vec![
+                            193, 0, 2, 153, 255, 0, 0, 0, 0, 0, 0, 0, 10, 1, 255, 255, 255, 255,
+                            255, 255, 255, 255, 255, 255, 255,
+                        ]
+                        .into_boxed_slice(),
                     })),
                 },
                 SectionInfo {
@@ -431,6 +440,11 @@ mod tests {
                     body: Some(SectionBody::Section4(ProdDefinition {
                         num_coordinates: 0,
                         prod_tmpl_num: 0,
+                        templated: vec![
+                            193, 0, 2, 153, 255, 0, 0, 0, 0, 0, 0, 0, 20, 1, 255, 255, 255, 255,
+                            255, 255, 255, 255, 255, 255, 255
+                        ]
+                        .into_boxed_slice(),
                     })),
                 },
                 SectionInfo {
@@ -463,6 +477,11 @@ mod tests {
                     body: Some(SectionBody::Section4(ProdDefinition {
                         num_coordinates: 0,
                         prod_tmpl_num: 0,
+                        templated: vec![
+                            193, 0, 2, 153, 255, 0, 0, 0, 0, 0, 0, 0, 30, 1, 255, 255, 255, 255,
+                            255, 255, 255, 255, 255, 255, 255
+                        ]
+                        .into_boxed_slice(),
                     })),
                 },
                 SectionInfo {
@@ -495,6 +514,11 @@ mod tests {
                     body: Some(SectionBody::Section4(ProdDefinition {
                         num_coordinates: 0,
                         prod_tmpl_num: 0,
+                        templated: vec![
+                            193, 0, 2, 153, 255, 0, 0, 0, 0, 0, 0, 0, 40, 1, 255, 255, 255, 255,
+                            255, 255, 255, 255, 255, 255, 255
+                        ]
+                        .into_boxed_slice(),
                     })),
                 },
                 SectionInfo {
@@ -527,6 +551,11 @@ mod tests {
                     body: Some(SectionBody::Section4(ProdDefinition {
                         num_coordinates: 0,
                         prod_tmpl_num: 0,
+                        templated: vec![
+                            193, 0, 2, 153, 255, 0, 0, 0, 0, 0, 0, 0, 50, 1, 255, 255, 255, 255,
+                            255, 255, 255, 255, 255, 255, 255
+                        ]
+                        .into_boxed_slice(),
                     })),
                 },
                 SectionInfo {
@@ -559,6 +588,11 @@ mod tests {
                     body: Some(SectionBody::Section4(ProdDefinition {
                         num_coordinates: 0,
                         prod_tmpl_num: 0,
+                        templated: vec![
+                            193, 0, 2, 153, 255, 0, 0, 0, 0, 0, 0, 0, 60, 1, 255, 255, 255, 255,
+                            255, 255, 255, 255, 255, 255, 255
+                        ]
+                        .into_boxed_slice(),
                     })),
                 },
                 SectionInfo {

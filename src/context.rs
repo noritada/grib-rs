@@ -90,6 +90,19 @@ pub struct ProdDefinition {
     pub num_coordinates: u16,
     /// Product Definition Template Number
     pub prod_tmpl_num: u16,
+    pub(crate) templated: Box<[u8]>,
+}
+
+impl ProdDefinition {
+    pub fn parameter_category(&self) -> Option<&u8> {
+        // FIXME: need to check if the template is supported
+        self.templated.get(0)
+    }
+
+    pub fn parameter_number(&self) -> Option<&u8> {
+        // FIXME: need to check if the template is supported
+        self.templated.get(1)
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -818,6 +831,7 @@ mod tests {
                 body: Some(SectionBody::Section4(ProdDefinition {
                     num_coordinates: 0,
                     prod_tmpl_num: 0,
+                    templated: Vec::new().into_boxed_slice(),
                 })),
             },
             SectionInfo {
@@ -847,6 +861,7 @@ mod tests {
                 body: Some(SectionBody::Section4(ProdDefinition {
                     num_coordinates: 0,
                     prod_tmpl_num: 0,
+                    templated: Vec::new().into_boxed_slice(),
                 })),
             },
             SectionInfo {
@@ -873,5 +888,21 @@ mod tests {
                 TemplateInfo(5, 0),
             ]
         );
+    }
+
+    #[test]
+    fn prod_definition_parameters() {
+        let data = ProdDefinition {
+            num_coordinates: 0,
+            prod_tmpl_num: 0,
+            templated: vec![
+                193, 0, 2, 153, 255, 0, 0, 0, 0, 0, 0, 0, 40, 1, 255, 255, 255, 255, 255, 255, 255,
+                255, 255, 255, 255,
+            ]
+            .into_boxed_slice(),
+        };
+
+        assert_eq!(data.parameter_category(), Some(&193));
+        assert_eq!(data.parameter_number(), Some(&0));
     }
 }
