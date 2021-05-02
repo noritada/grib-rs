@@ -94,36 +94,50 @@ fn list() -> Result<(), Box<dyn std::error::Error>> {
 0
 Grid:                                   Latitude/longitude
 Product:                                Analysis or forecast at a horizontal level or in a horizontal layer at a point in time
+  Parameter Category:                   code '193' is not implemented
+  Parameter:                            code '0' is not implemented
 Data Representation:                    Run length packing with level values
 
 1
 Grid:                                   Latitude/longitude
 Product:                                Analysis or forecast at a horizontal level or in a horizontal layer at a point in time
+  Parameter Category:                   code '193' is not implemented
+  Parameter:                            code '0' is not implemented
 Data Representation:                    Run length packing with level values
 
 2
 Grid:                                   Latitude/longitude
 Product:                                Analysis or forecast at a horizontal level or in a horizontal layer at a point in time
+  Parameter Category:                   code '193' is not implemented
+  Parameter:                            code '0' is not implemented
 Data Representation:                    Run length packing with level values
 
 3
 Grid:                                   Latitude/longitude
 Product:                                Analysis or forecast at a horizontal level or in a horizontal layer at a point in time
+  Parameter Category:                   code '193' is not implemented
+  Parameter:                            code '0' is not implemented
 Data Representation:                    Run length packing with level values
 
 4
 Grid:                                   Latitude/longitude
 Product:                                Analysis or forecast at a horizontal level or in a horizontal layer at a point in time
+  Parameter Category:                   code '193' is not implemented
+  Parameter:                            code '0' is not implemented
 Data Representation:                    Run length packing with level values
 
 5
 Grid:                                   Latitude/longitude
 Product:                                Analysis or forecast at a horizontal level or in a horizontal layer at a point in time
+  Parameter Category:                   code '193' is not implemented
+  Parameter:                            code '0' is not implemented
 Data Representation:                    Run length packing with level values
 
 6
 Grid:                                   Latitude/longitude
 Product:                                Analysis or forecast at a horizontal level or in a horizontal layer at a point in time
+  Parameter Category:                   code '193' is not implemented
+  Parameter:                            code '0' is not implemented
 Data Representation:                    Run length packing with level values
 
 ";

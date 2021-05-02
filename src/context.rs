@@ -5,7 +5,9 @@ use std::fmt::{self, Display, Formatter};
 use std::io::{Read, Seek};
 use std::result::Result;
 
-use crate::codetables::{CodeTable3_1, CodeTable4_0, CodeTable5_0, Lookup};
+use crate::codetables::{
+    CodeTable3_1, CodeTable4_0, CodeTable4_1, CodeTable4_2, CodeTable5_0, Lookup,
+};
 use crate::decoder::{self, DecodeError};
 use crate::reader::{Grib2Read, ParseError, SeekableGrib2Reader};
 
@@ -402,15 +404,46 @@ pub struct SubMessage<'a>(
 );
 
 impl<'a> SubMessage<'a> {
+    pub fn indicator(&self) -> &Indicator {
+        // panics should not happen if data is correct
+        match self.0.body.body.as_ref().unwrap() {
+            SectionBody::Section0(data) => data,
+            _ => panic!("something unexpected happened"),
+        }
+    }
+
+    pub fn prod_def(&self) -> &ProdDefinition {
+        // panics should not happen if data is correct
+        match self.4.body.body.as_ref().unwrap() {
+            SectionBody::Section4(data) => data,
+            _ => panic!("something unexpected happened"),
+        }
+    }
+
     pub fn describe(&self) -> String {
+        let category = self.prod_def().parameter_category();
         format!(
             "\
 Grid:                                   {}
 Product:                                {}
+  Parameter Category:                   {}
+  Parameter:                            {}
 Data Representation:                    {}
 ",
             self.3.describe().unwrap_or(String::new()),
             self.4.describe().unwrap_or(String::new()),
+            category
+                .map(|v| CodeTable4_1::new(self.indicator().discipline)
+                    .lookup(usize::from(*v))
+                    .to_string())
+                .unwrap_or(String::new()),
+            self.prod_def()
+                .parameter_number()
+                .zip(category)
+                .map(|(n, c)| CodeTable4_2::new(self.indicator().discipline, *c)
+                    .lookup(usize::from(*n))
+                    .to_string())
+                .unwrap_or(String::new()),
             self.5.describe().unwrap_or(String::new()),
         )
     }
