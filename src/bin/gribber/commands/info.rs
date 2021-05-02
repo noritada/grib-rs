@@ -47,7 +47,7 @@ Total Length:                           {}
 Originating/generating centre:          {}
 Originating/generating sub-centre:      {}
 GRIB Master Tables Version Number:      {} ({})
-GRIB Local Tables Version Number:       {}
+GRIB Local Tables Version Number:       {} ({})
 Significance of Reference Time:         {}
 Reference time of data:                 {}
 Production status of processed data:    {}
@@ -59,6 +59,7 @@ Type of processed data:                 {}
             self.identification.subcentre_id,
             self.identification.master_table_version,
             CommonCodeTable00.lookup(self.identification.master_table_version as usize),
+            self.identification.local_table_version,
             CodeTable1_1.lookup(self.identification.local_table_version as usize),
             CodeTable1_2.lookup(self.identification.ref_time_significance as usize),
             self.identification.ref_time,

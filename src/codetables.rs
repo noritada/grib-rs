@@ -28,11 +28,6 @@ impl Display for ConversionError {
 include!(concat!(env!("OUT_DIR"), "/cct.rs"));
 include!(concat!(env!("OUT_DIR"), "/grib2_codeflag.rs"));
 
-/// Implements "Code Table 1.1: GRIB Local Tables Version Number"
-const CODE_TABLE_1_1: &'static [&'static str] = &[
-    "Local tables not used. Only table entries and templates from the current Master table are valid.",
-];
-
 pub struct CommonCodeTable00;
 
 impl ArrayLookup for CommonCodeTable00 {

@@ -68,7 +68,7 @@ Total Length:                           10321
 Originating/generating centre:          Tokyo (RSMC), Japan Meteorological Agency
 Originating/generating sub-centre:      0
 GRIB Master Tables Version Number:      5 (4 November 2009)
-GRIB Local Tables Version Number:       code '1' is not implemented
+GRIB Local Tables Version Number:       1 (Number of local tables version used)
 Significance of Reference Time:         Analysis
 Reference time of data:                 2016-08-22 02:00:00 UTC
 Production status of processed data:    Operational products
