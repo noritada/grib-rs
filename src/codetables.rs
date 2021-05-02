@@ -120,7 +120,7 @@ impl ArrayLookup for CodeTable4_1 {
             4 => CODE_TABLE_4_1_4,
             10 => CODE_TABLE_4_1_10,
             20 => CODE_TABLE_4_1_20,
-            _ => CODE_TABLE_4_1_0, // FIXME
+            _ => CODE_TABLE_UNSUPPORTED,
         }
     }
 }
@@ -194,7 +194,7 @@ impl ArrayLookup for CodeTable4_2 {
             (20, 0) => CODE_TABLE_4_2_20_0,
             (20, 1) => CODE_TABLE_4_2_20_1,
             (20, 2) => CODE_TABLE_4_2_20_2,
-            _ => CODE_TABLE_4_2_0_0, // FIXME
+            _ => CODE_TABLE_UNSUPPORTED,
         }
     }
 }
@@ -224,3 +224,5 @@ impl<T: ArrayLookup> Lookup for T {
         LookupResult(result)
     }
 }
+
+const CODE_TABLE_UNSUPPORTED: &'static [&'static str] = &[];
