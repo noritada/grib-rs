@@ -6,7 +6,7 @@ use std::io::{Read, Seek};
 use std::result::Result;
 
 use crate::codetables::{
-    CodeTable3_1, CodeTable4_0, CodeTable4_1, CodeTable4_2, CodeTable5_0, Lookup,
+    CodeTable3_1, CodeTable4_0, CodeTable4_1, CodeTable4_2, CodeTable4_3, CodeTable5_0, Lookup,
 };
 use crate::decoder::{self, DecodeError};
 use crate::reader::{Grib2Read, ParseError, SeekableGrib2Reader};
@@ -108,6 +108,40 @@ impl ProdDefinition {
     pub fn parameter_number(&self) -> Option<&u8> {
         if self.template_supported {
             self.templated.get(1)
+        } else {
+            None
+        }
+    }
+
+    pub fn generating_process(&self) -> Option<&u8> {
+        if self.template_supported {
+            let index = match self.prod_tmpl_num {
+                0..=39 => Some(2),
+                40..=43 => Some(4),
+                44..=46 => Some(15),
+                47 => Some(2),
+                48..=49 => Some(26),
+                51 => Some(2),
+                // 53 and 54 is variable and not supported as of now
+                55..=56 => Some(8),
+                // 57 and 58 is variable and not supported as of now
+                59 => Some(8),
+                60..=61 => Some(2),
+                62..=63 => Some(8),
+                // 67 and 68 is variable and not supported as of now
+                70..=73 => Some(7),
+                76..=79 => Some(5),
+                80..=81 => Some(27),
+                82 => Some(16),
+                83 => Some(2),
+                84 => Some(16),
+                85 => Some(15),
+                86..=91 => Some(2),
+                254 => Some(2),
+                1000..=1101 => Some(2),
+                _ => None,
+            }?;
+            self.templated.get(index)
         } else {
             None
         }
@@ -435,6 +469,7 @@ Grid:                                   {}
 Product:                                {}
   Parameter Category:                   {}
   Parameter:                            {}
+  Generating Proceess:                  {}
 Data Representation:                    {}
 ",
             self.3.describe().unwrap_or(String::new()),
@@ -450,6 +485,10 @@ Data Representation:                    {}
                 .map(|(n, c)| CodeTable4_2::new(self.indicator().discipline, *c)
                     .lookup(usize::from(*n))
                     .to_string())
+                .unwrap_or(String::new()),
+            self.prod_def()
+                .generating_process()
+                .map(|v| CodeTable4_3.lookup(usize::from(*v)).to_string())
                 .unwrap_or(String::new()),
             self.5.describe().unwrap_or(String::new()),
         )

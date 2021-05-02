@@ -199,6 +199,14 @@ impl ArrayLookup for CodeTable4_2 {
     }
 }
 
+pub struct CodeTable4_3;
+
+impl ArrayLookup for CodeTable4_3 {
+    fn data(&self) -> &'static [&'static str] {
+        CODE_TABLE_4_3
+    }
+}
+
 pub struct CodeTable5_0;
 
 impl ArrayLookup for CodeTable5_0 {
