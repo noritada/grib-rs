@@ -94,36 +94,71 @@ fn list() -> Result<(), Box<dyn std::error::Error>> {
 0
 Grid:                                   Latitude/longitude
 Product:                                Analysis or forecast at a horizontal level or in a horizontal layer at a point in time
+  Parameter Category:                   code '193' is not implemented
+  Parameter:                            code '0' is not implemented
+  Generating Proceess:                  Analysis
+  Forecast Time:                        0
+  Forecast Time Unit:                   Minute
 Data Representation:                    Run length packing with level values
 
 1
 Grid:                                   Latitude/longitude
 Product:                                Analysis or forecast at a horizontal level or in a horizontal layer at a point in time
+  Parameter Category:                   code '193' is not implemented
+  Parameter:                            code '0' is not implemented
+  Generating Proceess:                  Forecast
+  Forecast Time:                        10
+  Forecast Time Unit:                   Minute
 Data Representation:                    Run length packing with level values
 
 2
 Grid:                                   Latitude/longitude
 Product:                                Analysis or forecast at a horizontal level or in a horizontal layer at a point in time
+  Parameter Category:                   code '193' is not implemented
+  Parameter:                            code '0' is not implemented
+  Generating Proceess:                  Forecast
+  Forecast Time:                        20
+  Forecast Time Unit:                   Minute
 Data Representation:                    Run length packing with level values
 
 3
 Grid:                                   Latitude/longitude
 Product:                                Analysis or forecast at a horizontal level or in a horizontal layer at a point in time
+  Parameter Category:                   code '193' is not implemented
+  Parameter:                            code '0' is not implemented
+  Generating Proceess:                  Forecast
+  Forecast Time:                        30
+  Forecast Time Unit:                   Minute
 Data Representation:                    Run length packing with level values
 
 4
 Grid:                                   Latitude/longitude
 Product:                                Analysis or forecast at a horizontal level or in a horizontal layer at a point in time
+  Parameter Category:                   code '193' is not implemented
+  Parameter:                            code '0' is not implemented
+  Generating Proceess:                  Forecast
+  Forecast Time:                        40
+  Forecast Time Unit:                   Minute
 Data Representation:                    Run length packing with level values
 
 5
 Grid:                                   Latitude/longitude
 Product:                                Analysis or forecast at a horizontal level or in a horizontal layer at a point in time
+  Parameter Category:                   code '193' is not implemented
+  Parameter:                            code '0' is not implemented
+  Generating Proceess:                  Forecast
+  Forecast Time:                        50
+  Forecast Time Unit:                   Minute
 Data Representation:                    Run length packing with level values
 
 6
 Grid:                                   Latitude/longitude
 Product:                                Analysis or forecast at a horizontal level or in a horizontal layer at a point in time
+  Parameter Category:                   code '193' is not implemented
+  Parameter:                            code '0' is not implemented
+  Generating Proceess:                  Forecast
+  Forecast Time:                        60
+  Forecast Time Unit:                   Minute
 Data Representation:                    Run length packing with level values
 
 ";

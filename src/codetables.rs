@@ -120,7 +120,7 @@ impl ArrayLookup for CodeTable4_1 {
             4 => CODE_TABLE_4_1_4,
             10 => CODE_TABLE_4_1_10,
             20 => CODE_TABLE_4_1_20,
-            _ => CODE_TABLE_4_1_0, // FIXME
+            _ => CODE_TABLE_UNSUPPORTED,
         }
     }
 }
@@ -194,8 +194,24 @@ impl ArrayLookup for CodeTable4_2 {
             (20, 0) => CODE_TABLE_4_2_20_0,
             (20, 1) => CODE_TABLE_4_2_20_1,
             (20, 2) => CODE_TABLE_4_2_20_2,
-            _ => CODE_TABLE_4_2_0_0, // FIXME
+            _ => CODE_TABLE_UNSUPPORTED,
         }
+    }
+}
+
+pub struct CodeTable4_3;
+
+impl ArrayLookup for CodeTable4_3 {
+    fn data(&self) -> &'static [&'static str] {
+        CODE_TABLE_4_3
+    }
+}
+
+pub struct CodeTable4_4;
+
+impl ArrayLookup for CodeTable4_4 {
+    fn data(&self) -> &'static [&'static str] {
+        CODE_TABLE_4_4
     }
 }
 
@@ -224,3 +240,11 @@ impl<T: ArrayLookup> Lookup for T {
         LookupResult(result)
     }
 }
+
+const CODE_TABLE_UNSUPPORTED: &'static [&'static str] = &[];
+
+pub(crate) const SUPPORTED_PROD_DEF_TEMPLATE_NUMBERS: [u16; 71] = [
+    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 20, 30, 31, 32, 33, 34, 35, 40, 41, 42,
+    43, 44, 45, 46, 47, 48, 49, 51, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 67, 68, 70, 71, 72,
+    73, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 91, 254, 1000, 1001, 1002, 1100, 1101,
+];

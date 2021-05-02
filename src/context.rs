@@ -1,11 +1,15 @@
 use chrono::{DateTime, Utc};
 use std::cell::RefCell;
 use std::collections::HashSet;
+use std::convert::TryInto;
 use std::fmt::{self, Display, Formatter};
 use std::io::{Read, Seek};
 use std::result::Result;
 
-use crate::codetables::{CodeTable3_1, CodeTable4_0, CodeTable5_0, Lookup};
+use crate::codetables::{
+    CodeTable3_1, CodeTable4_0, CodeTable4_1, CodeTable4_2, CodeTable4_3, CodeTable4_4,
+    CodeTable5_0, Lookup,
+};
 use crate::decoder::{self, DecodeError};
 use crate::reader::{Grib2Read, ParseError, SeekableGrib2Reader};
 
@@ -90,6 +94,97 @@ pub struct ProdDefinition {
     pub num_coordinates: u16,
     /// Product Definition Template Number
     pub prod_tmpl_num: u16,
+    pub(crate) templated: Box<[u8]>,
+    pub(crate) template_supported: bool,
+}
+
+impl ProdDefinition {
+    pub fn parameter_category(&self) -> Option<&u8> {
+        if self.template_supported {
+            self.templated.get(0)
+        } else {
+            None
+        }
+    }
+
+    pub fn parameter_number(&self) -> Option<&u8> {
+        if self.template_supported {
+            self.templated.get(1)
+        } else {
+            None
+        }
+    }
+
+    pub fn generating_process(&self) -> Option<&u8> {
+        if self.template_supported {
+            let index = match self.prod_tmpl_num {
+                0..=39 => Some(2),
+                40..=43 => Some(4),
+                44..=46 => Some(15),
+                47 => Some(2),
+                48..=49 => Some(26),
+                51 => Some(2),
+                // 53 and 54 is variable and not supported as of now
+                55..=56 => Some(8),
+                // 57 and 58 is variable and not supported as of now
+                59 => Some(8),
+                60..=61 => Some(2),
+                62..=63 => Some(8),
+                // 67 and 68 is variable and not supported as of now
+                70..=73 => Some(7),
+                76..=79 => Some(5),
+                80..=81 => Some(27),
+                82 => Some(16),
+                83 => Some(2),
+                84 => Some(16),
+                85 => Some(15),
+                86..=91 => Some(2),
+                254 => Some(2),
+                1000..=1101 => Some(2),
+                _ => None,
+            }?;
+            self.templated.get(index)
+        } else {
+            None
+        }
+    }
+
+    pub fn forecast_time(&self) -> Option<(u8, u32)> {
+        if self.template_supported {
+            let unit_index = match self.prod_tmpl_num {
+                0..=15 => Some(8),
+                32..=34 => Some(8),
+                40..=43 => Some(10),
+                44..=47 => Some(21),
+                48..=49 => Some(32),
+                51 => Some(8),
+                // 53 and 54 is variable and not supported as of now
+                55..=56 => Some(14),
+                // 57 and 58 is variable and not supported as of now
+                59 => Some(14),
+                60..=61 => Some(8),
+                62..=63 => Some(14),
+                // 67 and 68 is variable and not supported as of now
+                70..=73 => Some(13),
+                76..=79 => Some(11),
+                80..=81 => Some(33),
+                82..=84 => Some(22),
+                85 => Some(21),
+                86..=87 => Some(8),
+                88 => Some(26),
+                91 => Some(8),
+                1000..=1101 => Some(8),
+                _ => None,
+            }?;
+            let unit = self.templated.get(unit_index).map(|v| *v);
+            let start = unit_index + 1;
+            let end = unit_index + 5;
+            let time = u32::from_be_bytes(self.templated[start..end].try_into().unwrap());
+            unit.zip(Some(time))
+        } else {
+            None
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -389,15 +484,60 @@ pub struct SubMessage<'a>(
 );
 
 impl<'a> SubMessage<'a> {
+    pub fn indicator(&self) -> &Indicator {
+        // panics should not happen if data is correct
+        match self.0.body.body.as_ref().unwrap() {
+            SectionBody::Section0(data) => data,
+            _ => panic!("something unexpected happened"),
+        }
+    }
+
+    pub fn prod_def(&self) -> &ProdDefinition {
+        // panics should not happen if data is correct
+        match self.4.body.body.as_ref().unwrap() {
+            SectionBody::Section4(data) => data,
+            _ => panic!("something unexpected happened"),
+        }
+    }
+
     pub fn describe(&self) -> String {
+        let category = self.prod_def().parameter_category();
+        let forecast_time = self.prod_def().forecast_time();
         format!(
             "\
 Grid:                                   {}
 Product:                                {}
+  Parameter Category:                   {}
+  Parameter:                            {}
+  Generating Proceess:                  {}
+  Forecast Time:                        {}
+  Forecast Time Unit:                   {}
 Data Representation:                    {}
 ",
             self.3.describe().unwrap_or(String::new()),
             self.4.describe().unwrap_or(String::new()),
+            category
+                .map(|v| CodeTable4_1::new(self.indicator().discipline)
+                    .lookup(usize::from(*v))
+                    .to_string())
+                .unwrap_or(String::new()),
+            self.prod_def()
+                .parameter_number()
+                .zip(category)
+                .map(|(n, c)| CodeTable4_2::new(self.indicator().discipline, *c)
+                    .lookup(usize::from(*n))
+                    .to_string())
+                .unwrap_or(String::new()),
+            self.prod_def()
+                .generating_process()
+                .map(|v| CodeTable4_3.lookup(usize::from(*v)).to_string())
+                .unwrap_or(String::new()),
+            forecast_time
+                .map(|(_, v)| v.to_string())
+                .unwrap_or(String::new()),
+            forecast_time
+                .map(|(unit, _)| CodeTable4_4.lookup(usize::from(unit)).to_string())
+                .unwrap_or(String::new()),
             self.5.describe().unwrap_or(String::new()),
         )
     }
@@ -818,6 +958,8 @@ mod tests {
                 body: Some(SectionBody::Section4(ProdDefinition {
                     num_coordinates: 0,
                     prod_tmpl_num: 0,
+                    templated: Vec::new().into_boxed_slice(),
+                    template_supported: true,
                 })),
             },
             SectionInfo {
@@ -847,6 +989,8 @@ mod tests {
                 body: Some(SectionBody::Section4(ProdDefinition {
                     num_coordinates: 0,
                     prod_tmpl_num: 0,
+                    templated: Vec::new().into_boxed_slice(),
+                    template_supported: true,
                 })),
             },
             SectionInfo {
@@ -873,5 +1017,22 @@ mod tests {
                 TemplateInfo(5, 0),
             ]
         );
+    }
+
+    #[test]
+    fn prod_definition_parameters() {
+        let data = ProdDefinition {
+            num_coordinates: 0,
+            prod_tmpl_num: 0,
+            templated: vec![
+                193, 0, 2, 153, 255, 0, 0, 0, 0, 0, 0, 0, 40, 1, 255, 255, 255, 255, 255, 255, 255,
+                255, 255, 255, 255,
+            ]
+            .into_boxed_slice(),
+            template_supported: true,
+        };
+
+        assert_eq!(data.parameter_category(), Some(&193));
+        assert_eq!(data.parameter_number(), Some(&0));
     }
 }

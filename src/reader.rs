@@ -4,6 +4,7 @@ use std::fmt::{self, Display, Formatter};
 use std::io::{self, Read, Seek, SeekFrom};
 use std::result::Result;
 
+use crate::codetables::SUPPORTED_PROD_DEF_TEMPLATE_NUMBERS;
 use crate::context::{
     BitMap, GridDefinition, Identification, Indicator, ProdDefinition, ReprDefinition, SectionBody,
     SectionInfo,
@@ -227,14 +228,16 @@ pub fn unpack_sect4_body<R: Read>(f: &mut R, body_size: usize) -> Result<Section
     f.read_exact(&mut buf[..])?;
 
     let len_extra = body_size - buf.len();
-    if len_extra > 0 {
-        let mut buf = vec![0; len_extra];
-        f.read_exact(&mut buf[..])?;
-    }
+    let mut templated = vec![0; len_extra];
+    f.read_exact(&mut templated[..])?;
+
+    let prod_tmpl_num = read_as!(u16, buf, 2);
 
     Ok(SectionBody::Section4(ProdDefinition {
         num_coordinates: read_as!(u16, buf, 0),
-        prod_tmpl_num: read_as!(u16, buf, 2),
+        prod_tmpl_num: prod_tmpl_num,
+        templated: templated.into_boxed_slice(),
+        template_supported: SUPPORTED_PROD_DEF_TEMPLATE_NUMBERS.contains(&prod_tmpl_num),
     }))
 }
 
@@ -367,6 +370,12 @@ mod tests {
                     body: Some(SectionBody::Section4(ProdDefinition {
                         num_coordinates: 0,
                         prod_tmpl_num: 0,
+                        templated: vec![
+                            193, 0, 0, 153, 255, 0, 0, 0, 0, 0, 0, 0, 0, 1, 255, 255, 255, 255,
+                            255, 255, 255, 255, 255, 255, 255,
+                        ]
+                        .into_boxed_slice(),
+                        template_supported: true,
                     })),
                 },
                 SectionInfo {
@@ -399,6 +408,12 @@ mod tests {
                     body: Some(SectionBody::Section4(ProdDefinition {
                         num_coordinates: 0,
                         prod_tmpl_num: 0,
+                        templated: vec![
+                            193, 0, 2, 153, 255, 0, 0, 0, 0, 0, 0, 0, 10, 1, 255, 255, 255, 255,
+                            255, 255, 255, 255, 255, 255, 255,
+                        ]
+                        .into_boxed_slice(),
+                        template_supported: true,
                     })),
                 },
                 SectionInfo {
@@ -431,6 +446,12 @@ mod tests {
                     body: Some(SectionBody::Section4(ProdDefinition {
                         num_coordinates: 0,
                         prod_tmpl_num: 0,
+                        templated: vec![
+                            193, 0, 2, 153, 255, 0, 0, 0, 0, 0, 0, 0, 20, 1, 255, 255, 255, 255,
+                            255, 255, 255, 255, 255, 255, 255
+                        ]
+                        .into_boxed_slice(),
+                        template_supported: true,
                     })),
                 },
                 SectionInfo {
@@ -463,6 +484,12 @@ mod tests {
                     body: Some(SectionBody::Section4(ProdDefinition {
                         num_coordinates: 0,
                         prod_tmpl_num: 0,
+                        templated: vec![
+                            193, 0, 2, 153, 255, 0, 0, 0, 0, 0, 0, 0, 30, 1, 255, 255, 255, 255,
+                            255, 255, 255, 255, 255, 255, 255
+                        ]
+                        .into_boxed_slice(),
+                        template_supported: true,
                     })),
                 },
                 SectionInfo {
@@ -495,6 +522,12 @@ mod tests {
                     body: Some(SectionBody::Section4(ProdDefinition {
                         num_coordinates: 0,
                         prod_tmpl_num: 0,
+                        templated: vec![
+                            193, 0, 2, 153, 255, 0, 0, 0, 0, 0, 0, 0, 40, 1, 255, 255, 255, 255,
+                            255, 255, 255, 255, 255, 255, 255
+                        ]
+                        .into_boxed_slice(),
+                        template_supported: true,
                     })),
                 },
                 SectionInfo {
@@ -527,6 +560,12 @@ mod tests {
                     body: Some(SectionBody::Section4(ProdDefinition {
                         num_coordinates: 0,
                         prod_tmpl_num: 0,
+                        templated: vec![
+                            193, 0, 2, 153, 255, 0, 0, 0, 0, 0, 0, 0, 50, 1, 255, 255, 255, 255,
+                            255, 255, 255, 255, 255, 255, 255
+                        ]
+                        .into_boxed_slice(),
+                        template_supported: true,
                     })),
                 },
                 SectionInfo {
@@ -559,6 +598,12 @@ mod tests {
                     body: Some(SectionBody::Section4(ProdDefinition {
                         num_coordinates: 0,
                         prod_tmpl_num: 0,
+                        templated: vec![
+                            193, 0, 2, 153, 255, 0, 0, 0, 0, 0, 0, 0, 60, 1, 255, 255, 255, 255,
+                            255, 255, 255, 255, 255, 255, 255
+                        ]
+                        .into_boxed_slice(),
+                        template_supported: true,
                     })),
                 },
                 SectionInfo {
