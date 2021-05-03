@@ -57,7 +57,7 @@ SUBCOMMANDS:
     help       Prints this message or the help of the given subcommand(s)
     info       Shows identification information
     inspect    Inspects and describes the data structure
-    list       Lists contained data
+    list       Lists surfaces contained in the data
 ```
 
 Note that binaries exported from `gribber decode --big-endian` use `0x7fc00000` as a missing value, although those from `wgrib` use `0x6258d19a`.
