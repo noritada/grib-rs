@@ -94,14 +94,14 @@ impl<'i> Display for ListView<'i> {
                         .parameter_category()
                         .zip(prod_def.parameter_number())
                         .map(|(c, n)| {
-                            CodeTable4_2::new(submessage.indicator().discipline, *c)
-                                .lookup(usize::from(*n))
+                            CodeTable4_2::new(submessage.indicator().discipline, c)
+                                .lookup(usize::from(n))
                                 .to_string()
                         })
                         .unwrap_or(String::new());
                     let generating_process = prod_def
                         .generating_process()
-                        .map(|v| CodeTable4_3.lookup(usize::from(*v)).to_string())
+                        .map(|v| CodeTable4_3.lookup(usize::from(v)).to_string())
                         .unwrap_or(String::new());
                     let forecast_time = prod_def
                         .forecast_time()
