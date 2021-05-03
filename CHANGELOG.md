@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2021-05-04
+### Added
+
+- Library `grib`
+  - New interfaces of surfaces (submessages).
+  - New interfaces of code tables.
+  - Support for GRIB2 Code Tables 0.0, 3.1, 4.0 to 4.4, and 5.0.
+  - New example scripts (#1):
+    - examples/decode_surface.rs
+    - examples/list_surfaces.rs
+
+### Changed
+
+- Library `grib`
+  - All previous interfaces of code tables are now replaced by above-mentioned new ones.
+    Old ones were just constant arrays and their features were limited.
+  - Old submessage API is now replaced by above-mentioned new one.
+    Old one only returned indices of relevant sections and was not useful.
+  - Replace hard-coded GRIB2 Code Tables 1.1 to 1.4 with the latest ones from WMO's repository.
+
+- CLI application `gribber` built on the top of the Rust library
+  - "inspect" now shows sections and templates used in each surface (submessage).
+  - "list" now shows attributes of each surface, such as an element name and forecast time.
+
 ## [0.2.0] - 2021-01-24
 ### Added
 
