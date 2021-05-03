@@ -42,6 +42,10 @@ A world where everyone can read weather data easily although its interpretation 
 * Format conversion to other popular formats
 * Providing interface to other languages
 
+## API
+
+The [examples](examples) may help you understand the API. The functionality is still inadequate, and we are working on expanding the basic functionality as our top priority in this project, so we would be happy to receive any requests.
+
 ## CLI application `gribber`
 
 ```
