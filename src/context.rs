@@ -99,23 +99,23 @@ pub struct ProdDefinition {
 }
 
 impl ProdDefinition {
-    pub fn parameter_category(&self) -> Option<&u8> {
+    pub fn parameter_category(&self) -> Option<u8> {
         if self.template_supported {
-            self.templated.get(0)
+            self.templated.get(0).map(|v| *v)
         } else {
             None
         }
     }
 
-    pub fn parameter_number(&self) -> Option<&u8> {
+    pub fn parameter_number(&self) -> Option<u8> {
         if self.template_supported {
-            self.templated.get(1)
+            self.templated.get(1).map(|v| *v)
         } else {
             None
         }
     }
 
-    pub fn generating_process(&self) -> Option<&u8> {
+    pub fn generating_process(&self) -> Option<u8> {
         if self.template_supported {
             let index = match self.prod_tmpl_num {
                 0..=39 => Some(2),
@@ -143,7 +143,7 @@ impl ProdDefinition {
                 1000..=1101 => Some(2),
                 _ => None,
             }?;
-            self.templated.get(index)
+            self.templated.get(index).map(|v| *v)
         } else {
             None
         }
@@ -518,19 +518,19 @@ Data Representation:                    {}
             self.4.describe().unwrap_or(String::new()),
             category
                 .map(|v| CodeTable4_1::new(self.indicator().discipline)
-                    .lookup(usize::from(*v))
+                    .lookup(usize::from(v))
                     .to_string())
                 .unwrap_or(String::new()),
             self.prod_def()
                 .parameter_number()
                 .zip(category)
-                .map(|(n, c)| CodeTable4_2::new(self.indicator().discipline, *c)
-                    .lookup(usize::from(*n))
+                .map(|(n, c)| CodeTable4_2::new(self.indicator().discipline, c)
+                    .lookup(usize::from(n))
                     .to_string())
                 .unwrap_or(String::new()),
             self.prod_def()
                 .generating_process()
-                .map(|v| CodeTable4_3.lookup(usize::from(*v)).to_string())
+                .map(|v| CodeTable4_3.lookup(usize::from(v)).to_string())
                 .unwrap_or(String::new()),
             forecast_time
                 .map(|(_, v)| v.to_string())
@@ -1032,8 +1032,8 @@ mod tests {
             template_supported: true,
         };
 
-        assert_eq!(data.parameter_category(), Some(&193));
-        assert_eq!(data.parameter_number(), Some(&0));
+        assert_eq!(data.parameter_category(), Some(193));
+        assert_eq!(data.parameter_number(), Some(0));
         assert_eq!(data.forecast_time(), Some((0, 40)));
     }
 }

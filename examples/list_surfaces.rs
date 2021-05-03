@@ -52,7 +52,7 @@ fn main() {
         let parameter = submessage.prod_def().parameter_number().unwrap();
 
         // When using the `lookup()` function, `use grib::codetables::Lookup;` is necessary.
-        let parameter = CodeTable4_2::new(discipline, *category).lookup(usize::from(*parameter));
+        let parameter = CodeTable4_2::new(discipline, category).lookup(usize::from(parameter));
 
         // `forecast_time()` returns a tuple wrapped by `Option`.
         let (unit, forecast_time) = submessage.prod_def().forecast_time().unwrap();
