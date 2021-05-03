@@ -9,7 +9,7 @@ use crate::cli;
 
 pub fn cli() -> App<'static, 'static> {
     SubCommand::with_name("list")
-        .about("Lists contained data")
+        .about("Lists surfaces contained in the data")
         .arg(
             Arg::with_name("dump")
                 .help("Shows details of each data")
