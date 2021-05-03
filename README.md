@@ -21,7 +21,11 @@ A world where everyone can read weather data easily although its interpretation 
 
 * Rust library `grib`
   * Ability to read and check the basic structure of GRIB2
-  * Support for Common Code Table C-0 and C-11
+  * Ability to access data inside the GRIB2 message:
+    * List of surfaces
+    * Some parameters of each surface, which are important for most users
+    * Underlying sections which make up surfaces and the entire data
+  * Support for some code tables defined by WMO
   * Decoding feature supporting following templates:
     * Template 5.0/7.0 (simple packing)
     * Template 5.3/7.3 (complex packing)
@@ -31,7 +35,7 @@ A world where everyone can read weather data easily although its interpretation 
     * decode: data export as text and flat binary files
     * info: display of identification information
     * inspect: display of information mainly for development purpose such as template numbers
-    * list: display of a list of surfaces (the style is still tentative)
+    * list: display of parameters for each surface inside
 
 ## Planned features
 
