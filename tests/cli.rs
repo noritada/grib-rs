@@ -90,6 +90,31 @@ fn list() -> Result<(), Box<dyn std::error::Error>> {
     let tempfile = utils::jma_tornado_nowcast_file()?;
     let arg_path = tempfile.path();
 
+    let out_str = "   id │ Parameter                       Generating process  Forecast time
+    0 │ code '0' is not implemented     Analysis                 0 Minute
+    1 │ code '0' is not implemented     Forecast                10 Minute
+    2 │ code '0' is not implemented     Forecast                20 Minute
+    3 │ code '0' is not implemented     Forecast                30 Minute
+    4 │ code '0' is not implemented     Forecast                40 Minute
+    5 │ code '0' is not implemented     Forecast                50 Minute
+    6 │ code '0' is not implemented     Forecast                60 Minute
+";
+
+    let mut cmd = Command::cargo_bin(CMD_NAME)?;
+    cmd.arg("list").arg(arg_path);
+    cmd.assert()
+        .success()
+        .stdout(predicate::str::similar(out_str))
+        .stderr(predicate::str::is_empty());
+
+    Ok(())
+}
+
+#[test]
+fn list_with_opt_d() -> Result<(), Box<dyn std::error::Error>> {
+    let tempfile = utils::jma_tornado_nowcast_file()?;
+    let arg_path = tempfile.path();
+
     let out_str = "\
 0
 Grid:                                   Latitude/longitude
@@ -164,7 +189,7 @@ Data Representation:                    Run length packing with level values
 ";
 
     let mut cmd = Command::cargo_bin(CMD_NAME)?;
-    cmd.arg("list").arg(arg_path);
+    cmd.arg("list").arg("-d").arg(arg_path);
     cmd.assert()
         .success()
         .stdout(predicate::str::similar(out_str))
