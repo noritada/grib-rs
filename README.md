@@ -31,7 +31,7 @@ A world where everyone can read weather data easily although its interpretation 
     * decode: data export as text and flat binary files
     * info: display of identification information
     * inspect: display of information mainly for development purpose such as template numbers
-    * list: display of a list of sections (the style is still tentative)
+    * list: display of a list of surfaces (the style is still tentative)
 
 ## Planned features
 
