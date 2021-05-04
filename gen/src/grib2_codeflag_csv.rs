@@ -361,7 +361,7 @@ mod tests {
             db.export((0, 0, OptArg::None)),
             "\
 /// Foo
-pub const CODE_TABLE_0_0: &'static [&'static str] = &[
+const CODE_TABLE_0_0: &'static [&'static str] = &[
     \"0A\",
     \"0B\",
 ];"
@@ -379,19 +379,19 @@ pub const CODE_TABLE_0_0: &'static [&'static str] = &[
             format!("{}", db),
             "\
 /// Foo
-pub const CODE_TABLE_0_0: &'static [&'static str] = &[
+const CODE_TABLE_0_0: &'static [&'static str] = &[
     \"0A\",
     \"0B\",
 ];
 
 /// Bar
-pub const CODE_TABLE_1_0: &'static [&'static str] = &[
+const CODE_TABLE_1_0: &'static [&'static str] = &[
     \"1A\",
     \"1B\",
 ];
 
 /// Baz
-pub const CODE_TABLE_4_1_0: &'static [&'static str] = &[
+const CODE_TABLE_4_1_0: &'static [&'static str] = &[
     \"Temperature\",
     \"\",
     \"\",
@@ -399,19 +399,19 @@ pub const CODE_TABLE_4_1_0: &'static [&'static str] = &[
 ];
 
 /// Baz
-pub const CODE_TABLE_4_1_3: &'static [&'static str] = &[
+const CODE_TABLE_4_1_3: &'static [&'static str] = &[
     \"Image format products\",
     \"Quantitative products\",
     \"Cloud properties\",
 ];
 
 /// Baz
-pub const CODE_TABLE_4_1_20: &'static [&'static str] = &[
+const CODE_TABLE_4_1_20: &'static [&'static str] = &[
     \"Health indicators\",
 ];
 
 /// Baz
-pub const CODE_TABLE_4_2_0_0: &'static [&'static str] = &[
+const CODE_TABLE_4_2_0_0: &'static [&'static str] = &[
     \"Temperature\",
     \"\",
     \"\",
@@ -426,15 +426,15 @@ pub const CODE_TABLE_4_2_0_0: &'static [&'static str] = &[
 ];
 
 /// Baz
-pub const CODE_TABLE_4_2_0_191: &'static [&'static str] = &[
+const CODE_TABLE_4_2_0_191: &'static [&'static str] = &[
     \"Seconds prior to initial reference time (defined in Section 1)\",
 ];
 
 /// Baz
-pub const CODE_TABLE_4_2_3_2: &'static [&'static str] = &[];
+const CODE_TABLE_4_2_3_2: &'static [&'static str] = &[];
 
 /// Baz
-pub const CODE_TABLE_4_2_20_0: &'static [&'static str] = &[
+const CODE_TABLE_4_2_20_0: &'static [&'static str] = &[
     \"Universal thermal climate index\",
 ];"
         );
