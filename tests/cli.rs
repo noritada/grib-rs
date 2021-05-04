@@ -239,7 +239,7 @@ Sections:
    31 │ 000000000000284d - 0000000000002851 │ Section 8
 
 SubMessages:
-   id │    S2    S3    S4    S5    S6    S7 │ Tmpl3   Tmpl4   Tmpl5
+   id │    S2    S3    S4    S5    S6    S7 │ Tmpl3   Tmpl4   Tmpl5  
     0 │     -     2     3     4     5     6 │ 3.0     4.0     5.200  
     1 │     -     2     7     8     9    10 │ 3.0     4.0     5.200  
     2 │     -     2    11    12    13    14 │ 3.0     4.0     5.200  
@@ -318,7 +318,7 @@ fn inspect_with_opt_m() -> Result<(), Box<dyn std::error::Error>> {
     let tempfile = utils::jma_tornado_nowcast_file()?;
     let arg_path = tempfile.path();
 
-    let out_str = "   id │    S2    S3    S4    S5    S6    S7 │ Tmpl3   Tmpl4   Tmpl5
+    let out_str = "   id │    S2    S3    S4    S5    S6    S7 │ Tmpl3   Tmpl4   Tmpl5  
     0 │     -     2     3     4     5     6 │ 3.0     4.0     5.200  
     1 │     -     2     7     8     9    10 │ 3.0     4.0     5.200  
     2 │     -     2    11    12    13    14 │ 3.0     4.0     5.200  
