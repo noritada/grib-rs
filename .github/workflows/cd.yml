@@ -36,8 +36,23 @@ jobs:
         sudo apt -qq install musl-tools
     - name: Build
       run: cargo build --release --target ${{ matrix.target }} --verbose
-    - name: Upload artifacts
+    - name: Create an archive to maintain the file permission (in non-Windows environments)
+      if: matrix.target != 'x86_64-pc-windows-msvc'
+      run: |
+        tar -C target/${{ matrix.target }}/release -cvf gribber-${{ matrix.target }}.tar.xz gribber
+    - name: Create an archive to maintain the file permission (in Windows environments)
+      if: matrix.target == 'x86_64-pc-windows-msvc'
+      run: |
+        powershell Compress-Archive -Path target/${{ matrix.target }}/release/gribber.exe -DestinationPath gribber-${{ matrix.target }}.zip
+    - name: Upload artifacts (in non-Windows environments)
+      if: matrix.target != 'x86_64-pc-windows-msvc'
       uses: actions/upload-artifact@v2
       with:
         name: gribber-${{ matrix.target }}
-        path: target/${{ matrix.target }}/release/gribber
+        path: gribber-${{ matrix.target }}.tar.xz
+    - name: Upload artifacts (in Windows environments)
+      if: matrix.target == 'x86_64-pc-windows-msvc'
+      uses: actions/upload-artifact@v2
+      with:
+        name: gribber-${{ matrix.target }}
+        path: gribber-${{ matrix.target }}.zip
