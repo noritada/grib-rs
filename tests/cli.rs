@@ -90,14 +90,14 @@ fn list() -> Result<(), Box<dyn std::error::Error>> {
     let tempfile = utils::jma_tornado_nowcast_file()?;
     let arg_path = tempfile.path();
 
-    let out_str = "   id │ Parameter                       Generating process  Forecast time
-    0 │ code '0' is not implemented     Analysis                 0 Minute
-    1 │ code '0' is not implemented     Forecast                10 Minute
-    2 │ code '0' is not implemented     Forecast                20 Minute
-    3 │ code '0' is not implemented     Forecast                30 Minute
-    4 │ code '0' is not implemented     Forecast                40 Minute
-    5 │ code '0' is not implemented     Forecast                50 Minute
-    6 │ code '0' is not implemented     Forecast                60 Minute
+    let out_str = "   id │ Parameter                       Generating process  Forecast time 1st fixed surface 2nd fixed surface
+    0 │ code '0' is not implemented     Analysis                 0 Minute               NaN               NaN
+    1 │ code '0' is not implemented     Forecast                10 Minute               NaN               NaN
+    2 │ code '0' is not implemented     Forecast                20 Minute               NaN               NaN
+    3 │ code '0' is not implemented     Forecast                30 Minute               NaN               NaN
+    4 │ code '0' is not implemented     Forecast                40 Minute               NaN               NaN
+    5 │ code '0' is not implemented     Forecast                50 Minute               NaN               NaN
+    6 │ code '0' is not implemented     Forecast                60 Minute               NaN               NaN
 ";
 
     let mut cmd = Command::cargo_bin(CMD_NAME)?;
@@ -124,6 +124,12 @@ Product:                                Analysis or forecast at a horizontal lev
   Generating Proceess:                  Analysis
   Forecast Time:                        0
   Forecast Time Unit:                   Minute
+  1st Fixed Surface Type:               Ground or water surface
+  1st Scale Factor:                     Missing
+  1st Scaled Value:                     Missing
+  2nd Fixed Surface Type:               code '255' is not implemented
+  2nd Scale Factor:                     Missing
+  2nd Scaled Value:                     Missing
 Data Representation:                    Run length packing with level values
 
 1
@@ -134,6 +140,12 @@ Product:                                Analysis or forecast at a horizontal lev
   Generating Proceess:                  Forecast
   Forecast Time:                        10
   Forecast Time Unit:                   Minute
+  1st Fixed Surface Type:               Ground or water surface
+  1st Scale Factor:                     Missing
+  1st Scaled Value:                     Missing
+  2nd Fixed Surface Type:               code '255' is not implemented
+  2nd Scale Factor:                     Missing
+  2nd Scaled Value:                     Missing
 Data Representation:                    Run length packing with level values
 
 2
@@ -144,6 +156,12 @@ Product:                                Analysis or forecast at a horizontal lev
   Generating Proceess:                  Forecast
   Forecast Time:                        20
   Forecast Time Unit:                   Minute
+  1st Fixed Surface Type:               Ground or water surface
+  1st Scale Factor:                     Missing
+  1st Scaled Value:                     Missing
+  2nd Fixed Surface Type:               code '255' is not implemented
+  2nd Scale Factor:                     Missing
+  2nd Scaled Value:                     Missing
 Data Representation:                    Run length packing with level values
 
 3
@@ -154,6 +172,12 @@ Product:                                Analysis or forecast at a horizontal lev
   Generating Proceess:                  Forecast
   Forecast Time:                        30
   Forecast Time Unit:                   Minute
+  1st Fixed Surface Type:               Ground or water surface
+  1st Scale Factor:                     Missing
+  1st Scaled Value:                     Missing
+  2nd Fixed Surface Type:               code '255' is not implemented
+  2nd Scale Factor:                     Missing
+  2nd Scaled Value:                     Missing
 Data Representation:                    Run length packing with level values
 
 4
@@ -164,6 +188,12 @@ Product:                                Analysis or forecast at a horizontal lev
   Generating Proceess:                  Forecast
   Forecast Time:                        40
   Forecast Time Unit:                   Minute
+  1st Fixed Surface Type:               Ground or water surface
+  1st Scale Factor:                     Missing
+  1st Scaled Value:                     Missing
+  2nd Fixed Surface Type:               code '255' is not implemented
+  2nd Scale Factor:                     Missing
+  2nd Scaled Value:                     Missing
 Data Representation:                    Run length packing with level values
 
 5
@@ -174,6 +204,12 @@ Product:                                Analysis or forecast at a horizontal lev
   Generating Proceess:                  Forecast
   Forecast Time:                        50
   Forecast Time Unit:                   Minute
+  1st Fixed Surface Type:               Ground or water surface
+  1st Scale Factor:                     Missing
+  1st Scaled Value:                     Missing
+  2nd Fixed Surface Type:               code '255' is not implemented
+  2nd Scale Factor:                     Missing
+  2nd Scaled Value:                     Missing
 Data Representation:                    Run length packing with level values
 
 6
@@ -184,6 +220,12 @@ Product:                                Analysis or forecast at a horizontal lev
   Generating Proceess:                  Forecast
   Forecast Time:                        60
   Forecast Time Unit:                   Minute
+  1st Fixed Surface Type:               Ground or water surface
+  1st Scale Factor:                     Missing
+  1st Scaled Value:                     Missing
+  2nd Fixed Surface Type:               code '255' is not implemented
+  2nd Scale Factor:                     Missing
+  2nd Scaled Value:                     Missing
 Data Representation:                    Run length packing with level values
 
 ";

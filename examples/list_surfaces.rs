@@ -7,8 +7,8 @@ use std::io::BufReader;
 use std::path::Path;
 
 fn main() {
-    // This example shows how to get information of element names and forecast time for all
-    // surfaces in a GRIB2 message.
+    // This example shows how to get information of element names, forecast time and elevation
+    // levels for all surfaces in a GRIB2 message.
 
     // Take the first argument as an input file path.
     let mut args = env::args();
@@ -58,6 +58,13 @@ fn main() {
         let (unit, forecast_time) = submessage.prod_def().forecast_time().unwrap();
         let unit = CodeTable4_4.lookup(usize::from(unit));
 
-        println!("{}\t\t{} {}", parameter, forecast_time, unit);
+        // `fixed_surfaces()` returns a tuple of two surfaces wrapped by `Option`.
+        let (first, _second) = submessage.prod_def().fixed_surfaces().unwrap();
+        let elevation_level = first.value();
+
+        println!(
+            "{}\t\t{} {}\t{}",
+            parameter, forecast_time, unit, elevation_level
+        );
     }
 }

@@ -8,10 +8,11 @@ use std::result::Result;
 
 use crate::codetables::{
     CodeTable3_1, CodeTable4_0, CodeTable4_1, CodeTable4_2, CodeTable4_3, CodeTable4_4,
-    CodeTable5_0, Lookup,
+    CodeTable4_5, CodeTable5_0, Lookup,
 };
 use crate::decoder::{self, DecodeError};
 use crate::reader::{Grib2Read, ParseError, SeekableGrib2Reader};
+use crate::utils::GribInt;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SectionInfo {
@@ -190,6 +191,56 @@ impl ProdDefinition {
             None
         }
     }
+
+    /// Returns a tuple of two [FixedSurface], wrapped by `Option`.
+    /// Use [CodeTable4_5] to get textual representation of fixed surface type information.
+    pub fn fixed_surfaces(&self) -> Option<(FixedSurface, FixedSurface)> {
+        if self.template_supported {
+            let index = match self.prod_tmpl_num {
+                0..=15 => Some(13),
+                40..=43 => Some(15),
+                44 => Some(24),
+                45..=47 => Some(26),
+                48..=49 => Some(37),
+                51 => Some(13),
+                // 53 and 54 is variable and not supported as of now
+                55..=56 => Some(19),
+                // 57 and 58 is variable and not supported as of now
+                59 => Some(19),
+                60..=61 => Some(13),
+                62..=63 => Some(19),
+                // 67 and 68 is variable and not supported as of now
+                70..=73 => Some(18),
+                76..=79 => Some(16),
+                80..=81 => Some(38),
+                82..=84 => Some(27),
+                85 => Some(26),
+                86..=87 => Some(13),
+                88 => Some(5),
+                91 => Some(13),
+                1100..=1101 => Some(13),
+                _ => None,
+            }?;
+
+            let first_surface = self.read_surface_from(index);
+            let second_surface = self.read_surface_from(index + 6);
+            first_surface.zip(second_surface)
+        } else {
+            None
+        }
+    }
+
+    fn read_surface_from(&self, index: usize) -> Option<FixedSurface> {
+        let surface_type = self.templated.get(index).map(|v| *v);
+        let scale_factor = self.templated.get(index + 1).map(|v| (*v).into_grib_int());
+        let start = index + 2;
+        let end = index + 6;
+        let scaled_value =
+            u32::from_be_bytes(self.templated[start..end].try_into().unwrap()).into_grib_int();
+        surface_type
+            .zip(scale_factor)
+            .map(|(stype, factor)| FixedSurface::new(stype, factor, scaled_value))
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -206,6 +257,60 @@ pub struct ReprDefinition {
 pub struct BitMap {
     /// Bit-map indicator
     pub bitmap_indicator: u8,
+}
+
+pub struct FixedSurface {
+    pub surface_type: u8,
+    pub scale_factor: i8,
+    pub scaled_value: i32,
+}
+
+impl FixedSurface {
+    pub fn new(surface_type: u8, scale_factor: i8, scaled_value: i32) -> Self {
+        Self {
+            surface_type,
+            scale_factor,
+            scaled_value,
+        }
+    }
+
+    pub fn value(&self) -> f64 {
+        if self.value_is_nan() {
+            f64::NAN
+        } else {
+            let factor: f64 = 10_f64.powi(-i32::from(self.scale_factor));
+            f64::from(self.scaled_value) * factor
+        }
+    }
+
+    /// Checks if the scale factor should be treated as missing.
+    pub fn scale_factor_is_nan(&self) -> bool {
+        // Handle as NaN if all bits are 1. Note that this is i8::MIN + 1 and not i8::MIN.
+        self.scale_factor == i8::MIN + 1
+    }
+
+    /// Checks if the scaled value should be treated as missing.
+    pub fn value_is_nan(&self) -> bool {
+        // Handle as NaN if all bits are 1. Note that this is i32::MIN + 1 and not i32::MIN.
+        self.scaled_value == i32::MIN + 1
+    }
+
+    pub fn describe(&self) -> (String, String, String) {
+        let stype = CodeTable4_5
+            .lookup(usize::from(self.surface_type))
+            .to_string();
+        let scale_factor = if self.scale_factor_is_nan() {
+            "Missing".to_owned()
+        } else {
+            self.scale_factor.to_string()
+        };
+        let scaled_value = if self.value_is_nan() {
+            "Missing".to_owned()
+        } else {
+            self.scaled_value.to_string()
+        };
+        (stype, scale_factor, scaled_value)
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -508,6 +613,20 @@ impl<'a> SubMessage<'a> {
     pub fn describe(&self) -> String {
         let category = self.prod_def().parameter_category();
         let forecast_time = self.prod_def().forecast_time();
+        let fixed_surfaces_info = self
+            .prod_def()
+            .fixed_surfaces()
+            .map(|(first, second)| (first.describe(), second.describe()))
+            .map(|(first, second)| (first.0, first.1, first.2, second.0, second.1, second.2))
+            .unwrap_or((
+                String::new(),
+                String::new(),
+                String::new(),
+                String::new(),
+                String::new(),
+                String::new(),
+            ));
+
         format!(
             "\
 Grid:                                   {}
@@ -517,6 +636,12 @@ Product:                                {}
   Generating Proceess:                  {}
   Forecast Time:                        {}
   Forecast Time Unit:                   {}
+  1st Fixed Surface Type:               {}
+  1st Scale Factor:                     {}
+  1st Scaled Value:                     {}
+  2nd Fixed Surface Type:               {}
+  2nd Scale Factor:                     {}
+  2nd Scaled Value:                     {}
 Data Representation:                    {}
 ",
             self.3.describe().unwrap_or(String::new()),
@@ -543,6 +668,12 @@ Data Representation:                    {}
             forecast_time
                 .map(|(unit, _)| CodeTable4_4.lookup(usize::from(unit)).to_string())
                 .unwrap_or(String::new()),
+            fixed_surfaces_info.0,
+            fixed_surfaces_info.1,
+            fixed_surfaces_info.2,
+            fixed_surfaces_info.3,
+            fixed_surfaces_info.4,
+            fixed_surfaces_info.5,
             self.5.describe().unwrap_or(String::new()),
         )
     }

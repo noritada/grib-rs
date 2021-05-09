@@ -82,8 +82,13 @@ impl<'i> Display for ListView<'i> {
         match self.mode {
             ListViewMode::OneLine => {
                 let header = format!(
-                    "{:>5} │ {:<31} {:<18} {:>14}\n",
-                    "id", "Parameter", "Generating process", "Forecast time",
+                    "{:>5} │ {:<31} {:<18} {:>14} {:>17} {:>17}\n",
+                    "id",
+                    "Parameter",
+                    "Generating process",
+                    "Forecast time",
+                    "1st fixed surface",
+                    "2nd fixed surface"
                 );
                 let style = Style::new().bold();
                 write!(f, "{}", style.apply_to(header))?;
@@ -111,10 +116,16 @@ impl<'i> Display for ListView<'i> {
                             format!("{} {}", value, unit)
                         })
                         .unwrap_or(String::new());
+                    let surfaces = prod_def
+                        .fixed_surfaces()
+                        .map(|(first, second)| {
+                            (first.value().to_string(), second.value().to_string())
+                        })
+                        .unwrap_or((String::new(), String::new()));
                     write!(
                         f,
-                        "{:>5} │ {:<31} {:<18} {:>14}\n",
-                        i, category, generating_process, forecast_time,
+                        "{:>5} │ {:<31} {:<18} {:>14} {:>17} {:>17}\n",
+                        i, category, generating_process, forecast_time, surfaces.0, surfaces.1,
                     )?;
                 }
             }
