@@ -5,7 +5,7 @@ use grib::codetables::{
     CodeTable0_0, CodeTable1_1, CodeTable1_2, CodeTable1_3, CodeTable1_4, CommonCodeTable00,
     CommonCodeTable11, Lookup,
 };
-use grib::context::{Identification, Indicator};
+use grib::datatypes::{Identification, Indicator};
 
 use crate::cli;
 

@@ -5,10 +5,8 @@ use std::io::{self, Read, Seek, SeekFrom};
 use std::result::Result;
 
 use crate::codetables::SUPPORTED_PROD_DEF_TEMPLATE_NUMBERS;
-use crate::context::{
-    BitMap, GridDefinition, Identification, Indicator, ProdDefinition, ReprDefinition, SectionBody,
-    SectionInfo,
-};
+use crate::context::{SectionBody, SectionInfo};
+use crate::datatypes::*;
 
 const SECT0_IS_MAGIC: &'static [u8] = b"GRIB";
 const SECT0_IS_MAGIC_SIZE: usize = SECT0_IS_MAGIC.len();
