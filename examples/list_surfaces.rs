@@ -24,7 +24,7 @@ fn main() {
     let grib2 = Grib2::<SeekableGrib2Reader<BufReader<File>>>::read_with_seekable(f).unwrap();
 
     // Iterate over surfaces.
-    for submessage in grib2.submessages() {
+    for submessage in grib2.iter() {
         // In GRIB data, attribute information such as elements are represented as numeric values.
         // To convert those numeric values to strings, we use tables called Code Tables.
         // Code Table 4.2 is required for the textual representation of element names, and Code

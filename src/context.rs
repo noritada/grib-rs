@@ -119,6 +119,12 @@ impl<R: Grib2Read> Grib2<R> {
         }
     }
 
+    /// Iterates over submessages.
+    #[inline]
+    pub fn iter(&self) -> SubMessageIterator {
+        self.submessages()
+    }
+
     pub fn submessages(&self) -> SubMessageIterator {
         SubMessageIterator::new(&self.submessages, &self.sections)
     }
