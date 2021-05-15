@@ -234,5 +234,12 @@ mod tests {
         assert_eq!(data.parameter_category(), Some(193));
         assert_eq!(data.parameter_number(), Some(0));
         assert_eq!(data.forecast_time(), Some(ForecastTime::new(0, 40)));
+        assert_eq!(
+            data.fixed_surfaces(),
+            Some((
+                FixedSurface::new(1, -127, -2147483647),
+                FixedSurface::new(255, -127, -2147483647)
+            ))
+        );
     }
 }

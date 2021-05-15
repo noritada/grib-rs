@@ -19,6 +19,7 @@ impl ForecastTime {
     }
 }
 
+#[derive(Debug, PartialEq, Eq)]
 pub struct FixedSurface {
     /// Use [CodeTable4_5] to get textual representation.
     pub surface_type: u8,
