@@ -111,7 +111,7 @@ impl ProdDefinition {
     /// Returns the unit and value of the forecast time wrapped by `Option`.
     /// Use [CodeTable4_4](crate::codetables::CodeTable4_4) to get textual representation of the
     /// unit.
-    pub fn forecast_time(&self) -> Option<(u8, u32)> {
+    pub fn forecast_time(&self) -> Option<ForecastTime> {
         if self.template_supported {
             let unit_index = match self.prod_tmpl_num {
                 0..=15 => Some(8),
@@ -142,7 +142,7 @@ impl ProdDefinition {
             let start = unit_index + 1;
             let end = unit_index + 5;
             let time = u32::from_be_bytes(self.templated[start..end].try_into().unwrap());
-            unit.zip(Some(time))
+            unit.map(|v| ForecastTime::new(v, time))
         } else {
             None
         }
@@ -233,6 +233,6 @@ mod tests {
 
         assert_eq!(data.parameter_category(), Some(193));
         assert_eq!(data.parameter_number(), Some(0));
-        assert_eq!(data.forecast_time(), Some((0, 40)));
+        assert_eq!(data.forecast_time(), Some(ForecastTime::new(0, 40)));
     }
 }

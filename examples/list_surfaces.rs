@@ -1,4 +1,4 @@
-use grib::codetables::{CodeTable4_2, CodeTable4_4, Lookup};
+use grib::codetables::{CodeTable4_2, Lookup};
 use grib::context::Grib2;
 use grib::reader::SeekableGrib2Reader;
 use std::env;
@@ -54,9 +54,9 @@ fn main() {
         // When using the `lookup()` function, `use grib::codetables::Lookup;` is necessary.
         let parameter = CodeTable4_2::new(discipline, category).lookup(usize::from(parameter));
 
-        // `forecast_time()` returns a tuple wrapped by `Option`.
-        let (unit, forecast_time) = submessage.prod_def().forecast_time().unwrap();
-        let unit = CodeTable4_4.lookup(usize::from(unit));
+        // `forecast_time()` returns `ForecastTime` wrapped by `Option`.
+        let forecast_time = submessage.prod_def().forecast_time().unwrap();
+        let (unit, forecast_time) = forecast_time.describe();
 
         // `fixed_surfaces()` returns a tuple of two surfaces wrapped by `Option`.
         let (first, _second) = submessage.prod_def().fixed_surfaces().unwrap();

@@ -1,4 +1,23 @@
-use crate::codetables::{CodeTable4_5, Lookup};
+use crate::codetables::*;
+
+#[derive(Debug, PartialEq, Eq)]
+pub struct ForecastTime {
+    /// Use [CodeTable4_4] to get textual representation.
+    pub unit: u8,
+    pub value: u32,
+}
+
+impl ForecastTime {
+    pub fn new(unit: u8, value: u32) -> Self {
+        Self { unit, value }
+    }
+
+    pub fn describe(&self) -> (String, String) {
+        let unit = CodeTable4_4.lookup(usize::from(self.unit)).to_string();
+        let value = self.value.to_string();
+        (unit, value)
+    }
+}
 
 pub struct FixedSurface {
     /// Use [CodeTable4_5] to get textual representation.

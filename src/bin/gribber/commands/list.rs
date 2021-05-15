@@ -2,7 +2,7 @@ use clap::{App, Arg, ArgMatches, SubCommand};
 use console::{Style, Term};
 use std::fmt::{self, Display, Formatter};
 
-use grib::codetables::{CodeTable4_2, CodeTable4_3, CodeTable4_4, Lookup};
+use grib::codetables::{CodeTable4_2, CodeTable4_3, Lookup};
 use grib::context::SubMessageIterator;
 
 use crate::cli;
@@ -110,9 +110,8 @@ impl<'i> Display for ListView<'i> {
                         .unwrap_or(String::new());
                     let forecast_time = prod_def
                         .forecast_time()
-                        .map(|(unit, v)| {
-                            let unit = CodeTable4_4.lookup(usize::from(unit));
-                            let value = v;
+                        .map(|ft| {
+                            let (unit, value) = ft.describe();
                             format!("{} {}", value, unit)
                         })
                         .unwrap_or(String::new());

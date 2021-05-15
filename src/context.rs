@@ -5,8 +5,7 @@ use std::io::{Read, Seek};
 use std::result::Result;
 
 use crate::codetables::{
-    CodeTable3_1, CodeTable4_0, CodeTable4_1, CodeTable4_2, CodeTable4_3, CodeTable4_4,
-    CodeTable5_0, Lookup,
+    CodeTable3_1, CodeTable4_0, CodeTable4_1, CodeTable4_2, CodeTable4_3, CodeTable5_0, Lookup,
 };
 use crate::datatypes::*;
 use crate::decoder::{self, DecodeError};
@@ -349,7 +348,11 @@ impl<'a> SubMessage<'a> {
 
     pub fn describe(&self) -> String {
         let category = self.prod_def().parameter_category();
-        let forecast_time = self.prod_def().forecast_time();
+        let forecast_time = self
+            .prod_def()
+            .forecast_time()
+            .map(|ft| ft.describe())
+            .unwrap_or((String::new(), String::new()));
         let fixed_surfaces_info = self
             .prod_def()
             .fixed_surfaces()
@@ -399,12 +402,8 @@ Data Representation:                    {}
                 .generating_process()
                 .map(|v| CodeTable4_3.lookup(usize::from(v)).to_string())
                 .unwrap_or(String::new()),
-            forecast_time
-                .map(|(_, v)| v.to_string())
-                .unwrap_or(String::new()),
-            forecast_time
-                .map(|(unit, _)| CodeTable4_4.lookup(usize::from(unit)).to_string())
-                .unwrap_or(String::new()),
+            forecast_time.1,
+            forecast_time.0,
             fixed_surfaces_info.0,
             fixed_surfaces_info.1,
             fixed_surfaces_info.2,
