@@ -110,10 +110,7 @@ impl<'i> Display for ListView<'i> {
                         .unwrap_or(String::new());
                     let forecast_time = prod_def
                         .forecast_time()
-                        .map(|ft| {
-                            let (unit, value) = ft.describe();
-                            format!("{} {}", value, unit)
-                        })
+                        .map(|ft| ft.to_string())
                         .unwrap_or(String::new());
                     let surfaces = prod_def
                         .fixed_surfaces()
