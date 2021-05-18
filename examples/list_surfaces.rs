@@ -15,6 +15,10 @@ fn main() {
     let file_name = args.nth(1).unwrap();
     let path = Path::new(&file_name);
 
+    list_surfaces(path)
+}
+
+fn list_surfaces(path: &Path) {
     // Open the input file in a normal way, ignoring errors.
     let f = File::open(&path).unwrap();
     let f = BufReader::new(f);

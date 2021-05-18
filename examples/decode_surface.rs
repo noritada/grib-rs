@@ -17,6 +17,10 @@ fn main() {
     let index = args.next().unwrap();
     let index = index.parse::<usize>().unwrap();
 
+    decode_surface(path, index)
+}
+
+fn decode_surface(path: &Path, index: usize) {
     // Open the input file in a normal way, ignoring errors.
     let f = File::open(&path).unwrap();
     let f = BufReader::new(f);
