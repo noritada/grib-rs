@@ -11,7 +11,11 @@ pub struct ForecastTime {
 }
 
 impl ForecastTime {
-    pub fn new(unit: u8, value: u32) -> Self {
+    pub fn new(unit: TableLookupResult<grib2::Table4_4, u8>, value: u32) -> Self {
+        Self { unit, value }
+    }
+
+    pub fn from_numbers(unit: u8, value: u32) -> Self {
         let unit = Table4_4::try_from(unit).into();
         Self { unit, value }
     }
