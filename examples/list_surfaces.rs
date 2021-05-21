@@ -11,8 +11,8 @@ fn main() {
     // levels for all surfaces in a GRIB2 message.
 
     // Take the first argument as an input file path.
-    let mut args = env::args();
-    let file_name = args.nth(1).unwrap();
+    let mut args = env::args().skip(1);
+    let file_name = args.next().unwrap();
     let path = Path::new(&file_name);
 
     list_surfaces(path)

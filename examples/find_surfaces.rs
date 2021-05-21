@@ -12,8 +12,8 @@ fn main() {
     // This example shows how to find surfaces in a GRIB2 message.
 
     // Take the first argument as an input file path and the second argument as forecast time in hours.
-    let mut args = env::args();
-    let file_name = args.nth(1).unwrap();
+    let mut args = env::args().skip(1);
+    let file_name = args.next().unwrap();
     let path = Path::new(&file_name);
     let forecast_time = args.next().unwrap();
     let forecast_time = forecast_time.parse::<u32>().unwrap();

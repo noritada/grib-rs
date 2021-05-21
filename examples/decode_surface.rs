@@ -11,8 +11,8 @@ fn main() {
     // For now, there is no functionality to get which grid point each value is associated with.
 
     // Take the first argument as an input file path and the second argument as a surface index.
-    let mut args = env::args();
-    let file_name = args.nth(1).unwrap();
+    let mut args = env::args().skip(1);
+    let file_name = args.next().unwrap();
     let path = Path::new(&file_name);
     let index = args.next().unwrap();
     let index = index.parse::<usize>().unwrap();
