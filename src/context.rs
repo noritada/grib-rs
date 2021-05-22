@@ -8,7 +8,7 @@ use crate::codetables::{
     CodeTable3_1, CodeTable4_0, CodeTable4_1, CodeTable4_2, CodeTable4_3, CodeTable5_0, Lookup,
 };
 use crate::datatypes::*;
-use crate::decoder::{self, DecodeError};
+use crate::decoders::{self, DecodeError};
 use crate::reader::{Grib2Read, ParseError, SeekableGrib2Reader};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -144,7 +144,7 @@ impl<R: Grib2Read> Grib2<R> {
             .ok_or(GribError::InternalDataError)?;
 
         let reader = self.reader.borrow_mut();
-        let values = decoder::dispatch(sect5, sect6, sect7, reader)?;
+        let values = decoders::dispatch(sect5, sect6, sect7, reader)?;
         Ok(values)
     }
 
