@@ -614,6 +614,39 @@ fn decode_complex_packing_as_little_endian() -> Result<(), Box<dyn std::error::E
     Ok(())
 }
 
+#[test]
+fn decode_jpeg2000_code_stream_as_little_endian() -> Result<(), Box<dyn std::error::Error>> {
+    let arg_path = utils::cmc_glb_file_path();
+
+    let dir = TempDir::new()?;
+    let out_path = dir.path().join("out.bin");
+    let out_path = format!("{}", out_path.display());
+
+    let mut cmd = Command::cargo_bin(CMD_NAME)?;
+    cmd.arg("decode")
+        .arg(arg_path)
+        .arg("0")
+        .arg("-l")
+        .arg(&out_path);
+    cmd.assert()
+        .success()
+        .stdout(predicate::str::is_empty())
+        .stderr(predicate::str::is_empty());
+
+    // Compares integer values encoded using simple packing since there are some differences
+    // between float values from gribber and wgrib2.
+    let ref_val = f32::from_be_bytes([0x45, 0x0e, 0xcc, 0x05]);
+    let exp: i16 = -2;
+    let dig: i16 = 1;
+    let expected = utils::cmc_glb_le_bin_bytes()?;
+    let expected = utils::encode_le_bytes_using_simple_packing(expected, ref_val, exp, dig);
+    let actual = utils::cat_as_bytes(&out_path)?;
+    let actual = utils::encode_le_bytes_using_simple_packing(actual, ref_val, exp, dig);
+    assert_eq!(actual, expected);
+
+    Ok(())
+}
+
 macro_rules! test_subcommands_without_args {
     ($(($name:ident, $str:expr),)*) => ($(
         #[test]

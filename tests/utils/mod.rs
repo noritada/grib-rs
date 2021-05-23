@@ -1,8 +1,13 @@
+use std::convert::TryInto;
 use std::fs::File;
 use std::io::{self, BufReader, Read, Write};
 use std::path::{Path, PathBuf};
 use tempfile::NamedTempFile;
 use xz2::bufread::XzDecoder;
+
+pub(crate) fn cmc_glb_file_path() -> PathBuf {
+    testdata_dir().join("CMC_glb_TMP_ISBL_1_latlon.24x.24_2021051800_P000.grib2")
+}
 
 pub(crate) fn jma_tornado_nowcast_file() -> Result<NamedTempFile, io::Error> {
     unxz_to_tempfile(
@@ -36,6 +41,10 @@ fn unxz_to_tempfile(file_path: PathBuf) -> Result<NamedTempFile, io::Error> {
     out.write_all(&buf)?;
 
     Ok(out)
+}
+
+pub(crate) fn cmc_glb_le_bin_bytes() -> Result<Vec<u8>, io::Error> {
+    unxz_as_bytes(testdata_dir().join("gen").join("cmc-glb-wgrib2-le.bin.xz"))
 }
 
 pub(crate) fn tornado_nowcast_be_bin_bytes() -> Result<Vec<u8>, io::Error> {
@@ -91,6 +100,27 @@ pub(crate) fn cat_as_bytes(file_name: &str) -> Result<Vec<u8>, io::Error> {
     f.read_to_end(&mut buf)?;
 
     Ok(buf)
+}
+
+pub(crate) fn encode_le_bytes_using_simple_packing(
+    input: Vec<u8>,
+    ref_val: f32,
+    exp: i16,
+    dig: i16,
+) -> Vec<i32> {
+    let encode = |value: f32| -> i32 {
+        let dig_factor = 10_f32.powi(dig as i32);
+        let diff = value * dig_factor - ref_val;
+        let encoded = diff * 2_f32.powi(-exp as i32);
+        encoded.round() as i32
+    };
+
+    input
+        .chunks(4)
+        .into_iter()
+        .map(|quad| f32::from_le_bytes(quad.try_into().unwrap())) // should be safely unwrapped
+        .map(encode)
+        .collect::<Vec<_>>()
 }
 
 fn testdata_dir() -> &'static Path {

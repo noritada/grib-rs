@@ -2,6 +2,15 @@
 
 This directory contains test data files.
 
+## Data files from CMC
+
+Following data files are downloaded from [CMC's page on meteorological data in
+GRIB format](https://weather.gc.ca/grib/index_e.html).
+This data is distributed under [Environment and Climate Change Canada Data Server End-use
+Licence](https://dd.weather.gc.ca/doc/LICENCE_GENERAL.txt).
+
+* `CMC_glb_TMP_ISBL_1_latlon.24x.24_2021051800_P000.grib2`
+
 ## Data files from JMA
 
 Following data files are downloaded from [JMA's GPV sample data
@@ -36,4 +45,6 @@ $ wgrib2 -d 1.4 -order we:ns -no_header -ieee kousa-wgrib2-be.bin Z__C_RJTD_2017
 $ wgrib2 -d 1.4 -order we:ns -no_header -bin kousa-wgrib2-le.bin Z__C_RJTD_20170221120000_MSG_GPV_Gll0p5deg_Pys_B20170221120000_F2017022115-2017022212_grib2.bin
 
 $ wgrib2 -d 1.3 -order we:ns -no_header -bin meps-wgrib2-le.bin Z__C_RJTD_20190605000000_MEPS_GPV_Rjp_L-pall_FH00-15_grib2.bin.0-20
+
+$ wgrib2 -d 1 -no_header -bin cmc-glb-wgrib2-le.bin CMC_glb_TMP_ISBL_1_latlon.24x.24_2021051800_P000.grib2
 ```
