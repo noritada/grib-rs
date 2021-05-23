@@ -18,12 +18,14 @@ num = "0.3.1"
 pager = "0.15"
 console = "0.11"
 which = "4"
+openjpeg-sys = "1.0.2"
 
 [target.'cfg(not(unix))'.dependencies]
 clap = "2.33.0"
 chrono = "0.4"
 num = "0.3.1"
 console = "0.11"
+openjpeg-sys = "1.0.2"
 
 [dev-dependencies]
 xz2 = "0.1"
