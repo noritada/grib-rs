@@ -2,9 +2,10 @@ use openjpeg_sys as opj;
 use std::cell::RefMut;
 use std::convert::TryInto;
 
-use crate::context::{GribError, SectionBody, SectionInfo};
+use crate::context::{SectionBody, SectionInfo};
 use crate::decoders::common::*;
 use crate::decoders::simple::*;
+use crate::error::*;
 use crate::reader::Grib2Read;
 use crate::utils::GribInt;
 

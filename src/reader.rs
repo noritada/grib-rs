@@ -1,12 +1,12 @@
 use chrono::{offset::TimeZone, Utc};
 use std::convert::TryInto;
-use std::fmt::{self, Display, Formatter};
 use std::io::{self, Read, Seek, SeekFrom};
 use std::result::Result;
 
 use crate::codetables::SUPPORTED_PROD_DEF_TEMPLATE_NUMBERS;
 use crate::context::{SectionBody, SectionInfo};
 use crate::datatypes::*;
+use crate::error::*;
 
 const SECT0_IS_MAGIC: &'static [u8] = b"GRIB";
 const SECT0_IS_MAGIC_SIZE: usize = SECT0_IS_MAGIC.len();
@@ -274,35 +274,6 @@ fn skip_sect7_body<R: Seek>(f: &mut R, body_size: usize) -> Result<SectionBody, 
     f.seek(SeekFrom::Current(body_size as i64))?;
 
     Ok(SectionBody::Section7)
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub enum ParseError {
-    ReadError(String),
-    FileTypeCheckError(String),
-    NotGRIB,
-    GRIBVersionMismatch(u8),
-    UnknownSectionNumber(u8),
-    EndSectionMismatch,
-}
-
-impl Display for ParseError {
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        match self {
-            Self::ReadError(s) => write!(f, "Read error: {}", s),
-            Self::FileTypeCheckError(s) => write!(f, "Error in checking file type: {}", s),
-            Self::NotGRIB => write!(f, "Not GRIB data"),
-            Self::GRIBVersionMismatch(i) => write!(f, "Not GRIB version 2: {}", i),
-            Self::UnknownSectionNumber(s) => write!(f, "Unknown section number: {}", s),
-            Self::EndSectionMismatch => write!(f, "Content of End Section is not valid"),
-        }
-    }
-}
-
-impl From<io::Error> for ParseError {
-    fn from(e: io::Error) -> Self {
-        Self::ReadError(e.to_string())
-    }
 }
 
 #[cfg(test)]
