@@ -12,10 +12,12 @@ fn main() {
 
     // Take the first argument as an input file path.
     let mut args = env::args().skip(1);
-    let file_name = args.next().unwrap();
-    let path = Path::new(&file_name);
-
-    list_surfaces(path)
+    if let Some(file_name) = args.next() {
+        let path = Path::new(&file_name);
+        list_surfaces(path)
+    } else {
+        panic!("Usage: list_surfaces <path>");
+    }
 }
 
 fn list_surfaces(path: &Path) {

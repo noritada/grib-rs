@@ -12,12 +12,13 @@ fn main() {
 
     // Take the first argument as an input file path and the second argument as a surface index.
     let mut args = env::args().skip(1);
-    let file_name = args.next().unwrap();
-    let path = Path::new(&file_name);
-    let index = args.next().unwrap();
-    let index = index.parse::<usize>().unwrap();
-
-    decode_surface(path, index)
+    if let (Some(file_name), Some(index)) = (args.next(), args.next()) {
+        let path = Path::new(&file_name);
+        let index = index.parse::<usize>().unwrap();
+        decode_surface(path, index)
+    } else {
+        panic!("Usage: decode_surface <path> <index>");
+    }
 }
 
 fn decode_surface(path: &Path, index: usize) {

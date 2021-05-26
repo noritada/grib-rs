@@ -13,12 +13,13 @@ fn main() {
 
     // Take the first argument as an input file path and the second argument as forecast time in hours.
     let mut args = env::args().skip(1);
-    let file_name = args.next().unwrap();
-    let path = Path::new(&file_name);
-    let forecast_time = args.next().unwrap();
-    let forecast_time = forecast_time.parse::<u32>().unwrap();
-
-    find_surfaces(path, forecast_time)
+    if let (Some(file_name), Some(forecast_time)) = (args.next(), args.next()) {
+        let path = Path::new(&file_name);
+        let forecast_time = forecast_time.parse::<u32>().unwrap();
+        find_surfaces(path, forecast_time);
+    } else {
+        panic!("Usage: find_surfaces <path> <forecast_time>");
+    }
 }
 
 fn find_surfaces(path: &Path, forecast_time_hours: u32) {
