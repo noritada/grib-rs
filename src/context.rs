@@ -159,9 +159,7 @@ impl<R: Grib2Read> Grib2<R> {
 
 /// Validates the section order of sections and split them into a
 /// vector of section groups.
-fn index_submessages(
-    sects: &Box<[SectionInfo]>,
-) -> Result<Box<[SubMessageIndex]>, ValidationError> {
+fn index_submessages(sects: &[SectionInfo]) -> Result<Box<[SubMessageIndex]>, ValidationError> {
     let mut iter = sects.iter().enumerate();
     let mut starts = Vec::new();
     let mut i2_default = None;
@@ -271,13 +269,13 @@ fn get_templates(sects: &Box<[SectionInfo]>) -> Vec<TemplateInfo> {
 
 #[derive(Clone)]
 pub struct SubMessageIterator<'a> {
-    indices: &'a Box<[SubMessageIndex]>,
-    sections: &'a Box<[SectionInfo]>,
+    indices: &'a [SubMessageIndex],
+    sections: &'a [SectionInfo],
     pos: usize,
 }
 
 impl<'a> SubMessageIterator<'a> {
-    fn new(indices: &'a Box<[SubMessageIndex]>, sections: &'a Box<[SectionInfo]>) -> Self {
+    fn new(indices: &'a [SubMessageIndex], sections: &'a [SectionInfo]) -> Self {
         Self {
             indices: indices,
             sections: sections,

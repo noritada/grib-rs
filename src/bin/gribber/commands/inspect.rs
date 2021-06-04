@@ -162,11 +162,11 @@ impl<'i> InspectItem<'i> {
 }
 
 struct InspectSectionsItem<'i> {
-    data: &'i Box<[SectionInfo]>,
+    data: &'i [SectionInfo],
 }
 
 impl<'i> InspectSectionsItem<'i> {
-    fn new(data: &'i Box<[SectionInfo]>) -> Self {
+    fn new(data: &'i [SectionInfo]) -> Self {
         Self { data: data }
     }
 
