@@ -1,6 +1,4 @@
-# Comparison of GRIB2 data file operations
-
-## Listing all submessages inside a GRIB message
+# Listing all submessages inside a GRIB message
 
 wgrib2:
 
