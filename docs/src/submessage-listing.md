@@ -12,8 +12,8 @@ pygrib:
 import pygrib
 
 grib = pygrib.open("datafile.grib")
-    for submessage in grib:
-        print(submessage)
+for submessage in grib:
+    print(submessage)
 ```
 
 grib-rs:
