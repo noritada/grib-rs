@@ -11,10 +11,16 @@ fn main() {
     // levels for all surfaces in a GRIB2 message.
 
     // Take the first argument as an input file path.
-    let mut args = env::args();
-    let file_name = args.nth(1).unwrap();
-    let path = Path::new(&file_name);
+    let mut args = env::args().skip(1);
+    if let Some(file_name) = args.next() {
+        let path = Path::new(&file_name);
+        list_surfaces(path)
+    } else {
+        panic!("Usage: list_surfaces <path>");
+    }
+}
 
+fn list_surfaces(path: &Path) {
     // Open the input file in a normal way, ignoring errors.
     let f = File::open(&path).unwrap();
     let f = BufReader::new(f);
@@ -56,15 +62,11 @@ fn main() {
 
         // `forecast_time()` returns `ForecastTime` wrapped by `Option`.
         let forecast_time = submessage.prod_def().forecast_time().unwrap();
-        let (unit, forecast_time) = forecast_time.describe();
 
         // `fixed_surfaces()` returns a tuple of two surfaces wrapped by `Option`.
         let (first, _second) = submessage.prod_def().fixed_surfaces().unwrap();
         let elevation_level = first.value();
 
-        println!(
-            "{}\t\t{} {}\t{}",
-            parameter, forecast_time, unit, elevation_level
-        );
+        println!("{}\t\t{}\t{}", parameter, forecast_time, elevation_level);
     }
 }

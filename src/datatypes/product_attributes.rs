@@ -1,21 +1,51 @@
+use std::convert::TryFrom;
+use std::fmt::{self, Display, Formatter};
+
+use crate::codetables::grib2::*;
 use crate::codetables::*;
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct ForecastTime {
-    /// Use [CodeTable4_4] to get textual representation.
-    pub unit: u8,
+    pub unit: TableLookupResult<grib2::Table4_4, u8>,
     pub value: u32,
 }
 
 impl ForecastTime {
-    pub fn new(unit: u8, value: u32) -> Self {
+    pub fn new(unit: TableLookupResult<grib2::Table4_4, u8>, value: u32) -> Self {
+        Self { unit, value }
+    }
+
+    pub fn from_numbers(unit: u8, value: u32) -> Self {
+        let unit = Table4_4::try_from(unit).into();
         Self { unit, value }
     }
 
     pub fn describe(&self) -> (String, String) {
-        let unit = CodeTable4_4.lookup(usize::from(self.unit)).to_string();
+        let unit = match &self.unit {
+            Found(unit) => format!("{:#?}", unit),
+            NotFound(num) => format!("code {:#?}", num),
+        };
         let value = self.value.to_string();
         (unit, value)
+    }
+}
+
+impl Display for ForecastTime {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        write!(f, "{}", self.value)?;
+
+        match &self.unit {
+            Found(unit) => {
+                if let Some(expr) = unit.short_expr() {
+                    write!(f, " [{}]", expr)?;
+                }
+            }
+            NotFound(num) => {
+                write!(f, " [unit: {}]", num)?;
+            }
+        }
+
+        Ok(())
     }
 }
 

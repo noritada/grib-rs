@@ -11,12 +11,17 @@ fn main() {
     // For now, there is no functionality to get which grid point each value is associated with.
 
     // Take the first argument as an input file path and the second argument as a surface index.
-    let mut args = env::args();
-    let file_name = args.nth(1).unwrap();
-    let path = Path::new(&file_name);
-    let index = args.next().unwrap();
-    let index = index.parse::<usize>().unwrap();
+    let mut args = env::args().skip(1);
+    if let (Some(file_name), Some(index)) = (args.next(), args.next()) {
+        let path = Path::new(&file_name);
+        let index = index.parse::<usize>().unwrap();
+        decode_surface(path, index)
+    } else {
+        panic!("Usage: decode_surface <path> <index>");
+    }
+}
 
+fn decode_surface(path: &Path, index: usize) {
     // Open the input file in a normal way, ignoring errors.
     let f = File::open(&path).unwrap();
     let f = BufReader::new(f);

@@ -142,7 +142,7 @@ impl ProdDefinition {
             let start = unit_index + 1;
             let end = unit_index + 5;
             let time = u32::from_be_bytes(self.templated[start..end].try_into().unwrap());
-            unit.map(|v| ForecastTime::new(v, time))
+            unit.map(|v| ForecastTime::from_numbers(v, time))
         } else {
             None
         }
@@ -233,7 +233,10 @@ mod tests {
 
         assert_eq!(data.parameter_category(), Some(193));
         assert_eq!(data.parameter_number(), Some(0));
-        assert_eq!(data.forecast_time(), Some(ForecastTime::new(0, 40)));
+        assert_eq!(
+            data.forecast_time(),
+            Some(ForecastTime::from_numbers(0, 40))
+        );
         assert_eq!(
             data.fixed_surfaces(),
             Some((

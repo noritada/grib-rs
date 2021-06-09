@@ -91,13 +91,13 @@ fn list() -> Result<(), Box<dyn std::error::Error>> {
     let arg_path = tempfile.path();
 
     let out_str = "   id │ Parameter                       Generating process  Forecast time 1st fixed surface 2nd fixed surface
-    0 │ code '0' is not implemented     Analysis                 0 Minute               NaN               NaN
-    1 │ code '0' is not implemented     Forecast                10 Minute               NaN               NaN
-    2 │ code '0' is not implemented     Forecast                20 Minute               NaN               NaN
-    3 │ code '0' is not implemented     Forecast                30 Minute               NaN               NaN
-    4 │ code '0' is not implemented     Forecast                40 Minute               NaN               NaN
-    5 │ code '0' is not implemented     Forecast                50 Minute               NaN               NaN
-    6 │ code '0' is not implemented     Forecast                60 Minute               NaN               NaN
+    0 │ code '0' is not implemented     Analysis                    0 [m]               NaN               NaN
+    1 │ code '0' is not implemented     Forecast                   10 [m]               NaN               NaN
+    2 │ code '0' is not implemented     Forecast                   20 [m]               NaN               NaN
+    3 │ code '0' is not implemented     Forecast                   30 [m]               NaN               NaN
+    4 │ code '0' is not implemented     Forecast                   40 [m]               NaN               NaN
+    5 │ code '0' is not implemented     Forecast                   50 [m]               NaN               NaN
+    6 │ code '0' is not implemented     Forecast                   60 [m]               NaN               NaN
 ";
 
     let mut cmd = Command::cargo_bin(CMD_NAME)?;
