@@ -40,15 +40,11 @@ fn list_submessages() {
         let parameter = CodeTable4_2::new(discipline, category).lookup(usize::from(parameter));
 
         let forecast_time = submessage.prod_def().forecast_time().unwrap();
-        let (unit, forecast_time) = forecast_time.describe();
 
         let (first, _second) = submessage.prod_def().fixed_surfaces().unwrap();
         let elevation_level = first.value();
 
-        println!(
-            "{}\t\t{} {}\t{}",
-            parameter, forecast_time, unit, elevation_level
-        );
+        println!("{}\t\t{}\t{}", parameter, forecast_time, elevation_level);
     }
 }
 
