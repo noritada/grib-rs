@@ -26,8 +26,7 @@ use std::fs::File;
 use std::io::BufReader;
 use std::path::Path;
 
-fn list_submessages() {
-    let path = Path::new("datafile.grib");
+fn list_submessages(path: &Path) {
     let f = File::open(&path).unwrap();
     let f = BufReader::new(f);
 
@@ -49,7 +48,8 @@ fn list_submessages() {
 }
 
 fn main() {
-    list_submessages();
+    let path = Path::new("datafile.grib");
+    list_submessages(path);
 }
 ```
 
