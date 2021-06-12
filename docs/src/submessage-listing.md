@@ -43,7 +43,12 @@ fn list_submessages(path: &Path) {
         let (first, _second) = submessage.prod_def().fixed_surfaces().unwrap();
         let elevation_level = first.value();
 
-        println!("{}\t\t{}\t{}", parameter, forecast_time, elevation_level);
+        println!(
+            "{:<31} {:>14} {:>17}",
+            parameter.to_string(),
+            forecast_time.to_string(),
+            elevation_level
+        );
     }
 }
 
