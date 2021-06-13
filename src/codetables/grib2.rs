@@ -43,7 +43,9 @@ mod tests {
     use super::*;
 
     use num_enum::TryFromPrimitiveError;
-    use std::convert::{TryFrom, TryInto};
+    use std::convert::TryFrom;
+
+    use crate::codetables::*;
 
     #[test]
     fn num_enum_conversion() {
@@ -56,7 +58,8 @@ mod tests {
     }
 
     #[test]
-    fn num_enum_equivalence() {
-        assert_eq!(1u8.try_into(), Ok(Table4_4::Hour));
+    fn num_lookup_result_conversion() {
+        assert_eq!(Code::from(Table4_4::try_from(1u8)), Name(Table4_4::Hour));
+        assert_eq!(Code::from(Table4_4::try_from(254u8)), Num(254));
     }
 }

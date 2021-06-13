@@ -38,7 +38,7 @@ fn find_submessages(path: &Path, forecast_time_hours: u32) {
         let ft = submessage.prod_def().forecast_time();
         match ft {
             Some(ForecastTime {
-                unit: Found(Table4_4::Hour),
+                unit: Name(Table4_4::Hour),
                 value: hours,
             }) => {
                 if hours == forecast_time_hours {
