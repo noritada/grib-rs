@@ -59,13 +59,7 @@ mod tests {
 
     #[test]
     fn num_lookup_result_conversion() {
-        assert_eq!(
-            TableLookupResult::from(Table4_4::try_from(1u8)),
-            Found(Table4_4::Hour)
-        );
-        assert_eq!(
-            TableLookupResult::from(Table4_4::try_from(254u8)),
-            NotFound(254)
-        );
+        assert_eq!(Code::from(Table4_4::try_from(1u8)), Name(Table4_4::Hour));
+        assert_eq!(Code::from(Table4_4::try_from(254u8)), Num(254));
     }
 }

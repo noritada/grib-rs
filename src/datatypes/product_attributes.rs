@@ -6,12 +6,12 @@ use crate::codetables::*;
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct ForecastTime {
-    pub unit: TableLookupResult<grib2::Table4_4, u8>,
+    pub unit: Code<grib2::Table4_4, u8>,
     pub value: u32,
 }
 
 impl ForecastTime {
-    pub fn new(unit: TableLookupResult<grib2::Table4_4, u8>, value: u32) -> Self {
+    pub fn new(unit: Code<grib2::Table4_4, u8>, value: u32) -> Self {
         Self { unit, value }
     }
 
@@ -22,8 +22,8 @@ impl ForecastTime {
 
     pub fn describe(&self) -> (String, String) {
         let unit = match &self.unit {
-            Found(unit) => format!("{:#?}", unit),
-            NotFound(num) => format!("code {:#?}", num),
+            Name(unit) => format!("{:#?}", unit),
+            Num(num) => format!("code {:#?}", num),
         };
         let value = self.value.to_string();
         (unit, value)
@@ -35,12 +35,12 @@ impl Display for ForecastTime {
         write!(f, "{}", self.value)?;
 
         match &self.unit {
-            Found(unit) => {
+            Name(unit) => {
                 if let Some(expr) = unit.short_expr() {
                     write!(f, " [{}]", expr)?;
                 }
             }
-            NotFound(num) => {
+            Num(num) => {
                 write!(f, " [unit: {}]", num)?;
             }
         }
