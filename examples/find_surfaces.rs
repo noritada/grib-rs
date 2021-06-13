@@ -44,7 +44,5 @@ fn find_surfaces(path: &Path, forecast_time_hours: u32) {
             }
             _ => {}
         }
-        //if ft.unit == Table4_4::Hours && ft.value == forecast_time_hours {
-        //}
     }
 }

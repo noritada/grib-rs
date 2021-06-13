@@ -26,8 +26,7 @@ use std::fs::File;
 use std::io::BufReader;
 use std::path::Path;
 
-fn list_submessages() {
-    let path = Path::new("datafile.grib");
+fn list_submessages(path: &Path) {
     let f = File::open(&path).unwrap();
     let f = BufReader::new(f);
 
@@ -40,20 +39,22 @@ fn list_submessages() {
         let parameter = CodeTable4_2::new(discipline, category).lookup(usize::from(parameter));
 
         let forecast_time = submessage.prod_def().forecast_time().unwrap();
-        let (unit, forecast_time) = forecast_time.describe();
 
         let (first, _second) = submessage.prod_def().fixed_surfaces().unwrap();
         let elevation_level = first.value();
 
         println!(
-            "{}\t\t{} {}\t{}",
-            parameter, forecast_time, unit, elevation_level
+            "{:<31} {:>14} {:>17}",
+            parameter.to_string(),
+            forecast_time.to_string(),
+            elevation_level
         );
     }
 }
 
 fn main() {
-    list_submessages();
+    let path = Path::new("datafile.grib");
+    list_submessages(path);
 }
 ```
 
