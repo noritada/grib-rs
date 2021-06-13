@@ -43,7 +43,7 @@ mod tests {
     use super::*;
 
     use num_enum::TryFromPrimitiveError;
-    use std::convert::{TryFrom, TryInto};
+    use std::convert::TryFrom;
 
     use crate::codetables::*;
 
@@ -55,11 +55,6 @@ mod tests {
             (Table4_4::try_from(254u8)),
             Err(TryFromPrimitiveError { number: 254 })
         );
-    }
-
-    #[test]
-    fn num_enum_equivalence() {
-        assert_eq!(1u8.try_into(), Ok(Table4_4::Hour));
     }
 
     #[test]
