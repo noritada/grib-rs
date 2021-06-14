@@ -8,7 +8,8 @@ use std::path::Path;
 #[cfg(unix)]
 use which::which;
 
-use grib::context::{Grib2, GribError};
+use grib::context::Grib2;
+use grib::error::*;
 use grib::reader::SeekableGrib2Reader;
 
 pub enum CliError {

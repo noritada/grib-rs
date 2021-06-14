@@ -1,10 +1,11 @@
 use std::cell::RefMut;
 
-use crate::context::{GribError, SectionBody, SectionInfo};
+use crate::context::{SectionBody, SectionInfo};
 use crate::decoders::complex::*;
 use crate::decoders::jpeg2000::*;
 use crate::decoders::run_length::*;
 use crate::decoders::simple::*;
+use crate::error::*;
 use crate::reader::Grib2Read;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]

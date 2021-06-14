@@ -8,8 +8,9 @@ use crate::codetables::{
     CodeTable3_1, CodeTable4_0, CodeTable4_1, CodeTable4_2, CodeTable4_3, CodeTable5_0, Lookup,
 };
 use crate::datatypes::*;
-use crate::decoders::{self, DecodeError};
-use crate::reader::{Grib2Read, ParseError, SeekableGrib2Reader};
+use crate::decoders;
+use crate::error::*;
+use crate::reader::{Grib2Read, SeekableGrib2Reader};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SectionInfo {
@@ -438,60 +439,6 @@ impl<'a> SubMessageSection<'a> {
 
     pub fn describe(&self) -> Option<String> {
         self.template_code().and_then(|code| code.describe())
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub enum GribError {
-    InternalDataError,
-    ParseError(ParseError),
-    ValidationError(ValidationError),
-    DecodeError(DecodeError),
-}
-
-impl From<ParseError> for GribError {
-    fn from(e: ParseError) -> Self {
-        Self::ParseError(e)
-    }
-}
-
-impl From<ValidationError> for GribError {
-    fn from(e: ValidationError) -> Self {
-        Self::ValidationError(e)
-    }
-}
-
-impl From<DecodeError> for GribError {
-    fn from(e: DecodeError) -> Self {
-        Self::DecodeError(e)
-    }
-}
-
-impl Display for GribError {
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        match self {
-            Self::InternalDataError => write!(f, "Something unexpected happend"),
-            Self::ParseError(e) => write!(f, "{}", e),
-            Self::ValidationError(e) => write!(f, "{}", e),
-            Self::DecodeError(e) => write!(f, "{:#?}", e),
-        }
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub enum ValidationError {
-    GRIB2IterationSuddenlyFinished,
-    NoGridDefinition(usize),
-    GRIB2WrongIteration(usize),
-}
-
-impl Display for ValidationError {
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        match self {
-            Self::GRIB2IterationSuddenlyFinished => write!(f, "GRIB2 file suddenly finished"),
-            Self::NoGridDefinition(i) => write!(f, "Grid Definition Section not found at {}", i),
-            Self::GRIB2WrongIteration(i) => write!(f, "GRIB2 sections wrongly ordered at {}", i),
-        }
     }
 }
 
