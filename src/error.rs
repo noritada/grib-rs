@@ -1,3 +1,4 @@
+use std::error::Error;
 use std::fmt::{self, Display, Formatter};
 use std::io;
 
@@ -9,6 +10,12 @@ pub enum GribError {
     ParseError(ParseError),
     ValidationError(ValidationError),
     DecodeError(DecodeError),
+}
+
+impl Error for GribError {
+    fn description(&self) -> &str {
+        "grib error"
+    }
 }
 
 impl From<ParseError> for GribError {
@@ -48,6 +55,12 @@ pub enum ParseError {
     GRIBVersionMismatch(u8),
     UnknownSectionNumber(u8),
     EndSectionMismatch,
+}
+
+impl Error for ParseError {
+    fn description(&self) -> &str {
+        "grib parse error"
+    }
 }
 
 impl Display for ParseError {
