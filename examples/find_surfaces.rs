@@ -4,32 +4,33 @@ use grib::context::Grib2;
 use grib::datatypes::*;
 use grib::reader::SeekableGrib2Reader;
 use std::env;
+use std::error::Error;
 use std::fs::File;
 use std::io::BufReader;
 use std::path::Path;
 
-fn main() {
+fn main() -> Result<(), Box<dyn Error>> {
     // This example shows how to find surfaces in a GRIB2 message.
 
     // Take the first argument as an input file path and the second argument as forecast time in hours.
     let mut args = env::args().skip(1);
     if let (Some(file_name), Some(forecast_time)) = (args.next(), args.next()) {
         let path = Path::new(&file_name);
-        let forecast_time = forecast_time.parse::<u32>().unwrap();
-        find_surfaces(path, forecast_time);
+        let forecast_time = forecast_time.parse::<u32>()?;
+        find_surfaces(path, forecast_time)
     } else {
         panic!("Usage: find_surfaces <path> <forecast_time>");
     }
 }
 
-fn find_surfaces(path: &Path, forecast_time_hours: u32) {
-    // Open the input file in a normal way, ignoring errors.
-    let f = File::open(&path).unwrap();
+fn find_surfaces(path: &Path, forecast_time_hours: u32) -> Result<(), Box<dyn Error>> {
+    // Open the input file in a normal way.
+    let f = File::open(&path)?;
     let f = BufReader::new(f);
 
-    // Read with the reader provided by the library. Errors are ignored in this case, too.
+    // Read with the reader provided by the library.
     // This interface is ugly and will be improved in the future.
-    let grib2 = Grib2::<SeekableGrib2Reader<BufReader<File>>>::read_with_seekable(f).unwrap();
+    let grib2 = Grib2::<SeekableGrib2Reader<BufReader<File>>>::read_with_seekable(f)?;
 
     for (index, submessage) in grib2.iter().enumerate() {
         let ft = submessage.prod_def().forecast_time();
@@ -45,4 +46,6 @@ fn find_surfaces(path: &Path, forecast_time_hours: u32) {
             _ => {}
         }
     }
+
+    Ok(())
 }

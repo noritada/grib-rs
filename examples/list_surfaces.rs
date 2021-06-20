@@ -2,11 +2,12 @@ use grib::codetables::{CodeTable4_2, Lookup};
 use grib::context::Grib2;
 use grib::reader::SeekableGrib2Reader;
 use std::env;
+use std::error::Error;
 use std::fs::File;
 use std::io::BufReader;
 use std::path::Path;
 
-fn main() {
+fn main() -> Result<(), Box<dyn Error>> {
     // This example shows how to get information of element names, forecast time and elevation
     // levels for all surfaces in a GRIB2 message.
 
@@ -20,14 +21,14 @@ fn main() {
     }
 }
 
-fn list_surfaces(path: &Path) {
-    // Open the input file in a normal way, ignoring errors.
-    let f = File::open(&path).unwrap();
+fn list_surfaces(path: &Path) -> Result<(), Box<dyn Error>> {
+    // Open the input file in a normal way.
+    let f = File::open(&path)?;
     let f = BufReader::new(f);
 
-    // Read with the reader provided by the library. Errors are ignored in this case, too.
+    // Read with the reader provided by the library.
     // This interface is ugly and will be improved in the future.
-    let grib2 = Grib2::<SeekableGrib2Reader<BufReader<File>>>::read_with_seekable(f).unwrap();
+    let grib2 = Grib2::<SeekableGrib2Reader<BufReader<File>>>::read_with_seekable(f)?;
 
     // Iterate over surfaces.
     for submessage in grib2.iter() {
@@ -74,4 +75,6 @@ fn list_surfaces(path: &Path) {
             elevation_level
         );
     }
+
+    Ok(())
 }
