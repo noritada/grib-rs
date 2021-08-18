@@ -41,7 +41,7 @@ pub fn exec(args: &ArgMatches<'static>) -> Result<(), cli::CliError> {
                 }
                 Ok(())
             })
-            .map_err(|e| cli::CliError::IOError(e, out_path.to_string()))?;
+            .map_err(|e| cli::CliError::IO(e, out_path.to_string()))?;
     } else if args.is_present("little-endian") {
         let out_path = args.value_of("little-endian").unwrap();
         File::create(out_path)
@@ -51,7 +51,7 @@ pub fn exec(args: &ArgMatches<'static>) -> Result<(), cli::CliError> {
                 }
                 Ok(())
             })
-            .map_err(|e| cli::CliError::IOError(e, out_path.to_string()))?;
+            .map_err(|e| cli::CliError::IO(e, out_path.to_string()))?;
     } else {
         cli::start_pager();
         println!("{:#?}", values);
