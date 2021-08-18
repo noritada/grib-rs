@@ -50,8 +50,8 @@ impl<R: Grib2Read> Grib2DataDecode<R> for Jpeg2000CodeStreamDecoder {
 
         let sect5_data = reader.read_sect_body_bytes(sect5)?;
         let ref_val = read_as!(f32, sect5_data, 6);
-        let exp = read_as!(u16, sect5_data, 10).into_grib_int();
-        let dig = read_as!(u16, sect5_data, 12).into_grib_int();
+        let exp = read_as!(u16, sect5_data, 10).as_grib_int();
+        let dig = read_as!(u16, sect5_data, 12).as_grib_int();
         //let nbit = read_as!(u8, sect5_data, 14);
         let value_type = read_as!(u8, sect5_data, 15);
 

@@ -187,11 +187,11 @@ impl ProdDefinition {
 
     fn read_surface_from(&self, index: usize) -> Option<FixedSurface> {
         let surface_type = self.templated.get(index).copied();
-        let scale_factor = self.templated.get(index + 1).map(|v| (*v).into_grib_int());
+        let scale_factor = self.templated.get(index + 1).map(|v| (*v).as_grib_int());
         let start = index + 2;
         let end = index + 6;
         let scaled_value =
-            u32::from_be_bytes(self.templated[start..end].try_into().unwrap()).into_grib_int();
+            u32::from_be_bytes(self.templated[start..end].try_into().unwrap()).as_grib_int();
         surface_type
             .zip(scale_factor)
             .map(|(stype, factor)| FixedSurface::new(stype, factor, scaled_value))

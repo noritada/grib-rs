@@ -45,8 +45,8 @@ impl<R: Grib2Read> Grib2DataDecode<R> for ComplexPackingDecoder {
 
         let sect5_data = reader.read_sect_body_bytes(sect5)?;
         let ref_val = read_as!(f32, sect5_data, 6);
-        let exp = read_as!(u16, sect5_data, 10).into_grib_int();
-        let dig = read_as!(u16, sect5_data, 12).into_grib_int();
+        let exp = read_as!(u16, sect5_data, 10).as_grib_int();
+        let dig = read_as!(u16, sect5_data, 12).as_grib_int();
         let nbit = read_as!(u8, sect5_data, 14);
         let ngroup = read_as!(u32, sect5_data, 26);
         let group_width_ref = read_as!(u8, sect5_data, 30);
@@ -60,9 +60,9 @@ impl<R: Grib2Read> Grib2DataDecode<R> for ComplexPackingDecoder {
 
         let sect7_data = reader.read_sect_body_bytes(sect7)?;
 
-        let z1 = read_as!(u16, sect7_data, 0).into_grib_int();
-        let z2 = read_as!(u16, sect7_data, 2).into_grib_int();
-        let z_min = read_as!(u16, sect7_data, 4).into_grib_int();
+        let z1 = read_as!(u16, sect7_data, 0).as_grib_int();
+        let z2 = read_as!(u16, sect7_data, 2).as_grib_int();
+        let z_min = read_as!(u16, sect7_data, 4).as_grib_int();
 
         fn get_octet_length(nbit: u8, ngroup: u32) -> usize {
             let total_bit: u32 = ngroup * u32::from(nbit);
@@ -197,7 +197,7 @@ where
                     NBitwiseIterator::new(&self.data[self.pos..pos_end + offset_byte], width)
                         .with_offset(self.start_offset_bits)
                         .take(length)
-                        .map(|v| v.into_grib_int() + _ref + self.z_min)
+                        .map(|v| v.as_grib_int() + _ref + self.z_min)
                         .collect::<Vec<i32>>();
                 self.pos = pos_end;
                 self.start_offset_bits = offset_byte;
