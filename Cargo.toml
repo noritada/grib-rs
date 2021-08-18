@@ -17,7 +17,7 @@ clap = "2.33.0"
 console = "0.11"
 num = "0.3.1"
 num_enum = "0.5.1"
-openjpeg-sys = "1.0.2"
+openjpeg-sys = "1.0.3"
 
 [target.'cfg(unix)'.dependencies]
 pager = "0.15"
