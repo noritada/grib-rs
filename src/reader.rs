@@ -8,11 +8,11 @@ use crate::context::{SectionBody, SectionInfo};
 use crate::datatypes::*;
 use crate::error::*;
 
-const SECT0_IS_MAGIC: &'static [u8] = b"GRIB";
+const SECT0_IS_MAGIC: &[u8] = b"GRIB";
 const SECT0_IS_MAGIC_SIZE: usize = SECT0_IS_MAGIC.len();
 const SECT0_IS_SIZE: usize = 16;
 const SECT_HEADER_SIZE: usize = 5;
-const SECT8_ES_MAGIC: &'static [u8] = b"7777";
+const SECT8_ES_MAGIC: &[u8] = b"7777";
 const SECT8_ES_SIZE: usize = SECT8_ES_MAGIC.len();
 
 macro_rules! read_as {
@@ -108,7 +108,7 @@ impl<R: Read + Seek> Grib2Read for SeekableGrib2Reader<R> {
         let fsize = read_as!(u64, buf, 8);
 
         Ok(Indicator {
-            discipline: discipline,
+            discipline,
             total_length: fsize,
         })
     }
@@ -233,7 +233,7 @@ pub fn unpack_sect4_body<R: Read>(f: &mut R, body_size: usize) -> Result<Section
 
     Ok(SectionBody::Section4(ProdDefinition {
         num_coordinates: read_as!(u16, buf, 0),
-        prod_tmpl_num: prod_tmpl_num,
+        prod_tmpl_num,
         templated: templated.into_boxed_slice(),
         template_supported: SUPPORTED_PROD_DEF_TEMPLATE_NUMBERS.contains(&prod_tmpl_num),
     }))

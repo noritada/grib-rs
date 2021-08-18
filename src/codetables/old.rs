@@ -5,8 +5,8 @@ pub struct LookupResult(Result<&'static &'static str, ConversionError>);
 impl Display for LookupResult {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         let s = match &self.0 {
-            Ok(s) => format!("{}", s),
-            Err(e) => format!("{}", e),
+            Ok(s) => s.to_string(),
+            Err(e) => e.to_string(),
         };
         write!(f, "{}", s)
     }
@@ -249,7 +249,7 @@ impl<T: ArrayLookup> Lookup for T {
     }
 }
 
-const CODE_TABLE_UNSUPPORTED: &'static [&'static str] = &[];
+const CODE_TABLE_UNSUPPORTED: &[&str] = &[];
 
 pub(crate) const SUPPORTED_PROD_DEF_TEMPLATE_NUMBERS: [u16; 71] = [
     0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 20, 30, 31, 32, 33, 34, 35, 40, 41, 42,

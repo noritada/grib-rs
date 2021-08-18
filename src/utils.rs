@@ -35,8 +35,8 @@ pub(crate) struct NBitwiseIterator<'a> {
 impl<'a> NBitwiseIterator<'a> {
     pub(crate) fn new(slice: &'a [u8], size: usize) -> Self {
         Self {
-            slice: slice,
-            size: size,
+            slice,
+            size,
             pos: 0,
             offset: 0,
         }

@@ -56,7 +56,7 @@ impl ProdDefinition {
     /// returned numerical value.
     pub fn parameter_category(&self) -> Option<u8> {
         if self.template_supported {
-            self.templated.get(0).map(|v| *v)
+            self.templated.get(0).copied()
         } else {
             None
         }
@@ -66,7 +66,7 @@ impl ProdDefinition {
     /// returned numerical value.
     pub fn parameter_number(&self) -> Option<u8> {
         if self.template_supported {
-            self.templated.get(1).map(|v| *v)
+            self.templated.get(1).copied()
         } else {
             None
         }
@@ -102,7 +102,7 @@ impl ProdDefinition {
                 1000..=1101 => Some(2),
                 _ => None,
             }?;
-            self.templated.get(index).map(|v| *v)
+            self.templated.get(index).copied()
         } else {
             None
         }
@@ -138,7 +138,7 @@ impl ProdDefinition {
                 1000..=1101 => Some(8),
                 _ => None,
             }?;
-            let unit = self.templated.get(unit_index).map(|v| *v);
+            let unit = self.templated.get(unit_index).copied();
             let start = unit_index + 1;
             let end = unit_index + 5;
             let time = u32::from_be_bytes(self.templated[start..end].try_into().unwrap());
@@ -186,7 +186,7 @@ impl ProdDefinition {
     }
 
     fn read_surface_from(&self, index: usize) -> Option<FixedSurface> {
-        let surface_type = self.templated.get(index).map(|v| *v);
+        let surface_type = self.templated.get(index).copied();
         let scale_factor = self.templated.get(index + 1).map(|v| (*v).into_grib_int());
         let start = index + 2;
         let end = index + 6;

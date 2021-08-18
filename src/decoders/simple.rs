@@ -80,8 +80,8 @@ pub(crate) struct SimplePackingDecodeIterator<I> {
 impl<I> SimplePackingDecodeIterator<I> {
     pub(crate) fn new(iter: I, ref_val: f32, exp: i16, dig: i16) -> Self {
         Self {
-            iter: iter,
-            ref_val: ref_val,
+            iter,
+            ref_val,
             exp: exp.into(),
             dig: dig.into(),
         }

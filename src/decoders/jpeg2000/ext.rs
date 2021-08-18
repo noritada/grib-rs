@@ -53,15 +53,15 @@ impl Stream {
 
             let user_data = p_user_data as *mut SliceWithOffset;
 
-            let len = (&*user_data).buf.len();
+            let len = (*user_data).buf.len();
 
-            let offset = (&*user_data).offset;
+            let offset = (*user_data).offset;
 
             let bytes_left = len - offset;
 
             let bytes_read = std::cmp::min(bytes_left, p_nb_bytes);
 
-            let slice = &(&*user_data).buf[offset..offset + bytes_read];
+            let slice = &(*user_data).buf[offset..offset + bytes_read];
 
             std::ptr::copy_nonoverlapping(slice.as_ptr(), p_buffer as *mut u8, bytes_read);
 
@@ -106,7 +106,7 @@ impl Codec {
 
     pub(crate) fn create(format: OPJ_CODEC_FORMAT) -> Result<Self, Jpeg2000CodeStreamDecodeError> {
         NonNull::new(unsafe { opj::opj_create_decompress(format) })
-            .map(|c| Self(c))
+            .map(Self)
             .ok_or(Jpeg2000CodeStreamDecodeError::DecoderSetupError)
     }
 }
@@ -128,11 +128,11 @@ impl Image {
     }
 
     pub(crate) fn width(&self) -> u32 {
-        unsafe { (&*self.0).x1 - (&*self.0).x0 }
+        unsafe { (*self.0).x1 - (*self.0).x0 }
     }
 
     pub(crate) fn height(&self) -> u32 {
-        unsafe { (&*self.0).y1 - (&*self.0).y0 }
+        unsafe { (*self.0).y1 - (*self.0).y0 }
     }
 
     pub(crate) fn num_components(&self) -> u32 {

@@ -97,7 +97,7 @@ impl<R: Grib2Read> Grib2DataDecode<R> for ComplexPackingDecoder {
         );
         let group_lens_iter = group_lens_iter
             .take((ngroup - 1) as usize)
-            .map(|v| u32::from(group_len_ref) + u32::from(group_len_inc) * v)
+            .map(|v| group_len_ref + u32::from(group_len_inc) * v)
             .chain(iter::once(group_len_last));
 
         let unpacked_data = ComplexPackingValueDecodeIterator::new(
@@ -158,11 +158,11 @@ impl<'a, I, J, K> ComplexPackingValueDecodeIterator<'a, I, J, K> {
         data: &'a [u8],
     ) -> Self {
         Self {
-            ref_iter: ref_iter,
-            width_iter: width_iter,
-            length_iter: length_iter,
+            ref_iter,
+            width_iter,
+            length_iter,
             z_min: i32::from(z_min),
-            data: data,
+            data,
             pos: 0,
             start_offset_bits: 0,
         }
@@ -218,7 +218,7 @@ struct SpatialDiff2ndOrderDecodeIterator<I> {
 impl<I> SpatialDiff2ndOrderDecodeIterator<I> {
     fn new(iter: I) -> Self {
         Self {
-            iter: iter,
+            iter,
             count: 0,
             prev1: 0,
             prev2: 0,

@@ -37,7 +37,7 @@ pub fn exec(args: &ArgMatches<'static>) -> Result<(), cli::CliError> {
         File::create(out_path)
             .and_then(|mut f| {
                 for value in values.iter() {
-                    f.write(&value.to_be_bytes())?;
+                    f.write_all(&value.to_be_bytes())?;
                 }
                 Ok(())
             })
@@ -47,7 +47,7 @@ pub fn exec(args: &ArgMatches<'static>) -> Result<(), cli::CliError> {
         File::create(out_path)
             .and_then(|mut f| {
                 for value in values.iter() {
-                    f.write(&value.to_le_bytes())?;
+                    f.write_all(&value.to_le_bytes())?;
                 }
                 Ok(())
             })
