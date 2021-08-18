@@ -7,6 +7,26 @@ on:
     branches: [ master ]
 
 jobs:
+  lint_and_clippy:
+    name: Lint and Clippy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly
+          profile: minimal
+          override: true
+          components: 'rustfmt,clippy'
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          submodules: 'true'
+      - name: Run rustfmt
+        run: cargo fmt --all -- --check
+      - name: Run clippy
+        run: cargo clippy --workspace -- -D warnings
+
   build:
     strategy:
       matrix:
