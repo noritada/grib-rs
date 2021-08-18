@@ -29,6 +29,7 @@ jobs:
 
   build:
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, macOS-latest, windows-latest]
         rust: [stable]
