@@ -69,13 +69,13 @@ impl<R: Grib2Read> Grib2DataDecode<R> for RunLengthEncodingDecoder {
             maxv,
             Some(sect5_body.num_points as usize),
         )
-        .map_err(|e| DecodeError::RunLengthEncodingDecodeError(e))?;
+        .map_err(DecodeError::RunLengthEncodingDecodeError)?;
 
         let level_to_value = |level: &u16| -> Result<f32, DecodeError> {
             let index: usize = (*level).into();
             level_map
                 .get(index)
-                .map(|l| *l)
+                .copied()
                 .ok_or(DecodeError::RunLengthEncodingDecodeError(
                     RunLengthEncodingDecodeError::InvalidLevelValue(*level),
                 ))

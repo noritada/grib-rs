@@ -88,12 +88,12 @@ pub struct Grib2<R> {
 
 impl<R: Grib2Read> Grib2<R> {
     pub fn read(mut r: R) -> Result<Self, GribError> {
-        let sects = r.scan()?;
-        let submessages = index_submessages(&sects)?;
+        let sections = r.scan()?;
+        let submessages = index_submessages(&sections)?;
         Ok(Self {
             reader: RefCell::new(r),
-            sections: sects,
-            submessages: submessages,
+            sections,
+            submessages,
         })
     }
 
@@ -149,7 +149,7 @@ impl<R: Grib2Read> Grib2<R> {
         Ok(values)
     }
 
-    pub fn sections(&self) -> &Box<[SectionInfo]> {
+    pub fn sections(&self) -> &[SectionInfo] {
         &self.sections
     }
 
@@ -261,7 +261,7 @@ fn index_submessages(sects: &[SectionInfo]) -> Result<Box<[SubMessageIndex]>, Va
     Ok(starts.into_boxed_slice())
 }
 
-fn get_templates(sects: &Box<[SectionInfo]>) -> Vec<TemplateInfo> {
+fn get_templates(sects: &[SectionInfo]) -> Vec<TemplateInfo> {
     let uniq: HashSet<_> = sects.iter().filter_map(|s| s.get_tmpl_code()).collect();
     let mut vec: Vec<_> = uniq.into_iter().collect();
     vec.sort_unstable();
@@ -278,8 +278,8 @@ pub struct SubMessageIterator<'a> {
 impl<'a> SubMessageIterator<'a> {
     fn new(indices: &'a [SubMessageIndex], sections: &'a [SectionInfo]) -> Self {
         Self {
-            indices: indices,
-            sections: sections,
+            indices,
+            sections,
             pos: 0,
         }
     }
@@ -389,24 +389,24 @@ Product:                                {}
   2nd Scaled Value:                     {}
 Data Representation:                    {}
 ",
-            self.3.describe().unwrap_or(String::new()),
-            self.4.describe().unwrap_or(String::new()),
+            self.3.describe().unwrap_or_default(),
+            self.4.describe().unwrap_or_default(),
             category
                 .map(|v| CodeTable4_1::new(self.indicator().discipline)
                     .lookup(usize::from(v))
                     .to_string())
-                .unwrap_or(String::new()),
+                .unwrap_or_default(),
             self.prod_def()
                 .parameter_number()
                 .zip(category)
                 .map(|(n, c)| CodeTable4_2::new(self.indicator().discipline, c)
                     .lookup(usize::from(n))
                     .to_string())
-                .unwrap_or(String::new()),
+                .unwrap_or_default(),
             self.prod_def()
                 .generating_process()
                 .map(|v| CodeTable4_3.lookup(usize::from(v)).to_string())
-                .unwrap_or(String::new()),
+                .unwrap_or_default(),
             forecast_time.1,
             forecast_time.0,
             fixed_surfaces_info.0,
@@ -415,7 +415,7 @@ Data Representation:                    {}
             fixed_surfaces_info.3,
             fixed_surfaces_info.4,
             fixed_surfaces_info.5,
-            self.5.describe().unwrap_or(String::new()),
+            self.5.describe().unwrap_or_default(),
         )
     }
 }
@@ -427,10 +427,7 @@ pub struct SubMessageSection<'a> {
 
 impl<'a> SubMessageSection<'a> {
     pub fn new(index: usize, body: &'a SectionInfo) -> Self {
-        Self {
-            index: index,
-            body: body,
-        }
+        Self { index, body }
     }
 
     pub fn template_code(&self) -> Option<TemplateInfo> {

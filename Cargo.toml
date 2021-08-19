@@ -11,23 +11,17 @@ homepage = "https://github.com/noritada/grib-rs"
 categories = ["science"]
 keywords = ["GRIB", "weather", "meteorology"]
 
-[target.'cfg(unix)'.dependencies]
+[dependencies]
 chrono = "0.4"
 clap = "2.33.0"
 console = "0.11"
 num = "0.3.1"
 num_enum = "0.5.1"
-openjpeg-sys = "1.0.2"
+openjpeg-sys = "1.0.3"
+
+[target.'cfg(unix)'.dependencies]
 pager = "0.15"
 which = "4"
-
-[target.'cfg(not(unix))'.dependencies]
-chrono = "0.4"
-clap = "2.33.0"
-console = "0.11"
-num = "0.3.1"
-num_enum = "0.5.1"
-openjpeg-sys = "1.0.2"
 
 [dev-dependencies]
 assert_cmd = "1.0.*"

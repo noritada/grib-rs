@@ -54,10 +54,7 @@ struct ListView<'i> {
 
 impl<'i> ListView<'i> {
     fn new(data: SubMessageIterator<'i>, mode: ListViewMode) -> Self {
-        Self {
-            data: data,
-            mode: mode,
-        }
+        Self { data, mode }
     }
 
     fn num_lines(&self) -> usize {
@@ -70,8 +67,7 @@ impl<'i> ListView<'i> {
             ListViewMode::Dump => {
                 let unit_height = 8; // lines of output from SubMessage.describe(), hard-coded as of now
                 let (len, _) = self.data.size_hint();
-                let total_height = (unit_height + 2) * len - 1;
-                total_height
+                (unit_height + 2) * len - 1
             }
         }
     }
@@ -103,24 +99,24 @@ impl<'i> Display for ListView<'i> {
                                 .lookup(usize::from(n))
                                 .to_string()
                         })
-                        .unwrap_or(String::new());
+                        .unwrap_or_default();
                     let generating_process = prod_def
                         .generating_process()
                         .map(|v| CodeTable4_3.lookup(usize::from(v)).to_string())
-                        .unwrap_or(String::new());
+                        .unwrap_or_default();
                     let forecast_time = prod_def
                         .forecast_time()
                         .map(|ft| ft.to_string())
-                        .unwrap_or(String::new());
+                        .unwrap_or_default();
                     let surfaces = prod_def
                         .fixed_surfaces()
                         .map(|(first, second)| {
                             (first.value().to_string(), second.value().to_string())
                         })
                         .unwrap_or((String::new(), String::new()));
-                    write!(
+                    writeln!(
                         f,
-                        "{:>5} │ {:<31} {:<18} {:>14} {:>17} {:>17}\n",
+                        "{:>5} │ {:<31} {:<18} {:>14} {:>17} {:>17}",
                         i, category, generating_process, forecast_time, surfaces.0, surfaces.1,
                     )?;
                 }

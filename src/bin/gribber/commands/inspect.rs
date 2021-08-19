@@ -56,7 +56,7 @@ pub fn exec(args: &ArgMatches<'static>) -> Result<(), cli::CliError> {
         let tmpls = grib.list_templates();
         view.add(InspectItem::Templates(InspectTemplatesItem::new(tmpls)));
     }
-    if view.items.len() == 0 {
+    if view.items.is_empty() {
         view.add(InspectItem::Sections(InspectSectionsItem::new(
             grib.sections(),
         )));
@@ -99,8 +99,8 @@ pub fn exec(args: &ArgMatches<'static>) -> Result<(), cli::CliError> {
             InspectItem::Templates(item) => print!("{}", item),
         }
 
-        if let Some(_) = items.peek() {
-            println!("");
+        if items.peek().is_some() {
+            println!();
         }
     }
 
@@ -121,7 +121,7 @@ impl<'i> InspectView<'i> {
     }
 
     fn with_headers(&self) -> bool {
-        !(self.items.len() < 2)
+        self.items.len() >= 2
     }
 
     fn num_lines(&self) -> usize {
@@ -167,7 +167,7 @@ struct InspectSectionsItem<'i> {
 
 impl<'i> InspectSectionsItem<'i> {
     fn new(data: &'i [SectionInfo]) -> Self {
-        Self { data: data }
+        Self { data }
     }
 
     fn len(&self) -> usize {
@@ -178,9 +178,9 @@ impl<'i> InspectSectionsItem<'i> {
 impl<'i> Display for InspectSectionsItem<'i> {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         for (i, sect) in self.data.iter().enumerate() {
-            write!(
+            writeln!(
                 f,
-                "{:>5} │ {:016x} - {:016x} │ Section {}\n",
+                "{:>5} │ {:016x} - {:016x} │ Section {}",
                 i,
                 sect.offset,
                 sect.offset + sect.size,
@@ -197,7 +197,7 @@ struct InspectSubMessagesItem<'i> {
 
 impl<'i> InspectSubMessagesItem<'i> {
     fn new(data: SubMessageIterator<'i>) -> Self {
-        Self { data: data }
+        Self { data }
     }
 
     fn len(&self) -> usize {
@@ -236,9 +236,9 @@ impl<'i> Display for InspectSubMessagesItem<'i> {
         write!(f, "{}", style.apply_to(header))?;
 
         for (i, submessage) in self.data.clone().enumerate() {
-            write!(
+            writeln!(
                 f,
-                "{:>5} │ {} {} {} {} {} {} │ {} {} {}\n",
+                "{:>5} │ {} {} {} {} {} {} │ {} {} {}",
                 i,
                 format_section_index_optional(&submessage.2),
                 format_section_index(&submessage.3),
@@ -261,7 +261,7 @@ struct InspectTemplatesItem {
 
 impl InspectTemplatesItem {
     fn new(data: Vec<TemplateInfo>) -> Self {
-        Self { data: data }
+        Self { data }
     }
 
     fn len(&self) -> usize {
@@ -274,10 +274,10 @@ impl Display for InspectTemplatesItem {
         for tmpl in self.data.iter() {
             match tmpl.describe() {
                 Some(s) => {
-                    write!(f, "{:<8} - {}\n", tmpl.to_string(), s)?;
+                    writeln!(f, "{:<8} - {}", tmpl.to_string(), s)?;
                 }
                 None => {
-                    write!(f, "{}\n", tmpl)?;
+                    writeln!(f, "{}", tmpl)?;
                 }
             }
         }

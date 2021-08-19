@@ -1,11 +1,11 @@
 pub(crate) trait GribInt<I> {
-    fn into_grib_int(&self) -> I;
+    fn as_grib_int(&self) -> I;
 }
 
 macro_rules! add_impl_for_ints {
     ($(($ty_src:ty, $ty_dst:ty),)*) => ($(
         impl GribInt<$ty_dst> for $ty_src {
-            fn into_grib_int(&self) -> $ty_dst {
+            fn as_grib_int(&self) -> $ty_dst {
                 if self.leading_zeros() == 0 {
                     let abs = (self << 1 >> 1) as $ty_dst;
                     -abs
@@ -35,8 +35,8 @@ pub(crate) struct NBitwiseIterator<'a> {
 impl<'a> NBitwiseIterator<'a> {
     pub(crate) fn new(slice: &'a [u8], size: usize) -> Self {
         Self {
-            slice: slice,
-            size: size,
+            slice,
+            size,
             pos: 0,
             offset: 0,
         }
@@ -100,7 +100,7 @@ mod tests {
         while pos < input.len() {
             let val = u8::from_be_bytes(input[pos..pos + 1].try_into().unwrap());
             pos += 1;
-            let val = val.into_grib_int();
+            let val = val.as_grib_int();
             actual.push(val);
         }
 
@@ -120,7 +120,7 @@ mod tests {
         while pos < input.len() {
             let val = u16::from_be_bytes(input[pos..pos + 2].try_into().unwrap());
             pos += 2;
-            let val = val.into_grib_int();
+            let val = val.as_grib_int();
             actual.push(val);
         }
 

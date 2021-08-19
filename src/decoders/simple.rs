@@ -44,8 +44,8 @@ impl<R: Grib2Read> Grib2DataDecode<R> for SimplePackingDecoder {
 
         let sect5_data = reader.read_sect_body_bytes(sect5)?;
         let ref_val = read_as!(f32, sect5_data, 6);
-        let exp = read_as!(u16, sect5_data, 10).into_grib_int();
-        let dig = read_as!(u16, sect5_data, 12).into_grib_int();
+        let exp = read_as!(u16, sect5_data, 10).as_grib_int();
+        let dig = read_as!(u16, sect5_data, 12).as_grib_int();
         let nbit = read_as!(u8, sect5_data, 14);
         let value_type = read_as!(u8, sect5_data, 15);
 
@@ -80,8 +80,8 @@ pub(crate) struct SimplePackingDecodeIterator<I> {
 impl<I> SimplePackingDecodeIterator<I> {
     pub(crate) fn new(iter: I, ref_val: f32, exp: i16, dig: i16) -> Self {
         Self {
-            iter: iter,
-            ref_val: ref_val,
+            iter,
+            ref_val,
             exp: exp.into(),
             dig: dig.into(),
         }
@@ -119,13 +119,9 @@ mod tests {
 
         let ref_val = f32::from_be_bytes(ref_val_bytes[..].try_into().unwrap());
         let iter = NBitwiseIterator::new(&input, 16);
-        let actual = SimplePackingDecodeIterator::new(
-            iter,
-            ref_val,
-            exp.into_grib_int(),
-            dig.into_grib_int(),
-        )
-        .collect::<Vec<_>>();
+        let actual =
+            SimplePackingDecodeIterator::new(iter, ref_val, exp.as_grib_int(), dig.as_grib_int())
+                .collect::<Vec<_>>();
 
         assert_eq!(actual.len(), expected.len());
         let mut i = 0;

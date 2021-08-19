@@ -37,21 +37,21 @@ pub fn exec(args: &ArgMatches<'static>) -> Result<(), cli::CliError> {
         File::create(out_path)
             .and_then(|mut f| {
                 for value in values.iter() {
-                    f.write(&value.to_be_bytes())?;
+                    f.write_all(&value.to_be_bytes())?;
                 }
                 Ok(())
             })
-            .map_err(|e| cli::CliError::IOError(e, out_path.to_string()))?;
+            .map_err(|e| cli::CliError::IO(e, out_path.to_string()))?;
     } else if args.is_present("little-endian") {
         let out_path = args.value_of("little-endian").unwrap();
         File::create(out_path)
             .and_then(|mut f| {
                 for value in values.iter() {
-                    f.write(&value.to_le_bytes())?;
+                    f.write_all(&value.to_le_bytes())?;
                 }
                 Ok(())
             })
-            .map_err(|e| cli::CliError::IOError(e, out_path.to_string()))?;
+            .map_err(|e| cli::CliError::IO(e, out_path.to_string()))?;
     } else {
         cli::start_pager();
         println!("{:#?}", values);
