@@ -5,6 +5,8 @@ on:
     branches: [ master, testing ]
   pull_request:
     branches: [ master ]
+  schedule:
+    - cron: '0 21 * * *'
 
 jobs:
   lint_and_clippy:
