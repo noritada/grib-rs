@@ -34,16 +34,14 @@ fn find_surfaces(path: &Path, forecast_time_hours: u32) -> Result<(), Box<dyn Er
 
     for (index, submessage) in grib2.iter().enumerate() {
         let ft = submessage.prod_def().forecast_time();
-        match ft {
-            Some(ForecastTime {
-                unit: Name(Table4_4::Hour),
-                value: hours,
-            }) => {
-                if hours == forecast_time_hours {
-                    println!("{}: {}", index, hours);
-                }
+        if let Some(ForecastTime {
+            unit: Name(Table4_4::Hour),
+            value: hours,
+        }) = ft
+        {
+            if hours == forecast_time_hours {
+                println!("{}: {}", index, hours);
             }
-            _ => {}
         }
     }
 
