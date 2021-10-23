@@ -188,7 +188,7 @@ mod tests {
             db.export(0),
             "\
 /// Common Code Table C-0
-const COMMON_CODE_TABLE_00: &'static [&'static str] = &[
+const COMMON_CODE_TABLE_00: &[& str] = &[
     \"Experimental\",
     \"1 January 2000\",
     \"1 January 2001\",
@@ -206,7 +206,7 @@ const COMMON_CODE_TABLE_00: &'static [&'static str] = &[
             format!("{}", db),
             "\
 /// Common Code Table C-0
-const COMMON_CODE_TABLE_00: &'static [&'static str] = &[
+const COMMON_CODE_TABLE_00: &[& str] = &[
     \"Experimental\",
     \"1 January 2000\",
     \"1 January 2001\",
@@ -214,7 +214,7 @@ const COMMON_CODE_TABLE_00: &'static [&'static str] = &[
 ];
 
 /// Common Code Table C-11
-const COMMON_CODE_TABLE_11: &'static [&'static str] = &[
+const COMMON_CODE_TABLE_11: &[& str] = &[
     \"A\",
     \"B\",
     \"\",

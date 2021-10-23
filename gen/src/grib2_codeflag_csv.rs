@@ -361,7 +361,7 @@ mod tests {
             db.export((0, 0, OptArg::None)),
             "\
 /// Foo
-const CODE_TABLE_0_0: &'static [&'static str] = &[
+const CODE_TABLE_0_0: &[& str] = &[
     \"0A\",
     \"0B\",
 ];"
@@ -379,19 +379,19 @@ const CODE_TABLE_0_0: &'static [&'static str] = &[
             format!("{}", db),
             "\
 /// Foo
-const CODE_TABLE_0_0: &'static [&'static str] = &[
+const CODE_TABLE_0_0: &[& str] = &[
     \"0A\",
     \"0B\",
 ];
 
 /// Bar
-const CODE_TABLE_1_0: &'static [&'static str] = &[
+const CODE_TABLE_1_0: &[& str] = &[
     \"1A\",
     \"1B\",
 ];
 
 /// Baz
-const CODE_TABLE_4_1_0: &'static [&'static str] = &[
+const CODE_TABLE_4_1_0: &[& str] = &[
     \"Temperature\",
     \"\",
     \"\",
@@ -399,19 +399,19 @@ const CODE_TABLE_4_1_0: &'static [&'static str] = &[
 ];
 
 /// Baz
-const CODE_TABLE_4_1_3: &'static [&'static str] = &[
+const CODE_TABLE_4_1_3: &[& str] = &[
     \"Image format products\",
     \"Quantitative products\",
     \"Cloud properties\",
 ];
 
 /// Baz
-const CODE_TABLE_4_1_20: &'static [&'static str] = &[
+const CODE_TABLE_4_1_20: &[& str] = &[
     \"Health indicators\",
 ];
 
 /// Baz
-const CODE_TABLE_4_2_0_0: &'static [&'static str] = &[
+const CODE_TABLE_4_2_0_0: &[& str] = &[
     \"Temperature\",
     \"\",
     \"\",
@@ -426,15 +426,15 @@ const CODE_TABLE_4_2_0_0: &'static [&'static str] = &[
 ];
 
 /// Baz
-const CODE_TABLE_4_2_0_191: &'static [&'static str] = &[
+const CODE_TABLE_4_2_0_191: &[& str] = &[
     \"Seconds prior to initial reference time (defined in Section 1)\",
 ];
 
 /// Baz
-const CODE_TABLE_4_2_3_2: &'static [&'static str] = &[];
+const CODE_TABLE_4_2_3_2: &[& str] = &[];
 
 /// Baz
-const CODE_TABLE_4_2_20_0: &'static [&'static str] = &[
+const CODE_TABLE_4_2_20_0: &[& str] = &[
     \"Universal thermal climate index\",
 ];"
         );
