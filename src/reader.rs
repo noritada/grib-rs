@@ -165,7 +165,7 @@ impl<R: Read + Seek> Grib2Read for SeekableGrib2Reader<R> {
 
         let body_size = meta.size - SECT_HEADER_SIZE;
         let mut buf = vec![0; body_size];
-        self.read_exact(&mut buf.as_mut_slice())?;
+        self.read_exact(buf.as_mut_slice())?;
 
         Ok(buf.into_boxed_slice())
     }
