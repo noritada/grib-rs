@@ -2,7 +2,7 @@
 name = "grib"
 version = "0.3.0"
 authors = ["Noritada Kobayashi <noritada.kobayashi@gmail.com>"]
-edition = "2018"
+edition = "2021"
 license = "MIT OR Apache-2.0"
 description = "GRIB format parser for Rust"
 readme = "README.md"
