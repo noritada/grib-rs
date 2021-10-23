@@ -37,6 +37,12 @@ pub struct CodeDB {
     data: BTreeMap<u8, CodeTable>,
 }
 
+impl Default for CodeDB {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl CodeDB {
     pub fn new() -> Self {
         Self {
