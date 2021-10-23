@@ -5,7 +5,7 @@ use tempfile::TempDir;
 
 mod utils;
 
-const CMD_NAME: &'static str = "gribber";
+const CMD_NAME: &str = "gribber";
 
 #[test]
 fn help() -> Result<(), Box<dyn std::error::Error>> {
@@ -28,7 +28,7 @@ fn no_subcommand_specified() -> Result<(), Box<dyn std::error::Error>> {
     let mut cmd = Command::cargo_bin(CMD_NAME)?;
     cmd.arg("--help");
     let help_msg = cmd.output()?.stdout;
-    let help_msg = format!("{}", String::from_utf8(help_msg)?);
+    let help_msg = String::from_utf8(help_msg)?;
 
     let mut cmd = Command::cargo_bin(CMD_NAME)?;
     cmd.assert()
@@ -409,7 +409,7 @@ fn inspect_with_all_opts() -> Result<(), Box<dyn std::error::Error>> {
     let mut cmd = Command::cargo_bin(CMD_NAME)?;
     cmd.arg("inspect").arg(arg_path);
     let msg_no_opt = cmd.output()?.stdout;
-    let msg_no_opt = format!("{}", String::from_utf8(msg_no_opt)?);
+    let msg_no_opt = String::from_utf8(msg_no_opt)?;
 
     let mut cmd = Command::cargo_bin(CMD_NAME)?;
     cmd.arg("inspect")

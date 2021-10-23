@@ -115,7 +115,7 @@ mod tests {
         let exp = 0x801a;
         let dig = 0x0000;
         let input: Vec<u8> = vec![0x00, 0x06, 0x00, 0x0d];
-        let expected: Vec<f32> = vec![7.98783162e-07, 9.03091291e-07];
+        let expected: Vec<f32> = vec![7.987_831_6e-7, 9.030_913e-7];
 
         let ref_val = f32::from_be_bytes(ref_val_bytes[..].try_into().unwrap());
         let iter = NBitwiseIterator::new(&input, 16);
