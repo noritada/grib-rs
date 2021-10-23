@@ -47,19 +47,13 @@ impl FromStr for CodeRange {
 
         let (start, pos) = read_number(input, pos)?;
         if pos == input.len() {
-            return Ok(CodeRange {
-                start: start,
-                end: start,
-            });
+            return Ok(CodeRange { start, end: start });
         }
 
         let pos = read_hyphen(input, pos)?;
         let (end, _pos) = read_number(input, pos)?;
 
-        Ok(CodeRange {
-            start: start,
-            end: end,
-        })
+        Ok(CodeRange { start, end })
     }
 }
 
@@ -77,7 +71,7 @@ pub struct CodeTable {
 impl CodeTable {
     fn new(desc: String) -> Self {
         Self {
-            desc: desc,
+            desc,
             data: Vec::new(),
         }
     }

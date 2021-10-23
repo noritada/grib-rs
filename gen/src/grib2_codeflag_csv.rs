@@ -41,7 +41,7 @@ impl CodeDB {
 
     pub fn load(&mut self, path: PathBuf) -> Result<(), Box<dyn Error>> {
         let basename = path.file_stem().ok_or("unexpected path")?.to_string_lossy();
-        let words: Vec<_> = basename.split("_").take(4).collect();
+        let words: Vec<_> = basename.split('_').take(4).collect();
         if let ["GRIB2", "CodeFlag", section, number] = words[..] {
             let section = section.parse::<u8>()?;
             let number = number.parse::<u8>()?;
@@ -140,15 +140,15 @@ impl FromStr for OptArg {
                 let mut splitted = s.split(", ");
 
                 let first = splitted.next().ok_or(ParseError)?;
-                let words: Vec<_> = first.split(" ").take(3).collect();
+                let words: Vec<_> = first.split(' ').take(3).collect();
                 let discipline = match words[..] {
                     ["Product", "discipline", num] => u8::from_str(num).map_err(|_| ParseError),
                     _ => Err(ParseError),
                 }?;
 
                 if let Some(second) = splitted.next() {
-                    let second = second.split(":").next().ok_or(ParseError)?;
-                    let words: Vec<_> = second.split(" ").take(3).collect();
+                    let second = second.split(':').next().ok_or(ParseError)?;
+                    let words: Vec<_> = second.split(' ').take(3).collect();
                     let parameter = match words[..] {
                         ["parameter", "category", num] => u8::from_str(num).map_err(|_| ParseError),
                         _ => Err(ParseError),
