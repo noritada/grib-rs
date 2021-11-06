@@ -1,6 +1,8 @@
 # grib-rs
 
 [![docs](https://docs.rs/grib/badge.svg)](https://docs.rs/grib)
+[![Crates.io](https://img.shields.io/crates/v/grib)](https://crates.io/crates/grib)
+[![dependency status](https://deps.rs/repo/github/noritada/grib-rs/status.svg)](https://deps.rs/repo/github/noritada/grib-rs)
 [![License (Apache 2.0)](https://img.shields.io/badge/license-Apache%202.0-blue)](https://github.com/noritada/grib-rs/blob/master/LICENSE-APACHE)
 [![License (MIT)](https://img.shields.io/badge/license-MIT-blue)](https://github.com/noritada/grib-rs/blob/master/LICENSE-MIT)
 [![Build](https://github.com/noritada/grib-rs/workflows/CI/badge.svg)](https://github.com/noritada/grib-rs/actions?query=workflow%3ACI)
