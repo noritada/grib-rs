@@ -21,7 +21,7 @@ openjpeg-sys = "1.0.3"
 
 [target.'cfg(unix)'.dependencies]
 pager = "0.16.0"
-which = "4"
+which = "4.2.2"
 
 [dev-dependencies]
 assert_cmd = "2.0.2"
