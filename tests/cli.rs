@@ -34,7 +34,7 @@ fn no_subcommand_specified() -> Result<(), Box<dyn std::error::Error>> {
     cmd.assert()
         .failure()
         .stdout(predicate::str::is_empty())
-        .stderr(predicate::str::similar(help_msg));
+        .stderr(predicate::str::diff(help_msg));
 
     Ok(())
 }
@@ -79,7 +79,7 @@ Type of processed data:                 Analysis and forecast products
     cmd.arg("info").arg(arg_path);
     cmd.assert()
         .success()
-        .stdout(predicate::str::similar(out_str))
+        .stdout(predicate::str::diff(out_str))
         .stderr(predicate::str::is_empty());
 
     Ok(())
@@ -104,7 +104,7 @@ fn list() -> Result<(), Box<dyn std::error::Error>> {
     cmd.arg("list").arg(arg_path);
     cmd.assert()
         .success()
-        .stdout(predicate::str::similar(out_str))
+        .stdout(predicate::str::diff(out_str))
         .stderr(predicate::str::is_empty());
 
     Ok(())
@@ -234,7 +234,7 @@ Data Representation:                    Run length packing with level values
     cmd.arg("list").arg("-d").arg(arg_path);
     cmd.assert()
         .success()
-        .stdout(predicate::str::similar(out_str))
+        .stdout(predicate::str::diff(out_str))
         .stderr(predicate::str::is_empty());
 
     Ok(())
@@ -300,7 +300,7 @@ Templates:
     cmd.arg("inspect").arg(arg_path);
     cmd.assert()
         .success()
-        .stdout(predicate::str::similar(out_str))
+        .stdout(predicate::str::diff(out_str))
         .stderr(predicate::str::is_empty());
 
     Ok(())
@@ -349,7 +349,7 @@ fn inspect_with_opt_s() -> Result<(), Box<dyn std::error::Error>> {
     cmd.arg("inspect").arg("-s").arg(arg_path);
     cmd.assert()
         .success()
-        .stdout(predicate::str::similar(out_str))
+        .stdout(predicate::str::diff(out_str))
         .stderr(predicate::str::is_empty());
 
     Ok(())
@@ -374,7 +374,7 @@ fn inspect_with_opt_m() -> Result<(), Box<dyn std::error::Error>> {
     cmd.arg("inspect").arg("-m").arg(arg_path);
     cmd.assert()
         .success()
-        .stdout(predicate::str::similar(out_str))
+        .stdout(predicate::str::diff(out_str))
         .stderr(predicate::str::is_empty());
 
     Ok(())
@@ -395,7 +395,7 @@ fn inspect_with_opt_t() -> Result<(), Box<dyn std::error::Error>> {
     cmd.arg("inspect").arg("-t").arg(arg_path);
     cmd.assert()
         .success()
-        .stdout(predicate::str::similar(out_str))
+        .stdout(predicate::str::diff(out_str))
         .stderr(predicate::str::is_empty());
 
     Ok(())
@@ -419,7 +419,7 @@ fn inspect_with_all_opts() -> Result<(), Box<dyn std::error::Error>> {
         .arg(arg_path);
     cmd.assert()
         .success()
-        .stdout(predicate::str::similar(msg_no_opt))
+        .stdout(predicate::str::diff(msg_no_opt))
         .stderr(predicate::str::is_empty());
 
     Ok(())
@@ -712,7 +712,7 @@ macro_rules! test_subcommands_with_non_grib {
             cmd.assert()
                 .failure()
                 .stdout(predicate::str::is_empty())
-                .stderr(predicate::str::similar("Not GRIB data\n"));
+                .stderr(predicate::str::diff("Not GRIB data\n"));
 
             Ok(())
         }
@@ -737,7 +737,7 @@ macro_rules! test_subcommands_with_too_small_file {
             cmd.assert()
                 .failure()
                 .stdout(predicate::str::is_empty())
-                .stderr(predicate::str::similar(
+                .stderr(predicate::str::diff(
                     "Error in checking file type: failed to fill whole buffer\n",
                 ));
 

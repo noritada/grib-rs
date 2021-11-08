@@ -12,22 +12,22 @@ categories = ["science"]
 keywords = ["GRIB", "weather", "meteorology"]
 
 [dependencies]
-chrono = "0.4"
-clap = "2.33.0"
-console = "0.11"
-num = "0.3.1"
-num_enum = "0.5.1"
+chrono = "0.4.19"
+clap = "2.33.3"
+console = "0.15.0"
+num = "0.4.0"
+num_enum = "0.5.4"
 openjpeg-sys = "1.0.3"
 
 [target.'cfg(unix)'.dependencies]
-pager = "0.15"
+pager = "0.16.0"
 which = "4"
 
 [dev-dependencies]
-assert_cmd = "1.0.*"
-predicates = "1.0.*"
-tempfile = "3"
-xz2 = "0.1"
+assert_cmd = "2.0.2"
+predicates = "2.0.3"
+tempfile = "3.2.0"
+xz2 = "0.1.6"
 
 [build-dependencies]
 grib-build = { path = "gen", version = "0.2.0" }
