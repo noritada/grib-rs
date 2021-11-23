@@ -57,7 +57,10 @@ impl<'a> Iterator for NBitwiseIterator<'a> {
         let new_offset = self.offset + self.size;
         let (new_pos, new_offset) = (self.pos + new_offset / 8, new_offset % 8);
 
-        if new_pos > self.slice.len() || (new_pos == self.slice.len() && new_offset > 0) {
+        if self.pos >= self.slice.len()
+            || new_pos > self.slice.len()
+            || (new_pos == self.slice.len() && new_offset > 0)
+        {
             return None;
         }
 
@@ -186,5 +189,13 @@ mod tests {
 
         let mut iter = NBitwiseIterator::new(&slice, 2).with_offset(7);
         assert_eq!(iter.next(), Some(0b01));
+    }
+
+    #[test]
+    fn nbitwise_iterator_empty() {
+        let slice: [u8; 0] = [];
+
+        let mut iter = NBitwiseIterator::new(&slice, 0);
+        assert_eq!(iter.next(), None);
     }
 }
