@@ -13,7 +13,7 @@ Licence](https://dd.weather.gc.ca/doc/LICENCE_GENERAL.txt).
 
 ## Data files from DWD
 
-Following data files are downloaded from [Open-Data-Server of Deutscher Wetterdienst (DWD)].
+Following data files are downloaded from [Open-Data-Server of Deutscher Wetterdienst (DWD)](https://opendata.dwd.de/).
 The copyright of the data is [held by DWD](https://www.dwd.de/EN/service/copyright/copyright_artikel.html) and distribution is done according to the [rules for acknowledging the DWD as source](https://www.dwd.de/EN/service/copyright/templates_dwd_as_source.html).
 
 ```
