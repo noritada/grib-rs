@@ -59,6 +59,13 @@ impl<R: Grib2Read> Grib2DataDecode<R> for SimplePackingDecoder {
 
         let sect7_data = reader.read_sect_body_bytes(sect7)?;
 
+        // Based on the implementation of wgrib2, if nbits equals 0, return a constant field where
+        // the data value at each grid point is the reference value.
+        if nbit == 0 {
+            let decoded = vec![ref_val; sect5_body.num_points as usize];
+            return Ok(decoded.into_boxed_slice());
+        }
+
         let iter = NBitwiseIterator::new(&sect7_data, usize::from(nbit));
         let decoded = SimplePackingDecodeIterator::new(iter, ref_val, exp, dig).collect::<Vec<_>>();
         if decoded.len() != sect5_body.num_points as usize {
@@ -109,6 +116,12 @@ impl<I: Iterator<Item = N>, N: ToPrimitive> Iterator for SimplePackingDecodeIter
 mod tests {
     use super::*;
 
+    use std::fs::File;
+    use std::io::{BufReader, Cursor, Read};
+
+    use crate::context::Grib2;
+    use crate::reader::SeekableGrib2Reader;
+
     #[test]
     fn decode_simple_packing() {
         let ref_val_bytes = vec![0x35, 0x3e, 0x6b, 0xf6];
@@ -130,5 +143,38 @@ mod tests {
             assert!(actual[i] > expected[i] - 0.00000001);
             i += 1;
         }
+    }
+
+    #[test]
+    fn decode_simple_packing_when_nbit_is_zero() {
+        let f = File::open(
+            "testdata/icon_global_icosahedral_single-level_2021112018_000_TOT_PREC.grib2",
+        )
+        .unwrap();
+        let mut f = BufReader::new(f);
+        let mut buf = Vec::new();
+        f.read_to_end(&mut buf).unwrap();
+        let f = Cursor::new(buf);
+
+        let grib = Grib2::<SeekableGrib2Reader<BufReader<File>>>::read_with_seekable(f).unwrap();
+        let index = 0;
+        let (sect5, sect6, sect7) = grib
+            .submessages
+            .get(index)
+            .and_then(|submsg| {
+                Some((
+                    grib.sections.get(submsg.section5)?,
+                    grib.sections.get(submsg.section6)?,
+                    grib.sections.get(submsg.section7)?,
+                ))
+            })
+            .ok_or(GribError::InternalDataError)
+            .unwrap();
+
+        let reader = grib.reader.borrow_mut();
+
+        let actual = SimplePackingDecoder::decode(sect5, sect6, sect7, reader).unwrap();
+        let expected = vec![0f32; 0x002d0000].into_boxed_slice();
+        assert_eq!(actual, expected);
     }
 }

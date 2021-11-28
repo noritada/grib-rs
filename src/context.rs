@@ -51,13 +51,13 @@ impl SectionBody {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-struct SubMessageIndex {
-    section2: Option<usize>,
-    section3: usize,
-    section4: usize,
-    section5: usize,
-    section6: usize,
-    section7: usize,
+pub(crate) struct SubMessageIndex {
+    pub(crate) section2: Option<usize>,
+    pub(crate) section3: usize,
+    pub(crate) section4: usize,
+    pub(crate) section5: usize,
+    pub(crate) section6: usize,
+    pub(crate) section7: usize,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -81,9 +81,9 @@ impl Display for TemplateInfo {
 }
 
 pub struct Grib2<R> {
-    reader: RefCell<R>,
-    sections: Box<[SectionInfo]>,
-    submessages: Box<[SubMessageIndex]>,
+    pub(crate) reader: RefCell<R>,
+    pub(crate) sections: Box<[SectionInfo]>,
+    pub(crate) submessages: Box<[SubMessageIndex]>,
 }
 
 impl<R: Grib2Read> Grib2<R> {

@@ -11,6 +11,17 @@ Licence](https://dd.weather.gc.ca/doc/LICENCE_GENERAL.txt).
 
 * `CMC_glb_TMP_ISBL_1_latlon.24x.24_2021051800_P000.grib2`
 
+## Data files from DWD
+
+Following data files are downloaded from [Open-Data-Server of Deutscher Wetterdienst (DWD)].
+The copyright of the data is [held by DWD](https://www.dwd.de/EN/service/copyright/copyright_artikel.html) and distribution is done according to the [rules for acknowledging the DWD as source](https://www.dwd.de/EN/service/copyright/templates_dwd_as_source.html).
+
+```
+Source: Deutscher Wetterdienst
+```
+
+- `icon_global_icosahedral_single-level_2021112018_000_TOT_PREC.grib2`
+
 ## Data files from JMA
 
 Following data files are downloaded from [JMA's GPV sample data
