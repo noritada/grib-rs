@@ -8,6 +8,16 @@ Since this project is still in the early stage, there are so many things to do t
 
 When this project can grow to have a good community and continuous contributors, major themes will be settled and more descriptions will be written down.
 
+## Specifying dependencies
+
+When using other crates, we have a policy that we do not designate dependency versions too strictly.
+
+Based on [semantic versioning](https://semver.org/), for stable crates with a major version of 1 or higher, we specify dependencies using only the major version as much as possible (i.e., `"1"` for version `"x.y.z"`). Also, for unstable crates whose major version is less than 1, we specify dependencies with minor versions as much as possible (i.e., `"0.y"` for `"0.y.z"`).
+
+Of course, this is not the case if we need to be more specific in order to avoid bugs or API changes in a particular version.
+
+See the [Cargo documentation](https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html) for specifying dependencies.
+
 ## Before committing
 
 ### Formatting
