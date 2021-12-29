@@ -1,6 +1,6 @@
 [package]
 name = "grib"
-version = "0.3.0"
+version = "0.4.0"
 authors = ["Noritada Kobayashi <noritada.kobayashi@gmail.com>"]
 edition = "2021"
 license = "MIT OR Apache-2.0"
@@ -30,4 +30,4 @@ tempfile = "3"
 xz2 = "0.1"
 
 [build-dependencies]
-grib-build = { path = "gen", version = "0.2.0" }
+grib-build = { path = "gen", version = "0.3.0" }
