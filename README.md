@@ -31,6 +31,7 @@ A world where everyone can read weather data easily although its interpretation 
   * Decoding feature supporting following templates:
     * Template 5.0/7.0 (simple packing)
     * Template 5.3/7.3 (complex packing)
+    * Template 5.40/7.40 (JPEG 2000 code stream format)
     * Template 5.200/7.200 (run-length encoding)
 * CLI application `gribber` built on the top of the Rust library
   * 4 subcommends:
