@@ -1,6 +1,4 @@
 use grib::codetables::{CodeTable4_2, Lookup};
-use grib::context::Grib2;
-use grib::reader::SeekableGrib2Reader;
 use std::env;
 use std::error::Error;
 use std::fs::File;
@@ -26,9 +24,8 @@ fn list_surfaces(path: &Path) -> Result<(), Box<dyn Error>> {
     let f = File::open(&path)?;
     let f = BufReader::new(f);
 
-    // Read with the reader provided by the library.
-    // This interface is ugly and will be improved in the future.
-    let grib2 = Grib2::<SeekableGrib2Reader<BufReader<File>>>::read_with_seekable(f)?;
+    // Read with the reader.
+    let grib2 = grib::from_reader(f)?;
 
     // Iterate over surfaces.
     for submessage in grib2.iter() {

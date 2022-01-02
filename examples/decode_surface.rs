@@ -1,5 +1,3 @@
-use grib::context::Grib2;
-use grib::reader::SeekableGrib2Reader;
 use std::env;
 use std::error::Error;
 use std::fs::File;
@@ -27,9 +25,8 @@ fn decode_surface(path: &Path, index: usize) -> Result<(), Box<dyn Error>> {
     let f = File::open(&path)?;
     let f = BufReader::new(f);
 
-    // Read with the reader provided by the library.
-    // This interface is ugly and will be improved in the future.
-    let grib2 = Grib2::<SeekableGrib2Reader<BufReader<File>>>::read_with_seekable(f)?;
+    // Read with the reader.
+    let grib2 = grib::from_reader(f)?;
 
     // There are various methods available for compressing GRIB2 data, but some are not yet
     // supported by this library and may return errors.

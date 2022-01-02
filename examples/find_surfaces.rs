@@ -1,8 +1,6 @@
 use grib::codetables::grib2::*;
 use grib::codetables::*;
-use grib::context::Grib2;
 use grib::datatypes::*;
-use grib::reader::SeekableGrib2Reader;
 use std::env;
 use std::error::Error;
 use std::fs::File;
@@ -28,9 +26,8 @@ fn find_surfaces(path: &Path, forecast_time_hours: u32) -> Result<(), Box<dyn Er
     let f = File::open(&path)?;
     let f = BufReader::new(f);
 
-    // Read with the reader provided by the library.
-    // This interface is ugly and will be improved in the future.
-    let grib2 = Grib2::<SeekableGrib2Reader<BufReader<File>>>::read_with_seekable(f)?;
+    // Read with the reader.
+    let grib2 = grib::from_reader(f)?;
 
     for (index, submessage) in grib2.iter().enumerate() {
         let ft = submessage.prod_def().forecast_time();

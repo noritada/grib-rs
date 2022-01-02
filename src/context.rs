@@ -1,7 +1,7 @@
 use std::cell::RefCell;
 use std::collections::HashSet;
 use std::fmt::{self, Display, Formatter};
-use std::io::{Read, Seek};
+use std::io::{Cursor, Read, Seek};
 use std::result::Result;
 
 use crate::codetables::{
@@ -78,6 +78,17 @@ impl Display for TemplateInfo {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         write!(f, "{}.{}", self.0, self.1)
     }
+}
+
+pub fn from_reader<SR: Read + Seek>(
+    reader: SR,
+) -> Result<Grib2<SeekableGrib2Reader<SR>>, GribError> {
+    Grib2::<SeekableGrib2Reader<SR>>::read_with_seekable(reader)
+}
+
+pub fn from_slice(bytes: &[u8]) -> Result<Grib2<SeekableGrib2Reader<Cursor<&[u8]>>>, GribError> {
+    let reader = Cursor::new(bytes);
+    Grib2::<SeekableGrib2Reader<Cursor<&[u8]>>>::read_with_seekable(reader)
 }
 
 pub struct Grib2<R> {
@@ -443,6 +454,9 @@ impl<'a> SubMessageSection<'a> {
 mod tests {
     use super::*;
 
+    use std::fs::File;
+    use std::io::BufReader;
+
     macro_rules! sect_placeholder {
         ($num:expr) => {{
             SectionInfo {
@@ -462,6 +476,30 @@ mod tests {
                 )*
             ].into_boxed_slice()
         }}
+    }
+
+    #[test]
+    fn from_buf_reader() {
+        let f = File::open(
+            "testdata/icon_global_icosahedral_single-level_2021112018_000_TOT_PREC.grib2",
+        )
+        .unwrap();
+        let f = BufReader::new(f);
+        let result = from_reader(f);
+        assert!(result.is_ok())
+    }
+
+    #[test]
+    fn from_bytes() {
+        let f = File::open(
+            "testdata/icon_global_icosahedral_single-level_2021112018_000_TOT_PREC.grib2",
+        )
+        .unwrap();
+        let mut f = BufReader::new(f);
+        let mut buf = Vec::new();
+        f.read_to_end(&mut buf).unwrap();
+        let result = from_slice(&buf);
+        assert!(result.is_ok())
     }
 
     #[test]
