@@ -59,16 +59,16 @@ The [examples](examples) may help you understand the API. The functionality is s
 USAGE:
     gribber [SUBCOMMAND]
 
-FLAGS:
-    -h, --help       Prints help information
-    -V, --version    Prints version information
+OPTIONS:
+    -h, --help       Print help information
+    -V, --version    Print version information
 
 SUBCOMMANDS:
-    decode     Exports decoded data
-    help       Prints this message or the help of the given subcommand(s)
-    info       Shows identification information
-    inspect    Inspects and describes the data structure
-    list       Lists surfaces contained in the data
+    decode     Export decoded data
+    help       Print this message or the help of the given subcommand(s)
+    info       Show identification information
+    inspect    Inspect and describes the data structure
+    list       List surfaces contained in the data
 ```
 
 Note that binaries exported from `gribber decode --big-endian` use `0x7fc00000` as a missing value, although those from `wgrib` use `0x6258d19a`.
