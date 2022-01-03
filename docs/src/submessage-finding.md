@@ -21,9 +21,7 @@ grib-rs:
 ```rust
 use grib::codetables::grib2::*;
 use grib::codetables::*;
-use grib::context::Grib2;
 use grib::datatypes::*;
-use grib::reader::SeekableGrib2Reader;
 use std::fs::File;
 use std::io::BufReader;
 use std::path::Path;
@@ -32,7 +30,7 @@ fn find_submessages(path: &Path, forecast_time_hours: u32) {
     let f = File::open(&path).unwrap();
     let f = BufReader::new(f);
 
-    let grib2 = Grib2::<SeekableGrib2Reader<BufReader<File>>>::read_with_seekable(f).unwrap();
+    let grib2 = grib::from_reader(f).unwrap();
 
     for (index, submessage) in grib2.iter().enumerate() {
         let ft = submessage.prod_def().forecast_time();

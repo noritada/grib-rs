@@ -119,8 +119,7 @@ mod tests {
     use std::fs::File;
     use std::io::{BufReader, Cursor, Read};
 
-    use crate::context::Grib2;
-    use crate::reader::SeekableGrib2Reader;
+    use crate::context::from_reader;
 
     #[test]
     fn decode_simple_packing() {
@@ -156,7 +155,7 @@ mod tests {
         f.read_to_end(&mut buf).unwrap();
         let f = Cursor::new(buf);
 
-        let grib = Grib2::<SeekableGrib2Reader<BufReader<File>>>::read_with_seekable(f).unwrap();
+        let grib = from_reader(f).unwrap();
         let index = 0;
         let (sect5, sect6, sect7) = grib
             .submessages

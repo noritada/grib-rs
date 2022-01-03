@@ -44,7 +44,7 @@ pub fn grib(file_name: &str) -> Result<Grib2<SeekableGrib2Reader<BufReader<File>
     let path = Path::new(file_name);
     let f = File::open(&path).map_err(|e| CliError::IO(e, path.display().to_string()))?;
     let f = BufReader::new(f);
-    Ok(Grib2::<SeekableGrib2Reader<BufReader<File>>>::read_with_seekable(f)?)
+    Ok(grib::from_reader(f)?)
 }
 
 #[cfg(unix)]

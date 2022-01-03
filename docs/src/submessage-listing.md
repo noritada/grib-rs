@@ -20,8 +20,6 @@ grib-rs:
 
 ```rust
 use grib::codetables::{CodeTable4_2, Lookup};
-use grib::context::Grib2;
-use grib::reader::SeekableGrib2Reader;
 use std::fs::File;
 use std::io::BufReader;
 use std::path::Path;
@@ -30,7 +28,7 @@ fn list_submessages(path: &Path) {
     let f = File::open(&path).unwrap();
     let f = BufReader::new(f);
 
-    let grib2 = Grib2::<SeekableGrib2Reader<BufReader<File>>>::read_with_seekable(f).unwrap();
+    let grib2 = grib::from_reader(f).unwrap();
 
     for submessage in grib2.iter() {
         let discipline = submessage.indicator().discipline;
