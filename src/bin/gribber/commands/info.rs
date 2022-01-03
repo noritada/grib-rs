@@ -1,4 +1,4 @@
-use clap::{App, Arg, ArgMatches, SubCommand};
+use clap::{App, Arg, ArgMatches};
 use std::fmt::{self, Display, Formatter};
 
 use grib::codetables::{
@@ -9,13 +9,13 @@ use grib::datatypes::{Identification, Indicator};
 
 use crate::cli;
 
-pub fn cli() -> App<'static, 'static> {
-    SubCommand::with_name("info")
+pub fn cli() -> App<'static> {
+    App::new("info")
         .about("Shows identification information")
-        .arg(Arg::with_name("file").required(true))
+        .arg(Arg::new("file").required(true))
 }
 
-pub fn exec(args: &ArgMatches<'static>) -> Result<(), cli::CliError> {
+pub fn exec(args: &ArgMatches) -> Result<(), cli::CliError> {
     let file_name = args.value_of("file").unwrap();
     let grib = cli::grib(file_name)?;
     let info = InfoItem::new(grib.info()?);

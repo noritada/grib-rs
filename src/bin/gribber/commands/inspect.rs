@@ -1,4 +1,4 @@
-use clap::{App, Arg, ArgMatches, SubCommand};
+use clap::{App, Arg, ArgMatches};
 use console::{Style, Term};
 use std::fmt::{self, Display, Formatter};
 
@@ -6,28 +6,28 @@ use grib::context::{SectionInfo, SubMessageIterator, SubMessageSection, Template
 
 use crate::cli;
 
-pub fn cli() -> App<'static, 'static> {
-    SubCommand::with_name("inspect")
+pub fn cli() -> App<'static> {
+    App::new("inspect")
         .about("Inspects and describes the data structure")
         .arg(
-            Arg::with_name("sections")
+            Arg::new("sections")
                 .help("Prints sections constructing the GRIB message")
-                .short("s")
+                .short('s')
                 .long("sections"),
         )
         .arg(
-            Arg::with_name("submessages")
+            Arg::new("submessages")
                 .help("Prints submessages in the GRIB message")
-                .short("m")
+                .short('m')
                 .long("submessages"),
         )
         .arg(
-            Arg::with_name("templates")
+            Arg::new("templates")
                 .help("Prints templates used in the GRIB message")
-                .short("t")
+                .short('t')
                 .long("templates"),
         )
-        .arg(Arg::with_name("file").required(true))
+        .arg(Arg::new("file").required(true))
         .after_help(
             "\
 This subcommand is mainly targeted at (possible) developers and
@@ -37,7 +37,7 @@ of debugging, enhancement, and education.\
         )
 }
 
-pub fn exec(args: &ArgMatches<'static>) -> Result<(), cli::CliError> {
+pub fn exec(args: &ArgMatches) -> Result<(), cli::CliError> {
     let file_name = args.value_of("file").unwrap();
     let grib = cli::grib(file_name)?;
 

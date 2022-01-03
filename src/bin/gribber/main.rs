@@ -3,11 +3,10 @@ use clap::{crate_name, crate_version, App, AppSettings};
 mod cli;
 mod commands;
 
-fn app() -> App<'static, 'static> {
+fn app() -> App<'static> {
     App::new(crate_name!())
         .version(crate_version!())
         .setting(AppSettings::ArgRequiredElseHelp)
-        .setting(AppSettings::ColoredHelp)
         .subcommands(commands::cli())
 }
 

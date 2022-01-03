@@ -15,7 +15,7 @@ fn help() -> Result<(), Box<dyn std::error::Error>> {
         .success()
         .stdout(
             predicate::str::contains("USAGE:")
-                .and(predicate::str::contains("FLAGS:"))
+                .and(predicate::str::contains("OPTIONS:"))
                 .and(predicate::str::contains("SUBCOMMANDS:")),
         )
         .stderr(predicate::str::is_empty());

@@ -1,32 +1,32 @@
-use clap::{App, Arg, ArgMatches, SubCommand};
+use clap::{App, Arg, ArgMatches};
 use std::fs::File;
 use std::io::Write;
 
 use crate::cli;
 
-pub fn cli() -> App<'static, 'static> {
-    SubCommand::with_name("decode")
+pub fn cli() -> App<'static> {
+    App::new("decode")
         .about("Exports decoded data")
-        .arg(Arg::with_name("file").required(true))
-        .arg(Arg::with_name("index").required(true))
+        .arg(Arg::new("file").required(true))
+        .arg(Arg::new("index").required(true))
         .arg(
-            Arg::with_name("big-endian")
+            Arg::new("big-endian")
                 .help("Exports as a big-endian flat binary file")
-                .short("b")
+                .short('b')
                 .long("big-endian")
                 .takes_value(true),
         )
         .arg(
-            Arg::with_name("little-endian")
+            Arg::new("little-endian")
                 .help("Exports as a little-endian flat binary file")
-                .short("l")
+                .short('l')
                 .long("little-endian")
                 .takes_value(true)
                 .conflicts_with("big-endian"),
         )
 }
 
-pub fn exec(args: &ArgMatches<'static>) -> Result<(), cli::CliError> {
+pub fn exec(args: &ArgMatches) -> Result<(), cli::CliError> {
     let file_name = args.value_of("file").unwrap();
     let grib = cli::grib(file_name)?;
     let index: usize = args.value_of("index").unwrap().parse()?;

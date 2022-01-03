@@ -2,17 +2,16 @@ use clap::{App, ArgMatches};
 
 use crate::cli;
 
-pub fn cli() -> Vec<App<'static, 'static>> {
+pub fn cli() -> Vec<App<'static>> {
     vec![decode::cli(), info::cli(), inspect::cli(), list::cli()]
 }
 
-pub fn dispatch(matches: ArgMatches<'static>) -> Result<(), cli::CliError> {
+pub fn dispatch(matches: ArgMatches) -> Result<(), cli::CliError> {
     match matches.subcommand() {
-        ("decode", Some(args)) => decode::exec(args),
-        ("info", Some(args)) => info::exec(args),
-        ("inspect", Some(args)) => inspect::exec(args),
-        ("list", Some(args)) => list::exec(args),
-        ("", None) => unreachable!(),
+        Some(("decode", args)) => decode::exec(args),
+        Some(("info", args)) => info::exec(args),
+        Some(("inspect", args)) => inspect::exec(args),
+        Some(("list", args)) => list::exec(args),
         _ => unreachable!(),
     }
 }
