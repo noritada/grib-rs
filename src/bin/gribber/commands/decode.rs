@@ -6,19 +6,19 @@ use crate::cli;
 
 pub fn cli() -> App<'static> {
     App::new("decode")
-        .about("Exports decoded data")
+        .about("Export decoded data")
         .arg(Arg::new("file").required(true))
         .arg(Arg::new("index").required(true))
         .arg(
             Arg::new("big-endian")
-                .help("Exports as a big-endian flat binary file")
+                .help("Export as a big-endian flat binary file")
                 .short('b')
                 .long("big-endian")
                 .takes_value(true),
         )
         .arg(
             Arg::new("little-endian")
-                .help("Exports as a little-endian flat binary file")
+                .help("Export as a little-endian flat binary file")
                 .short('l')
                 .long("little-endian")
                 .takes_value(true)

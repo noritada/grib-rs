@@ -9,10 +9,10 @@ use crate::cli;
 
 pub fn cli() -> App<'static> {
     App::new("list")
-        .about("Lists surfaces contained in the data")
+        .about("List surfaces contained in the data")
         .arg(
             Arg::new("dump")
-                .help("Shows details of each data")
+                .help("Show details of each data")
                 .short('d')
                 .long("dump"),
         )

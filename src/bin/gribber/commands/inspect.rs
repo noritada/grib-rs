@@ -8,22 +8,22 @@ use crate::cli;
 
 pub fn cli() -> App<'static> {
     App::new("inspect")
-        .about("Inspects and describes the data structure")
+        .about("Inspect and describes the data structure")
         .arg(
             Arg::new("sections")
-                .help("Prints sections constructing the GRIB message")
+                .help("Print sections constructing the GRIB message")
                 .short('s')
                 .long("sections"),
         )
         .arg(
             Arg::new("submessages")
-                .help("Prints submessages in the GRIB message")
+                .help("Print submessages in the GRIB message")
                 .short('m')
                 .long("submessages"),
         )
         .arg(
             Arg::new("templates")
-                .help("Prints templates used in the GRIB message")
+                .help("Print templates used in the GRIB message")
                 .short('t')
                 .long("templates"),
         )

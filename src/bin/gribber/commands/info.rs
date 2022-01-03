@@ -11,7 +11,7 @@ use crate::cli;
 
 pub fn cli() -> App<'static> {
     App::new("info")
-        .about("Shows identification information")
+        .about("Show identification information")
         .arg(Arg::new("file").required(true))
 }
 
