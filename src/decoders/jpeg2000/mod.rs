@@ -119,7 +119,7 @@ fn decode_jp2(stream: Stream) -> Result<impl Iterator<Item = i32>, Jpeg2000CodeS
         let vec = unsafe {
             std::slice::from_raw_parts(comp_gray.data, (width * height) as usize)
                 .iter()
-                .map(|x| *x as i32)
+                .map(|x| *x)
                 .collect::<Vec<_>>()
         };
         Ok(vec.into_iter())
