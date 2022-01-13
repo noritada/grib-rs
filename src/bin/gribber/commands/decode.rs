@@ -1,6 +1,6 @@
 use clap::{App, Arg, ArgMatches};
 use std::fs::File;
-use std::io::Write;
+use std::io::{BufWriter, Write};
 
 use crate::cli;
 
@@ -45,9 +45,10 @@ pub fn exec(args: &ArgMatches) -> Result<(), cli::CliError> {
     } else if args.is_present("little-endian") {
         let out_path = args.value_of("little-endian").unwrap();
         File::create(out_path)
-            .and_then(|mut f| {
+            .and_then(|f| {
+                let mut stream = BufWriter::new(f);
                 for value in values.iter() {
-                    f.write_all(&value.to_le_bytes())?;
+                    stream.write_all(&value.to_le_bytes())?;
                 }
                 Ok(())
             })
