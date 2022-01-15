@@ -35,9 +35,10 @@ pub fn exec(args: &ArgMatches) -> Result<(), cli::CliError> {
     if args.is_present("big-endian") {
         let out_path = args.value_of("big-endian").unwrap();
         File::create(out_path)
-            .and_then(|mut f| {
+            .and_then(|f| {
+                let mut stream = BufWriter::new(f);
                 for value in values.iter() {
-                    f.write_all(&value.to_be_bytes())?;
+                    stream.write_all(&value.to_be_bytes())?;
                 }
                 Ok(())
             })
