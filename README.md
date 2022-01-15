@@ -42,12 +42,7 @@ A world where everyone can read weather data easily although its interpretation 
 
 ## Planned features
 
-* WebAssembly application
-* Efficient read from cloud sources such as S3
-* More supports of code tables and templates
-* Data extraction based on geographical specification
-* Format conversion to other popular formats
-* Providing interface to other languages
+Please check the [ROADMAP](ROADMAP.md) to see planned features.
 
 ## API
 
