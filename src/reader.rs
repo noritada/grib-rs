@@ -22,6 +22,123 @@ macro_rules! read_as {
     }};
 }
 
+pub struct Grib2SectionReadIterator<R> {
+    reader: R,
+    whole_size: usize,
+    rest_size: usize,
+}
+
+impl<R> Grib2SectionReadIterator<R> {
+    /// # Example
+    /// ```
+    /// use grib::reader::{Grib2SectionReadIterator, SeekableGrib2Reader};
+    ///
+    /// fn main() -> Result<(), Box<dyn std::error::Error>> {
+    ///     let f = std::fs::File::open(
+    ///         "testdata/icon_global_icosahedral_single-level_2021112018_000_TOT_PREC.grib2",
+    ///     )?;
+    ///     let mut f = std::io::BufReader::new(f);
+    ///     let grib2_reader = SeekableGrib2Reader::new(f);
+    ///     let sect_reader = Grib2SectionReadIterator::new(grib2_reader);
+    ///     Ok(())
+    /// }
+    /// ```
+    pub fn new(reader: R) -> Self {
+        Self {
+            reader,
+            whole_size: 0,
+            rest_size: 0,
+        }
+    }
+}
+
+impl<R> Grib2SectionReadIterator<R>
+where
+    R: Grib2Read,
+{
+    #[inline]
+    fn next_sect0(&mut self) -> Result<SectionInfo, ParseError> {
+        let indicator = self.reader.read_sect0()?;
+        self.whole_size = indicator.total_length as usize;
+        let sect_info = SectionInfo {
+            num: 0,
+            offset: 0,
+            size: SECT0_IS_SIZE,
+            body: Some(SectionBody::Section0(indicator)),
+        };
+        self.rest_size = self.whole_size - SECT0_IS_SIZE;
+        Ok(sect_info)
+    }
+
+    #[inline]
+    fn next_sect8(&mut self) -> Result<SectionInfo, ParseError> {
+        self.reader.read_sect8()?;
+        let sect_info = SectionInfo {
+            num: 8,
+            offset: self.whole_size - self.rest_size,
+            size: SECT8_ES_SIZE,
+            body: None,
+        };
+        Ok(sect_info)
+    }
+
+    #[inline]
+    fn next_sect(&mut self) -> Result<SectionInfo, ParseError> {
+        let mut sect_info = self.reader.read_sect_meta()?;
+        sect_info.offset = self.whole_size - self.rest_size;
+        sect_info.body = Some(self.reader.read_sect(&sect_info)?);
+        self.rest_size -= sect_info.size;
+        Ok(sect_info)
+    }
+}
+
+impl<R> Iterator for Grib2SectionReadIterator<R>
+where
+    R: Grib2Read,
+{
+    type Item = Result<SectionInfo, ParseError>;
+
+    /// # Example
+    /// ```
+    /// use grib::context::{SectionBody, SectionInfo};
+    /// use grib::datatypes::Indicator;
+    /// use grib::reader::{Grib2SectionReadIterator, SeekableGrib2Reader};
+    ///
+    /// fn main() -> Result<(), Box<dyn std::error::Error>> {
+    ///     let f = std::fs::File::open(
+    ///         "testdata/icon_global_icosahedral_single-level_2021112018_000_TOT_PREC.grib2",
+    ///     )?;
+    ///     let f = std::io::BufReader::new(f);
+    ///     let grib2_reader = SeekableGrib2Reader::new(f);
+    ///
+    ///     let mut sect_reader = Grib2SectionReadIterator::new(grib2_reader);
+    ///     assert_eq!(
+    ///         sect_reader.next(),
+    ///         Some(Ok(SectionInfo {
+    ///             num: 0,
+    ///             offset: 0,
+    ///             size: 16,
+    ///             body: Some(SectionBody::Section0(Indicator {
+    ///                 discipline: 0,
+    ///                 total_length: 193,
+    ///             })),
+    ///         }))
+    ///     );
+    ///     Ok(())
+    /// }
+    /// ```
+    fn next(&mut self) -> Option<Result<SectionInfo, ParseError>> {
+        // Currently, this method does not return `None` and therefore the iteration
+        // only stops by `Some(Err(ParseError))`. In the future, we need some
+        // options to return `None`.
+        match self.rest_size {
+            0 => Some(self.next_sect0()),
+            SECT8_ES_SIZE => Some(self.next_sect8()),
+            _ => Some(self.next_sect()),
+        }
+    }
+}
+
 pub trait Grib2Read: Read + Seek {
     fn scan(&mut self) -> Result<Box<[SectionInfo]>, ParseError> {
         let indicator = self.read_sect0()?;
