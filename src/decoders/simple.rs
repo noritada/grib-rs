@@ -50,8 +50,8 @@ impl<R: Grib2Read> Grib2DataDecode<R> for SimplePackingDecoder {
 
         let sect7_data = reader.read_sect_body_bytes(sect7)?;
 
-        // Based on the implementation of wgrib2, if nbits equals 0, return a constant field where
-        // the data value at each grid point is the reference value.
+        // Based on the implementation of wgrib2, if nbits equals 0, return a constant
+        // field where the data value at each grid point is the reference value.
         if nbit == 0 {
             let decoded = vec![ref_val; sect3_num_points];
             return Ok(decoded.into_boxed_slice());

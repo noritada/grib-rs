@@ -710,8 +710,8 @@ fn decode_jpeg2000_code_stream_as_little_endian() -> Result<(), Box<dyn std::err
         .stdout(predicate::str::is_empty())
         .stderr(predicate::str::is_empty());
 
-    // Compares integer values encoded using simple packing since there are some differences
-    // between float values from gribber and wgrib2.
+    // Compares integer values encoded using simple packing since there are some
+    // differences between float values from gribber and wgrib2.
     let ref_val = f32::from_be_bytes([0x45, 0x0e, 0xcc, 0x05]);
     let exp: i16 = -2;
     let dig: i16 = 1;

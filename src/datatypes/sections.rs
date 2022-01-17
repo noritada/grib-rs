@@ -14,9 +14,11 @@ pub struct Indicator {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Identification {
-    /// Identification of originating/generating centre (see Common Code Table C-1)
+    /// Identification of originating/generating centre (see Common Code Table
+    /// C-1)
     pub centre_id: u16,
-    /// Identification of originating/generating sub-centre (allocated by originating/ generating centre)
+    /// Identification of originating/generating sub-centre (allocated by
+    /// originating/ generating centre)
     pub subcentre_id: u16,
     /// GRIB Master Tables Version Number (see Code Table 1.0)
     pub master_table_version: u8,
@@ -52,8 +54,8 @@ pub struct ProdDefinition {
 }
 
 impl ProdDefinition {
-    /// Use [CodeTable4_1](crate::codetables::CodeTable4_1) to get textual representation of the
-    /// returned numerical value.
+    /// Use [CodeTable4_1](crate::codetables::CodeTable4_1) to get textual
+    /// representation of the returned numerical value.
     pub fn parameter_category(&self) -> Option<u8> {
         if self.template_supported {
             self.templated.get(0).copied()
@@ -62,8 +64,8 @@ impl ProdDefinition {
         }
     }
 
-    /// Use [CodeTable4_2](crate::codetables::CodeTable4_2) to get textual representation of the
-    /// returned numerical value.
+    /// Use [CodeTable4_2](crate::codetables::CodeTable4_2) to get textual
+    /// representation of the returned numerical value.
     pub fn parameter_number(&self) -> Option<u8> {
         if self.template_supported {
             self.templated.get(1).copied()
@@ -72,8 +74,8 @@ impl ProdDefinition {
         }
     }
 
-    /// Use [CodeTable4_3](crate::codetables::CodeTable4_3) to get textual representation of the
-    /// returned numerical value.
+    /// Use [CodeTable4_3](crate::codetables::CodeTable4_3) to get textual
+    /// representation of the returned numerical value.
     pub fn generating_process(&self) -> Option<u8> {
         if self.template_supported {
             let index = match self.prod_tmpl_num {
@@ -109,8 +111,8 @@ impl ProdDefinition {
     }
 
     /// Returns the unit and value of the forecast time wrapped by `Option`.
-    /// Use [CodeTable4_4](crate::codetables::CodeTable4_4) to get textual representation of the
-    /// unit.
+    /// Use [CodeTable4_4](crate::codetables::CodeTable4_4) to get textual
+    /// representation of the unit.
     pub fn forecast_time(&self) -> Option<ForecastTime> {
         if self.template_supported {
             let unit_index = match self.prod_tmpl_num {
