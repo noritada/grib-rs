@@ -115,7 +115,8 @@ const {}: &[& str] = &{:#?};",
                     }
 
                     if count != range.start {
-                        return Vec::new(); // Sparse code tables are not supported at the moment.
+                        return Vec::new(); // Sparse code tables are not
+                                           // supported at the moment.
                     }
                     if range.size() == 1 {
                         output.push(string.to_string());
