@@ -22,16 +22,16 @@ macro_rules! read_as {
     }};
 }
 
-pub struct Grib2SectionReadIterator<R> {
+pub struct Grib2SectionStream<R> {
     reader: R,
     whole_size: usize,
     rest_size: usize,
 }
 
-impl<R> Grib2SectionReadIterator<R> {
+impl<R> Grib2SectionStream<R> {
     /// # Example
     /// ```
-    /// use grib::reader::{Grib2SectionReadIterator, SeekableGrib2Reader};
+    /// use grib::reader::{Grib2SectionStream, SeekableGrib2Reader};
     ///
     /// fn main() -> Result<(), Box<dyn std::error::Error>> {
     ///     let f = std::fs::File::open(
@@ -39,7 +39,7 @@ impl<R> Grib2SectionReadIterator<R> {
     ///     )?;
     ///     let mut f = std::io::BufReader::new(f);
     ///     let grib2_reader = SeekableGrib2Reader::new(f);
-    ///     let sect_reader = Grib2SectionReadIterator::new(grib2_reader);
+    ///     let _sect_stream = Grib2SectionStream::new(grib2_reader);
     ///     Ok(())
     /// }
     /// ```
@@ -52,7 +52,7 @@ impl<R> Grib2SectionReadIterator<R> {
     }
 }
 
-impl<R> Grib2SectionReadIterator<R>
+impl<R> Grib2SectionStream<R>
 where
     R: Grib2Read,
 {
@@ -92,7 +92,7 @@ where
     }
 }
 
-impl<R> Iterator for Grib2SectionReadIterator<R>
+impl<R> Iterator for Grib2SectionStream<R>
 where
     R: Grib2Read,
 {
@@ -102,7 +102,7 @@ where
     /// ```
     /// use grib::context::{SectionBody, SectionInfo};
     /// use grib::datatypes::Indicator;
-    /// use grib::reader::{Grib2SectionReadIterator, SeekableGrib2Reader};
+    /// use grib::reader::{Grib2SectionStream, SeekableGrib2Reader};
     ///
     /// fn main() -> Result<(), Box<dyn std::error::Error>> {
     ///     let f = std::fs::File::open(
@@ -111,9 +111,9 @@ where
     ///     let f = std::io::BufReader::new(f);
     ///     let grib2_reader = SeekableGrib2Reader::new(f);
     ///
-    ///     let mut sect_reader = Grib2SectionReadIterator::new(grib2_reader);
+    ///     let mut sect_stream = Grib2SectionStream::new(grib2_reader);
     ///     assert_eq!(
-    ///         sect_reader.next(),
+    ///         sect_stream.next(),
     ///         Some(Ok(SectionInfo {
     ///             num: 0,
     ///             offset: 0,
