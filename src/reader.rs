@@ -58,15 +58,17 @@ where
 {
     #[inline]
     fn next_sect0(&mut self) -> Result<SectionInfo, ParseError> {
+        let offset = self.whole_size;
         let indicator = self.reader.read_sect0()?;
-        self.whole_size = indicator.total_length as usize;
+        let message_size = indicator.total_length as usize;
+        self.whole_size += message_size;
         let sect_info = SectionInfo {
             num: 0,
-            offset: 0,
+            offset,
             size: SECT0_IS_SIZE,
             body: Some(SectionBody::Section0(indicator)),
         };
-        self.rest_size = self.whole_size - SECT0_IS_SIZE;
+        self.rest_size = message_size - SECT0_IS_SIZE;
         Ok(sect_info)
     }
 
@@ -79,6 +81,7 @@ where
             size: SECT8_ES_SIZE,
             body: None,
         };
+        self.rest_size -= SECT8_ES_SIZE;
         Ok(sect_info)
     }
 
@@ -424,6 +427,52 @@ mod tests {
                 Ok((6, 178, 6)),
                 Ok((7, 184, 5)),
                 Ok((8, 189, 4)),
+                Err(ParseError::ReadError(
+                    "failed to fill whole buffer".to_owned()
+                ))
+            ]
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn read_multiple_grib2_messages() -> Result<(), Box<dyn std::error::Error>> {
+        let f = std::fs::File::open(
+            "testdata/icon_global_icosahedral_single-level_2021112018_000_TOT_PREC.grib2",
+        )?;
+        let mut f = std::io::BufReader::new(f);
+        let mut buf = Vec::new();
+        f.read_to_end(&mut buf)?;
+        let repeated_message = buf.repeat(2);
+        let f = Cursor::new(repeated_message);
+
+        let grib2_reader = SeekableGrib2Reader::new(f);
+        let sect_stream = Grib2SectionStream::new(grib2_reader);
+        assert_eq!(
+            sect_stream
+                .take(19)
+                .map(|result| result.map(|sect| (sect.num, sect.offset, sect.size)))
+                .collect::<Vec<_>>(),
+            vec![
+                Ok((0, 0, 16)),
+                Ok((1, 16, 21)),
+                Ok((2, 37, 27)),
+                Ok((3, 64, 35)),
+                Ok((4, 99, 58)),
+                Ok((5, 157, 21)),
+                Ok((6, 178, 6)),
+                Ok((7, 184, 5)),
+                Ok((8, 189, 4)),
+                Ok((0, 193, 16)),
+                Ok((1, 209, 21)),
+                Ok((2, 230, 27)),
+                Ok((3, 257, 35)),
+                Ok((4, 292, 58)),
+                Ok((5, 350, 21)),
+                Ok((6, 371, 6)),
+                Ok((7, 377, 5)),
+                Ok((8, 382, 4)),
                 Err(ParseError::ReadError(
                     "failed to fill whole buffer".to_owned()
                 ))
