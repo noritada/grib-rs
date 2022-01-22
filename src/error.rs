@@ -71,6 +71,7 @@ impl Display for ParseError {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         match self {
             Self::ReadError(s) => write!(f, "Read error: {}", s),
+            #[allow(deprecated)]
             Self::FileTypeCheckError(s) => write!(f, "Error in checking file type: {}", s),
             Self::NotGRIB => write!(f, "Not GRIB data"),
             Self::GRIBVersionMismatch(i) => write!(f, "Not GRIB version 2: {}", i),
