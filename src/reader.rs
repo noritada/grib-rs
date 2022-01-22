@@ -402,6 +402,39 @@ mod tests {
     use xz2::bufread::XzDecoder;
 
     #[test]
+    fn read_one_grib2_message() -> Result<(), Box<dyn std::error::Error>> {
+        let f = std::fs::File::open(
+            "testdata/icon_global_icosahedral_single-level_2021112018_000_TOT_PREC.grib2",
+        )?;
+        let f = std::io::BufReader::new(f);
+
+        let grib2_reader = SeekableGrib2Reader::new(f);
+        let sect_stream = Grib2SectionStream::new(grib2_reader);
+        assert_eq!(
+            sect_stream
+                .take(10)
+                .map(|result| result.map(|sect| (sect.num, sect.offset, sect.size)))
+                .collect::<Vec<_>>(),
+            vec![
+                Ok((0, 0, 16)),
+                Ok((1, 16, 21)),
+                Ok((2, 37, 27)),
+                Ok((3, 64, 35)),
+                Ok((4, 99, 58)),
+                Ok((5, 157, 21)),
+                Ok((6, 178, 6)),
+                Ok((7, 184, 5)),
+                Ok((8, 189, 4)),
+                Err(ParseError::ReadError(
+                    "failed to fill whole buffer".to_owned()
+                ))
+            ]
+        );
+
+        Ok(())
+    }
+
+    #[test]
     fn read_normal() -> Result<(), Box<dyn std::error::Error>> {
         let f = File::open(
             "testdata/Z__C_RJTD_20160822020000_NOWC_GPV_Ggis10km_Pphw10_FH0000-0100_grib2.bin.xz",
