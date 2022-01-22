@@ -738,7 +738,7 @@ macro_rules! test_subcommands_with_too_small_file {
                 .failure()
                 .stdout(predicate::str::is_empty())
                 .stderr(predicate::str::diff(
-                    "Error in checking file type: failed to fill whole buffer\n",
+                    "Read error: failed to fill whole buffer\n",
                 ));
 
             Ok(())

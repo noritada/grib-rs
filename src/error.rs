@@ -50,6 +50,10 @@ impl Display for GribError {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum ParseError {
     ReadError(String),
+    #[deprecated(
+        since = "0.4.4",
+        note = "This error was used only in reading Section 0 and no more used"
+    )]
     FileTypeCheckError(String),
     NotGRIB,
     GRIBVersionMismatch(u8),

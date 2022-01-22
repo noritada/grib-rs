@@ -210,8 +210,7 @@ impl<S: Seek> Seek for SeekableGrib2Reader<S> {
 impl<R: Read + Seek> Grib2Read for SeekableGrib2Reader<R> {
     fn read_sect0(&mut self) -> Result<Indicator, ParseError> {
         let mut buf = [0; SECT0_IS_SIZE];
-        self.read_exact(&mut buf[..])
-            .map_err(|e| ParseError::FileTypeCheckError(e.to_string()))?;
+        self.read_exact(&mut buf[..])?;
 
         if &buf[0..SECT0_IS_MAGIC_SIZE] != SECT0_IS_MAGIC {
             return Err(ParseError::NotGRIB);
