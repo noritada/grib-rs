@@ -57,41 +57,55 @@ where
     R: Grib2Read,
 {
     #[inline]
-    fn next_sect0(&mut self) -> Result<SectionInfo, ParseError> {
+    fn next_sect0(&mut self) -> Option<Result<SectionInfo, ParseError>> {
         let offset = self.whole_size;
-        let indicator = self.reader.read_sect0()?;
-        let message_size = indicator.total_length as usize;
-        self.whole_size += message_size;
-        let sect_info = SectionInfo {
-            num: 0,
-            offset,
-            size: SECT0_IS_SIZE,
-            body: Some(SectionBody::Section0(indicator)),
-        };
-        self.rest_size = message_size - SECT0_IS_SIZE;
-        Ok(sect_info)
+        let result = self.reader.read_sect0().transpose()?.map(|indicator| {
+            let message_size = indicator.total_length as usize;
+            self.whole_size += message_size;
+            let sect_info = SectionInfo {
+                num: 0,
+                offset,
+                size: SECT0_IS_SIZE,
+                body: Some(SectionBody::Section0(indicator)),
+            };
+            self.rest_size = message_size - SECT0_IS_SIZE;
+            sect_info
+        });
+        Some(result)
     }
 
     #[inline]
-    fn next_sect8(&mut self) -> Result<SectionInfo, ParseError> {
-        self.reader.read_sect8()?;
-        let sect_info = SectionInfo {
-            num: 8,
-            offset: self.whole_size - self.rest_size,
-            size: SECT8_ES_SIZE,
-            body: None,
-        };
-        self.rest_size -= SECT8_ES_SIZE;
-        Ok(sect_info)
+    fn next_sect8(&mut self) -> Option<Result<SectionInfo, ParseError>> {
+        let result = self.reader.read_sect8().transpose()?.map(|_| {
+            let sect_info = SectionInfo {
+                num: 8,
+                offset: self.whole_size - self.rest_size,
+                size: SECT8_ES_SIZE,
+                body: None,
+            };
+            self.rest_size -= SECT8_ES_SIZE;
+            sect_info
+        });
+        Some(result)
     }
 
     #[inline]
-    fn next_sect(&mut self) -> Result<SectionInfo, ParseError> {
-        let mut sect_info = self.reader.read_sect_meta()?;
-        sect_info.offset = self.whole_size - self.rest_size;
-        sect_info.body = Some(self.reader.read_sect(&sect_info)?);
-        self.rest_size -= sect_info.size;
-        Ok(sect_info)
+    fn next_sect(&mut self) -> Option<Result<SectionInfo, ParseError>> {
+        let result = self.reader.read_sect_meta().transpose()?;
+        match result {
+            Ok(mut sect_info) => {
+                sect_info.offset = self.whole_size - self.rest_size;
+                match self.reader.read_sect(&sect_info) {
+                    Ok(body) => {
+                        sect_info.body = Some(body);
+                        self.rest_size -= sect_info.size;
+                        Some(Ok(sect_info))
+                    }
+                    Err(e) => Some(Err(e)),
+                }
+            }
+            Err(e) => Some(Err(e)),
+        }
     }
 }
 
@@ -131,20 +145,19 @@ where
     /// }
     /// ```
     fn next(&mut self) -> Option<Result<SectionInfo, ParseError>> {
-        // Currently, this method does not return `None` and therefore the iteration
-        // only stops by `Some(Err(ParseError))`. In the future, we need some
-        // options to return `None`.
         match self.rest_size {
-            0 => Some(self.next_sect0()),
-            SECT8_ES_SIZE => Some(self.next_sect8()),
-            _ => Some(self.next_sect()),
+            0 => self.next_sect0(),
+            SECT8_ES_SIZE => self.next_sect8(),
+            _ => self.next_sect(),
         }
     }
 }
 
 pub trait Grib2Read: Read + Seek {
     fn scan(&mut self) -> Result<Box<[SectionInfo]>, ParseError> {
-        let indicator = self.read_sect0()?;
+        let indicator = self.read_sect0()?.ok_or_else(|| {
+            io::Error::new(io::ErrorKind::UnexpectedEof, "failed to fill whole buffer")
+        })?;
         let whole_size = indicator.total_length as usize;
         let mut rest_size = whole_size - SECT0_IS_SIZE;
         let mut sects = vec![SectionInfo {
@@ -156,7 +169,9 @@ pub trait Grib2Read: Read + Seek {
 
         loop {
             if rest_size == SECT8_ES_SIZE {
-                self.read_sect8()?;
+                self.read_sect8()?.ok_or_else(|| {
+                    io::Error::new(io::ErrorKind::UnexpectedEof, "failed to fill whole buffer")
+                })?;
                 let sect_info = SectionInfo {
                     num: 8,
                     offset: whole_size - rest_size,
@@ -167,7 +182,9 @@ pub trait Grib2Read: Read + Seek {
                 break;
             }
 
-            let mut sect_info = self.read_sect_meta()?;
+            let mut sect_info = self.read_sect_meta()?.ok_or_else(|| {
+                io::Error::new(io::ErrorKind::UnexpectedEof, "failed to fill whole buffer")
+            })?;
             sect_info.offset = whole_size - rest_size;
             sect_info.body = Some(self.read_sect(&sect_info)?);
             rest_size -= sect_info.size;
@@ -177,9 +194,9 @@ pub trait Grib2Read: Read + Seek {
         Ok(sects.into_boxed_slice())
     }
 
-    fn read_sect0(&mut self) -> Result<Indicator, ParseError>;
-    fn read_sect8(&mut self) -> Result<(), ParseError>;
-    fn read_sect_meta(&mut self) -> Result<SectionInfo, ParseError>;
+    fn read_sect0(&mut self) -> Result<Option<Indicator>, ParseError>;
+    fn read_sect8(&mut self) -> Result<Option<()>, ParseError>;
+    fn read_sect_meta(&mut self) -> Result<Option<SectionInfo>, ParseError>;
     fn read_sect(&mut self, meta: &SectionInfo) -> Result<SectionBody, ParseError>;
     fn read_sect_body_bytes(&mut self, meta: &SectionInfo) -> Result<Box<[u8]>, ParseError>;
 }
@@ -210,10 +227,26 @@ impl<S: Seek> Seek for SeekableGrib2Reader<S> {
     }
 }
 
+macro_rules! check_size {
+    ($size:expr, $expected_size:expr) => {{
+        if $size == 0 {
+            return Ok(None);
+        }
+        if $size != $expected_size {
+            return Err(io::Error::new(
+                io::ErrorKind::UnexpectedEof,
+                "failed to fill whole buffer",
+            )
+            .into());
+        }
+    }};
+}
+
 impl<R: Read + Seek> Grib2Read for SeekableGrib2Reader<R> {
-    fn read_sect0(&mut self) -> Result<Indicator, ParseError> {
+    fn read_sect0(&mut self) -> Result<Option<Indicator>, ParseError> {
         let mut buf = [0; SECT0_IS_SIZE];
-        self.read_exact(&mut buf[..])?;
+        let size = self.read(&mut buf[..])?;
+        check_size!(size, buf.len());
 
         if &buf[0..SECT0_IS_MAGIC_SIZE] != SECT0_IS_MAGIC {
             return Err(ParseError::NotGRIB);
@@ -226,40 +259,42 @@ impl<R: Read + Seek> Grib2Read for SeekableGrib2Reader<R> {
 
         let fsize = read_as!(u64, buf, 8);
 
-        Ok(Indicator {
+        Ok(Some(Indicator {
             discipline,
             total_length: fsize,
-        })
+        }))
     }
 
-    fn read_sect8(&mut self) -> Result<(), ParseError> {
+    fn read_sect8(&mut self) -> Result<Option<()>, ParseError> {
         let mut buf = [0; SECT8_ES_SIZE];
-        self.read_exact(&mut buf[..])?;
+        let size = self.read(&mut buf[..])?;
+        check_size!(size, buf.len());
 
         if buf[..] != SECT8_ES_MAGIC[..] {
             return Err(ParseError::EndSectionMismatch);
         }
 
-        Ok(())
+        Ok(Some(()))
     }
 
     /// Reads a common header for sections 1-7 and returns the section
     /// number and size.  Since offset is not determined within this
     /// function, the `offset` and `body` fields in returned `SectionInfo`
     /// struct is set to `0` and `None` respectively.
-    fn read_sect_meta(&mut self) -> Result<SectionInfo, ParseError> {
+    fn read_sect_meta(&mut self) -> Result<Option<SectionInfo>, ParseError> {
         let mut buf = [0; SECT_HEADER_SIZE];
-        self.read_exact(&mut buf[..])?;
+        let size = self.read(&mut buf[..])?;
+        check_size!(size, buf.len());
 
         let sect_size = read_as!(u32, buf, 0) as usize;
         let sect_num = buf[4];
 
-        Ok(SectionInfo {
+        Ok(Some(SectionInfo {
             num: sect_num,
             offset: 0,
             size: sect_size,
             body: None,
-        })
+        }))
     }
 
     fn read_sect(&mut self, meta: &SectionInfo) -> Result<SectionBody, ParseError> {
@@ -427,9 +462,6 @@ mod tests {
                 Ok((6, 178, 6)),
                 Ok((7, 184, 5)),
                 Ok((8, 189, 4)),
-                Err(ParseError::ReadError(
-                    "failed to fill whole buffer".to_owned()
-                ))
             ]
         );
 
@@ -473,6 +505,129 @@ mod tests {
                 Ok((6, 371, 6)),
                 Ok((7, 377, 5)),
                 Ok((8, 382, 4)),
+            ]
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn read_grib2_message_with_incomplete_section_0() -> Result<(), Box<dyn std::error::Error>> {
+        let f = std::fs::File::open(
+            "testdata/icon_global_icosahedral_single-level_2021112018_000_TOT_PREC.grib2",
+        )?;
+        let mut f = std::io::BufReader::new(f);
+        let mut buf = Vec::new();
+        f.read_to_end(&mut buf)?;
+
+        let mut extra_bytes = "extra".as_bytes().to_vec();
+        buf.append(&mut extra_bytes);
+        let f = Cursor::new(buf);
+
+        let grib2_reader = SeekableGrib2Reader::new(f);
+        let sect_stream = Grib2SectionStream::new(grib2_reader);
+        assert_eq!(
+            sect_stream
+                .take(10)
+                .map(|result| result.map(|sect| (sect.num, sect.offset, sect.size)))
+                .collect::<Vec<_>>(),
+            vec![
+                Ok((0, 0, 16)),
+                Ok((1, 16, 21)),
+                Ok((2, 37, 27)),
+                Ok((3, 64, 35)),
+                Ok((4, 99, 58)),
+                Ok((5, 157, 21)),
+                Ok((6, 178, 6)),
+                Ok((7, 184, 5)),
+                Ok((8, 189, 4)),
+                Err(ParseError::ReadError(
+                    "failed to fill whole buffer".to_owned()
+                ))
+            ]
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn read_grib2_message_with_incomplete_section_1() -> Result<(), Box<dyn std::error::Error>> {
+        let f = std::fs::File::open(
+            "testdata/icon_global_icosahedral_single-level_2021112018_000_TOT_PREC.grib2",
+        )?;
+        let mut f = std::io::BufReader::new(f);
+        let mut buf = Vec::new();
+        f.read_to_end(&mut buf)?;
+
+        let mut message_2_bytes = buf[..(SECT0_IS_SIZE + 1)].to_vec();
+        buf.append(&mut message_2_bytes);
+        let f = Cursor::new(buf);
+
+        let grib2_reader = SeekableGrib2Reader::new(f);
+        let sect_stream = Grib2SectionStream::new(grib2_reader);
+        assert_eq!(
+            sect_stream
+                .take(19)
+                .map(|result| result.map(|sect| (sect.num, sect.offset, sect.size)))
+                .collect::<Vec<_>>(),
+            vec![
+                Ok((0, 0, 16)),
+                Ok((1, 16, 21)),
+                Ok((2, 37, 27)),
+                Ok((3, 64, 35)),
+                Ok((4, 99, 58)),
+                Ok((5, 157, 21)),
+                Ok((6, 178, 6)),
+                Ok((7, 184, 5)),
+                Ok((8, 189, 4)),
+                Ok((0, 193, 16)),
+                Err(ParseError::ReadError(
+                    "failed to fill whole buffer".to_owned()
+                ))
+            ]
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn read_grib2_message_with_incomplete_section_8() -> Result<(), Box<dyn std::error::Error>> {
+        let f = std::fs::File::open(
+            "testdata/icon_global_icosahedral_single-level_2021112018_000_TOT_PREC.grib2",
+        )?;
+        let mut f = std::io::BufReader::new(f);
+        let mut buf = Vec::new();
+        f.read_to_end(&mut buf)?;
+
+        let mut repeated_message = buf.repeat(2);
+        repeated_message.pop();
+        let f = Cursor::new(repeated_message);
+
+        let grib2_reader = SeekableGrib2Reader::new(f);
+        let sect_stream = Grib2SectionStream::new(grib2_reader);
+        assert_eq!(
+            sect_stream
+                .take(19)
+                .map(|result| result.map(|sect| (sect.num, sect.offset, sect.size)))
+                .collect::<Vec<_>>(),
+            vec![
+                Ok((0, 0, 16)),
+                Ok((1, 16, 21)),
+                Ok((2, 37, 27)),
+                Ok((3, 64, 35)),
+                Ok((4, 99, 58)),
+                Ok((5, 157, 21)),
+                Ok((6, 178, 6)),
+                Ok((7, 184, 5)),
+                Ok((8, 189, 4)),
+                Ok((0, 193, 16)),
+                Ok((1, 209, 21)),
+                Ok((2, 230, 27)),
+                Ok((3, 257, 35)),
+                Ok((4, 292, 58)),
+                Ok((5, 350, 21)),
+                Ok((6, 371, 6)),
+                Ok((7, 377, 5)),
                 Err(ParseError::ReadError(
                     "failed to fill whole buffer".to_owned()
                 ))
