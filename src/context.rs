@@ -10,9 +10,9 @@ use crate::codetables::{
 use crate::datatypes::*;
 use crate::decoders;
 use crate::error::*;
-use crate::reader::{Grib2Read, SeekableGrib2Reader};
+use crate::reader::{Grib2Read, SeekableGrib2Reader, SECT8_ES_SIZE};
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Default, Debug, Clone, PartialEq, Eq)]
 pub struct SectionInfo {
     pub num: u8,
     pub offset: usize,
@@ -24,6 +24,15 @@ impl SectionInfo {
     pub fn get_tmpl_code(&self) -> Option<TemplateInfo> {
         let tmpl_num = self.body.as_ref()?.get_tmpl_num()?;
         Some(TemplateInfo(self.num, tmpl_num))
+    }
+
+    pub(crate) fn new_8(offset: usize) -> Self {
+        Self {
+            num: 8,
+            offset,
+            size: SECT8_ES_SIZE,
+            body: None,
+        }
     }
 }
 

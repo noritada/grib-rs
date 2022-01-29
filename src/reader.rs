@@ -13,7 +13,7 @@ const SECT0_IS_MAGIC_SIZE: usize = SECT0_IS_MAGIC.len();
 const SECT0_IS_SIZE: usize = 16;
 const SECT_HEADER_SIZE: usize = 5;
 const SECT8_ES_MAGIC: &[u8] = b"7777";
-const SECT8_ES_SIZE: usize = SECT8_ES_MAGIC.len();
+pub(crate) const SECT8_ES_SIZE: usize = SECT8_ES_MAGIC.len();
 
 macro_rules! read_as {
     ($ty:ty, $buf:ident, $start:expr) => {{
