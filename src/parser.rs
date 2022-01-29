@@ -54,10 +54,10 @@ where
     fn new_unexpected_end_of_data_err(
         &self,
     ) -> Option<Result<(usize, usize, Submessage), ParseError>> {
-        return Some(Err(ParseError::UnexpectedEndOfData(
+        Some(Err(ParseError::UnexpectedEndOfData(
             self.message_count,
             self.submessage_count,
-        )));
+        )))
     }
 
     fn new_invalid_section_order_err(
@@ -70,10 +70,10 @@ where
     }
 
     fn new_no_grid_definition_err(&self) -> Option<Result<(usize, usize, Submessage), ParseError>> {
-        return Some(Err(ParseError::NoGridDefinition(
+        Some(Err(ParseError::NoGridDefinition(
             self.message_count,
             self.submessage_count,
-        )));
+        )))
     }
 }
 
