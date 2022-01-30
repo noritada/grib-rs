@@ -22,6 +22,35 @@ macro_rules! read_as {
     }};
 }
 
+/// # Example
+/// ```
+/// use grib::context::{SectionBody, SectionInfo};
+/// use grib::datatypes::Indicator;
+/// use grib::reader::{Grib2SectionStream, SeekableGrib2Reader};
+///
+/// fn main() -> Result<(), Box<dyn std::error::Error>> {
+///     let f = std::fs::File::open(
+///         "testdata/icon_global_icosahedral_single-level_2021112018_000_TOT_PREC.grib2",
+///     )?;
+///     let f = std::io::BufReader::new(f);
+///     let grib2_reader = SeekableGrib2Reader::new(f);
+///
+///     let mut sect_stream = Grib2SectionStream::new(grib2_reader);
+///     assert_eq!(
+///         sect_stream.next(),
+///         Some(Ok(SectionInfo {
+///             num: 0,
+///             offset: 0,
+///             size: 16,
+///             body: Some(SectionBody::Section0(Indicator {
+///                 discipline: 0,
+///                 total_length: 193,
+///             })),
+///         }))
+///     );
+///     Ok(())
+/// }
+/// ```
 pub struct Grib2SectionStream<R> {
     reader: R,
     whole_size: usize,
@@ -115,35 +144,6 @@ where
 {
     type Item = Result<SectionInfo, ParseError>;
 
-    /// # Example
-    /// ```
-    /// use grib::context::{SectionBody, SectionInfo};
-    /// use grib::datatypes::Indicator;
-    /// use grib::reader::{Grib2SectionStream, SeekableGrib2Reader};
-    ///
-    /// fn main() -> Result<(), Box<dyn std::error::Error>> {
-    ///     let f = std::fs::File::open(
-    ///         "testdata/icon_global_icosahedral_single-level_2021112018_000_TOT_PREC.grib2",
-    ///     )?;
-    ///     let f = std::io::BufReader::new(f);
-    ///     let grib2_reader = SeekableGrib2Reader::new(f);
-    ///
-    ///     let mut sect_stream = Grib2SectionStream::new(grib2_reader);
-    ///     assert_eq!(
-    ///         sect_stream.next(),
-    ///         Some(Ok(SectionInfo {
-    ///             num: 0,
-    ///             offset: 0,
-    ///             size: 16,
-    ///             body: Some(SectionBody::Section0(Indicator {
-    ///                 discipline: 0,
-    ///                 total_length: 193,
-    ///             })),
-    ///         }))
-    ///     );
-    ///     Ok(())
-    /// }
-    /// ```
     fn next(&mut self) -> Option<Result<SectionInfo, ParseError>> {
         match self.rest_size {
             0 => self.next_sect0(),
