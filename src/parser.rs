@@ -14,6 +14,58 @@ pub struct Submessage(
     pub SectionInfo,
 );
 
+///
+/// # Example
+/// In every `Submessage`, the `offset` of all Section 8 is always set to 0
+/// since this parser only reads required submessages from the beginning of the
+/// file.
+///
+/// ```
+/// use grib::context::{SectionBody, SectionInfo};
+/// use grib::datatypes::Indicator;
+/// use grib::parser::Grib2SubmessageStream;
+/// use grib::reader::{Grib2SectionStream, SeekableGrib2Reader};
+///
+/// fn main() -> Result<(), Box<dyn std::error::Error>> {
+///     let f = std::fs::File::open(
+///         "testdata/icon_global_icosahedral_single-level_2021112018_000_TOT_PREC.grib2",
+///     )?;
+///     let f = std::io::BufReader::new(f);
+///     let grib2_reader = SeekableGrib2Reader::new(f);
+///
+///     let sect_stream = Grib2SectionStream::new(grib2_reader);
+///     let mut parser = Grib2SubmessageStream::new(sect_stream);
+///
+///     let first = parser.next();
+///     assert!(first.is_some());
+///
+///     let first = first.unwrap();
+///     assert!(first.is_ok());
+///
+///     let first = first.unwrap();
+///     let (message_index, submessage_index, submessage) = first;
+///     assert_eq!(message_index, 0);
+///     assert_eq!(submessage_index, 0);
+///     assert_eq!(
+///         (
+///             submessage.0.offset,
+///             submessage.1.offset,
+///             submessage.2.map(|s| s.offset),
+///             submessage.3.offset,
+///             submessage.4.offset,
+///             submessage.5.offset,
+///             submessage.6.offset,
+///             submessage.7.offset,
+///             submessage.8.offset
+///         ),
+///         (0, 16, Some(37), 64, 99, 157, 178, 184, 0)
+///     );
+///
+///     let second = parser.next();
+///     assert!(second.is_none());
+///     Ok(())
+/// }
+/// ```
 pub struct Grib2SubmessageStream<I>
 where
     I: Iterator,
@@ -32,6 +84,22 @@ impl<I> Grib2SubmessageStream<I>
 where
     I: Iterator,
 {
+    /// # Example
+    /// ```
+    /// use grib::parser::Grib2SubmessageStream;
+    /// use grib::reader::{Grib2SectionStream, SeekableGrib2Reader};
+    ///
+    /// fn main() -> Result<(), Box<dyn std::error::Error>> {
+    ///     let f = std::fs::File::open(
+    ///         "testdata/icon_global_icosahedral_single-level_2021112018_000_TOT_PREC.grib2",
+    ///     )?;
+    ///     let mut f = std::io::BufReader::new(f);
+    ///     let grib2_reader = SeekableGrib2Reader::new(f);
+    ///     let sect_stream = Grib2SectionStream::new(grib2_reader);
+    ///     let _parser = Grib2SubmessageStream::new(sect_stream);
+    ///     Ok(())
+    /// }
+    /// ```
     pub fn new(iter: I) -> Self {
         Self {
             iter: iter.peekable(),
