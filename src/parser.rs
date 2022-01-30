@@ -45,7 +45,7 @@ where
         }
     }
 
-    pub fn clear_submessage_cache(&mut self) {
+    fn clear_submessage_cache(&mut self) {
         self.submessage_count = 0;
         self.sect0 = Default::default();
         self.sect1 = Default::default();
