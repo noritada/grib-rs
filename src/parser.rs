@@ -45,7 +45,7 @@ where
         }
     }
 
-    pub fn initialize_submessage_cache(&mut self) {
+    pub fn clear_submessage_cache(&mut self) {
         self.submessage_count = 0;
         self.sect0 = Default::default();
         self.sect1 = Default::default();
@@ -198,7 +198,7 @@ where
             Ok(SectionInfo { num: 8, .. }) => {
                 self.iter.next();
                 self.message_count += 1;
-                self.initialize_submessage_cache();
+                self.clear_submessage_cache();
             }
             _ => {
                 self.submessage_count += 1;
