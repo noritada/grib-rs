@@ -25,6 +25,7 @@ where
     sect1: SectionInfo,
     sect2: Option<SectionInfo>,
     sect3: SectionInfo,
+    terminated: bool,
 }
 
 impl<I> Grib2SubmessageStream<I>
@@ -40,6 +41,7 @@ where
             sect1: Default::default(),
             sect2: Default::default(),
             sect3: Default::default(),
+            terminated: false,
         }
     }
 
@@ -52,8 +54,9 @@ where
     }
 
     fn new_unexpected_end_of_data_err(
-        &self,
+        &mut self,
     ) -> Option<Result<(usize, usize, Submessage), ParseError>> {
+        self.terminated = true;
         Some(Err(ParseError::UnexpectedEndOfData(
             self.message_count,
             self.submessage_count,
@@ -61,15 +64,19 @@ where
     }
 
     fn new_invalid_section_order_err(
-        &self,
+        &mut self,
     ) -> Option<Result<(usize, usize, Submessage), ParseError>> {
+        self.terminated = true;
         Some(Err(ParseError::InvalidSectionOrder(
             self.message_count,
             self.submessage_count,
         )))
     }
 
-    fn new_no_grid_definition_err(&self) -> Option<Result<(usize, usize, Submessage), ParseError>> {
+    fn new_no_grid_definition_err(
+        &mut self,
+    ) -> Option<Result<(usize, usize, Submessage), ParseError>> {
+        self.terminated = true;
         Some(Err(ParseError::NoGridDefinition(
             self.message_count,
             self.submessage_count,
@@ -103,6 +110,10 @@ where
 
                 sect
             }};
+        }
+
+        if self.terminated {
+            return None;
         }
 
         if self.submessage_count == 0 {
@@ -505,6 +516,183 @@ mod tests {
                 .map(|result| result.map(|i| digest_submessage_iter_item(i)))
                 .collect::<Vec<_>>(),
             vec![Err(ParseError::UnexpectedEndOfData(0, 0)),],
+        );
+    }
+
+    #[test]
+    fn submessage_stream_from_submessage_without_sect3() {
+        let sects = new_sect_vec_with_dummy_offset(vec![0, 1, 4, 5, 6, 7, 8]);
+
+        assert_eq!(
+            Grib2SubmessageStream::new(sects.into_iter())
+                .map(|result| result.map(|i| digest_submessage_iter_item(i)))
+                .collect::<Vec<_>>(),
+            vec![Err(ParseError::NoGridDefinition(0, 0)),],
+        );
+    }
+
+    #[test]
+    fn submessage_stream_wrongly_ordered_from_the_beginning() {
+        let sects = new_sect_vec_with_dummy_offset(vec![1, 0, 2, 3, 4, 5, 6, 7, 8]);
+
+        assert_eq!(
+            Grib2SubmessageStream::new(sects.into_iter())
+                .map(|result| result.map(|i| digest_submessage_iter_item(i)))
+                .collect::<Vec<_>>(),
+            vec![Err(ParseError::InvalidSectionOrder(0, 0)),],
+        );
+    }
+
+    #[test]
+    fn submessage_stream_wrongly_ordered_after_sect0() {
+        let sects = new_sect_vec_with_dummy_offset(vec![0, 2, 1, 3, 4, 5, 6, 7, 8]);
+
+        assert_eq!(
+            Grib2SubmessageStream::new(sects.into_iter())
+                .map(|result| result.map(|i| digest_submessage_iter_item(i)))
+                .collect::<Vec<_>>(),
+            vec![Err(ParseError::InvalidSectionOrder(0, 0)),],
+        );
+    }
+
+    #[test]
+    fn submessage_stream_wrongly_ordered_after_sect1() {
+        let sects = new_sect_vec_with_dummy_offset(vec![0, 1, 5, 2, 3, 4, 6, 7, 8]);
+
+        assert_eq!(
+            Grib2SubmessageStream::new(sects.into_iter())
+                .map(|result| result.map(|i| digest_submessage_iter_item(i)))
+                .collect::<Vec<_>>(),
+            vec![Err(ParseError::InvalidSectionOrder(0, 0)),],
+        );
+    }
+
+    #[test]
+    fn submessage_stream_wrongly_ordered_after_sect2() {
+        let sects = new_sect_vec_with_dummy_offset(vec![0, 1, 2, 4, 3, 5, 6, 7, 8]);
+
+        assert_eq!(
+            Grib2SubmessageStream::new(sects.into_iter())
+                .map(|result| result.map(|i| digest_submessage_iter_item(i)))
+                .collect::<Vec<_>>(),
+            vec![Err(ParseError::InvalidSectionOrder(0, 0)),],
+        );
+    }
+
+    #[test]
+    fn submessage_stream_wrongly_ordered_after_sect3() {
+        let sects = new_sect_vec_with_dummy_offset(vec![0, 1, 2, 3, 5, 4, 6, 7, 8]);
+
+        assert_eq!(
+            Grib2SubmessageStream::new(sects.into_iter())
+                .map(|result| result.map(|i| digest_submessage_iter_item(i)))
+                .collect::<Vec<_>>(),
+            vec![Err(ParseError::InvalidSectionOrder(0, 0)),],
+        );
+    }
+
+    #[test]
+    fn submessage_stream_wrongly_ordered_after_sect3_without_sect2() {
+        let sects = new_sect_vec_with_dummy_offset(vec![0, 1, 3, 5, 4, 6, 7, 8]);
+
+        assert_eq!(
+            Grib2SubmessageStream::new(sects.into_iter())
+                .map(|result| result.map(|i| digest_submessage_iter_item(i)))
+                .collect::<Vec<_>>(),
+            vec![Err(ParseError::InvalidSectionOrder(0, 0)),],
+        );
+    }
+
+    #[test]
+    fn submessage_stream_wrongly_ordered_after_sect4() {
+        let sects = new_sect_vec_with_dummy_offset(vec![0, 1, 2, 3, 4, 6, 5, 7, 8]);
+
+        assert_eq!(
+            Grib2SubmessageStream::new(sects.into_iter())
+                .map(|result| result.map(|i| digest_submessage_iter_item(i)))
+                .collect::<Vec<_>>(),
+            vec![Err(ParseError::InvalidSectionOrder(0, 0)),],
+        );
+    }
+
+    #[test]
+    fn submessage_stream_wrongly_ordered_after_sect4_without_sect2() {
+        let sects = new_sect_vec_with_dummy_offset(vec![0, 1, 3, 4, 6, 5, 7, 8]);
+
+        assert_eq!(
+            Grib2SubmessageStream::new(sects.into_iter())
+                .map(|result| result.map(|i| digest_submessage_iter_item(i)))
+                .collect::<Vec<_>>(),
+            vec![Err(ParseError::InvalidSectionOrder(0, 0)),],
+        );
+    }
+
+    #[test]
+    fn submessage_stream_wrongly_ordered_after_sect5() {
+        let sects = new_sect_vec_with_dummy_offset(vec![0, 1, 2, 3, 4, 5, 7, 6, 8]);
+
+        assert_eq!(
+            Grib2SubmessageStream::new(sects.into_iter())
+                .map(|result| result.map(|i| digest_submessage_iter_item(i)))
+                .collect::<Vec<_>>(),
+            vec![Err(ParseError::InvalidSectionOrder(0, 0)),],
+        );
+    }
+
+    #[test]
+    fn submessage_stream_wrongly_ordered_after_sect6() {
+        let sects = new_sect_vec_with_dummy_offset(vec![0, 1, 2, 3, 4, 5, 6, 8, 7]);
+
+        assert_eq!(
+            Grib2SubmessageStream::new(sects.into_iter())
+                .map(|result| result.map(|i| digest_submessage_iter_item(i)))
+                .collect::<Vec<_>>(),
+            vec![Err(ParseError::InvalidSectionOrder(0, 0)),],
+        );
+    }
+
+    #[test]
+    fn submessage_stream_with_2nd_submessage_wrongly_ordered_from_the_beginning() {
+        let sects = new_sect_vec_with_dummy_offset(vec![0, 1, 2, 3, 4, 5, 6, 7, 0, 8]);
+
+        assert_eq!(
+            Grib2SubmessageStream::new(sects.into_iter())
+                .map(|result| result.map(|i| digest_submessage_iter_item(i)))
+                .collect::<Vec<_>>(),
+            vec![
+                Ok((0, 0, 0, 1, Some(2), 3, 4, 5, 6, 7, 0)),
+                Err(ParseError::InvalidSectionOrder(0, 1)),
+            ],
+        );
+    }
+
+    #[test]
+    fn submessage_stream_with_2nd_submessage_wrongly_ordered_after_sect2() {
+        let sects = new_sect_vec_with_dummy_offset(vec![0, 1, 2, 3, 4, 5, 6, 7, 2, 8]);
+
+        assert_eq!(
+            Grib2SubmessageStream::new(sects.into_iter())
+                .map(|result| result.map(|i| digest_submessage_iter_item(i)))
+                .collect::<Vec<_>>(),
+            vec![
+                Ok((0, 0, 0, 1, Some(2), 3, 4, 5, 6, 7, 0)),
+                Err(ParseError::InvalidSectionOrder(0, 1)),
+            ],
+        );
+    }
+
+    #[test]
+    fn submessage_stream_with_2nd_submessage_wrongly_ordered_after_sect4_without_sect2_and_sect3() {
+        let sects = new_sect_vec_with_dummy_offset(vec![0, 1, 2, 3, 4, 5, 6, 7, 4, 8]);
+
+        assert_eq!(
+            Grib2SubmessageStream::new(sects.into_iter())
+                .map(|result| result.map(|i| digest_submessage_iter_item(i)))
+                .collect::<Vec<_>>(),
+            vec![
+                Ok((0, 0, 0, 1, Some(2), 3, 4, 5, 6, 7, 0)),
+                Err(ParseError::InvalidSectionOrder(0, 1)),
+            ],
         );
     }
 }
