@@ -1,6 +1,6 @@
 use crate::context::SectionInfo;
 use crate::error::*;
-use std::iter::Peekable;
+use std::iter::{Enumerate, Peekable};
 
 pub struct Submessage(
     pub SectionInfo,
@@ -70,7 +70,8 @@ pub struct Grib2SubmessageStream<I>
 where
     I: Iterator,
 {
-    iter: Peekable<I>,
+    iter: Peekable<Enumerate<I>>,
+    pos: usize,
     message_count: usize,
     submessage_count: usize,
     sect0: SectionInfo,
@@ -102,7 +103,8 @@ where
     /// ```
     pub fn new(iter: I) -> Self {
         Self {
-            iter: iter.peekable(),
+            iter: iter.enumerate().peekable(),
+            pos: 0,
             message_count: 0,
             submessage_count: 0,
             sect0: Default::default(),
@@ -125,30 +127,21 @@ where
         &mut self,
     ) -> Option<Result<(usize, usize, Submessage), ParseError>> {
         self.terminated = true;
-        Some(Err(ParseError::UnexpectedEndOfData(
-            self.message_count,
-            self.submessage_count,
-        )))
+        Some(Err(ParseError::UnexpectedEndOfData(self.pos)))
     }
 
     fn new_invalid_section_order_err(
         &mut self,
     ) -> Option<Result<(usize, usize, Submessage), ParseError>> {
         self.terminated = true;
-        Some(Err(ParseError::InvalidSectionOrder(
-            self.message_count,
-            self.submessage_count,
-        )))
+        Some(Err(ParseError::InvalidSectionOrder(self.pos)))
     }
 
     fn new_no_grid_definition_err(
         &mut self,
     ) -> Option<Result<(usize, usize, Submessage), ParseError>> {
         self.terminated = true;
-        Some(Err(ParseError::NoGridDefinition(
-            self.message_count,
-            self.submessage_count,
-        )))
+        Some(Err(ParseError::NoGridDefinition(self.pos)))
     }
 }
 
@@ -161,16 +154,17 @@ where
     fn next(&mut self) -> Option<Result<(usize, usize, Submessage), ParseError>> {
         macro_rules! check_next_sect {
             ($num:expr) => {{
-                let sect = self.iter.next();
-                if sect.is_none() {
+                let next = self.iter.next();
+                if next.is_none() {
                     return self.new_unexpected_end_of_data_err();
                 }
 
-                let sect = sect.unwrap();
+                let (pos, sect) = next.unwrap();
                 if let Err(e) = sect {
                     return Some(Err(e));
                 }
 
+                self.pos = pos;
                 let sect = sect.unwrap();
                 if sect.num != $num {
                     return self.new_invalid_section_order_err();
@@ -185,11 +179,12 @@ where
         }
 
         if self.submessage_count == 0 {
-            let sect0 = self.iter.next()?;
+            let (pos, sect0) = self.iter.next()?;
             if let Err(e) = sect0 {
                 return Some(Err(e));
             }
 
+            self.pos = pos;
             self.sect0 = sect0.unwrap();
             if self.sect0.num != 0 {
                 return self.new_invalid_section_order_err();
@@ -202,11 +197,12 @@ where
         if sect.is_none() {
             return self.new_unexpected_end_of_data_err();
         }
-        let sect = sect.unwrap();
+        let (pos, sect) = sect.unwrap();
         if let Err(e) = sect {
             return Some(Err(e));
         }
 
+        self.pos = pos;
         let sect = sect.unwrap();
         let sect4 = match sect.num {
             2 => {
@@ -254,10 +250,10 @@ where
             return self.new_unexpected_end_of_data_err();
         }
 
-        let sect8 = sect8.unwrap();
+        let (_, sect8) = sect8.unwrap();
         match sect8 {
             Err(_) => {
-                if let Some(Err(e)) = self.iter.next() {
+                if let Some((_, Err(e))) = self.iter.next() {
                     return Some(Err(e));
                 } else {
                     unreachable!()
@@ -499,7 +495,7 @@ mod tests {
             Grib2SubmessageStream::new(sects.into_iter())
                 .map(|result| result.map(|i| digest_submessage_iter_item(i)))
                 .collect::<Vec<_>>(),
-            vec![Err(ParseError::UnexpectedEndOfData(0, 0)),],
+            vec![Err(ParseError::UnexpectedEndOfData(0)),],
         );
     }
 
@@ -511,7 +507,7 @@ mod tests {
             Grib2SubmessageStream::new(sects.into_iter())
                 .map(|result| result.map(|i| digest_submessage_iter_item(i)))
                 .collect::<Vec<_>>(),
-            vec![Err(ParseError::UnexpectedEndOfData(0, 0)),],
+            vec![Err(ParseError::UnexpectedEndOfData(1)),],
         );
     }
 
@@ -523,7 +519,7 @@ mod tests {
             Grib2SubmessageStream::new(sects.into_iter())
                 .map(|result| result.map(|i| digest_submessage_iter_item(i)))
                 .collect::<Vec<_>>(),
-            vec![Err(ParseError::UnexpectedEndOfData(0, 0)),],
+            vec![Err(ParseError::UnexpectedEndOfData(2)),],
         );
     }
 
@@ -535,7 +531,7 @@ mod tests {
             Grib2SubmessageStream::new(sects.into_iter())
                 .map(|result| result.map(|i| digest_submessage_iter_item(i)))
                 .collect::<Vec<_>>(),
-            vec![Err(ParseError::UnexpectedEndOfData(0, 0)),],
+            vec![Err(ParseError::UnexpectedEndOfData(3)),],
         );
     }
 
@@ -547,7 +543,7 @@ mod tests {
             Grib2SubmessageStream::new(sects.into_iter())
                 .map(|result| result.map(|i| digest_submessage_iter_item(i)))
                 .collect::<Vec<_>>(),
-            vec![Err(ParseError::UnexpectedEndOfData(0, 0)),],
+            vec![Err(ParseError::UnexpectedEndOfData(2)),],
         );
     }
 
@@ -559,7 +555,7 @@ mod tests {
             Grib2SubmessageStream::new(sects.into_iter())
                 .map(|result| result.map(|i| digest_submessage_iter_item(i)))
                 .collect::<Vec<_>>(),
-            vec![Err(ParseError::UnexpectedEndOfData(0, 0)),],
+            vec![Err(ParseError::UnexpectedEndOfData(4)),],
         );
     }
 
@@ -571,7 +567,7 @@ mod tests {
             Grib2SubmessageStream::new(sects.into_iter())
                 .map(|result| result.map(|i| digest_submessage_iter_item(i)))
                 .collect::<Vec<_>>(),
-            vec![Err(ParseError::UnexpectedEndOfData(0, 0)),],
+            vec![Err(ParseError::UnexpectedEndOfData(3)),],
         );
     }
 
@@ -583,7 +579,7 @@ mod tests {
             Grib2SubmessageStream::new(sects.into_iter())
                 .map(|result| result.map(|i| digest_submessage_iter_item(i)))
                 .collect::<Vec<_>>(),
-            vec![Err(ParseError::UnexpectedEndOfData(0, 0)),],
+            vec![Err(ParseError::UnexpectedEndOfData(7)),],
         );
     }
 
@@ -595,7 +591,7 @@ mod tests {
             Grib2SubmessageStream::new(sects.into_iter())
                 .map(|result| result.map(|i| digest_submessage_iter_item(i)))
                 .collect::<Vec<_>>(),
-            vec![Err(ParseError::NoGridDefinition(0, 0)),],
+            vec![Err(ParseError::NoGridDefinition(2)),],
         );
     }
 
@@ -607,7 +603,7 @@ mod tests {
             Grib2SubmessageStream::new(sects.into_iter())
                 .map(|result| result.map(|i| digest_submessage_iter_item(i)))
                 .collect::<Vec<_>>(),
-            vec![Err(ParseError::InvalidSectionOrder(0, 0)),],
+            vec![Err(ParseError::InvalidSectionOrder(0)),],
         );
     }
 
@@ -619,7 +615,7 @@ mod tests {
             Grib2SubmessageStream::new(sects.into_iter())
                 .map(|result| result.map(|i| digest_submessage_iter_item(i)))
                 .collect::<Vec<_>>(),
-            vec![Err(ParseError::InvalidSectionOrder(0, 0)),],
+            vec![Err(ParseError::InvalidSectionOrder(1)),],
         );
     }
 
@@ -631,7 +627,7 @@ mod tests {
             Grib2SubmessageStream::new(sects.into_iter())
                 .map(|result| result.map(|i| digest_submessage_iter_item(i)))
                 .collect::<Vec<_>>(),
-            vec![Err(ParseError::InvalidSectionOrder(0, 0)),],
+            vec![Err(ParseError::InvalidSectionOrder(2)),],
         );
     }
 
@@ -643,7 +639,7 @@ mod tests {
             Grib2SubmessageStream::new(sects.into_iter())
                 .map(|result| result.map(|i| digest_submessage_iter_item(i)))
                 .collect::<Vec<_>>(),
-            vec![Err(ParseError::InvalidSectionOrder(0, 0)),],
+            vec![Err(ParseError::InvalidSectionOrder(3)),],
         );
     }
 
@@ -655,7 +651,7 @@ mod tests {
             Grib2SubmessageStream::new(sects.into_iter())
                 .map(|result| result.map(|i| digest_submessage_iter_item(i)))
                 .collect::<Vec<_>>(),
-            vec![Err(ParseError::InvalidSectionOrder(0, 0)),],
+            vec![Err(ParseError::InvalidSectionOrder(4)),],
         );
     }
 
@@ -667,7 +663,7 @@ mod tests {
             Grib2SubmessageStream::new(sects.into_iter())
                 .map(|result| result.map(|i| digest_submessage_iter_item(i)))
                 .collect::<Vec<_>>(),
-            vec![Err(ParseError::InvalidSectionOrder(0, 0)),],
+            vec![Err(ParseError::InvalidSectionOrder(3)),],
         );
     }
 
@@ -679,7 +675,7 @@ mod tests {
             Grib2SubmessageStream::new(sects.into_iter())
                 .map(|result| result.map(|i| digest_submessage_iter_item(i)))
                 .collect::<Vec<_>>(),
-            vec![Err(ParseError::InvalidSectionOrder(0, 0)),],
+            vec![Err(ParseError::InvalidSectionOrder(5)),],
         );
     }
 
@@ -691,7 +687,7 @@ mod tests {
             Grib2SubmessageStream::new(sects.into_iter())
                 .map(|result| result.map(|i| digest_submessage_iter_item(i)))
                 .collect::<Vec<_>>(),
-            vec![Err(ParseError::InvalidSectionOrder(0, 0)),],
+            vec![Err(ParseError::InvalidSectionOrder(4)),],
         );
     }
 
@@ -703,7 +699,7 @@ mod tests {
             Grib2SubmessageStream::new(sects.into_iter())
                 .map(|result| result.map(|i| digest_submessage_iter_item(i)))
                 .collect::<Vec<_>>(),
-            vec![Err(ParseError::InvalidSectionOrder(0, 0)),],
+            vec![Err(ParseError::InvalidSectionOrder(6)),],
         );
     }
 
@@ -715,7 +711,7 @@ mod tests {
             Grib2SubmessageStream::new(sects.into_iter())
                 .map(|result| result.map(|i| digest_submessage_iter_item(i)))
                 .collect::<Vec<_>>(),
-            vec![Err(ParseError::InvalidSectionOrder(0, 0)),],
+            vec![Err(ParseError::InvalidSectionOrder(7)),],
         );
     }
 
@@ -729,7 +725,7 @@ mod tests {
                 .collect::<Vec<_>>(),
             vec![
                 Ok((0, 0, 0, 1, Some(2), 3, 4, 5, 6, 7, 0)),
-                Err(ParseError::InvalidSectionOrder(0, 1)),
+                Err(ParseError::InvalidSectionOrder(8)),
             ],
         );
     }
@@ -744,7 +740,7 @@ mod tests {
                 .collect::<Vec<_>>(),
             vec![
                 Ok((0, 0, 0, 1, Some(2), 3, 4, 5, 6, 7, 0)),
-                Err(ParseError::InvalidSectionOrder(0, 1)),
+                Err(ParseError::InvalidSectionOrder(9)),
             ],
         );
     }
@@ -759,7 +755,7 @@ mod tests {
                 .collect::<Vec<_>>(),
             vec![
                 Ok((0, 0, 0, 1, Some(2), 3, 4, 5, 6, 7, 0)),
-                Err(ParseError::InvalidSectionOrder(0, 1)),
+                Err(ParseError::InvalidSectionOrder(9)),
             ],
         );
     }

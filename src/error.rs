@@ -59,9 +59,9 @@ pub enum ParseError {
     GRIBVersionMismatch(u8),
     UnknownSectionNumber(u8),
     EndSectionMismatch,
-    UnexpectedEndOfData(usize, usize),
-    InvalidSectionOrder(usize, usize),
-    NoGridDefinition(usize, usize),
+    UnexpectedEndOfData(usize),
+    InvalidSectionOrder(usize),
+    NoGridDefinition(usize),
 }
 
 impl Error for ParseError {
@@ -80,14 +80,14 @@ impl Display for ParseError {
             Self::GRIBVersionMismatch(i) => write!(f, "Not GRIB version 2: {}", i),
             Self::UnknownSectionNumber(s) => write!(f, "Unknown section number: {}", s),
             Self::EndSectionMismatch => write!(f, "Content of End Section is not valid"),
-            Self::UnexpectedEndOfData(i1, i2) => {
-                write!(f, "Unexpected end of data at {}, {}", i1, i2)
+            Self::UnexpectedEndOfData(i) => {
+                write!(f, "Unexpected end of data at {}", i)
             }
-            Self::InvalidSectionOrder(i1, i2) => {
-                write!(f, "GRIB2 sections wrongly ordered at {}, {}", i1, i2)
+            Self::InvalidSectionOrder(i) => {
+                write!(f, "GRIB2 sections wrongly ordered at {}", i)
             }
-            Self::NoGridDefinition(i1, i2) => {
-                write!(f, "Grid Definition Section not found at {}, {}", i1, i2)
+            Self::NoGridDefinition(i) => {
+                write!(f, "Grid Definition Section not found at {}", i)
             }
         }
     }
