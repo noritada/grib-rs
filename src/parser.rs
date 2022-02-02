@@ -755,4 +755,215 @@ mod tests {
             ],
         );
     }
+
+    fn new_sect_vec_with_dummy_offset_and_errors(
+        vec: Vec<Result<u8, ParseError>>,
+    ) -> Vec<Result<SectionInfo, ParseError>> {
+        vec.iter()
+            .enumerate()
+            .map(|(index, result)| {
+                result.clone().map(|num| SectionInfo {
+                    num: num,
+                    offset: index,
+                    ..Default::default()
+                })
+            })
+            .collect::<Vec<_>>()
+    }
+
+    #[test]
+    fn submessage_stream_with_sect_streem_error_at_sect0_in_1st_submessage() {
+        let sects = new_sect_vec_with_dummy_offset_and_errors(vec![Err(ParseError::ReadError(
+            "failed to fill whole buffer".to_owned(),
+        ))]);
+
+        assert_eq!(
+            Grib2SubmessageStream::new(sects.into_iter())
+                .map(|result| result.map(|i| digest_submessage_iter_item(i)))
+                .collect::<Vec<_>>(),
+            vec![Err(ParseError::ReadError(
+                "failed to fill whole buffer".to_owned()
+            )),],
+        );
+    }
+
+    #[test]
+    fn submessage_stream_with_sect_streem_error_at_sect1_in_1st_submessage() {
+        let sects = new_sect_vec_with_dummy_offset_and_errors(vec![
+            Ok(0),
+            Err(ParseError::ReadError(
+                "failed to fill whole buffer".to_owned(),
+            )),
+        ]);
+
+        assert_eq!(
+            Grib2SubmessageStream::new(sects.into_iter())
+                .map(|result| result.map(|i| digest_submessage_iter_item(i)))
+                .collect::<Vec<_>>(),
+            vec![Err(ParseError::ReadError(
+                "failed to fill whole buffer".to_owned()
+            )),],
+        );
+    }
+
+    #[test]
+    fn submessage_stream_with_sect_streem_error_at_sect2_in_1st_submessage() {
+        let sects = new_sect_vec_with_dummy_offset_and_errors(vec![
+            Ok(0),
+            Ok(1),
+            Err(ParseError::ReadError(
+                "failed to fill whole buffer".to_owned(),
+            )),
+        ]);
+
+        assert_eq!(
+            Grib2SubmessageStream::new(sects.into_iter())
+                .map(|result| result.map(|i| digest_submessage_iter_item(i)))
+                .collect::<Vec<_>>(),
+            vec![Err(ParseError::ReadError(
+                "failed to fill whole buffer".to_owned()
+            )),],
+        );
+    }
+
+    #[test]
+    fn submessage_stream_with_sect_streem_error_at_sect3_in_1st_submessage() {
+        let sects = new_sect_vec_with_dummy_offset_and_errors(vec![
+            Ok(0),
+            Ok(1),
+            Ok(2),
+            Err(ParseError::ReadError(
+                "failed to fill whole buffer".to_owned(),
+            )),
+        ]);
+
+        assert_eq!(
+            Grib2SubmessageStream::new(sects.into_iter())
+                .map(|result| result.map(|i| digest_submessage_iter_item(i)))
+                .collect::<Vec<_>>(),
+            vec![Err(ParseError::ReadError(
+                "failed to fill whole buffer".to_owned()
+            )),],
+        );
+    }
+
+    #[test]
+    fn submessage_stream_with_sect_streem_error_at_sect4_in_1st_submessage() {
+        let sects = new_sect_vec_with_dummy_offset_and_errors(vec![
+            Ok(0),
+            Ok(1),
+            Ok(2),
+            Ok(3),
+            Err(ParseError::ReadError(
+                "failed to fill whole buffer".to_owned(),
+            )),
+        ]);
+
+        assert_eq!(
+            Grib2SubmessageStream::new(sects.into_iter())
+                .map(|result| result.map(|i| digest_submessage_iter_item(i)))
+                .collect::<Vec<_>>(),
+            vec![Err(ParseError::ReadError(
+                "failed to fill whole buffer".to_owned()
+            )),],
+        );
+    }
+
+    #[test]
+    fn submessage_stream_with_sect_streem_error_at_sect5_in_1st_submessage() {
+        let sects = new_sect_vec_with_dummy_offset_and_errors(vec![
+            Ok(0),
+            Ok(1),
+            Ok(2),
+            Ok(3),
+            Ok(4),
+            Err(ParseError::ReadError(
+                "failed to fill whole buffer".to_owned(),
+            )),
+        ]);
+
+        assert_eq!(
+            Grib2SubmessageStream::new(sects.into_iter())
+                .map(|result| result.map(|i| digest_submessage_iter_item(i)))
+                .collect::<Vec<_>>(),
+            vec![Err(ParseError::ReadError(
+                "failed to fill whole buffer".to_owned()
+            )),],
+        );
+    }
+
+    #[test]
+    fn submessage_stream_with_sect_streem_error_at_sect6_in_1st_submessage() {
+        let sects = new_sect_vec_with_dummy_offset_and_errors(vec![
+            Ok(0),
+            Ok(1),
+            Ok(2),
+            Ok(3),
+            Ok(4),
+            Ok(5),
+            Err(ParseError::ReadError(
+                "failed to fill whole buffer".to_owned(),
+            )),
+        ]);
+
+        assert_eq!(
+            Grib2SubmessageStream::new(sects.into_iter())
+                .map(|result| result.map(|i| digest_submessage_iter_item(i)))
+                .collect::<Vec<_>>(),
+            vec![Err(ParseError::ReadError(
+                "failed to fill whole buffer".to_owned()
+            )),],
+        );
+    }
+
+    #[test]
+    fn submessage_stream_with_sect_streem_error_at_sect7_in_1st_submessage() {
+        let sects = new_sect_vec_with_dummy_offset_and_errors(vec![
+            Ok(0),
+            Ok(1),
+            Ok(2),
+            Ok(3),
+            Ok(4),
+            Ok(5),
+            Ok(6),
+            Err(ParseError::ReadError(
+                "failed to fill whole buffer".to_owned(),
+            )),
+        ]);
+
+        assert_eq!(
+            Grib2SubmessageStream::new(sects.into_iter())
+                .map(|result| result.map(|i| digest_submessage_iter_item(i)))
+                .collect::<Vec<_>>(),
+            vec![Err(ParseError::ReadError(
+                "failed to fill whole buffer".to_owned()
+            )),],
+        );
+    }
+
+    #[test]
+    fn submessage_stream_with_sect_streem_error_at_sect8_in_1st_submessage() {
+        let sects = new_sect_vec_with_dummy_offset_and_errors(vec![
+            Ok(0),
+            Ok(1),
+            Ok(2),
+            Ok(3),
+            Ok(4),
+            Ok(5),
+            Ok(6),
+            Ok(7),
+            Err(ParseError::ReadError(
+                "failed to fill whole buffer".to_owned(),
+            )),
+        ]);
+
+        assert_eq!(
+            Grib2SubmessageStream::new(sects.into_iter())
+                .map(|result| result.map(|i| digest_submessage_iter_item(i)))
+                .collect::<Vec<_>>(),
+            vec![Err(ParseError::ReadError(
+                "failed to fill whole buffer".to_owned()
+            )),],
+        );
+    }
 }
