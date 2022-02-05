@@ -778,7 +778,7 @@ mod tests {
     }
 
     #[test]
-    fn submessage_stream_with_sect_streem_error_at_sect0_in_1st_submessage() {
+    fn submessage_stream_with_sect_stream_error_at_sect0_in_1st_submessage() {
         let sects = new_sect_vec_with_dummy_offset_and_errors(vec![Err(ParseError::ReadError(
             "failed to fill whole buffer".to_owned(),
         ))]);
@@ -794,7 +794,7 @@ mod tests {
     }
 
     #[test]
-    fn submessage_stream_with_sect_streem_error_at_sect1_in_1st_submessage() {
+    fn submessage_stream_with_sect_stream_error_at_sect1_in_1st_submessage() {
         let sects = new_sect_vec_with_dummy_offset_and_errors(vec![
             Ok(0),
             Err(ParseError::ReadError(
@@ -813,7 +813,7 @@ mod tests {
     }
 
     #[test]
-    fn submessage_stream_with_sect_streem_error_at_sect2_in_1st_submessage() {
+    fn submessage_stream_with_sect_stream_error_at_sect2_in_1st_submessage() {
         let sects = new_sect_vec_with_dummy_offset_and_errors(vec![
             Ok(0),
             Ok(1),
@@ -833,7 +833,7 @@ mod tests {
     }
 
     #[test]
-    fn submessage_stream_with_sect_streem_error_at_sect3_in_1st_submessage() {
+    fn submessage_stream_with_sect_stream_error_at_sect3_in_1st_submessage() {
         let sects = new_sect_vec_with_dummy_offset_and_errors(vec![
             Ok(0),
             Ok(1),
@@ -854,7 +854,7 @@ mod tests {
     }
 
     #[test]
-    fn submessage_stream_with_sect_streem_error_at_sect4_in_1st_submessage() {
+    fn submessage_stream_with_sect_stream_error_at_sect4_in_1st_submessage() {
         let sects = new_sect_vec_with_dummy_offset_and_errors(vec![
             Ok(0),
             Ok(1),
@@ -876,7 +876,7 @@ mod tests {
     }
 
     #[test]
-    fn submessage_stream_with_sect_streem_error_at_sect5_in_1st_submessage() {
+    fn submessage_stream_with_sect_stream_error_at_sect5_in_1st_submessage() {
         let sects = new_sect_vec_with_dummy_offset_and_errors(vec![
             Ok(0),
             Ok(1),
@@ -899,7 +899,7 @@ mod tests {
     }
 
     #[test]
-    fn submessage_stream_with_sect_streem_error_at_sect6_in_1st_submessage() {
+    fn submessage_stream_with_sect_stream_error_at_sect6_in_1st_submessage() {
         let sects = new_sect_vec_with_dummy_offset_and_errors(vec![
             Ok(0),
             Ok(1),
@@ -923,7 +923,7 @@ mod tests {
     }
 
     #[test]
-    fn submessage_stream_with_sect_streem_error_at_sect7_in_1st_submessage() {
+    fn submessage_stream_with_sect_stream_error_at_sect7_in_1st_submessage() {
         let sects = new_sect_vec_with_dummy_offset_and_errors(vec![
             Ok(0),
             Ok(1),
@@ -948,7 +948,7 @@ mod tests {
     }
 
     #[test]
-    fn submessage_stream_with_sect_streem_error_at_sect8_in_1st_submessage() {
+    fn submessage_stream_with_sect_stream_error_at_sect8_in_1st_submessage() {
         let sects = new_sect_vec_with_dummy_offset_and_errors(vec![
             Ok(0),
             Ok(1),
