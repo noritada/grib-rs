@@ -152,20 +152,23 @@ where
     type Item = Result<(usize, usize, Submessage), ParseError>;
 
     fn next(&mut self) -> Option<Result<(usize, usize, Submessage), ParseError>> {
-        macro_rules! check_next_sect {
+        macro_rules! ensure_next_sect_num {
             ($num:expr) => {{
-                let next = self.iter.next();
-                if let Some((pos, Ok(s))) = next {
-                    self.pos = pos;
-                    if s.num == $num {
-                        s
-                    } else {
-                        return self.new_invalid_section_order_err();
+                match self.iter.next() {
+                    Some((pos, Ok(s))) => {
+                        self.pos = pos;
+                        if s.num == $num {
+                            s
+                        } else {
+                            return self.new_invalid_section_order_err();
+                        }
                     }
-                } else if let Some((_, Err(e))) = next {
-                    return Some(Err(e));
-                } else {
-                    return self.new_unexpected_end_of_data_err();
+                    Some((_, Err(e))) => {
+                        return Some(Err(e));
+                    }
+                    None => {
+                        return self.new_unexpected_end_of_data_err();
+                    }
                 }
             }};
         }
@@ -175,40 +178,45 @@ where
         }
 
         if self.submessage_count == 0 {
-            let next = self.iter.next()?;
-            if let (pos, Ok(s)) = next {
-                self.pos = pos;
-                if s.num == 0 {
-                    self.sect0 = s
-                } else {
-                    return self.new_invalid_section_order_err();
+            match self.iter.next()? {
+                (pos, Ok(s)) => {
+                    self.pos = pos;
+                    if s.num == 0 {
+                        self.sect0 = s
+                    } else {
+                        return self.new_invalid_section_order_err();
+                    }
                 }
-            } else if let (_, Err(e)) = next {
-                return Some(Err(e));
+                (_, Err(e)) => {
+                    return Some(Err(e));
+                }
             }
 
-            self.sect1 = check_next_sect!(1);
+            self.sect1 = ensure_next_sect_num!(1);
         }
 
-        let next = self.iter.next();
-        let sect = if let Some((pos, Ok(s))) = next {
-            self.pos = pos;
-            s
-        } else if let Some((_, Err(e))) = next {
-            return Some(Err(e));
-        } else {
-            return self.new_unexpected_end_of_data_err();
+        let sect = match self.iter.next() {
+            Some((pos, Ok(s))) => {
+                self.pos = pos;
+                s
+            }
+            Some((_, Err(e))) => {
+                return Some(Err(e));
+            }
+            _ => {
+                return self.new_unexpected_end_of_data_err();
+            }
         };
 
         let sect4 = match sect.num {
             2 => {
                 self.sect2 = Some(sect);
-                self.sect3 = check_next_sect!(3);
-                check_next_sect!(4)
+                self.sect3 = ensure_next_sect_num!(3);
+                ensure_next_sect_num!(4)
             }
             3 => {
                 self.sect3 = sect;
-                check_next_sect!(4)
+                ensure_next_sect_num!(4)
             }
             4 => {
                 if self.sect3.num == 0 {
@@ -221,9 +229,9 @@ where
             }
         };
 
-        let sect5 = check_next_sect!(5);
-        let sect6 = check_next_sect!(6);
-        let sect7 = check_next_sect!(7);
+        let sect5 = ensure_next_sect_num!(5);
+        let sect6 = ensure_next_sect_num!(6);
+        let sect7 = ensure_next_sect_num!(7);
 
         let next_value = Some(Ok((
             self.message_count,
@@ -242,25 +250,23 @@ where
         )));
 
         let sect8 = self.iter.peek();
-        if sect8.is_none() {
-            return self.new_unexpected_end_of_data_err();
-        }
-
-        let (_, sect8) = sect8.unwrap();
         match sect8 {
-            Err(_) => {
+            None => {
+                return self.new_unexpected_end_of_data_err();
+            }
+            Some((_, Err(_))) => {
                 if let Some((_, Err(e))) = self.iter.next() {
                     return Some(Err(e));
                 } else {
                     unreachable!()
                 }
             }
-            Ok(SectionInfo { num: 8, .. }) => {
+            Some((_, Ok(SectionInfo { num: 8, .. }))) => {
                 self.iter.next();
                 self.message_count += 1;
                 self.clear_submessage_cache();
             }
-            _ => {
+            Some((_, Ok(_))) => {
                 self.submessage_count += 1;
             }
         }
