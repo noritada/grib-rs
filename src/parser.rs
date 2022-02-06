@@ -554,9 +554,7 @@ mod tests {
             .collect::<Vec<_>>()
     }
 
-    fn digest_submessage_iter_item(
-        item: (usize, usize, Submessage),
-    ) -> (
+    type SubmessageDigest = (
         usize,
         usize,
         usize,
@@ -568,7 +566,9 @@ mod tests {
         usize,
         usize,
         usize,
-    ) {
+    );
+
+    fn digest_submessage_iter_item(item: (usize, usize, Submessage)) -> SubmessageDigest {
         let (i1, i2, submessage) = item;
         (
             i1,
@@ -585,21 +585,7 @@ mod tests {
         )
     }
 
-    fn digest_submessage_index_iter_item(
-        item: (usize, usize, SubmessageRef),
-    ) -> (
-        usize,
-        usize,
-        usize,
-        usize,
-        Option<usize>,
-        usize,
-        usize,
-        usize,
-        usize,
-        usize,
-        usize,
-    ) {
+    fn digest_submessage_index_iter_item(item: (usize, usize, SubmessageRef)) -> SubmessageDigest {
         let (i1, i2, submessage) = item;
         (
             i1,
