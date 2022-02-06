@@ -14,6 +14,18 @@ pub struct Submessage(
     pub SectionInfo,
 );
 
+struct SubmessageRef(
+    usize,
+    usize,
+    Option<usize>,
+    usize,
+    usize,
+    usize,
+    usize,
+    usize,
+    usize,
+);
+
 ///
 /// # Example
 /// In all but the last `Submessage` in a message, the `offset` of Section 8 is
@@ -179,6 +191,133 @@ where
                     }
                     _ => unreachable!(),
                 },
+            }
+        }
+    }
+}
+
+struct Grib2SubmessageIndexStream<'cacher, I>
+where
+    I: Iterator,
+{
+    iter: Grib2SubmessageValidator<I>,
+    sect_cacher: Option<&'cacher mut Vec<SectionInfo>>,
+    sect0: usize,
+    sect1: usize,
+    sect2: Option<usize>,
+    sect3: usize,
+}
+
+impl<'cacher, I> Grib2SubmessageIndexStream<'cacher, I>
+where
+    I: Iterator,
+{
+    fn new(iter: I) -> Self {
+        Self {
+            iter: Grib2SubmessageValidator::new(iter),
+            sect_cacher: None,
+            sect0: Default::default(),
+            sect1: Default::default(),
+            sect2: Default::default(),
+            sect3: Default::default(),
+        }
+    }
+
+    fn with_cacher(mut self, cacher: &'cacher mut Vec<SectionInfo>) -> Self {
+        self.sect_cacher = Some(cacher);
+        self
+    }
+
+    fn cache_sect(&mut self, sect: SectionInfo) {
+        if let Some(cacher) = self.sect_cacher.as_mut() {
+            cacher.push(sect);
+        }
+    }
+
+    fn clear_message_cache(&mut self) {
+        self.sect0 = Default::default();
+        self.sect1 = Default::default();
+        self.sect2 = Default::default();
+        self.sect3 = Default::default();
+    }
+}
+
+impl<'cacher, I> Iterator for Grib2SubmessageIndexStream<'cacher, I>
+where
+    I: Iterator<Item = Result<SectionInfo, ParseError>>,
+{
+    type Item = Result<(usize, usize, SubmessageRef), ParseError>;
+
+    fn next(&mut self) -> Option<Result<(usize, usize, SubmessageRef), ParseError>> {
+        let mut sect4 = Default::default();
+        let mut sect5 = Default::default();
+        let mut sect6 = Default::default();
+        let mut sect7 = Default::default();
+        loop {
+            match self.iter.next()? {
+                Err(e) => return Some(Err(e)),
+                Ok((pos, message_count, submessage_count, s)) => {
+                    let num = s.num;
+                    match num {
+                        0 => {
+                            self.cache_sect(s);
+                            self.sect0 = pos;
+                        }
+                        1 => {
+                            self.cache_sect(s);
+                            self.sect1 = pos;
+                        }
+                        2 => {
+                            self.cache_sect(s);
+                            self.sect2 = Some(pos);
+                        }
+                        3 => {
+                            self.cache_sect(s);
+                            self.sect3 = pos;
+                        }
+                        4 => {
+                            self.cache_sect(s);
+                            sect4 = pos;
+                        }
+                        5 => {
+                            self.cache_sect(s);
+                            sect5 = pos;
+                        }
+                        6 => {
+                            self.cache_sect(s);
+                            sect6 = pos;
+                        }
+                        7 => {
+                            self.cache_sect(s);
+                            sect7 = pos;
+                        }
+                        8 => {
+                            let ret = Some(Ok((
+                                message_count,
+                                submessage_count,
+                                SubmessageRef(
+                                    self.sect0.clone(),
+                                    self.sect1.clone(),
+                                    self.sect2.clone(),
+                                    self.sect3.clone(),
+                                    sect4,
+                                    sect5,
+                                    sect6,
+                                    sect7,
+                                    pos,
+                                ),
+                            )));
+
+                            // if pos is 0, it is dummy
+                            if pos != 0 {
+                                self.cache_sect(s);
+                                self.clear_message_cache();
+                            }
+                            return ret;
+                        }
+                        _ => unreachable!(),
+                    }
+                }
             }
         }
     }
@@ -450,6 +589,37 @@ mod tests {
             submessage.6.offset,
             submessage.7.offset,
             submessage.8.offset,
+        )
+    }
+
+    fn digest_submessage_index_iter_item(
+        item: (usize, usize, SubmessageRef),
+    ) -> (
+        usize,
+        usize,
+        usize,
+        usize,
+        Option<usize>,
+        usize,
+        usize,
+        usize,
+        usize,
+        usize,
+        usize,
+    ) {
+        let (i1, i2, submessage) = item;
+        (
+            i1,
+            i2,
+            submessage.0,
+            submessage.1,
+            submessage.2,
+            submessage.3,
+            submessage.4,
+            submessage.5,
+            submessage.6,
+            submessage.7,
+            submessage.8,
         )
     }
 
@@ -1101,5 +1271,28 @@ mod tests {
                 "failed to fill whole buffer".to_owned()
             )),],
         );
+    }
+
+    #[test]
+    fn submessage_index_stream_from_multiple_messages_and_submessages_with_sect2_toggled() {
+        // testing cache of submessage_count and sect2
+        let sect_nums = vec![
+            0, 1, 2, 3, 4, 5, 6, 7, 2, 3, 4, 5, 6, 7, 8, 0, 1, 3, 4, 5, 6, 7, 8,
+        ];
+        let sects = new_sect_vec_with_dummy_offset(sect_nums.clone());
+
+        let mut cacher = Vec::new();
+        let stream = Grib2SubmessageIndexStream::new(sects.into_iter()).with_cacher(&mut cacher);
+        assert_eq!(
+            stream
+                .map(|result| result.map(|i| digest_submessage_index_iter_item(i)))
+                .collect::<Vec<_>>(),
+            vec![
+                Ok((0, 0, 0, 1, Some(2), 3, 4, 5, 6, 7, 0)),
+                Ok((0, 1, 0, 1, Some(8), 9, 10, 11, 12, 13, 14)),
+                Ok((1, 0, 15, 16, None, 17, 18, 19, 20, 21, 22))
+            ],
+        );
+        assert_eq!(cacher.iter().map(|s| s.num).collect::<Vec<_>>(), sect_nums,);
     }
 }
