@@ -14,16 +14,16 @@ pub struct Submessage(
     pub SectionInfo,
 );
 
-struct SubmessageRef(
-    usize,
-    usize,
-    Option<usize>,
-    usize,
-    usize,
-    usize,
-    usize,
-    usize,
-    usize,
+pub(crate) struct SubmessageRef(
+    pub(crate) usize,
+    pub(crate) usize,
+    pub(crate) Option<usize>,
+    pub(crate) usize,
+    pub(crate) usize,
+    pub(crate) usize,
+    pub(crate) usize,
+    pub(crate) usize,
+    pub(crate) usize,
 );
 
 ///
@@ -196,7 +196,7 @@ where
     }
 }
 
-struct Grib2SubmessageIndexStream<'cacher, I>
+pub(crate) struct Grib2SubmessageIndexStream<'cacher, I>
 where
     I: Iterator,
 {
@@ -212,7 +212,8 @@ impl<'cacher, I> Grib2SubmessageIndexStream<'cacher, I>
 where
     I: Iterator,
 {
-    fn new(iter: I) -> Self {
+    #[allow(dead_code)] // tentative
+    pub(crate) fn new(iter: I) -> Self {
         Self {
             iter: Grib2SubmessageValidator::new(iter),
             sect_cacher: None,
@@ -223,7 +224,8 @@ where
         }
     }
 
-    fn with_cacher(mut self, cacher: &'cacher mut Vec<SectionInfo>) -> Self {
+    #[allow(dead_code)] // tentative
+    pub(crate) fn with_cacher(mut self, cacher: &'cacher mut Vec<SectionInfo>) -> Self {
         self.sect_cacher = Some(cacher);
         self
     }
