@@ -296,15 +296,8 @@ where
                                 message_count,
                                 submessage_count,
                                 SubmessageRef(
-                                    self.sect0.clone(),
-                                    self.sect1.clone(),
-                                    self.sect2.clone(),
-                                    self.sect3.clone(),
-                                    sect4,
-                                    sect5,
-                                    sect6,
-                                    sect7,
-                                    pos,
+                                    self.sect0, self.sect1, self.sect2, self.sect3, sect4, sect5,
+                                    sect6, sect7, pos,
                                 ),
                             )));
 
@@ -629,7 +622,7 @@ mod tests {
 
         assert_eq!(
             Grib2SubmessageStream::new(sects.into_iter())
-                .map(|result| result.map(|i| digest_submessage_iter_item(i)))
+                .map(|result| result.map(digest_submessage_iter_item))
                 .collect::<Vec<_>>(),
             vec![Ok((0, 0, 0, 1, Some(2), 3, 4, 5, 6, 7, 8))],
         );
@@ -643,7 +636,7 @@ mod tests {
 
         assert_eq!(
             Grib2SubmessageStream::new(sects.into_iter())
-                .map(|result| result.map(|i| digest_submessage_iter_item(i)))
+                .map(|result| result.map(digest_submessage_iter_item))
                 .collect::<Vec<_>>(),
             vec![
                 Ok((0, 0, 0, 1, Some(2), 3, 4, 5, 6, 7, 8)),
@@ -658,7 +651,7 @@ mod tests {
 
         assert_eq!(
             Grib2SubmessageStream::new(sects.into_iter())
-                .map(|result| result.map(|i| digest_submessage_iter_item(i)))
+                .map(|result| result.map(digest_submessage_iter_item))
                 .collect::<Vec<_>>(),
             Vec::new(),
         );
@@ -671,7 +664,7 @@ mod tests {
 
         assert_eq!(
             Grib2SubmessageStream::new(sects.into_iter())
-                .map(|result| result.map(|i| digest_submessage_iter_item(i)))
+                .map(|result| result.map(digest_submessage_iter_item))
                 .collect::<Vec<_>>(),
             vec![
                 Ok((0, 0, 0, 1, None, 2, 3, 4, 5, 6, 7)),
@@ -687,7 +680,7 @@ mod tests {
 
         assert_eq!(
             Grib2SubmessageStream::new(sects.into_iter())
-                .map(|result| result.map(|i| digest_submessage_iter_item(i)))
+                .map(|result| result.map(digest_submessage_iter_item))
                 .collect::<Vec<_>>(),
             vec![
                 Ok((0, 0, 0, 1, Some(2), 3, 4, 5, 6, 7, 0)),
@@ -702,7 +695,7 @@ mod tests {
 
         assert_eq!(
             Grib2SubmessageStream::new(sects.into_iter())
-                .map(|result| result.map(|i| digest_submessage_iter_item(i)))
+                .map(|result| result.map(digest_submessage_iter_item))
                 .collect::<Vec<_>>(),
             vec![
                 Ok((0, 0, 0, 1, None, 2, 3, 4, 5, 6, 0)),
@@ -717,7 +710,7 @@ mod tests {
 
         assert_eq!(
             Grib2SubmessageStream::new(sects.into_iter())
-                .map(|result| result.map(|i| digest_submessage_iter_item(i)))
+                .map(|result| result.map(digest_submessage_iter_item))
                 .collect::<Vec<_>>(),
             vec![
                 Ok((0, 0, 0, 1, Some(2), 3, 4, 5, 6, 7, 0)),
@@ -732,7 +725,7 @@ mod tests {
 
         assert_eq!(
             Grib2SubmessageStream::new(sects.into_iter())
-                .map(|result| result.map(|i| digest_submessage_iter_item(i)))
+                .map(|result| result.map(digest_submessage_iter_item))
                 .collect::<Vec<_>>(),
             vec![
                 Ok((0, 0, 0, 1, None, 2, 3, 4, 5, 6, 0)),
@@ -746,7 +739,7 @@ mod tests {
 
         assert_eq!(
             Grib2SubmessageStream::new(sects.into_iter())
-                .map(|result| result.map(|i| digest_submessage_iter_item(i)))
+                .map(|result| result.map(digest_submessage_iter_item))
                 .collect::<Vec<_>>(),
             vec![
                 Ok((0, 0, 0, 1, Some(2), 3, 4, 5, 6, 7, 0)),
@@ -761,7 +754,7 @@ mod tests {
 
         assert_eq!(
             Grib2SubmessageStream::new(sects.into_iter())
-                .map(|result| result.map(|i| digest_submessage_iter_item(i)))
+                .map(|result| result.map(digest_submessage_iter_item))
                 .collect::<Vec<_>>(),
             vec![
                 Ok((0, 0, 0, 1, None, 2, 3, 4, 5, 6, 0)),
@@ -779,7 +772,7 @@ mod tests {
 
         assert_eq!(
             Grib2SubmessageStream::new(sects.into_iter())
-                .map(|result| result.map(|i| digest_submessage_iter_item(i)))
+                .map(|result| result.map(digest_submessage_iter_item))
                 .collect::<Vec<_>>(),
             vec![
                 Ok((0, 0, 0, 1, Some(2), 3, 4, 5, 6, 7, 0)),
@@ -795,7 +788,7 @@ mod tests {
 
         assert_eq!(
             Grib2SubmessageStream::new(sects.into_iter())
-                .map(|result| result.map(|i| digest_submessage_iter_item(i)))
+                .map(|result| result.map(digest_submessage_iter_item))
                 .collect::<Vec<_>>(),
             vec![Err(ParseError::UnexpectedEndOfData(0)),],
         );
@@ -807,7 +800,7 @@ mod tests {
 
         assert_eq!(
             Grib2SubmessageStream::new(sects.into_iter())
-                .map(|result| result.map(|i| digest_submessage_iter_item(i)))
+                .map(|result| result.map(digest_submessage_iter_item))
                 .collect::<Vec<_>>(),
             vec![Err(ParseError::UnexpectedEndOfData(1)),],
         );
@@ -819,7 +812,7 @@ mod tests {
 
         assert_eq!(
             Grib2SubmessageStream::new(sects.into_iter())
-                .map(|result| result.map(|i| digest_submessage_iter_item(i)))
+                .map(|result| result.map(digest_submessage_iter_item))
                 .collect::<Vec<_>>(),
             vec![Err(ParseError::UnexpectedEndOfData(2)),],
         );
@@ -831,7 +824,7 @@ mod tests {
 
         assert_eq!(
             Grib2SubmessageStream::new(sects.into_iter())
-                .map(|result| result.map(|i| digest_submessage_iter_item(i)))
+                .map(|result| result.map(digest_submessage_iter_item))
                 .collect::<Vec<_>>(),
             vec![Err(ParseError::UnexpectedEndOfData(3)),],
         );
@@ -843,7 +836,7 @@ mod tests {
 
         assert_eq!(
             Grib2SubmessageStream::new(sects.into_iter())
-                .map(|result| result.map(|i| digest_submessage_iter_item(i)))
+                .map(|result| result.map(digest_submessage_iter_item))
                 .collect::<Vec<_>>(),
             vec![Err(ParseError::UnexpectedEndOfData(2)),],
         );
@@ -855,7 +848,7 @@ mod tests {
 
         assert_eq!(
             Grib2SubmessageStream::new(sects.into_iter())
-                .map(|result| result.map(|i| digest_submessage_iter_item(i)))
+                .map(|result| result.map(digest_submessage_iter_item))
                 .collect::<Vec<_>>(),
             vec![Err(ParseError::UnexpectedEndOfData(4)),],
         );
@@ -867,7 +860,7 @@ mod tests {
 
         assert_eq!(
             Grib2SubmessageStream::new(sects.into_iter())
-                .map(|result| result.map(|i| digest_submessage_iter_item(i)))
+                .map(|result| result.map(digest_submessage_iter_item))
                 .collect::<Vec<_>>(),
             vec![Err(ParseError::UnexpectedEndOfData(3)),],
         );
@@ -879,7 +872,7 @@ mod tests {
 
         assert_eq!(
             Grib2SubmessageStream::new(sects.into_iter())
-                .map(|result| result.map(|i| digest_submessage_iter_item(i)))
+                .map(|result| result.map(digest_submessage_iter_item))
                 .collect::<Vec<_>>(),
             vec![Err(ParseError::UnexpectedEndOfData(7)),],
         );
@@ -891,7 +884,7 @@ mod tests {
 
         assert_eq!(
             Grib2SubmessageStream::new(sects.into_iter())
-                .map(|result| result.map(|i| digest_submessage_iter_item(i)))
+                .map(|result| result.map(digest_submessage_iter_item))
                 .collect::<Vec<_>>(),
             vec![Err(ParseError::NoGridDefinition(2)),],
         );
@@ -903,7 +896,7 @@ mod tests {
 
         assert_eq!(
             Grib2SubmessageStream::new(sects.into_iter())
-                .map(|result| result.map(|i| digest_submessage_iter_item(i)))
+                .map(|result| result.map(digest_submessage_iter_item))
                 .collect::<Vec<_>>(),
             vec![Err(ParseError::InvalidSectionOrder(0)),],
         );
@@ -915,7 +908,7 @@ mod tests {
 
         assert_eq!(
             Grib2SubmessageStream::new(sects.into_iter())
-                .map(|result| result.map(|i| digest_submessage_iter_item(i)))
+                .map(|result| result.map(digest_submessage_iter_item))
                 .collect::<Vec<_>>(),
             vec![Err(ParseError::InvalidSectionOrder(1)),],
         );
@@ -927,7 +920,7 @@ mod tests {
 
         assert_eq!(
             Grib2SubmessageStream::new(sects.into_iter())
-                .map(|result| result.map(|i| digest_submessage_iter_item(i)))
+                .map(|result| result.map(digest_submessage_iter_item))
                 .collect::<Vec<_>>(),
             vec![Err(ParseError::InvalidSectionOrder(2)),],
         );
@@ -939,7 +932,7 @@ mod tests {
 
         assert_eq!(
             Grib2SubmessageStream::new(sects.into_iter())
-                .map(|result| result.map(|i| digest_submessage_iter_item(i)))
+                .map(|result| result.map(digest_submessage_iter_item))
                 .collect::<Vec<_>>(),
             vec![Err(ParseError::InvalidSectionOrder(3)),],
         );
@@ -951,7 +944,7 @@ mod tests {
 
         assert_eq!(
             Grib2SubmessageStream::new(sects.into_iter())
-                .map(|result| result.map(|i| digest_submessage_iter_item(i)))
+                .map(|result| result.map(digest_submessage_iter_item))
                 .collect::<Vec<_>>(),
             vec![Err(ParseError::InvalidSectionOrder(4)),],
         );
@@ -963,7 +956,7 @@ mod tests {
 
         assert_eq!(
             Grib2SubmessageStream::new(sects.into_iter())
-                .map(|result| result.map(|i| digest_submessage_iter_item(i)))
+                .map(|result| result.map(digest_submessage_iter_item))
                 .collect::<Vec<_>>(),
             vec![Err(ParseError::InvalidSectionOrder(3)),],
         );
@@ -975,7 +968,7 @@ mod tests {
 
         assert_eq!(
             Grib2SubmessageStream::new(sects.into_iter())
-                .map(|result| result.map(|i| digest_submessage_iter_item(i)))
+                .map(|result| result.map(digest_submessage_iter_item))
                 .collect::<Vec<_>>(),
             vec![Err(ParseError::InvalidSectionOrder(5)),],
         );
@@ -987,7 +980,7 @@ mod tests {
 
         assert_eq!(
             Grib2SubmessageStream::new(sects.into_iter())
-                .map(|result| result.map(|i| digest_submessage_iter_item(i)))
+                .map(|result| result.map(digest_submessage_iter_item))
                 .collect::<Vec<_>>(),
             vec![Err(ParseError::InvalidSectionOrder(4)),],
         );
@@ -999,7 +992,7 @@ mod tests {
 
         assert_eq!(
             Grib2SubmessageStream::new(sects.into_iter())
-                .map(|result| result.map(|i| digest_submessage_iter_item(i)))
+                .map(|result| result.map(digest_submessage_iter_item))
                 .collect::<Vec<_>>(),
             vec![Err(ParseError::InvalidSectionOrder(6)),],
         );
@@ -1011,7 +1004,7 @@ mod tests {
 
         assert_eq!(
             Grib2SubmessageStream::new(sects.into_iter())
-                .map(|result| result.map(|i| digest_submessage_iter_item(i)))
+                .map(|result| result.map(digest_submessage_iter_item))
                 .collect::<Vec<_>>(),
             vec![Err(ParseError::InvalidSectionOrder(7)),],
         );
@@ -1023,7 +1016,7 @@ mod tests {
 
         assert_eq!(
             Grib2SubmessageStream::new(sects.into_iter())
-                .map(|result| result.map(|i| digest_submessage_iter_item(i)))
+                .map(|result| result.map(digest_submessage_iter_item))
                 .collect::<Vec<_>>(),
             vec![
                 Ok((0, 0, 0, 1, Some(2), 3, 4, 5, 6, 7, 0)),
@@ -1038,7 +1031,7 @@ mod tests {
 
         assert_eq!(
             Grib2SubmessageStream::new(sects.into_iter())
-                .map(|result| result.map(|i| digest_submessage_iter_item(i)))
+                .map(|result| result.map(digest_submessage_iter_item))
                 .collect::<Vec<_>>(),
             vec![
                 Ok((0, 0, 0, 1, Some(2), 3, 4, 5, 6, 7, 0)),
@@ -1053,7 +1046,7 @@ mod tests {
 
         assert_eq!(
             Grib2SubmessageStream::new(sects.into_iter())
-                .map(|result| result.map(|i| digest_submessage_iter_item(i)))
+                .map(|result| result.map(digest_submessage_iter_item))
                 .collect::<Vec<_>>(),
             vec![
                 Ok((0, 0, 0, 1, Some(2), 3, 4, 5, 6, 7, 0)),
@@ -1069,7 +1062,7 @@ mod tests {
             .enumerate()
             .map(|(index, result)| {
                 result.clone().map(|num| SectionInfo {
-                    num: num,
+                    num,
                     offset: index,
                     ..Default::default()
                 })
@@ -1085,7 +1078,7 @@ mod tests {
 
         assert_eq!(
             Grib2SubmessageStream::new(sects.into_iter())
-                .map(|result| result.map(|i| digest_submessage_iter_item(i)))
+                .map(|result| result.map(digest_submessage_iter_item))
                 .collect::<Vec<_>>(),
             vec![Err(ParseError::ReadError(
                 "failed to fill whole buffer".to_owned()
@@ -1104,7 +1097,7 @@ mod tests {
 
         assert_eq!(
             Grib2SubmessageStream::new(sects.into_iter())
-                .map(|result| result.map(|i| digest_submessage_iter_item(i)))
+                .map(|result| result.map(digest_submessage_iter_item))
                 .collect::<Vec<_>>(),
             vec![Err(ParseError::ReadError(
                 "failed to fill whole buffer".to_owned()
@@ -1124,7 +1117,7 @@ mod tests {
 
         assert_eq!(
             Grib2SubmessageStream::new(sects.into_iter())
-                .map(|result| result.map(|i| digest_submessage_iter_item(i)))
+                .map(|result| result.map(digest_submessage_iter_item))
                 .collect::<Vec<_>>(),
             vec![Err(ParseError::ReadError(
                 "failed to fill whole buffer".to_owned()
@@ -1145,7 +1138,7 @@ mod tests {
 
         assert_eq!(
             Grib2SubmessageStream::new(sects.into_iter())
-                .map(|result| result.map(|i| digest_submessage_iter_item(i)))
+                .map(|result| result.map(digest_submessage_iter_item))
                 .collect::<Vec<_>>(),
             vec![Err(ParseError::ReadError(
                 "failed to fill whole buffer".to_owned()
@@ -1167,7 +1160,7 @@ mod tests {
 
         assert_eq!(
             Grib2SubmessageStream::new(sects.into_iter())
-                .map(|result| result.map(|i| digest_submessage_iter_item(i)))
+                .map(|result| result.map(digest_submessage_iter_item))
                 .collect::<Vec<_>>(),
             vec![Err(ParseError::ReadError(
                 "failed to fill whole buffer".to_owned()
@@ -1190,7 +1183,7 @@ mod tests {
 
         assert_eq!(
             Grib2SubmessageStream::new(sects.into_iter())
-                .map(|result| result.map(|i| digest_submessage_iter_item(i)))
+                .map(|result| result.map(digest_submessage_iter_item))
                 .collect::<Vec<_>>(),
             vec![Err(ParseError::ReadError(
                 "failed to fill whole buffer".to_owned()
@@ -1214,7 +1207,7 @@ mod tests {
 
         assert_eq!(
             Grib2SubmessageStream::new(sects.into_iter())
-                .map(|result| result.map(|i| digest_submessage_iter_item(i)))
+                .map(|result| result.map(digest_submessage_iter_item))
                 .collect::<Vec<_>>(),
             vec![Err(ParseError::ReadError(
                 "failed to fill whole buffer".to_owned()
@@ -1239,7 +1232,7 @@ mod tests {
 
         assert_eq!(
             Grib2SubmessageStream::new(sects.into_iter())
-                .map(|result| result.map(|i| digest_submessage_iter_item(i)))
+                .map(|result| result.map(digest_submessage_iter_item))
                 .collect::<Vec<_>>(),
             vec![Err(ParseError::ReadError(
                 "failed to fill whole buffer".to_owned()
@@ -1265,7 +1258,7 @@ mod tests {
 
         assert_eq!(
             Grib2SubmessageStream::new(sects.into_iter())
-                .map(|result| result.map(|i| digest_submessage_iter_item(i)))
+                .map(|result| result.map(digest_submessage_iter_item))
                 .collect::<Vec<_>>(),
             vec![Err(ParseError::ReadError(
                 "failed to fill whole buffer".to_owned()
@@ -1285,7 +1278,7 @@ mod tests {
         let stream = Grib2SubmessageIndexStream::new(sects.into_iter()).with_cacher(&mut cacher);
         assert_eq!(
             stream
-                .map(|result| result.map(|i| digest_submessage_index_iter_item(i)))
+                .map(|result| result.map(digest_submessage_index_iter_item))
                 .collect::<Vec<_>>(),
             vec![
                 Ok((0, 0, 0, 1, Some(2), 3, 4, 5, 6, 7, 0)),
