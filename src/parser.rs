@@ -75,10 +75,6 @@ where
     sect1: SectionInfo,
     sect2: Option<SectionInfo>,
     sect3: SectionInfo,
-    sect4: SectionInfo,
-    sect5: SectionInfo,
-    sect6: SectionInfo,
-    sect7: SectionInfo,
 }
 
 impl<I> Grib2SubmessageStream<I>
@@ -108,10 +104,6 @@ where
             sect1: Default::default(),
             sect2: Default::default(),
             sect3: Default::default(),
-            sect4: Default::default(),
-            sect5: Default::default(),
-            sect6: Default::default(),
-            sect7: Default::default(),
         }
     }
 
@@ -130,6 +122,10 @@ where
     type Item = Result<(usize, usize, Submessage), ParseError>;
 
     fn next(&mut self) -> Option<Result<(usize, usize, Submessage), ParseError>> {
+        let mut sect4 = Default::default();
+        let mut sect5 = Default::default();
+        let mut sect6 = Default::default();
+        let mut sect7 = Default::default();
         loop {
             match self.iter.next()? {
                 Err(e) => return Some(Err(e)),
@@ -147,16 +143,16 @@ where
                         self.sect3 = s;
                     }
                     4 => {
-                        self.sect4 = s;
+                        sect4 = s;
                     }
                     5 => {
-                        self.sect5 = s;
+                        sect5 = s;
                     }
                     6 => {
-                        self.sect6 = s;
+                        sect6 = s;
                     }
                     7 => {
-                        self.sect7 = s;
+                        sect7 = s;
                     }
                     8 => {
                         let ret = Some(Ok((
@@ -167,10 +163,10 @@ where
                                 self.sect1.clone(),
                                 self.sect2.clone(),
                                 self.sect3.clone(),
-                                self.sect4.clone(),
-                                self.sect5.clone(),
-                                self.sect6.clone(),
-                                self.sect7.clone(),
+                                sect4,
+                                sect5,
+                                sect6,
+                                sect7,
                                 s,
                             ),
                         )));
