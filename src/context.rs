@@ -10,7 +10,7 @@ use crate::codetables::{
 use crate::datatypes::*;
 use crate::decoders;
 use crate::error::*;
-use crate::reader::{Grib2Read, SeekableGrib2Reader, SECT8_ES_SIZE};
+use crate::reader::{Grib2Read, Grib2SectionStream, SeekableGrib2Reader, SECT8_ES_SIZE};
 
 #[derive(Default, Debug, Clone, PartialEq, Eq)]
 pub struct SectionInfo {
@@ -107,11 +107,15 @@ pub struct Grib2<R> {
 }
 
 impl<R: Grib2Read> Grib2<R> {
-    pub fn read(mut r: R) -> Result<Self, GribError> {
-        let sections = r.scan()?;
+    pub fn read(r: R) -> Result<Self, GribError> {
+        let mut sect_stream = Grib2SectionStream::new(r);
+        let sections = sect_stream
+            .by_ref()
+            .collect::<Result<Vec<_>, _>>()?
+            .into_boxed_slice();
         let submessages = index_submessages(&sections)?;
         Ok(Self {
-            reader: RefCell::new(r),
+            reader: RefCell::new(sect_stream.into_reader()),
             sections,
             submessages,
         })

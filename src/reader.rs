@@ -79,6 +79,10 @@ impl<R> Grib2SectionStream<R> {
             rest_size: 0,
         }
     }
+
+    pub fn into_reader(self) -> R {
+        self.reader
+    }
 }
 
 impl<R> Grib2SectionStream<R>
