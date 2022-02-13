@@ -162,9 +162,9 @@ mod tests {
             .get(index)
             .and_then(|submsg| {
                 Some((
-                    grib.sections.get(submsg.section5)?,
-                    grib.sections.get(submsg.section6)?,
-                    grib.sections.get(submsg.section7)?,
+                    grib.sections.get(submsg.sections.5)?,
+                    grib.sections.get(submsg.sections.6)?,
+                    grib.sections.get(submsg.sections.7)?,
                 ))
             })
             .ok_or(GribError::InternalDataError)

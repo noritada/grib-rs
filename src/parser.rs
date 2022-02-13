@@ -1,4 +1,5 @@
 use crate::context::SectionInfo;
+use crate::datatypes::Grib2SubmessageIndex;
 use crate::error::*;
 use std::iter::{Enumerate, Peekable};
 
@@ -12,18 +13,6 @@ pub struct Submessage(
     pub SectionInfo,
     pub SectionInfo,
     pub SectionInfo,
-);
-
-pub(crate) struct SubmessageRef(
-    pub(crate) usize,
-    pub(crate) usize,
-    pub(crate) Option<usize>,
-    pub(crate) usize,
-    pub(crate) usize,
-    pub(crate) usize,
-    pub(crate) usize,
-    pub(crate) usize,
-    pub(crate) usize,
 );
 
 ///
@@ -246,9 +235,9 @@ impl<'cacher, I> Iterator for Grib2SubmessageIndexStream<'cacher, I>
 where
     I: Iterator<Item = Result<SectionInfo, ParseError>>,
 {
-    type Item = Result<(usize, usize, SubmessageRef), ParseError>;
+    type Item = Result<Grib2SubmessageIndex, ParseError>;
 
-    fn next(&mut self) -> Option<Result<(usize, usize, SubmessageRef), ParseError>> {
+    fn next(&mut self) -> Option<Result<Grib2SubmessageIndex, ParseError>> {
         let mut sect4 = Default::default();
         let mut sect5 = Default::default();
         let mut sect6 = Default::default();
@@ -292,14 +281,14 @@ where
                             sect7 = pos;
                         }
                         8 => {
-                            let ret = Some(Ok((
-                                message_count,
-                                submessage_count,
-                                SubmessageRef(
+                            let ret = Some(Ok(Grib2SubmessageIndex {
+                                message: message_count,
+                                submessage: submessage_count,
+                                sections: (
                                     self.sect0, self.sect1, self.sect2, self.sect3, sect4, sect5,
                                     sect6, sect7, pos,
                                 ),
-                            )));
+                            }));
 
                             // if pos is 0, it is dummy
                             if pos != 0 {
@@ -585,20 +574,19 @@ mod tests {
         )
     }
 
-    fn digest_submessage_index_iter_item(item: (usize, usize, SubmessageRef)) -> SubmessageDigest {
-        let (i1, i2, submessage) = item;
+    fn digest_submessage_index_iter_item(item: Grib2SubmessageIndex) -> SubmessageDigest {
         (
-            i1,
-            i2,
-            submessage.0,
-            submessage.1,
-            submessage.2,
-            submessage.3,
-            submessage.4,
-            submessage.5,
-            submessage.6,
-            submessage.7,
-            submessage.8,
+            item.message,
+            item.submessage,
+            item.sections.0,
+            item.sections.1,
+            item.sections.2,
+            item.sections.3,
+            item.sections.4,
+            item.sections.5,
+            item.sections.6,
+            item.sections.7,
+            item.sections.8,
         )
     }
 

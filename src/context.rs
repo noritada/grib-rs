@@ -60,16 +60,6 @@ impl SectionBody {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) struct SubMessageIndex {
-    pub(crate) section2: Option<usize>,
-    pub(crate) section3: usize,
-    pub(crate) section4: usize,
-    pub(crate) section5: usize,
-    pub(crate) section6: usize,
-    pub(crate) section7: usize,
-}
-
 #[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct TemplateInfo(pub u8, pub u16);
 
@@ -104,7 +94,7 @@ pub fn from_slice(bytes: &[u8]) -> Result<Grib2<SeekableGrib2Reader<Cursor<&[u8]
 pub struct Grib2<R> {
     pub(crate) reader: RefCell<R>,
     pub(crate) sections: Box<[SectionInfo]>,
-    pub(crate) submessages: Box<[SubMessageIndex]>,
+    pub(crate) submessages: Vec<Grib2SubmessageIndex>,
 }
 
 impl<R: Grib2Read> Grib2<R> {
@@ -115,21 +105,13 @@ impl<R: Grib2Read> Grib2<R> {
         let submessages = parser.collect::<Result<Vec<_>, _>>()?;
         // tentatively extract only submessages in the first message
         let submessages = submessages
-            .iter()
-            .filter(|(message_count, _, _)| *message_count == 0)
-            .map(|(_, _, s)| SubMessageIndex {
-                section2: s.2,
-                section3: s.3,
-                section4: s.4,
-                section5: s.5,
-                section6: s.6,
-                section7: s.7,
-            })
+            .into_iter()
+            .filter(|index| index.message == 0)
             .collect::<Vec<_>>();
         Ok(Self {
             reader: RefCell::new(sect_stream.into_reader()),
             sections: cacher.into_boxed_slice(),
-            submessages: submessages.into_boxed_slice(),
+            submessages,
         })
     }
 
@@ -173,9 +155,9 @@ impl<R: Grib2Read> Grib2<R> {
             .get(i)
             .and_then(|submsg| {
                 Some((
-                    self.sections.get(submsg.section5)?,
-                    self.sections.get(submsg.section6)?,
-                    self.sections.get(submsg.section7)?,
+                    self.sections.get(submsg.sections.5)?,
+                    self.sections.get(submsg.sections.6)?,
+                    self.sections.get(submsg.sections.7)?,
                 ))
             })
             .ok_or(GribError::InternalDataError)?;
@@ -203,13 +185,13 @@ fn get_templates(sects: &[SectionInfo]) -> Vec<TemplateInfo> {
 
 #[derive(Clone)]
 pub struct SubMessageIterator<'a> {
-    indices: &'a [SubMessageIndex],
+    indices: &'a [Grib2SubmessageIndex],
     sections: &'a [SectionInfo],
     pos: usize,
 }
 
 impl<'a> SubMessageIterator<'a> {
-    fn new(indices: &'a [SubMessageIndex], sections: &'a [SectionInfo]) -> Self {
+    fn new(indices: &'a [Grib2SubmessageIndex], sections: &'a [SectionInfo]) -> Self {
         Self {
             indices,
             sections,
@@ -233,13 +215,14 @@ impl<'a> Iterator for SubMessageIterator<'a> {
             self.new_submessage_section(0)?,
             self.new_submessage_section(1)?,
             submessage_index
-                .section2
+                .sections
+                .2
                 .and_then(|i| self.new_submessage_section(i)),
-            self.new_submessage_section(submessage_index.section3)?,
-            self.new_submessage_section(submessage_index.section4)?,
-            self.new_submessage_section(submessage_index.section5)?,
-            self.new_submessage_section(submessage_index.section6)?,
-            self.new_submessage_section(submessage_index.section7)?,
+            self.new_submessage_section(submessage_index.sections.3)?,
+            self.new_submessage_section(submessage_index.sections.4)?,
+            self.new_submessage_section(submessage_index.sections.5)?,
+            self.new_submessage_section(submessage_index.sections.6)?,
+            self.new_submessage_section(submessage_index.sections.7)?,
             self.new_submessage_section(self.sections.len() - 1)?,
         ))
     }
