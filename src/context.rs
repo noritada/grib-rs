@@ -10,6 +10,7 @@ use crate::codetables::{
 use crate::datatypes::*;
 use crate::decoders;
 use crate::error::*;
+use crate::parser::Grib2SubmessageIndexStream;
 use crate::reader::{Grib2Read, Grib2SectionStream, SeekableGrib2Reader, SECT8_ES_SIZE};
 
 #[derive(Default, Debug, Clone, PartialEq, Eq)]
@@ -109,15 +110,26 @@ pub struct Grib2<R> {
 impl<R: Grib2Read> Grib2<R> {
     pub fn read(r: R) -> Result<Self, GribError> {
         let mut sect_stream = Grib2SectionStream::new(r);
-        let sections = sect_stream
-            .by_ref()
-            .collect::<Result<Vec<_>, _>>()?
-            .into_boxed_slice();
-        let submessages = index_submessages(&sections)?;
+        let mut cacher = Vec::new();
+        let parser = Grib2SubmessageIndexStream::new(sect_stream.by_ref()).with_cacher(&mut cacher);
+        let submessages = parser.collect::<Result<Vec<_>, _>>()?;
+        // tentatively extract only submessages in the first message
+        let submessages = submessages
+            .iter()
+            .filter(|(message_count, _, _)| *message_count == 0)
+            .map(|(_, _, s)| SubMessageIndex {
+                section2: s.2,
+                section3: s.3,
+                section4: s.4,
+                section5: s.5,
+                section6: s.6,
+                section7: s.7,
+            })
+            .collect::<Vec<_>>();
         Ok(Self {
             reader: RefCell::new(sect_stream.into_reader()),
-            sections,
-            submessages,
+            sections: cacher.into_boxed_slice(),
+            submessages: submessages.into_boxed_slice(),
         })
     }
 

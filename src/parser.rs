@@ -212,7 +212,6 @@ impl<'cacher, I> Grib2SubmessageIndexStream<'cacher, I>
 where
     I: Iterator,
 {
-    #[allow(dead_code)] // tentative
     pub(crate) fn new(iter: I) -> Self {
         Self {
             iter: Grib2SubmessageValidator::new(iter),
@@ -224,7 +223,6 @@ where
         }
     }
 
-    #[allow(dead_code)] // tentative
     pub(crate) fn with_cacher(mut self, cacher: &'cacher mut Vec<SectionInfo>) -> Self {
         self.sect_cacher = Some(cacher);
         self
