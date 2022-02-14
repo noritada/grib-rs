@@ -3,7 +3,7 @@ use console::{Style, Term};
 use std::fmt::{self, Display, Formatter};
 
 use grib::codetables::{CodeTable4_2, CodeTable4_3, Lookup};
-use grib::context::SubMessageIterator;
+use grib::context::SubmessageIterator;
 
 use crate::cli;
 
@@ -48,12 +48,12 @@ pub fn exec(args: &ArgMatches) -> Result<(), cli::CliError> {
 }
 
 struct ListView<'i> {
-    data: SubMessageIterator<'i>,
+    data: SubmessageIterator<'i>,
     mode: ListViewMode,
 }
 
 impl<'i> ListView<'i> {
-    fn new(data: SubMessageIterator<'i>, mode: ListViewMode) -> Self {
+    fn new(data: SubmessageIterator<'i>, mode: ListViewMode) -> Self {
         Self { data, mode }
     }
 

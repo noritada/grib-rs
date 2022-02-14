@@ -140,12 +140,12 @@ impl<R: Grib2Read> Grib2<R> {
 
     /// Iterates over submessages.
     #[inline]
-    pub fn iter(&self) -> SubMessageIterator {
+    pub fn iter(&self) -> SubmessageIterator {
         self.submessages()
     }
 
-    pub fn submessages(&self) -> SubMessageIterator {
-        SubMessageIterator::new(&self.submessages, &self.sections)
+    pub fn submessages(&self) -> SubmessageIterator {
+        SubmessageIterator::new(&self.submessages, &self.sections)
     }
 
     /// Decodes grid values of a surface specified by the index `i`.
@@ -184,13 +184,13 @@ fn get_templates(sects: &[SectionInfo]) -> Vec<TemplateInfo> {
 }
 
 #[derive(Clone)]
-pub struct SubMessageIterator<'a> {
+pub struct SubmessageIterator<'a> {
     indices: &'a [Grib2SubmessageIndex],
     sections: &'a [SectionInfo],
     pos: usize,
 }
 
-impl<'a> SubMessageIterator<'a> {
+impl<'a> SubmessageIterator<'a> {
     fn new(indices: &'a [Grib2SubmessageIndex], sections: &'a [SectionInfo]) -> Self {
         Self {
             indices,
@@ -204,7 +204,7 @@ impl<'a> SubMessageIterator<'a> {
     }
 }
 
-impl<'a> Iterator for SubMessageIterator<'a> {
+impl<'a> Iterator for SubmessageIterator<'a> {
     type Item = SubMessage<'a>;
 
     fn next(&mut self) -> Option<SubMessage<'a>> {
