@@ -160,6 +160,11 @@ where
 pub trait Grib2Read: Read + Seek {
     fn read_sect0(&mut self) -> Result<Option<Indicator>, ParseError>;
     fn read_sect8(&mut self) -> Result<Option<()>, ParseError>;
+
+    /// Reads a common header for sections 1-7 and returns the section
+    /// number and size.  Since offset is not determined within this
+    /// function, the `offset` and `body` fields in returned `SectionInfo`
+    /// struct is set to `0` and `None` respectively.
     fn read_sect_meta(&mut self) -> Result<Option<SectionInfo>, ParseError>;
     fn read_sect(&mut self, meta: &SectionInfo) -> Result<SectionBody, ParseError>;
     fn read_sect_body_bytes(&mut self, meta: &SectionInfo) -> Result<Box<[u8]>, ParseError>;
@@ -241,10 +246,6 @@ impl<R: Read + Seek> Grib2Read for SeekableGrib2Reader<R> {
         Ok(Some(()))
     }
 
-    /// Reads a common header for sections 1-7 and returns the section
-    /// number and size.  Since offset is not determined within this
-    /// function, the `offset` and `body` fields in returned `SectionInfo`
-    /// struct is set to `0` and `None` respectively.
     fn read_sect_meta(&mut self) -> Result<Option<SectionInfo>, ParseError> {
         let mut buf = [0; SECT_HEADER_SIZE];
         let size = self.read(&mut buf[..])?;
