@@ -158,10 +158,13 @@ where
 }
 
 pub trait Grib2Read: Read + Seek {
+    /// Reads Section 0.
     fn read_sect0(&mut self) -> Result<Option<Indicator>, ParseError>;
+
+    /// Reads Section 8.
     fn read_sect8(&mut self) -> Result<Option<()>, ParseError>;
 
-    /// Reads a common header for sections 1-7 and returns the section
+    /// Reads a common header for Sections 1-7 and returns the section
     /// number and size.  Since offset is not determined within this
     /// function, the `offset` and `body` fields in returned `SectionInfo`
     /// struct is set to `0` and `None` respectively.
