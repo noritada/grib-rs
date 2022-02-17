@@ -1,4 +1,4 @@
-use clap::{App, Arg, ArgMatches};
+use clap::{Arg, ArgMatches, Command};
 use console::{Style, Term};
 use std::fmt::{self, Display, Formatter};
 
@@ -7,8 +7,8 @@ use grib::context::SubMessageIterator;
 
 use crate::cli;
 
-pub fn cli() -> App<'static> {
-    App::new("list")
+pub fn cli() -> Command<'static> {
+    Command::new("list")
         .about("List surfaces contained in the data")
         .arg(
             Arg::new("dump")
