@@ -1,11 +1,11 @@
-use clap::{App, Arg, ArgMatches};
+use clap::{Arg, ArgMatches, Command};
 use std::fs::File;
 use std::io::{BufWriter, Write};
 
 use crate::cli;
 
-pub fn cli() -> App<'static> {
-    App::new("decode")
+pub fn cli() -> Command<'static> {
+    Command::new("decode")
         .about("Export decoded data")
         .arg(Arg::new("file").required(true))
         .arg(Arg::new("index").required(true))

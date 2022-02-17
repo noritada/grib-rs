@@ -1,4 +1,4 @@
-use clap::{App, Arg, ArgMatches};
+use clap::{Arg, ArgMatches, Command};
 use console::{Style, Term};
 use std::fmt::{self, Display, Formatter};
 
@@ -6,8 +6,8 @@ use grib::context::{SectionInfo, SubMessageIterator, SubMessageSection, Template
 
 use crate::cli;
 
-pub fn cli() -> App<'static> {
-    App::new("inspect")
+pub fn cli() -> Command<'static> {
+    Command::new("inspect")
         .about("Inspect and describes the data structure")
         .arg(
             Arg::new("sections")
