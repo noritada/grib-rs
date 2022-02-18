@@ -124,15 +124,21 @@ where
 
     #[inline]
     fn next_sect(&mut self) -> Option<Result<SectionInfo, ParseError>> {
-        let result = self.reader.read_sect_meta().transpose()?;
+        let result = self.reader.read_sect_header().transpose()?;
         match result {
-            Ok(mut sect_info) => {
-                sect_info.offset = self.whole_size - self.rest_size;
-                match self.reader.read_sect(&sect_info) {
+            Ok(header) => {
+                let offset = self.whole_size - self.rest_size;
+                match self.reader.read_sect(&header) {
                     Ok(body) => {
-                        sect_info.body = Some(body);
-                        self.rest_size -= sect_info.size;
-                        Some(Ok(sect_info))
+                        let body = Some(body);
+                        let (size, num) = header;
+                        self.rest_size -= size;
+                        Some(Ok(SectionInfo {
+                            num,
+                            offset,
+                            size,
+                            body,
+                        }))
                     }
                     Err(e) => Some(Err(e)),
                 }
@@ -165,11 +171,9 @@ pub trait Grib2Read: Read + Seek {
     fn read_sect8(&mut self) -> Result<Option<()>, ParseError>;
 
     /// Reads a common header for Sections 1-7 and returns the section
-    /// number and size.  Since offset is not determined within this
-    /// function, the `offset` and `body` fields in returned `SectionInfo`
-    /// struct is set to `0` and `None` respectively.
-    fn read_sect_meta(&mut self) -> Result<Option<SectionInfo>, ParseError>;
-    fn read_sect(&mut self, meta: &SectionInfo) -> Result<SectionBody, ParseError>;
+    /// size and number.
+    fn read_sect_header(&mut self) -> Result<Option<SectHeader>, ParseError>;
+    fn read_sect(&mut self, header: &SectHeader) -> Result<SectionBody, ParseError>;
     fn read_sect_body_bytes(&mut self, meta: &SectionInfo) -> Result<Box<[u8]>, ParseError>;
 }
 
@@ -249,7 +253,7 @@ impl<R: Read + Seek> Grib2Read for SeekableGrib2Reader<R> {
         Ok(Some(()))
     }
 
-    fn read_sect_meta(&mut self) -> Result<Option<SectionInfo>, ParseError> {
+    fn read_sect_header(&mut self) -> Result<Option<SectHeader>, ParseError> {
         let mut buf = [0; SECT_HEADER_SIZE];
         let size = self.read(&mut buf[..])?;
         check_size!(size, buf.len());
@@ -257,17 +261,13 @@ impl<R: Read + Seek> Grib2Read for SeekableGrib2Reader<R> {
         let sect_size = read_as!(u32, buf, 0) as usize;
         let sect_num = buf[4];
 
-        Ok(Some(SectionInfo {
-            num: sect_num,
-            offset: 0,
-            size: sect_size,
-            body: None,
-        }))
+        Ok(Some((sect_size, sect_num)))
     }
 
-    fn read_sect(&mut self, meta: &SectionInfo) -> Result<SectionBody, ParseError> {
-        let body_size = meta.size - SECT_HEADER_SIZE;
-        let body = match meta.num {
+    fn read_sect(&mut self, header: &SectHeader) -> Result<SectionBody, ParseError> {
+        let (size, num) = header;
+        let body_size = size - SECT_HEADER_SIZE;
+        let body = match num {
             1 => unpack_sect1_body(self, body_size)?,
             2 => unpack_sect2_body(self, body_size)?,
             3 => unpack_sect3_body(self, body_size)?,
@@ -275,7 +275,7 @@ impl<R: Read + Seek> Grib2Read for SeekableGrib2Reader<R> {
             5 => unpack_sect5_body(self, body_size)?,
             6 => unpack_sect6_body(self, body_size)?,
             7 => skip_sect7_body(self, body_size)?,
-            _ => return Err(ParseError::UnknownSectionNumber(meta.num)),
+            _ => return Err(ParseError::UnknownSectionNumber(*num)),
         };
 
         Ok(body)
@@ -397,6 +397,8 @@ fn skip_sect7_body<R: Seek>(f: &mut R, body_size: usize) -> Result<SectionBody, 
 
     Ok(SectionBody::Section7)
 }
+
+type SectHeader = (usize, u8);
 
 #[cfg(test)]
 mod tests {
