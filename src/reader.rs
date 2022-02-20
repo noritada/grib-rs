@@ -272,15 +272,15 @@ impl<R: Read + Seek> Grib2Read for SeekableGrib2Reader<R> {
         let (size, num) = header;
         let body_size = size - SECT_HEADER_SIZE;
         let body = match num {
-            1 => SectionBody::Section1(Identification {
-                slice: self.read_slice_without_offset_check(body_size)?,
-            }),
-            2 => SectionBody::Section2(LocalUse {
-                slice: self.read_slice_without_offset_check(body_size)?,
-            }),
-            3 => SectionBody::Section3(GridDefinition {
-                slice: self.read_slice_without_offset_check(body_size)?,
-            }),
+            1 => SectionBody::Section1(Identification::from_payload(
+                self.read_slice_without_offset_check(body_size)?,
+            )?),
+            2 => SectionBody::Section2(LocalUse::from_payload(
+                self.read_slice_without_offset_check(body_size)?,
+            )),
+            3 => SectionBody::Section3(GridDefinition::from_payload(
+                self.read_slice_without_offset_check(body_size)?,
+            )?),
             4 => self.read_sect4_payload(body_size)?,
             5 => self.read_sect5_payload(body_size)?,
             6 => self.read_sect6_payload(body_size)?,

@@ -421,9 +421,9 @@ mod tests {
                 num: 3,
                 offset: 0,
                 size: 0,
-                body: Some(SectionBody::Section3(GridDefinition {
-                    slice: vec![0; 9].into_boxed_slice(),
-                })),
+                body: Some(SectionBody::Section3(
+                    GridDefinition::from_payload(vec![0; 9].into_boxed_slice()).unwrap(),
+                )),
             },
             SectionInfo {
                 num: 4,
@@ -451,9 +451,12 @@ mod tests {
                 num: 3,
                 offset: 0,
                 size: 0,
-                body: Some(SectionBody::Section3(GridDefinition {
-                    slice: vec![0, 0, 0, 0, 0, 0, 0, 0, 1].into_boxed_slice(),
-                })),
+                body: Some(SectionBody::Section3(
+                    GridDefinition::from_payload(
+                        vec![0, 0, 0, 0, 0, 0, 0, 0, 1].into_boxed_slice(),
+                    )
+                    .unwrap(),
+                )),
             },
             SectionInfo {
                 num: 4,

@@ -99,6 +99,25 @@ impl From<io::Error> for ParseError {
     }
 }
 
+impl From<BuildError> for ParseError {
+    fn from(e: BuildError) -> Self {
+        Self::ReadError(e.to_string())
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum BuildError {
+    SectionSizeTooSmall(usize),
+}
+
+impl Display for BuildError {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        match self {
+            Self::SectionSizeTooSmall(i) => write!(f, "Section size is too small: {}", i),
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum ValidationError {
     GRIB2IterationSuddenlyFinished,

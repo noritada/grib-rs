@@ -2,6 +2,7 @@ use chrono::{offset::TimeZone, DateTime, Utc};
 use std::convert::TryInto;
 
 use crate::datatypes::*;
+use crate::error::*;
 use crate::utils::GribInt;
 
 macro_rules! read_as {
@@ -21,10 +22,19 @@ pub struct Indicator {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Identification {
-    pub(crate) slice: Box<[u8]>,
+    slice: Box<[u8]>,
 }
 
 impl Identification {
+    pub fn from_payload(slice: Box<[u8]>) -> Result<Self, BuildError> {
+        let size = slice.len();
+        if size < 16 {
+            Err(BuildError::SectionSizeTooSmall(size))
+        } else {
+            Ok(Self { slice })
+        }
+    }
+
     pub fn into_slice(self) -> Box<[u8]> {
         self.slice
     }
@@ -95,10 +105,14 @@ impl Identification {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct LocalUse {
-    pub(crate) slice: Box<[u8]>,
+    slice: Box<[u8]>,
 }
 
 impl LocalUse {
+    pub fn from_payload(slice: Box<[u8]>) -> Self {
+        Self { slice }
+    }
+
     pub fn into_slice(self) -> Box<[u8]> {
         self.slice
     }
@@ -106,10 +120,19 @@ impl LocalUse {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct GridDefinition {
-    pub(crate) slice: Box<[u8]>,
+    slice: Box<[u8]>,
 }
 
 impl GridDefinition {
+    pub fn from_payload(slice: Box<[u8]>) -> Result<Self, BuildError> {
+        let size = slice.len();
+        if size < 9 {
+            Err(BuildError::SectionSizeTooSmall(size))
+        } else {
+            Ok(Self { slice })
+        }
+    }
+
     pub fn into_slice(self) -> Box<[u8]> {
         self.slice
     }
