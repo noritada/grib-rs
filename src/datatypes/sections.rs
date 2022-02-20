@@ -22,7 +22,7 @@ pub struct Indicator {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Identification {
-    slice: Box<[u8]>,
+    payload: Box<[u8]>,
 }
 
 impl Identification {
@@ -31,61 +31,61 @@ impl Identification {
         if size < 16 {
             Err(BuildError::SectionSizeTooSmall(size))
         } else {
-            Ok(Self { slice })
+            Ok(Self { payload: slice })
         }
     }
 
     pub fn into_slice(self) -> Box<[u8]> {
-        self.slice
+        self.payload
     }
 
     /// Identification of originating/generating centre (see Common Code Table
     /// C-1)
     #[inline]
     pub fn centre_id(&self) -> u16 {
-        let slice = &self.slice;
-        read_as!(u16, slice, 0)
+        let payload = &self.payload;
+        read_as!(u16, payload, 0)
     }
 
     /// Identification of originating/generating sub-centre (allocated by
     /// originating/ generating centre)
     #[inline]
     pub fn subcentre_id(&self) -> u16 {
-        let slice = &self.slice;
-        read_as!(u16, slice, 2)
+        let payload = &self.payload;
+        read_as!(u16, payload, 2)
     }
 
     /// GRIB Master Tables Version Number (see Code Table 1.0)
     #[inline]
     pub fn master_table_version(&self) -> u8 {
-        self.slice[4]
+        self.payload[4]
     }
 
     /// GRIB Local Tables Version Number (see Code Table 1.1)
     #[inline]
     pub fn local_table_version(&self) -> u8 {
-        self.slice[5]
+        self.payload[5]
     }
 
     /// Significance of Reference Time (see Code Table 1.2)
     #[inline]
     pub fn ref_time_significance(&self) -> u8 {
-        self.slice[6]
+        self.payload[6]
     }
 
     /// Reference time of data
     #[inline]
     pub fn ref_time(&self) -> DateTime<Utc> {
-        let slice = &self.slice;
+        let payload = &self.payload;
         Utc.ymd(
-            read_as!(u16, slice, 7).into(),
-            self.slice[9].into(),
-            self.slice[10].into(),
+            read_as!(u16, payload, 7).into(),
+            self.payload[9].into(),
+            self.payload[10].into(),
         )
         .and_hms(
-            self.slice[11].into(),
-            self.slice[12].into(),
-            self.slice[13].into(),
+            self.payload[11].into(),
+            self.payload[12].into(),
+            self.payload[13].into(),
         )
     }
 
@@ -93,34 +93,34 @@ impl Identification {
     /// (see Code Table 1.3)
     #[inline]
     pub fn prod_status(&self) -> u8 {
-        self.slice[14]
+        self.payload[14]
     }
 
     /// Type of processed data in this GRIB message (see Code Table 1.4)
     #[inline]
     pub fn data_type(&self) -> u8 {
-        self.slice[15]
+        self.payload[15]
     }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct LocalUse {
-    slice: Box<[u8]>,
+    payload: Box<[u8]>,
 }
 
 impl LocalUse {
     pub fn from_payload(slice: Box<[u8]>) -> Self {
-        Self { slice }
+        Self { payload: slice }
     }
 
     pub fn into_slice(self) -> Box<[u8]> {
-        self.slice
+        self.payload
     }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct GridDefinition {
-    slice: Box<[u8]>,
+    payload: Box<[u8]>,
 }
 
 impl GridDefinition {
@@ -129,24 +129,24 @@ impl GridDefinition {
         if size < 9 {
             Err(BuildError::SectionSizeTooSmall(size))
         } else {
-            Ok(Self { slice })
+            Ok(Self { payload: slice })
         }
     }
 
     pub fn into_slice(self) -> Box<[u8]> {
-        self.slice
+        self.payload
     }
 
     /// Number of data points
     pub fn num_points(&self) -> u32 {
-        let slice = &self.slice;
-        read_as!(u32, slice, 1)
+        let payload = &self.payload;
+        read_as!(u32, payload, 1)
     }
 
     /// Grid Definition Template Number
     pub fn grid_tmpl_num(&self) -> u16 {
-        let slice = &self.slice;
-        read_as!(u16, slice, 7)
+        let payload = &self.payload;
+        read_as!(u16, payload, 7)
     }
 }
 
