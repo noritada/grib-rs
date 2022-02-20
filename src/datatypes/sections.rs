@@ -1,8 +1,15 @@
-use chrono::{DateTime, Utc};
+use chrono::{offset::TimeZone, DateTime, Utc};
 use std::convert::TryInto;
 
 use crate::datatypes::*;
 use crate::utils::GribInt;
+
+macro_rules! read_as {
+    ($ty:ty, $buf:ident, $start:expr) => {{
+        let end = $start + std::mem::size_of::<$ty>();
+        <$ty>::from_be_bytes($buf[$start..end].try_into().unwrap())
+    }};
+}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Indicator {
@@ -14,25 +21,76 @@ pub struct Indicator {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Identification {
+    pub(crate) slice: Box<[u8]>,
+}
+
+impl Identification {
+    pub fn into_slice(self) -> Box<[u8]> {
+        self.slice
+    }
+
     /// Identification of originating/generating centre (see Common Code Table
     /// C-1)
-    pub centre_id: u16,
+    #[inline]
+    pub fn centre_id(&self) -> u16 {
+        let slice = &self.slice;
+        read_as!(u16, slice, 0)
+    }
+
     /// Identification of originating/generating sub-centre (allocated by
     /// originating/ generating centre)
-    pub subcentre_id: u16,
+    #[inline]
+    pub fn subcentre_id(&self) -> u16 {
+        let slice = &self.slice;
+        read_as!(u16, slice, 2)
+    }
+
     /// GRIB Master Tables Version Number (see Code Table 1.0)
-    pub master_table_version: u8,
+    #[inline]
+    pub fn master_table_version(&self) -> u8 {
+        self.slice[4]
+    }
+
     /// GRIB Local Tables Version Number (see Code Table 1.1)
-    pub local_table_version: u8,
+    #[inline]
+    pub fn local_table_version(&self) -> u8 {
+        self.slice[5]
+    }
+
     /// Significance of Reference Time (see Code Table 1.2)
-    pub ref_time_significance: u8,
+    #[inline]
+    pub fn ref_time_significance(&self) -> u8 {
+        self.slice[6]
+    }
+
     /// Reference time of data
-    pub ref_time: DateTime<Utc>,
+    #[inline]
+    pub fn ref_time(&self) -> DateTime<Utc> {
+        let slice = &self.slice;
+        Utc.ymd(
+            read_as!(u16, slice, 7).into(),
+            self.slice[9].into(),
+            self.slice[10].into(),
+        )
+        .and_hms(
+            self.slice[11].into(),
+            self.slice[12].into(),
+            self.slice[13].into(),
+        )
+    }
+
     /// Production status of processed data in this GRIB message
     /// (see Code Table 1.3)
-    pub prod_status: u8,
+    #[inline]
+    pub fn prod_status(&self) -> u8 {
+        self.slice[14]
+    }
+
     /// Type of processed data in this GRIB message (see Code Table 1.4)
-    pub data_type: u8,
+    #[inline]
+    pub fn data_type(&self) -> u8 {
+        self.slice[15]
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

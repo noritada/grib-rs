@@ -1,4 +1,3 @@
-use chrono::{offset::TimeZone, Utc};
 use std::convert::TryInto;
 use std::io::{self, Read, Seek, SeekFrom};
 use std::result::Result;
@@ -175,7 +174,6 @@ pub trait Grib2Read: Read + Seek {
     fn read_sect_header(&mut self) -> Result<Option<SectHeader>, ParseError>;
     fn read_sect_payload(&mut self, header: &SectHeader) -> Result<SectionBody, ParseError>;
     fn read_sect_payload_as_slice(&mut self, sect: &SectionInfo) -> Result<Box<[u8]>, ParseError>;
-    fn read_sect1_payload(&mut self, size: usize) -> Result<SectionBody, ParseError>;
     fn read_sect3_payload(&mut self, size: usize) -> Result<SectionBody, ParseError>;
     fn read_sect4_payload(&mut self, size: usize) -> Result<SectionBody, ParseError>;
     fn read_sect5_payload(&mut self, size: usize) -> Result<SectionBody, ParseError>;
@@ -275,7 +273,9 @@ impl<R: Read + Seek> Grib2Read for SeekableGrib2Reader<R> {
         let (size, num) = header;
         let body_size = size - SECT_HEADER_SIZE;
         let body = match num {
-            1 => self.read_sect1_payload(body_size)?,
+            1 => SectionBody::Section1(Identification {
+                slice: self.read_slice_without_offset_check(body_size)?,
+            }),
             2 => SectionBody::Section2(LocalUse {
                 slice: self.read_slice_without_offset_check(body_size)?,
             }),
@@ -299,30 +299,6 @@ impl<R: Read + Seek> Grib2Read for SeekableGrib2Reader<R> {
         self.read_exact(buf.as_mut_slice())?;
 
         Ok(buf.into_boxed_slice())
-    }
-
-    fn read_sect1_payload(&mut self, body_size: usize) -> Result<SectionBody, ParseError> {
-        let mut buf = [0; 16]; // octet 6-21
-        self.read_exact(&mut buf[..])?;
-
-        let len_extra = body_size - buf.len();
-        if len_extra > 0 {
-            let mut buf = vec![0; len_extra];
-            self.read_exact(&mut buf[..])?;
-        }
-
-        Ok(SectionBody::Section1(Identification {
-            centre_id: read_as!(u16, buf, 0),
-            subcentre_id: read_as!(u16, buf, 2),
-            master_table_version: buf[4],
-            local_table_version: buf[5],
-            ref_time_significance: buf[6],
-            ref_time: Utc
-                .ymd(read_as!(u16, buf, 7).into(), buf[9].into(), buf[10].into())
-                .and_hms(buf[11].into(), buf[12].into(), buf[13].into()),
-            prod_status: buf[14],
-            data_type: buf[15],
-        }))
     }
 
     fn read_sect3_payload(&mut self, body_size: usize) -> Result<SectionBody, ParseError> {
