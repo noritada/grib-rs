@@ -67,7 +67,7 @@ impl<R: Grib2Read> Grib2DataDecode<R> for RunLengthEncodingDecoder {
             &sect7_data,
             nbit,
             maxv,
-            Some(sect5_body.num_points as usize),
+            Some(sect5_body.num_points() as usize),
         )
         .map_err(DecodeError::RunLengthEncodingDecodeError)?;
 

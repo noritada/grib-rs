@@ -173,7 +173,6 @@ pub trait Grib2Read: Read + Seek {
     fn read_sect_header(&mut self) -> Result<Option<SectHeader>, ParseError>;
     fn read_sect_payload(&mut self, header: &SectHeader) -> Result<SectionBody, ParseError>;
     fn read_sect_payload_as_slice(&mut self, sect: &SectionInfo) -> Result<Box<[u8]>, ParseError>;
-    fn read_sect5_payload(&mut self, size: usize) -> Result<SectionBody, ParseError>;
     fn read_sect6_payload(&mut self, size: usize) -> Result<SectionBody, ParseError>;
     fn skip_sect7_payload(&mut self, size: usize) -> Result<SectionBody, ParseError>;
     fn read_slice_without_offset_check(&mut self, size: usize) -> Result<Box<[u8]>, ParseError>;
@@ -282,7 +281,9 @@ impl<R: Read + Seek> Grib2Read for SeekableGrib2Reader<R> {
             4 => SectionBody::Section4(ProdDefinition::from_payload(
                 self.read_slice_without_offset_check(body_size)?,
             )?),
-            5 => self.read_sect5_payload(body_size)?,
+            5 => SectionBody::Section5(ReprDefinition::from_payload(
+                self.read_slice_without_offset_check(body_size)?,
+            )?),
             6 => self.read_sect6_payload(body_size)?,
             7 => self.skip_sect7_payload(body_size)?,
             _ => return Err(ParseError::UnknownSectionNumber(*num)),
@@ -300,22 +301,6 @@ impl<R: Read + Seek> Grib2Read for SeekableGrib2Reader<R> {
         self.read_exact(buf.as_mut_slice())?;
 
         Ok(buf.into_boxed_slice())
-    }
-
-    fn read_sect5_payload(&mut self, body_size: usize) -> Result<SectionBody, ParseError> {
-        let mut buf = [0; 6]; // octet 6-11
-        self.read_exact(&mut buf[..])?;
-
-        let len_extra = body_size - buf.len();
-        if len_extra > 0 {
-            let mut buf = vec![0; len_extra];
-            self.read_exact(&mut buf[..])?;
-        }
-
-        Ok(SectionBody::Section5(ReprDefinition {
-            num_points: read_as!(u32, buf, 0),
-            repr_tmpl_num: read_as!(u16, buf, 4),
-        }))
     }
 
     fn read_sect6_payload(&mut self, body_size: usize) -> Result<SectionBody, ParseError> {

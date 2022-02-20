@@ -54,7 +54,7 @@ impl SectionBody {
         match self {
             Self::Section3(s) => Some(s.grid_tmpl_num()),
             Self::Section4(s) => Some(s.prod_tmpl_num()),
-            Self::Section5(s) => Some(s.repr_tmpl_num),
+            Self::Section5(s) => Some(s.repr_tmpl_num()),
             _ => None,
         }
     }
@@ -403,10 +403,12 @@ mod tests {
             num: 5,
             offset: 8902,
             size: 23,
-            body: Some(SectionBody::Section5(ReprDefinition {
-                num_points: 86016,
-                repr_tmpl_num: 200,
-            })),
+            body: Some(SectionBody::Section5(
+                ReprDefinition::from_payload(
+                    vec![0x00, 0x01, 0x50, 0x00, 0x00, 0xc8].into_boxed_slice(),
+                )
+                .unwrap(),
+            )),
         };
 
         assert_eq!(sect.get_tmpl_code(), Some(TemplateInfo(5, 200)));
@@ -437,10 +439,9 @@ mod tests {
                 num: 5,
                 offset: 0,
                 size: 0,
-                body: Some(SectionBody::Section5(ReprDefinition {
-                    num_points: 0,
-                    repr_tmpl_num: 0,
-                })),
+                body: Some(SectionBody::Section5(
+                    ReprDefinition::from_payload(vec![0; 6].into_boxed_slice()).unwrap(),
+                )),
             },
             sect_placeholder!(6),
             sect_placeholder!(7),
@@ -467,10 +468,9 @@ mod tests {
                 num: 5,
                 offset: 0,
                 size: 0,
-                body: Some(SectionBody::Section5(ReprDefinition {
-                    num_points: 0,
-                    repr_tmpl_num: 0,
-                })),
+                body: Some(SectionBody::Section5(
+                    ReprDefinition::from_payload(vec![0; 6].into_boxed_slice()).unwrap(),
+                )),
             },
             sect_placeholder!(6),
             sect_placeholder!(7),

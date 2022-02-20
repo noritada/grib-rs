@@ -71,7 +71,7 @@ impl<R: Grib2Read> Grib2DataDecode<R> for Jpeg2000CodeStreamDecoder {
             .map_err(|e| GribError::DecodeError(DecodeError::Jpeg2000CodeStreamDecodeError(e)))?;
         let decoded =
             SimplePackingDecodeIterator::new(jp2_unpacked, ref_val, exp, dig).collect::<Vec<_>>();
-        if decoded.len() != sect5_body.num_points as usize {
+        if decoded.len() != sect5_body.num_points() as usize {
             return Err(GribError::DecodeError(
                 DecodeError::SimplePackingDecodeError(SimplePackingDecodeError::LengthMismatch),
             ));

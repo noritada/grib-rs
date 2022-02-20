@@ -62,13 +62,13 @@ impl<R: Grib2Read> Grib2DataDecode<R> for SimplePackingDecoder {
         // Based on the implementation of wgrib2, if nbits equals 0, return a constant
         // field where the data value at each grid point is the reference value.
         if nbit == 0 {
-            let decoded = vec![ref_val; sect5_body.num_points as usize];
+            let decoded = vec![ref_val; sect5_body.num_points() as usize];
             return Ok(decoded.into_boxed_slice());
         }
 
         let iter = NBitwiseIterator::new(&sect7_data, usize::from(nbit));
         let decoded = SimplePackingDecodeIterator::new(iter, ref_val, exp, dig).collect::<Vec<_>>();
-        if decoded.len() != sect5_body.num_points as usize {
+        if decoded.len() != sect5_body.num_points() as usize {
             return Err(GribError::DecodeError(
                 DecodeError::SimplePackingDecodeError(SimplePackingDecodeError::LengthMismatch),
             ));

@@ -342,12 +342,36 @@ impl ProdDefinition {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ReprDefinition {
+    payload: Box<[u8]>,
+}
+
+impl ReprDefinition {
+    pub fn from_payload(slice: Box<[u8]>) -> Result<Self, BuildError> {
+        let size = slice.len();
+        if size < 6 {
+            Err(BuildError::SectionSizeTooSmall(size))
+        } else {
+            Ok(Self { payload: slice })
+        }
+    }
+
+    pub fn into_slice(self) -> Box<[u8]> {
+        self.payload
+    }
+
     /// Number of data points where one or more values are
     /// specified in Section 7 when a bit map is present, total
     /// number of data points when a bit map is absent
-    pub num_points: u32,
+    pub fn num_points(&self) -> u32 {
+        let payload = &self.payload;
+        read_as!(u32, payload, 0)
+    }
+
     /// Data Representation Template Number
-    pub repr_tmpl_num: u16,
+    pub fn repr_tmpl_num(&self) -> u16 {
+        let payload = &self.payload;
+        read_as!(u16, payload, 4)
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]

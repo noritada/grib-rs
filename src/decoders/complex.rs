@@ -129,7 +129,7 @@ impl<R: Grib2Read> Grib2DataDecode<R> for ComplexPackingDecoder {
         let spdiff_unpacked = SpatialDiff2ndOrderDecodeIterator::new(spdiff_packed_iter);
         let decoded = SimplePackingDecodeIterator::new(spdiff_unpacked, ref_val, exp, dig)
             .collect::<Vec<_>>();
-        if decoded.len() != sect5_body.num_points as usize {
+        if decoded.len() != sect5_body.num_points() as usize {
             return Err(GribError::DecodeError(
                 DecodeError::SimplePackingDecodeError(SimplePackingDecodeError::LengthMismatch),
             ));
