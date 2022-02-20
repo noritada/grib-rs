@@ -106,10 +106,25 @@ impl LocalUse {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct GridDefinition {
+    pub(crate) slice: Box<[u8]>,
+}
+
+impl GridDefinition {
+    pub fn into_slice(self) -> Box<[u8]> {
+        self.slice
+    }
+
     /// Number of data points
-    pub num_points: u32,
+    pub fn num_points(&self) -> u32 {
+        let slice = &self.slice;
+        read_as!(u32, slice, 1)
+    }
+
     /// Grid Definition Template Number
-    pub grid_tmpl_num: u16,
+    pub fn grid_tmpl_num(&self) -> u16 {
+        let slice = &self.slice;
+        read_as!(u16, slice, 7)
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]

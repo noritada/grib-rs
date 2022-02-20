@@ -174,7 +174,6 @@ pub trait Grib2Read: Read + Seek {
     fn read_sect_header(&mut self) -> Result<Option<SectHeader>, ParseError>;
     fn read_sect_payload(&mut self, header: &SectHeader) -> Result<SectionBody, ParseError>;
     fn read_sect_payload_as_slice(&mut self, sect: &SectionInfo) -> Result<Box<[u8]>, ParseError>;
-    fn read_sect3_payload(&mut self, size: usize) -> Result<SectionBody, ParseError>;
     fn read_sect4_payload(&mut self, size: usize) -> Result<SectionBody, ParseError>;
     fn read_sect5_payload(&mut self, size: usize) -> Result<SectionBody, ParseError>;
     fn read_sect6_payload(&mut self, size: usize) -> Result<SectionBody, ParseError>;
@@ -279,7 +278,9 @@ impl<R: Read + Seek> Grib2Read for SeekableGrib2Reader<R> {
             2 => SectionBody::Section2(LocalUse {
                 slice: self.read_slice_without_offset_check(body_size)?,
             }),
-            3 => self.read_sect3_payload(body_size)?,
+            3 => SectionBody::Section3(GridDefinition {
+                slice: self.read_slice_without_offset_check(body_size)?,
+            }),
             4 => self.read_sect4_payload(body_size)?,
             5 => self.read_sect5_payload(body_size)?,
             6 => self.read_sect6_payload(body_size)?,
@@ -299,22 +300,6 @@ impl<R: Read + Seek> Grib2Read for SeekableGrib2Reader<R> {
         self.read_exact(buf.as_mut_slice())?;
 
         Ok(buf.into_boxed_slice())
-    }
-
-    fn read_sect3_payload(&mut self, body_size: usize) -> Result<SectionBody, ParseError> {
-        let mut buf = [0; 9]; // octet 6-14
-        self.read_exact(&mut buf[..])?;
-
-        let len_extra = body_size - buf.len();
-        if len_extra > 0 {
-            let mut buf = vec![0; len_extra];
-            self.read_exact(&mut buf[..])?;
-        }
-
-        Ok(SectionBody::Section3(GridDefinition {
-            num_points: read_as!(u32, buf, 1),
-            grid_tmpl_num: read_as!(u16, buf, 7),
-        }))
     }
 
     fn read_sect4_payload(&mut self, body_size: usize) -> Result<SectionBody, ParseError> {

@@ -52,7 +52,7 @@ pub enum SectionBody {
 impl SectionBody {
     fn get_tmpl_num(&self) -> Option<u16> {
         match self {
-            Self::Section3(s) => Some(s.grid_tmpl_num),
+            Self::Section3(s) => Some(s.grid_tmpl_num()),
             Self::Section4(s) => Some(s.prod_tmpl_num),
             Self::Section5(s) => Some(s.repr_tmpl_num),
             _ => None,
@@ -422,8 +422,7 @@ mod tests {
                 offset: 0,
                 size: 0,
                 body: Some(SectionBody::Section3(GridDefinition {
-                    num_points: 0,
-                    grid_tmpl_num: 0,
+                    slice: vec![0; 9].into_boxed_slice(),
                 })),
             },
             SectionInfo {
@@ -453,8 +452,7 @@ mod tests {
                 offset: 0,
                 size: 0,
                 body: Some(SectionBody::Section3(GridDefinition {
-                    num_points: 0,
-                    grid_tmpl_num: 1,
+                    slice: vec![0, 0, 0, 0, 0, 0, 0, 0, 1].into_boxed_slice(),
                 })),
             },
             SectionInfo {
