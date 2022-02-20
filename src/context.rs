@@ -53,7 +53,7 @@ impl SectionBody {
     fn get_tmpl_num(&self) -> Option<u16> {
         match self {
             Self::Section3(s) => Some(s.grid_tmpl_num()),
-            Self::Section4(s) => Some(s.prod_tmpl_num),
+            Self::Section4(s) => Some(s.prod_tmpl_num()),
             Self::Section5(s) => Some(s.repr_tmpl_num),
             _ => None,
         }
@@ -429,12 +429,9 @@ mod tests {
                 num: 4,
                 offset: 0,
                 size: 0,
-                body: Some(SectionBody::Section4(ProdDefinition {
-                    num_coordinates: 0,
-                    prod_tmpl_num: 0,
-                    templated: Vec::new().into_boxed_slice(),
-                    template_supported: true,
-                })),
+                body: Some(SectionBody::Section4(
+                    ProdDefinition::from_payload(vec![0; 4].into_boxed_slice()).unwrap(),
+                )),
             },
             SectionInfo {
                 num: 5,
@@ -462,12 +459,9 @@ mod tests {
                 num: 4,
                 offset: 0,
                 size: 0,
-                body: Some(SectionBody::Section4(ProdDefinition {
-                    num_coordinates: 0,
-                    prod_tmpl_num: 0,
-                    templated: Vec::new().into_boxed_slice(),
-                    template_supported: true,
-                })),
+                body: Some(SectionBody::Section4(
+                    ProdDefinition::from_payload(vec![0; 4].into_boxed_slice()).unwrap(),
+                )),
             },
             SectionInfo {
                 num: 5,
