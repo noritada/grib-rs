@@ -176,12 +176,12 @@ pub trait Grib2Read: Read + Seek {
     fn read_sect_payload(&mut self, header: &SectHeader) -> Result<SectionBody, ParseError>;
     fn read_sect_payload_as_slice(&mut self, sect: &SectionInfo) -> Result<Box<[u8]>, ParseError>;
     fn read_sect1_payload(&mut self, size: usize) -> Result<SectionBody, ParseError>;
-    fn read_sect2_payload(&mut self, size: usize) -> Result<SectionBody, ParseError>;
     fn read_sect3_payload(&mut self, size: usize) -> Result<SectionBody, ParseError>;
     fn read_sect4_payload(&mut self, size: usize) -> Result<SectionBody, ParseError>;
     fn read_sect5_payload(&mut self, size: usize) -> Result<SectionBody, ParseError>;
     fn read_sect6_payload(&mut self, size: usize) -> Result<SectionBody, ParseError>;
     fn skip_sect7_payload(&mut self, size: usize) -> Result<SectionBody, ParseError>;
+    fn read_slice_without_offset_check(&mut self, size: usize) -> Result<Box<[u8]>, ParseError>;
 }
 
 pub struct SeekableGrib2Reader<R> {
@@ -276,7 +276,9 @@ impl<R: Read + Seek> Grib2Read for SeekableGrib2Reader<R> {
         let body_size = size - SECT_HEADER_SIZE;
         let body = match num {
             1 => self.read_sect1_payload(body_size)?,
-            2 => self.read_sect2_payload(body_size)?,
+            2 => SectionBody::Section2(LocalUse {
+                slice: self.read_slice_without_offset_check(body_size)?,
+            }),
             3 => self.read_sect3_payload(body_size)?,
             4 => self.read_sect4_payload(body_size)?,
             5 => self.read_sect5_payload(body_size)?,
@@ -321,16 +323,6 @@ impl<R: Read + Seek> Grib2Read for SeekableGrib2Reader<R> {
             prod_status: buf[14],
             data_type: buf[15],
         }))
-    }
-
-    fn read_sect2_payload(&mut self, body_size: usize) -> Result<SectionBody, ParseError> {
-        let len_extra = body_size;
-        if len_extra > 0 {
-            let mut buf = vec![0; len_extra];
-            self.read_exact(&mut buf[..])?;
-        }
-
-        Ok(SectionBody::Section2)
     }
 
     fn read_sect3_payload(&mut self, body_size: usize) -> Result<SectionBody, ParseError> {
@@ -402,6 +394,12 @@ impl<R: Read + Seek> Grib2Read for SeekableGrib2Reader<R> {
         self.seek(SeekFrom::Current(body_size as i64))?;
 
         Ok(SectionBody::Section7)
+    }
+
+    fn read_slice_without_offset_check(&mut self, size: usize) -> Result<Box<[u8]>, ParseError> {
+        let mut buf = vec![0; size];
+        self.read_exact(&mut buf[..])?;
+        Ok(buf.into_boxed_slice())
     }
 }
 

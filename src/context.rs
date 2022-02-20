@@ -41,7 +41,7 @@ impl SectionInfo {
 pub enum SectionBody {
     Section0(Indicator),
     Section1(Identification),
-    Section2,
+    Section2(LocalUse),
     Section3(GridDefinition),
     Section4(ProdDefinition),
     Section5(ReprDefinition),

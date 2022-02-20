@@ -35,6 +35,17 @@ pub struct Identification {
     pub data_type: u8,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct LocalUse {
+    pub(crate) slice: Box<[u8]>,
+}
+
+impl LocalUse {
+    pub fn into_slice(self) -> Box<[u8]> {
+        self.slice
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct GridDefinition {
     /// Number of data points
