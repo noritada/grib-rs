@@ -42,7 +42,7 @@ impl<R: Grib2Read> Grib2DataDecode<R> for SimplePackingDecoder {
             ));
         }
 
-        let sect5_data = reader.read_sect_body_bytes(sect5)?;
+        let sect5_data = reader.read_sect_payload_as_slice(sect5)?;
         let ref_val = read_as!(f32, sect5_data, 6);
         let exp = read_as!(u16, sect5_data, 10).as_grib_int();
         let dig = read_as!(u16, sect5_data, 12).as_grib_int();
@@ -57,7 +57,7 @@ impl<R: Grib2Read> Grib2DataDecode<R> for SimplePackingDecoder {
             ));
         }
 
-        let sect7_data = reader.read_sect_body_bytes(sect7)?;
+        let sect7_data = reader.read_sect_payload_as_slice(sect7)?;
 
         // Based on the implementation of wgrib2, if nbits equals 0, return a constant
         // field where the data value at each grid point is the reference value.

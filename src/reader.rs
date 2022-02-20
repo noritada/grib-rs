@@ -128,7 +128,7 @@ where
         match result {
             Ok(header) => {
                 let offset = self.whole_size - self.rest_size;
-                match self.reader.read_sect(&header) {
+                match self.reader.read_sect_payload(&header) {
                     Ok(body) => {
                         let body = Some(body);
                         let (size, num) = header;
@@ -173,8 +173,15 @@ pub trait Grib2Read: Read + Seek {
     /// Reads a common header for Sections 1-7 and returns the section
     /// size and number.
     fn read_sect_header(&mut self) -> Result<Option<SectHeader>, ParseError>;
-    fn read_sect(&mut self, header: &SectHeader) -> Result<SectionBody, ParseError>;
-    fn read_sect_body_bytes(&mut self, sect: &SectionInfo) -> Result<Box<[u8]>, ParseError>;
+    fn read_sect_payload(&mut self, header: &SectHeader) -> Result<SectionBody, ParseError>;
+    fn read_sect_payload_as_slice(&mut self, sect: &SectionInfo) -> Result<Box<[u8]>, ParseError>;
+    fn read_sect1_payload(&mut self, size: usize) -> Result<SectionBody, ParseError>;
+    fn read_sect2_payload(&mut self, size: usize) -> Result<SectionBody, ParseError>;
+    fn read_sect3_payload(&mut self, size: usize) -> Result<SectionBody, ParseError>;
+    fn read_sect4_payload(&mut self, size: usize) -> Result<SectionBody, ParseError>;
+    fn read_sect5_payload(&mut self, size: usize) -> Result<SectionBody, ParseError>;
+    fn read_sect6_payload(&mut self, size: usize) -> Result<SectionBody, ParseError>;
+    fn skip_sect7_payload(&mut self, size: usize) -> Result<SectionBody, ParseError>;
 }
 
 pub struct SeekableGrib2Reader<R> {
@@ -264,24 +271,24 @@ impl<R: Read + Seek> Grib2Read for SeekableGrib2Reader<R> {
         Ok(Some((sect_size, sect_num)))
     }
 
-    fn read_sect(&mut self, header: &SectHeader) -> Result<SectionBody, ParseError> {
+    fn read_sect_payload(&mut self, header: &SectHeader) -> Result<SectionBody, ParseError> {
         let (size, num) = header;
         let body_size = size - SECT_HEADER_SIZE;
         let body = match num {
-            1 => unpack_sect1_body(self, body_size)?,
-            2 => unpack_sect2_body(self, body_size)?,
-            3 => unpack_sect3_body(self, body_size)?,
-            4 => unpack_sect4_body(self, body_size)?,
-            5 => unpack_sect5_body(self, body_size)?,
-            6 => unpack_sect6_body(self, body_size)?,
-            7 => skip_sect7_body(self, body_size)?,
+            1 => self.read_sect1_payload(body_size)?,
+            2 => self.read_sect2_payload(body_size)?,
+            3 => self.read_sect3_payload(body_size)?,
+            4 => self.read_sect4_payload(body_size)?,
+            5 => self.read_sect5_payload(body_size)?,
+            6 => self.read_sect6_payload(body_size)?,
+            7 => self.skip_sect7_payload(body_size)?,
             _ => return Err(ParseError::UnknownSectionNumber(*num)),
         };
 
         Ok(body)
     }
 
-    fn read_sect_body_bytes(&mut self, sect: &SectionInfo) -> Result<Box<[u8]>, ParseError> {
+    fn read_sect_payload_as_slice(&mut self, sect: &SectionInfo) -> Result<Box<[u8]>, ParseError> {
         let body_offset = sect.offset + SECT_HEADER_SIZE;
         self.seek(SeekFrom::Start(body_offset as u64))?;
 
@@ -291,111 +298,111 @@ impl<R: Read + Seek> Grib2Read for SeekableGrib2Reader<R> {
 
         Ok(buf.into_boxed_slice())
     }
-}
 
-pub fn unpack_sect1_body<R: Read>(f: &mut R, body_size: usize) -> Result<SectionBody, ParseError> {
-    let mut buf = [0; 16]; // octet 6-21
-    f.read_exact(&mut buf[..])?;
+    fn read_sect1_payload(&mut self, body_size: usize) -> Result<SectionBody, ParseError> {
+        let mut buf = [0; 16]; // octet 6-21
+        self.read_exact(&mut buf[..])?;
 
-    let len_extra = body_size - buf.len();
-    if len_extra > 0 {
-        let mut buf = vec![0; len_extra];
-        f.read_exact(&mut buf[..])?;
+        let len_extra = body_size - buf.len();
+        if len_extra > 0 {
+            let mut buf = vec![0; len_extra];
+            self.read_exact(&mut buf[..])?;
+        }
+
+        Ok(SectionBody::Section1(Identification {
+            centre_id: read_as!(u16, buf, 0),
+            subcentre_id: read_as!(u16, buf, 2),
+            master_table_version: buf[4],
+            local_table_version: buf[5],
+            ref_time_significance: buf[6],
+            ref_time: Utc
+                .ymd(read_as!(u16, buf, 7).into(), buf[9].into(), buf[10].into())
+                .and_hms(buf[11].into(), buf[12].into(), buf[13].into()),
+            prod_status: buf[14],
+            data_type: buf[15],
+        }))
     }
 
-    Ok(SectionBody::Section1(Identification {
-        centre_id: read_as!(u16, buf, 0),
-        subcentre_id: read_as!(u16, buf, 2),
-        master_table_version: buf[4],
-        local_table_version: buf[5],
-        ref_time_significance: buf[6],
-        ref_time: Utc
-            .ymd(read_as!(u16, buf, 7).into(), buf[9].into(), buf[10].into())
-            .and_hms(buf[11].into(), buf[12].into(), buf[13].into()),
-        prod_status: buf[14],
-        data_type: buf[15],
-    }))
-}
+    fn read_sect2_payload(&mut self, body_size: usize) -> Result<SectionBody, ParseError> {
+        let len_extra = body_size;
+        if len_extra > 0 {
+            let mut buf = vec![0; len_extra];
+            self.read_exact(&mut buf[..])?;
+        }
 
-pub fn unpack_sect2_body<R: Read>(f: &mut R, body_size: usize) -> Result<SectionBody, ParseError> {
-    let len_extra = body_size;
-    if len_extra > 0 {
-        let mut buf = vec![0; len_extra];
-        f.read_exact(&mut buf[..])?;
+        Ok(SectionBody::Section2)
     }
 
-    Ok(SectionBody::Section2)
-}
+    fn read_sect3_payload(&mut self, body_size: usize) -> Result<SectionBody, ParseError> {
+        let mut buf = [0; 9]; // octet 6-14
+        self.read_exact(&mut buf[..])?;
 
-pub fn unpack_sect3_body<R: Read>(f: &mut R, body_size: usize) -> Result<SectionBody, ParseError> {
-    let mut buf = [0; 9]; // octet 6-14
-    f.read_exact(&mut buf[..])?;
+        let len_extra = body_size - buf.len();
+        if len_extra > 0 {
+            let mut buf = vec![0; len_extra];
+            self.read_exact(&mut buf[..])?;
+        }
 
-    let len_extra = body_size - buf.len();
-    if len_extra > 0 {
-        let mut buf = vec![0; len_extra];
-        f.read_exact(&mut buf[..])?;
+        Ok(SectionBody::Section3(GridDefinition {
+            num_points: read_as!(u32, buf, 1),
+            grid_tmpl_num: read_as!(u16, buf, 7),
+        }))
     }
 
-    Ok(SectionBody::Section3(GridDefinition {
-        num_points: read_as!(u32, buf, 1),
-        grid_tmpl_num: read_as!(u16, buf, 7),
-    }))
-}
+    fn read_sect4_payload(&mut self, body_size: usize) -> Result<SectionBody, ParseError> {
+        let mut buf = [0; 4]; // octet 6-9
+        self.read_exact(&mut buf[..])?;
 
-pub fn unpack_sect4_body<R: Read>(f: &mut R, body_size: usize) -> Result<SectionBody, ParseError> {
-    let mut buf = [0; 4]; // octet 6-9
-    f.read_exact(&mut buf[..])?;
+        let len_extra = body_size - buf.len();
+        let mut templated = vec![0; len_extra];
+        self.read_exact(&mut templated[..])?;
 
-    let len_extra = body_size - buf.len();
-    let mut templated = vec![0; len_extra];
-    f.read_exact(&mut templated[..])?;
+        let prod_tmpl_num = read_as!(u16, buf, 2);
 
-    let prod_tmpl_num = read_as!(u16, buf, 2);
-
-    Ok(SectionBody::Section4(ProdDefinition {
-        num_coordinates: read_as!(u16, buf, 0),
-        prod_tmpl_num,
-        templated: templated.into_boxed_slice(),
-        template_supported: SUPPORTED_PROD_DEF_TEMPLATE_NUMBERS.contains(&prod_tmpl_num),
-    }))
-}
-
-pub fn unpack_sect5_body<R: Read>(f: &mut R, body_size: usize) -> Result<SectionBody, ParseError> {
-    let mut buf = [0; 6]; // octet 6-11
-    f.read_exact(&mut buf[..])?;
-
-    let len_extra = body_size - buf.len();
-    if len_extra > 0 {
-        let mut buf = vec![0; len_extra];
-        f.read_exact(&mut buf[..])?;
+        Ok(SectionBody::Section4(ProdDefinition {
+            num_coordinates: read_as!(u16, buf, 0),
+            prod_tmpl_num,
+            templated: templated.into_boxed_slice(),
+            template_supported: SUPPORTED_PROD_DEF_TEMPLATE_NUMBERS.contains(&prod_tmpl_num),
+        }))
     }
 
-    Ok(SectionBody::Section5(ReprDefinition {
-        num_points: read_as!(u32, buf, 0),
-        repr_tmpl_num: read_as!(u16, buf, 4),
-    }))
-}
+    fn read_sect5_payload(&mut self, body_size: usize) -> Result<SectionBody, ParseError> {
+        let mut buf = [0; 6]; // octet 6-11
+        self.read_exact(&mut buf[..])?;
 
-pub fn unpack_sect6_body<R: Read>(f: &mut R, body_size: usize) -> Result<SectionBody, ParseError> {
-    let mut buf = [0; 1]; // octet 6
-    f.read_exact(&mut buf[..])?;
+        let len_extra = body_size - buf.len();
+        if len_extra > 0 {
+            let mut buf = vec![0; len_extra];
+            self.read_exact(&mut buf[..])?;
+        }
 
-    let len_extra = body_size - buf.len();
-    if len_extra > 0 {
-        let mut buf = vec![0; len_extra];
-        f.read_exact(&mut buf[..])?;
+        Ok(SectionBody::Section5(ReprDefinition {
+            num_points: read_as!(u32, buf, 0),
+            repr_tmpl_num: read_as!(u16, buf, 4),
+        }))
     }
 
-    Ok(SectionBody::Section6(BitMap {
-        bitmap_indicator: buf[0],
-    }))
-}
+    fn read_sect6_payload(&mut self, body_size: usize) -> Result<SectionBody, ParseError> {
+        let mut buf = [0; 1]; // octet 6
+        self.read_exact(&mut buf[..])?;
 
-fn skip_sect7_body<R: Seek>(f: &mut R, body_size: usize) -> Result<SectionBody, ParseError> {
-    f.seek(SeekFrom::Current(body_size as i64))?;
+        let len_extra = body_size - buf.len();
+        if len_extra > 0 {
+            let mut buf = vec![0; len_extra];
+            self.read_exact(&mut buf[..])?;
+        }
 
-    Ok(SectionBody::Section7)
+        Ok(SectionBody::Section6(BitMap {
+            bitmap_indicator: buf[0],
+        }))
+    }
+
+    fn skip_sect7_payload(&mut self, body_size: usize) -> Result<SectionBody, ParseError> {
+        self.seek(SeekFrom::Current(body_size as i64))?;
+
+        Ok(SectionBody::Section7)
+    }
 }
 
 type SectHeader = (usize, u8);
