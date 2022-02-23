@@ -1,5 +1,6 @@
 use chrono::{offset::TimeZone, DateTime, Utc};
 use std::convert::TryInto;
+use std::slice::Iter;
 
 use crate::codetables::SUPPORTED_PROD_DEF_TEMPLATE_NUMBERS;
 use crate::datatypes::*;
@@ -36,8 +37,8 @@ impl Identification {
         }
     }
 
-    pub fn into_slice(self) -> Box<[u8]> {
-        self.payload
+    pub fn iter(&self) -> Iter<u8> {
+        self.payload.iter()
     }
 
     /// Identification of originating/generating centre (see Common Code Table
@@ -114,8 +115,8 @@ impl LocalUse {
         Self { payload: slice }
     }
 
-    pub fn into_slice(self) -> Box<[u8]> {
-        self.payload
+    pub fn iter(&self) -> Iter<u8> {
+        self.payload.iter()
     }
 }
 
@@ -134,8 +135,8 @@ impl GridDefinition {
         }
     }
 
-    pub fn into_slice(self) -> Box<[u8]> {
-        self.payload
+    pub fn iter(&self) -> Iter<u8> {
+        self.payload.iter()
     }
 
     /// Number of data points
@@ -168,8 +169,8 @@ impl ProdDefinition {
         }
     }
 
-    pub fn into_slice(self) -> Box<[u8]> {
-        self.payload
+    pub fn iter(&self) -> Iter<u8> {
+        self.payload.iter()
     }
 
     /// Number of coordinate values after Template
@@ -355,8 +356,8 @@ impl ReprDefinition {
         }
     }
 
-    pub fn into_slice(self) -> Box<[u8]> {
-        self.payload
+    pub fn iter(&self) -> Iter<u8> {
+        self.payload.iter()
     }
 
     /// Number of data points where one or more values are
