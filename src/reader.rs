@@ -5,6 +5,7 @@ use std::result::Result;
 use crate::context::{SectionBody, SectionInfo};
 use crate::datatypes::*;
 use crate::error::*;
+use crate::utils::read_as;
 
 const SECT0_IS_MAGIC: &[u8] = b"GRIB";
 const SECT0_IS_MAGIC_SIZE: usize = SECT0_IS_MAGIC.len();
@@ -12,13 +13,6 @@ const SECT0_IS_SIZE: usize = 16;
 const SECT_HEADER_SIZE: usize = 5;
 const SECT8_ES_MAGIC: &[u8] = b"7777";
 pub(crate) const SECT8_ES_SIZE: usize = SECT8_ES_MAGIC.len();
-
-macro_rules! read_as {
-    ($ty:ty, $buf:ident, $start:expr) => {{
-        let end = $start + std::mem::size_of::<$ty>();
-        <$ty>::from_be_bytes($buf[$start..end].try_into().unwrap())
-    }};
-}
 
 /// # Example
 /// ```

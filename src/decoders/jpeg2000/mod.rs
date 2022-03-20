@@ -7,7 +7,7 @@ use crate::decoders::common::*;
 use crate::decoders::simple::*;
 use crate::error::*;
 use crate::reader::Grib2Read;
-use crate::utils::GribInt;
+use crate::utils::{read_as, GribInt};
 
 mod ext;
 use ext::*;
@@ -19,13 +19,6 @@ pub enum Jpeg2000CodeStreamDecodeError {
     MainHeaderReadError,
     BodyReadError,
     LengthMismatch,
-}
-
-macro_rules! read_as {
-    ($ty:ty, $buf:ident, $start:expr) => {{
-        let end = $start + std::mem::size_of::<$ty>();
-        <$ty>::from_be_bytes($buf[$start..end].try_into().unwrap())
-    }};
 }
 
 pub(crate) struct Jpeg2000CodeStreamDecoder {}

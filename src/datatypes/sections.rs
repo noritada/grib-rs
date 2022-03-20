@@ -5,14 +5,7 @@ use std::slice::Iter;
 use crate::codetables::SUPPORTED_PROD_DEF_TEMPLATE_NUMBERS;
 use crate::datatypes::*;
 use crate::error::*;
-use crate::utils::GribInt;
-
-macro_rules! read_as {
-    ($ty:ty, $buf:ident, $start:expr) => {{
-        let end = $start + std::mem::size_of::<$ty>();
-        <$ty>::from_be_bytes($buf[$start..end].try_into().unwrap())
-    }};
-}
+use crate::utils::{read_as, GribInt};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Indicator {

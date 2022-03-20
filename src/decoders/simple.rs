@@ -6,20 +6,13 @@ use crate::context::{SectionBody, SectionInfo};
 use crate::decoders::common::*;
 use crate::error::*;
 use crate::reader::Grib2Read;
-use crate::utils::{GribInt, NBitwiseIterator};
+use crate::utils::{read_as, GribInt, NBitwiseIterator};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum SimplePackingDecodeError {
     NotSupported,
     OriginalFieldValueTypeNotSupported,
     LengthMismatch,
-}
-
-macro_rules! read_as {
-    ($ty:ty, $buf:ident, $start:expr) => {{
-        let end = $start + std::mem::size_of::<$ty>();
-        <$ty>::from_be_bytes($buf[$start..end].try_into().unwrap())
-    }};
 }
 
 pub(crate) struct SimplePackingDecoder {}

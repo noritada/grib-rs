@@ -24,6 +24,14 @@ add_impl_for_ints! {
     (u64, i64),
 }
 
+macro_rules! read_as {
+    ($ty:ty, $buf:ident, $start:expr) => {{
+        let end = $start + std::mem::size_of::<$ty>();
+        <$ty>::from_be_bytes($buf[$start..end].try_into().unwrap())
+    }};
+}
+pub(crate) use read_as;
+
 #[derive(Clone)]
 pub(crate) struct NBitwiseIterator<'a> {
     slice: &'a [u8],
