@@ -41,7 +41,7 @@ impl SectionInfo {
 pub enum SectionBody {
     Section0(Indicator),
     Section1(Identification),
-    Section2,
+    Section2(LocalUse),
     Section3(GridDefinition),
     Section4(ProdDefinition),
     Section5(ReprDefinition),
@@ -52,9 +52,9 @@ pub enum SectionBody {
 impl SectionBody {
     fn get_tmpl_num(&self) -> Option<u16> {
         match self {
-            Self::Section3(s) => Some(s.grid_tmpl_num),
-            Self::Section4(s) => Some(s.prod_tmpl_num),
-            Self::Section5(s) => Some(s.repr_tmpl_num),
+            Self::Section3(s) => Some(s.grid_tmpl_num()),
+            Self::Section4(s) => Some(s.prod_tmpl_num()),
+            Self::Section5(s) => Some(s.repr_tmpl_num()),
             _ => None,
         }
     }
@@ -140,12 +140,12 @@ impl<R: Grib2Read> Grib2<R> {
 
     /// Iterates over submessages.
     #[inline]
-    pub fn iter(&self) -> SubMessageIterator {
+    pub fn iter(&self) -> SubmessageIterator {
         self.submessages()
     }
 
-    pub fn submessages(&self) -> SubMessageIterator {
-        SubMessageIterator::new(&self.submessages, &self.sections)
+    pub fn submessages(&self) -> SubmessageIterator {
+        SubmessageIterator::new(&self.submessages, &self.sections)
     }
 
     /// Decodes grid values of a surface specified by the index `i`.
@@ -184,13 +184,13 @@ fn get_templates(sects: &[SectionInfo]) -> Vec<TemplateInfo> {
 }
 
 #[derive(Clone)]
-pub struct SubMessageIterator<'a> {
+pub struct SubmessageIterator<'a> {
     indices: &'a [Grib2SubmessageIndex],
     sections: &'a [SectionInfo],
     pos: usize,
 }
 
-impl<'a> SubMessageIterator<'a> {
+impl<'a> SubmessageIterator<'a> {
     fn new(indices: &'a [Grib2SubmessageIndex], sections: &'a [SectionInfo]) -> Self {
         Self {
             indices,
@@ -204,7 +204,7 @@ impl<'a> SubMessageIterator<'a> {
     }
 }
 
-impl<'a> Iterator for SubMessageIterator<'a> {
+impl<'a> Iterator for SubmessageIterator<'a> {
     type Item = SubMessage<'a>;
 
     fn next(&mut self) -> Option<SubMessage<'a>> {
@@ -403,10 +403,12 @@ mod tests {
             num: 5,
             offset: 8902,
             size: 23,
-            body: Some(SectionBody::Section5(ReprDefinition {
-                num_points: 86016,
-                repr_tmpl_num: 200,
-            })),
+            body: Some(SectionBody::Section5(
+                ReprDefinition::from_payload(
+                    vec![0x00, 0x01, 0x50, 0x00, 0x00, 0xc8].into_boxed_slice(),
+                )
+                .unwrap(),
+            )),
         };
 
         assert_eq!(sect.get_tmpl_code(), Some(TemplateInfo(5, 200)));
@@ -421,30 +423,25 @@ mod tests {
                 num: 3,
                 offset: 0,
                 size: 0,
-                body: Some(SectionBody::Section3(GridDefinition {
-                    num_points: 0,
-                    grid_tmpl_num: 0,
-                })),
+                body: Some(SectionBody::Section3(
+                    GridDefinition::from_payload(vec![0; 9].into_boxed_slice()).unwrap(),
+                )),
             },
             SectionInfo {
                 num: 4,
                 offset: 0,
                 size: 0,
-                body: Some(SectionBody::Section4(ProdDefinition {
-                    num_coordinates: 0,
-                    prod_tmpl_num: 0,
-                    templated: Vec::new().into_boxed_slice(),
-                    template_supported: true,
-                })),
+                body: Some(SectionBody::Section4(
+                    ProdDefinition::from_payload(vec![0; 4].into_boxed_slice()).unwrap(),
+                )),
             },
             SectionInfo {
                 num: 5,
                 offset: 0,
                 size: 0,
-                body: Some(SectionBody::Section5(ReprDefinition {
-                    num_points: 0,
-                    repr_tmpl_num: 0,
-                })),
+                body: Some(SectionBody::Section5(
+                    ReprDefinition::from_payload(vec![0; 6].into_boxed_slice()).unwrap(),
+                )),
             },
             sect_placeholder!(6),
             sect_placeholder!(7),
@@ -452,30 +449,28 @@ mod tests {
                 num: 3,
                 offset: 0,
                 size: 0,
-                body: Some(SectionBody::Section3(GridDefinition {
-                    num_points: 0,
-                    grid_tmpl_num: 1,
-                })),
+                body: Some(SectionBody::Section3(
+                    GridDefinition::from_payload(
+                        vec![0, 0, 0, 0, 0, 0, 0, 0, 1].into_boxed_slice(),
+                    )
+                    .unwrap(),
+                )),
             },
             SectionInfo {
                 num: 4,
                 offset: 0,
                 size: 0,
-                body: Some(SectionBody::Section4(ProdDefinition {
-                    num_coordinates: 0,
-                    prod_tmpl_num: 0,
-                    templated: Vec::new().into_boxed_slice(),
-                    template_supported: true,
-                })),
+                body: Some(SectionBody::Section4(
+                    ProdDefinition::from_payload(vec![0; 4].into_boxed_slice()).unwrap(),
+                )),
             },
             SectionInfo {
                 num: 5,
                 offset: 0,
                 size: 0,
-                body: Some(SectionBody::Section5(ReprDefinition {
-                    num_points: 0,
-                    repr_tmpl_num: 0,
-                })),
+                body: Some(SectionBody::Section5(
+                    ReprDefinition::from_payload(vec![0; 6].into_boxed_slice()).unwrap(),
+                )),
             },
             sect_placeholder!(6),
             sect_placeholder!(7),

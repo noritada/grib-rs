@@ -53,7 +53,7 @@ pub fn dispatch<R: Grib2Read>(
         _ => return Err(GribError::InternalDataError),
     };
 
-    let decoded = match sect5_body.repr_tmpl_num {
+    let decoded = match sect5_body.repr_tmpl_num() {
         0 => SimplePackingDecoder::decode(sect5, sect6, sect7, reader)?,
         3 => ComplexPackingDecoder::decode(sect5, sect6, sect7, reader)?,
         40 => Jpeg2000CodeStreamDecoder::decode(sect5, sect6, sect7, reader)?,

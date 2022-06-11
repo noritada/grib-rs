@@ -7,7 +7,7 @@ use crate::decoders::common::*;
 use crate::decoders::simple::*;
 use crate::error::*;
 use crate::reader::Grib2Read;
-use crate::utils::GribInt;
+use crate::utils::{read_as, GribInt};
 
 mod ext;
 use ext::*;
@@ -19,13 +19,6 @@ pub enum Jpeg2000CodeStreamDecodeError {
     MainHeaderReadError,
     BodyReadError,
     LengthMismatch,
-}
-
-macro_rules! read_as {
-    ($ty:ty, $buf:ident, $start:expr) => {{
-        let end = $start + std::mem::size_of::<$ty>();
-        <$ty>::from_be_bytes($buf[$start..end].try_into().unwrap())
-    }};
 }
 
 pub(crate) struct Jpeg2000CodeStreamDecoder {}
@@ -48,7 +41,7 @@ impl<R: Grib2Read> Grib2DataDecode<R> for Jpeg2000CodeStreamDecoder {
             ));
         }
 
-        let sect5_data = reader.read_sect_body_bytes(sect5)?;
+        let sect5_data = reader.read_sect_payload_as_slice(sect5)?;
         let ref_val = read_as!(f32, sect5_data, 6);
         let exp = read_as!(u16, sect5_data, 10).as_grib_int();
         let dig = read_as!(u16, sect5_data, 12).as_grib_int();
@@ -63,7 +56,7 @@ impl<R: Grib2Read> Grib2DataDecode<R> for Jpeg2000CodeStreamDecoder {
             ));
         }
 
-        let sect7_data = reader.read_sect_body_bytes(sect7)?;
+        let sect7_data = reader.read_sect_payload_as_slice(sect7)?;
 
         let stream = Stream::from_bytes(&sect7_data)
             .map_err(|e| GribError::DecodeError(DecodeError::Jpeg2000CodeStreamDecodeError(e)))?;
@@ -71,7 +64,7 @@ impl<R: Grib2Read> Grib2DataDecode<R> for Jpeg2000CodeStreamDecoder {
             .map_err(|e| GribError::DecodeError(DecodeError::Jpeg2000CodeStreamDecodeError(e)))?;
         let decoded =
             SimplePackingDecodeIterator::new(jp2_unpacked, ref_val, exp, dig).collect::<Vec<_>>();
-        if decoded.len() != sect5_body.num_points as usize {
+        if decoded.len() != sect5_body.num_points() as usize {
             return Err(GribError::DecodeError(
                 DecodeError::SimplePackingDecodeError(SimplePackingDecodeError::LengthMismatch),
             ));

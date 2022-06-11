@@ -5,7 +5,7 @@ use crate::context::{SectionBody, SectionInfo};
 use crate::decoders::common::*;
 use crate::error::*;
 use crate::reader::Grib2Read;
-use crate::utils::NBitwiseIterator;
+use crate::utils::{read_as, NBitwiseIterator};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum RunLengthEncodingDecodeError {
@@ -13,13 +13,6 @@ pub enum RunLengthEncodingDecodeError {
     InvalidFirstValue,
     LengthMismatch,
     InvalidLevelValue(u16),
-}
-
-macro_rules! read_as {
-    ($ty:ty, $buf:ident, $start:expr) => {{
-        let end = $start + std::mem::size_of::<$ty>();
-        <$ty>::from_be_bytes($buf[$start..end].try_into().unwrap())
-    }};
 }
 
 pub(crate) struct RunLengthEncodingDecoder {}
@@ -42,7 +35,7 @@ impl<R: Grib2Read> Grib2DataDecode<R> for RunLengthEncodingDecoder {
             ));
         }
 
-        let sect5_data = reader.read_sect_body_bytes(sect5)?;
+        let sect5_data = reader.read_sect_payload_as_slice(sect5)?;
         let nbit = read_as!(u8, sect5_data, 6);
         let maxv = read_as!(u16, sect5_data, 7);
         let max_level = read_as!(u16, sect5_data, 9);
@@ -61,13 +54,13 @@ impl<R: Grib2Read> Grib2DataDecode<R> for RunLengthEncodingDecoder {
             pos += std::mem::size_of::<u16>();
         }
 
-        let sect7_data = reader.read_sect_body_bytes(sect7)?;
+        let sect7_data = reader.read_sect_payload_as_slice(sect7)?;
 
         let decoded_levels = rleunpack(
             &sect7_data,
             nbit,
             maxv,
-            Some(sect5_body.num_points as usize),
+            Some(sect5_body.num_points() as usize),
         )
         .map_err(DecodeError::RunLengthEncodingDecodeError)?;
 

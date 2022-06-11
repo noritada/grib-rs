@@ -1,8 +1,11 @@
-use chrono::{DateTime, Utc};
+use chrono::{offset::TimeZone, DateTime, Utc};
 use std::convert::TryInto;
+use std::slice::Iter;
 
+use crate::codetables::SUPPORTED_PROD_DEF_TEMPLATE_NUMBERS;
 use crate::datatypes::*;
-use crate::utils::GribInt;
+use crate::error::*;
+use crate::utils::{read_as, GribInt};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Indicator {
@@ -14,51 +17,180 @@ pub struct Indicator {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Identification {
+    payload: Box<[u8]>,
+}
+
+impl Identification {
+    pub fn from_payload(slice: Box<[u8]>) -> Result<Self, BuildError> {
+        let size = slice.len();
+        if size < 16 {
+            Err(BuildError::SectionSizeTooSmall(size))
+        } else {
+            Ok(Self { payload: slice })
+        }
+    }
+
+    pub fn iter(&self) -> Iter<u8> {
+        self.payload.iter()
+    }
+
     /// Identification of originating/generating centre (see Common Code Table
     /// C-1)
-    pub centre_id: u16,
+    #[inline]
+    pub fn centre_id(&self) -> u16 {
+        let payload = &self.payload;
+        read_as!(u16, payload, 0)
+    }
+
     /// Identification of originating/generating sub-centre (allocated by
     /// originating/ generating centre)
-    pub subcentre_id: u16,
+    #[inline]
+    pub fn subcentre_id(&self) -> u16 {
+        let payload = &self.payload;
+        read_as!(u16, payload, 2)
+    }
+
     /// GRIB Master Tables Version Number (see Code Table 1.0)
-    pub master_table_version: u8,
+    #[inline]
+    pub fn master_table_version(&self) -> u8 {
+        self.payload[4]
+    }
+
     /// GRIB Local Tables Version Number (see Code Table 1.1)
-    pub local_table_version: u8,
+    #[inline]
+    pub fn local_table_version(&self) -> u8 {
+        self.payload[5]
+    }
+
     /// Significance of Reference Time (see Code Table 1.2)
-    pub ref_time_significance: u8,
+    #[inline]
+    pub fn ref_time_significance(&self) -> u8 {
+        self.payload[6]
+    }
+
     /// Reference time of data
-    pub ref_time: DateTime<Utc>,
+    #[inline]
+    pub fn ref_time(&self) -> DateTime<Utc> {
+        let payload = &self.payload;
+        Utc.ymd(
+            read_as!(u16, payload, 7).into(),
+            self.payload[9].into(),
+            self.payload[10].into(),
+        )
+        .and_hms(
+            self.payload[11].into(),
+            self.payload[12].into(),
+            self.payload[13].into(),
+        )
+    }
+
     /// Production status of processed data in this GRIB message
     /// (see Code Table 1.3)
-    pub prod_status: u8,
+    #[inline]
+    pub fn prod_status(&self) -> u8 {
+        self.payload[14]
+    }
+
     /// Type of processed data in this GRIB message (see Code Table 1.4)
-    pub data_type: u8,
+    #[inline]
+    pub fn data_type(&self) -> u8 {
+        self.payload[15]
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct LocalUse {
+    payload: Box<[u8]>,
+}
+
+impl LocalUse {
+    pub fn from_payload(slice: Box<[u8]>) -> Self {
+        Self { payload: slice }
+    }
+
+    pub fn iter(&self) -> Iter<u8> {
+        self.payload.iter()
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct GridDefinition {
-    /// Number of data points
-    pub num_points: u32,
-    /// Grid Definition Template Number
-    pub grid_tmpl_num: u16,
+    payload: Box<[u8]>,
 }
+
+impl GridDefinition {
+    pub fn from_payload(slice: Box<[u8]>) -> Result<Self, BuildError> {
+        let size = slice.len();
+        if size < 9 {
+            Err(BuildError::SectionSizeTooSmall(size))
+        } else {
+            Ok(Self { payload: slice })
+        }
+    }
+
+    pub fn iter(&self) -> Iter<u8> {
+        self.payload.iter()
+    }
+
+    /// Number of data points
+    pub fn num_points(&self) -> u32 {
+        let payload = &self.payload;
+        read_as!(u32, payload, 1)
+    }
+
+    /// Grid Definition Template Number
+    pub fn grid_tmpl_num(&self) -> u16 {
+        let payload = &self.payload;
+        read_as!(u16, payload, 7)
+    }
+}
+
+const START_OF_PROD_TEMPLATE: usize = 4;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ProdDefinition {
-    /// Number of coordinate values after Template
-    pub num_coordinates: u16,
-    /// Product Definition Template Number
-    pub prod_tmpl_num: u16,
-    pub(crate) templated: Box<[u8]>,
-    pub(crate) template_supported: bool,
+    payload: Box<[u8]>,
 }
 
 impl ProdDefinition {
+    pub fn from_payload(slice: Box<[u8]>) -> Result<Self, BuildError> {
+        let size = slice.len();
+        if size < START_OF_PROD_TEMPLATE {
+            Err(BuildError::SectionSizeTooSmall(size))
+        } else {
+            Ok(Self { payload: slice })
+        }
+    }
+
+    pub fn iter(&self) -> Iter<u8> {
+        self.payload.iter()
+    }
+
+    /// Number of coordinate values after Template
+    pub fn num_coordinates(&self) -> u16 {
+        let payload = &self.payload;
+        read_as!(u16, payload, 0)
+    }
+
+    /// Product Definition Template Number
+    pub fn prod_tmpl_num(&self) -> u16 {
+        let payload = &self.payload;
+        read_as!(u16, payload, 2)
+    }
+
+    // pub(crate) templated(&self)-> Box<[u8]> {
+
+    // }
+
+    pub(crate) fn template_supported(&self) -> bool {
+        SUPPORTED_PROD_DEF_TEMPLATE_NUMBERS.contains(&self.prod_tmpl_num())
+    }
+
     /// Use [CodeTable4_1](crate::codetables::CodeTable4_1) to get textual
     /// representation of the returned numerical value.
     pub fn parameter_category(&self) -> Option<u8> {
-        if self.template_supported {
-            self.templated.get(0).copied()
+        if self.template_supported() {
+            self.payload.get(START_OF_PROD_TEMPLATE).copied()
         } else {
             None
         }
@@ -67,8 +199,8 @@ impl ProdDefinition {
     /// Use [CodeTable4_2](crate::codetables::CodeTable4_2) to get textual
     /// representation of the returned numerical value.
     pub fn parameter_number(&self) -> Option<u8> {
-        if self.template_supported {
-            self.templated.get(1).copied()
+        if self.template_supported() {
+            self.payload.get(START_OF_PROD_TEMPLATE + 1).copied()
         } else {
             None
         }
@@ -77,8 +209,8 @@ impl ProdDefinition {
     /// Use [CodeTable4_3](crate::codetables::CodeTable4_3) to get textual
     /// representation of the returned numerical value.
     pub fn generating_process(&self) -> Option<u8> {
-        if self.template_supported {
-            let index = match self.prod_tmpl_num {
+        if self.template_supported() {
+            let index = match self.prod_tmpl_num() {
                 0..=39 => Some(2),
                 40..=43 => Some(4),
                 44..=46 => Some(15),
@@ -104,7 +236,7 @@ impl ProdDefinition {
                 1000..=1101 => Some(2),
                 _ => None,
             }?;
-            self.templated.get(index).copied()
+            self.payload.get(START_OF_PROD_TEMPLATE + index).copied()
         } else {
             None
         }
@@ -114,8 +246,8 @@ impl ProdDefinition {
     /// Use [CodeTable4_4](crate::codetables::CodeTable4_4) to get textual
     /// representation of the unit.
     pub fn forecast_time(&self) -> Option<ForecastTime> {
-        if self.template_supported {
-            let unit_index = match self.prod_tmpl_num {
+        if self.template_supported() {
+            let unit_index = match self.prod_tmpl_num() {
                 0..=15 => Some(8),
                 32..=34 => Some(8),
                 40..=43 => Some(10),
@@ -140,10 +272,11 @@ impl ProdDefinition {
                 1000..=1101 => Some(8),
                 _ => None,
             }?;
-            let unit = self.templated.get(unit_index).copied();
+            let unit_index = START_OF_PROD_TEMPLATE + unit_index;
+            let unit = self.payload.get(unit_index).copied();
             let start = unit_index + 1;
             let end = unit_index + 5;
-            let time = u32::from_be_bytes(self.templated[start..end].try_into().unwrap());
+            let time = u32::from_be_bytes(self.payload[start..end].try_into().unwrap());
             unit.map(|v| ForecastTime::from_numbers(v, time))
         } else {
             None
@@ -152,8 +285,8 @@ impl ProdDefinition {
 
     /// Returns a tuple of two [FixedSurface], wrapped by `Option`.
     pub fn fixed_surfaces(&self) -> Option<(FixedSurface, FixedSurface)> {
-        if self.template_supported {
-            let index = match self.prod_tmpl_num {
+        if self.template_supported() {
+            let index = match self.prod_tmpl_num() {
                 0..=15 => Some(13),
                 40..=43 => Some(15),
                 44 => Some(24),
@@ -188,12 +321,13 @@ impl ProdDefinition {
     }
 
     fn read_surface_from(&self, index: usize) -> Option<FixedSurface> {
-        let surface_type = self.templated.get(index).copied();
-        let scale_factor = self.templated.get(index + 1).map(|v| (*v).as_grib_int());
+        let index = START_OF_PROD_TEMPLATE + index;
+        let surface_type = self.payload.get(index).copied();
+        let scale_factor = self.payload.get(index + 1).map(|v| (*v).as_grib_int());
         let start = index + 2;
         let end = index + 6;
         let scaled_value =
-            u32::from_be_bytes(self.templated[start..end].try_into().unwrap()).as_grib_int();
+            u32::from_be_bytes(self.payload[start..end].try_into().unwrap()).as_grib_int();
         surface_type
             .zip(scale_factor)
             .map(|(stype, factor)| FixedSurface::new(stype, factor, scaled_value))
@@ -202,12 +336,36 @@ impl ProdDefinition {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ReprDefinition {
+    payload: Box<[u8]>,
+}
+
+impl ReprDefinition {
+    pub fn from_payload(slice: Box<[u8]>) -> Result<Self, BuildError> {
+        let size = slice.len();
+        if size < 6 {
+            Err(BuildError::SectionSizeTooSmall(size))
+        } else {
+            Ok(Self { payload: slice })
+        }
+    }
+
+    pub fn iter(&self) -> Iter<u8> {
+        self.payload.iter()
+    }
+
     /// Number of data points where one or more values are
     /// specified in Section 7 when a bit map is present, total
     /// number of data points when a bit map is absent
-    pub num_points: u32,
+    pub fn num_points(&self) -> u32 {
+        let payload = &self.payload;
+        read_as!(u32, payload, 0)
+    }
+
     /// Data Representation Template Number
-    pub repr_tmpl_num: u16,
+    pub fn repr_tmpl_num(&self) -> u16 {
+        let payload = &self.payload;
+        read_as!(u16, payload, 4)
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -222,16 +380,14 @@ mod tests {
 
     #[test]
     fn prod_definition_parameters() {
-        let data = ProdDefinition {
-            num_coordinates: 0,
-            prod_tmpl_num: 0,
-            templated: vec![
-                193, 0, 2, 153, 255, 0, 0, 0, 0, 0, 0, 0, 40, 1, 255, 255, 255, 255, 255, 255, 255,
-                255, 255, 255, 255,
+        let data = ProdDefinition::from_payload(
+            vec![
+                0, 0, 0, 0, 193, 0, 2, 153, 255, 0, 0, 0, 0, 0, 0, 0, 40, 1, 255, 255, 255, 255,
+                255, 255, 255, 255, 255, 255, 255,
             ]
             .into_boxed_slice(),
-            template_supported: true,
-        };
+        )
+        .unwrap();
 
         assert_eq!(data.parameter_category(), Some(193));
         assert_eq!(data.parameter_number(), Some(0));

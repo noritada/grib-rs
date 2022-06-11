@@ -55,16 +55,16 @@ Type of processed data:                 {}
 ",
             CodeTable0_0.lookup(self.indicator.discipline as usize),
             self.indicator.total_length,
-            CommonCodeTable11.lookup(self.identification.centre_id as usize),
-            self.identification.subcentre_id,
-            self.identification.master_table_version,
-            CommonCodeTable00.lookup(self.identification.master_table_version as usize),
-            self.identification.local_table_version,
-            CodeTable1_1.lookup(self.identification.local_table_version as usize),
-            CodeTable1_2.lookup(self.identification.ref_time_significance as usize),
-            self.identification.ref_time,
-            CodeTable1_3.lookup(self.identification.prod_status as usize),
-            CodeTable1_4.lookup(self.identification.data_type as usize)
+            CommonCodeTable11.lookup(self.identification.centre_id() as usize),
+            self.identification.subcentre_id(),
+            self.identification.master_table_version(),
+            CommonCodeTable00.lookup(self.identification.master_table_version() as usize),
+            self.identification.local_table_version(),
+            CodeTable1_1.lookup(self.identification.local_table_version() as usize),
+            CodeTable1_2.lookup(self.identification.ref_time_significance() as usize),
+            self.identification.ref_time(),
+            CodeTable1_3.lookup(self.identification.prod_status() as usize),
+            CodeTable1_4.lookup(self.identification.data_type() as usize)
         )
     }
 }
