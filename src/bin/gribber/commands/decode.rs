@@ -1,20 +1,22 @@
-use clap::{Arg, ArgMatches, Command};
+use clap::{arg, command, Arg, ArgMatches, Command};
 use std::fs::File;
 use std::io::{BufWriter, Write};
+use std::path::PathBuf;
 
 use crate::cli;
 
 pub fn cli() -> Command<'static> {
-    Command::new("decode")
+    command!("decode")
         .about("Export decoded data")
-        .arg(Arg::new("file").required(true))
-        .arg(Arg::new("index").required(true))
+        .arg(arg!(<FILE> "Target file").value_parser(clap::value_parser!(PathBuf)))
+        .arg(arg!(<INDEX> "Submessage index").value_parser(clap::value_parser!(usize)))
         .arg(
             Arg::new("big-endian")
                 .help("Export as a big-endian flat binary file")
                 .short('b')
                 .long("big-endian")
-                .takes_value(true),
+                .takes_value(true)
+                .value_parser(clap::value_parser!(PathBuf)),
         )
         .arg(
             Arg::new("little-endian")
@@ -22,18 +24,19 @@ pub fn cli() -> Command<'static> {
                 .short('l')
                 .long("little-endian")
                 .takes_value(true)
+                .value_parser(clap::value_parser!(PathBuf))
                 .conflicts_with("big-endian"),
         )
 }
 
 pub fn exec(args: &ArgMatches) -> Result<(), cli::CliError> {
-    let file_name = args.value_of("file").unwrap();
+    let file_name = args.get_one::<PathBuf>("FILE").unwrap();
     let grib = cli::grib(file_name)?;
-    let index: usize = args.value_of("index").unwrap().parse()?;
-    let values = grib.get_values(index)?;
+    let index = args.get_one::<usize>("INDEX").unwrap();
+    let values = grib.get_values(*index)?;
 
-    if args.is_present("big-endian") {
-        let out_path = args.value_of("big-endian").unwrap();
+    if args.contains_id("big-endian") {
+        let out_path = args.get_one::<PathBuf>("big-endian").unwrap();
         File::create(out_path)
             .and_then(|f| {
                 let mut stream = BufWriter::new(f);
@@ -42,9 +45,9 @@ pub fn exec(args: &ArgMatches) -> Result<(), cli::CliError> {
                 }
                 Ok(())
             })
-            .map_err(|e| cli::CliError::IO(e, out_path.to_string()))?;
-    } else if args.is_present("little-endian") {
-        let out_path = args.value_of("little-endian").unwrap();
+            .map_err(|e| cli::CliError::IO(e, out_path.to_string_lossy().to_string()))?;
+    } else if args.contains_id("little-endian") {
+        let out_path = args.get_one::<PathBuf>("little-endian").unwrap();
         File::create(out_path)
             .and_then(|f| {
                 let mut stream = BufWriter::new(f);
@@ -53,7 +56,7 @@ pub fn exec(args: &ArgMatches) -> Result<(), cli::CliError> {
                 }
                 Ok(())
             })
-            .map_err(|e| cli::CliError::IO(e, out_path.to_string()))?;
+            .map_err(|e| cli::CliError::IO(e, out_path.to_string_lossy().to_string()))?;
     } else {
         cli::start_pager();
         println!("{:#?}", values);

@@ -1,33 +1,19 @@
-use clap::{Arg, ArgMatches, Command};
+use clap::{arg, command, ArgMatches, Command};
 use console::{Style, Term};
 use std::fmt::{self, Display, Formatter};
+use std::path::PathBuf;
 
 use grib::context::{SectionInfo, SubMessageSection, SubmessageIterator, TemplateInfo};
 
 use crate::cli;
 
 pub fn cli() -> Command<'static> {
-    Command::new("inspect")
+    command!("inspect")
         .about("Inspect and describes the data structure")
-        .arg(
-            Arg::new("sections")
-                .help("Print sections constructing the GRIB message")
-                .short('s')
-                .long("sections"),
-        )
-        .arg(
-            Arg::new("submessages")
-                .help("Print submessages in the GRIB message")
-                .short('m')
-                .long("submessages"),
-        )
-        .arg(
-            Arg::new("templates")
-                .help("Print templates used in the GRIB message")
-                .short('t')
-                .long("templates"),
-        )
-        .arg(Arg::new("file").required(true))
+        .arg(arg!(-s --sections "Print sections constructing the GRIB message"))
+        .arg(arg!(-m --submessages "Print submessages in the GRIB message"))
+        .arg(arg!(-t --templates "Print templates used in the GRIB message"))
+        .arg(arg!(<FILE> "Target file").value_parser(clap::value_parser!(PathBuf)))
         .after_help(
             "\
 This subcommand is mainly targeted at (possible) developers and
@@ -38,21 +24,21 @@ of debugging, enhancement, and education.\
 }
 
 pub fn exec(args: &ArgMatches) -> Result<(), cli::CliError> {
-    let file_name = args.value_of("file").unwrap();
+    let file_name = args.get_one::<PathBuf>("FILE").unwrap();
     let grib = cli::grib(file_name)?;
 
     let mut view = InspectView::new();
-    if args.is_present("sections") {
+    if args.contains_id("sections") {
         view.add(InspectItem::Sections(InspectSectionsItem::new(
             grib.sections(),
         )));
     }
-    if args.is_present("submessages") {
+    if args.contains_id("submessages") {
         view.add(InspectItem::SubMessages(InspectSubMessagesItem::new(
             grib.submessages(),
         )));
     }
-    if args.is_present("templates") {
+    if args.contains_id("templates") {
         let tmpls = grib.list_templates();
         view.add(InspectItem::Templates(InspectTemplatesItem::new(tmpls)));
     }

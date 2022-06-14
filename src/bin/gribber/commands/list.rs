@@ -1,6 +1,7 @@
-use clap::{Arg, ArgMatches, Command};
+use clap::{arg, command, ArgMatches, Command};
 use console::{Style, Term};
 use std::fmt::{self, Display, Formatter};
+use std::path::PathBuf;
 
 use grib::codetables::{CodeTable4_2, CodeTable4_3, Lookup};
 use grib::context::SubmessageIterator;
@@ -8,22 +9,17 @@ use grib::context::SubmessageIterator;
 use crate::cli;
 
 pub fn cli() -> Command<'static> {
-    Command::new("list")
+    command!("list")
         .about("List surfaces contained in the data")
-        .arg(
-            Arg::new("dump")
-                .help("Show details of each data")
-                .short('d')
-                .long("dump"),
-        )
-        .arg(Arg::new("file").required(true))
+        .arg(arg!(-d --dump "Show details of each data"))
+        .arg(arg!(<FILE> "Target file").value_parser(clap::value_parser!(PathBuf)))
 }
 
 pub fn exec(args: &ArgMatches) -> Result<(), cli::CliError> {
-    let file_name = args.value_of("file").unwrap();
+    let file_name = args.get_one::<PathBuf>("FILE").unwrap();
     let grib = cli::grib(file_name)?;
 
-    let mode = if args.is_present("dump") {
+    let mode = if args.contains_id("dump") {
         ListViewMode::Dump
     } else {
         ListViewMode::OneLine
