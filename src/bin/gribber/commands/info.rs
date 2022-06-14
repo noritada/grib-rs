@@ -1,5 +1,6 @@
-use clap::{Arg, ArgMatches, Command};
+use clap::{arg, command, ArgMatches, Command};
 use std::fmt::{self, Display, Formatter};
+use std::path::PathBuf;
 
 use grib::codetables::{
     CodeTable0_0, CodeTable1_1, CodeTable1_2, CodeTable1_3, CodeTable1_4, CommonCodeTable00,
@@ -10,13 +11,13 @@ use grib::datatypes::{Identification, Indicator};
 use crate::cli;
 
 pub fn cli() -> Command<'static> {
-    Command::new("info")
+    command!("info")
         .about("Show identification information")
-        .arg(Arg::new("file").required(true))
+        .arg(arg!(<FILE> "Target file").value_parser(clap::value_parser!(PathBuf)))
 }
 
 pub fn exec(args: &ArgMatches) -> Result<(), cli::CliError> {
-    let file_name = args.value_of("file").unwrap();
+    let file_name = args.get_one::<PathBuf>("FILE").unwrap();
     let grib = cli::grib(file_name)?;
     let info = InfoItem::new(grib.info()?);
     print!("{}", info);
