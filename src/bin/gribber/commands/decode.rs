@@ -1,4 +1,4 @@
-use clap::{arg, command, Arg, ArgMatches, Command};
+use clap::{arg, command, ArgMatches, Command};
 use std::fs::File;
 use std::io::{BufWriter, Write};
 use std::path::PathBuf;
@@ -11,19 +11,13 @@ pub fn cli() -> Command<'static> {
         .arg(arg!(<FILE> "Target file").value_parser(clap::value_parser!(PathBuf)))
         .arg(arg!(<INDEX> "Submessage index").value_parser(clap::value_parser!(usize)))
         .arg(
-            Arg::new("big-endian")
-                .help("Export as a big-endian flat binary file")
-                .short('b')
-                .long("big-endian")
-                .takes_value(true)
+            arg!(-b --"big-endian" <OUT_FILE> "Export as a big-endian flat binary file")
+                .required(false) // There is no syntax yet for optional options.
                 .value_parser(clap::value_parser!(PathBuf)),
         )
         .arg(
-            Arg::new("little-endian")
-                .help("Export as a little-endian flat binary file")
-                .short('l')
-                .long("little-endian")
-                .takes_value(true)
+            arg!(-l --"little-endian" <OUT_FILE> "Export as a little-endian flat binary file")
+                .required(false) // There is no syntax yet for optional options.
                 .value_parser(clap::value_parser!(PathBuf))
                 .conflicts_with("big-endian"),
         )
