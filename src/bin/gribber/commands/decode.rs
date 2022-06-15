@@ -1,4 +1,4 @@
-use clap::{arg, command, ArgMatches, Command};
+use clap::{arg, ArgMatches, Command};
 use std::fs::File;
 use std::io::{BufWriter, Write};
 use std::path::PathBuf;
@@ -6,7 +6,7 @@ use std::path::PathBuf;
 use crate::cli;
 
 pub fn cli() -> Command<'static> {
-    command!("decode")
+    Command::new("decode")
         .about("Export decoded data")
         .arg(arg!(<FILE> "Target file").value_parser(clap::value_parser!(PathBuf)))
         .arg(arg!(<INDEX> "Submessage index").value_parser(clap::value_parser!(usize)))

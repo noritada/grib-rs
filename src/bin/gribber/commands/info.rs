@@ -1,4 +1,4 @@
-use clap::{arg, command, ArgMatches, Command};
+use clap::{arg, ArgMatches, Command};
 use std::fmt::{self, Display, Formatter};
 use std::path::PathBuf;
 
@@ -11,7 +11,7 @@ use grib::datatypes::{Identification, Indicator};
 use crate::cli;
 
 pub fn cli() -> Command<'static> {
-    command!("info")
+    Command::new("info")
         .about("Show identification information")
         .arg(arg!(<FILE> "Target file").value_parser(clap::value_parser!(PathBuf)))
 }
