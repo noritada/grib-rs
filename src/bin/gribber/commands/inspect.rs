@@ -1,4 +1,4 @@
-use clap::{arg, command, ArgMatches, Command};
+use clap::{arg, ArgMatches, Command};
 use console::{Style, Term};
 use std::fmt::{self, Display, Formatter};
 use std::path::PathBuf;
@@ -8,7 +8,7 @@ use grib::context::{SectionInfo, SubMessageSection, SubmessageIterator, Template
 use crate::cli;
 
 pub fn cli() -> Command<'static> {
-    command!("inspect")
+    Command::new("inspect")
         .about("Inspect and describes the data structure")
         .arg(arg!(-s --sections "Print sections constructing the GRIB message"))
         .arg(arg!(-m --submessages "Print submessages in the GRIB message"))

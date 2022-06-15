@@ -1,4 +1,4 @@
-use clap::{arg, command, ArgMatches, Command};
+use clap::{arg, ArgMatches, Command};
 use console::{Style, Term};
 use std::fmt::{self, Display, Formatter};
 use std::path::PathBuf;
@@ -9,7 +9,7 @@ use grib::context::SubmessageIterator;
 use crate::cli;
 
 pub fn cli() -> Command<'static> {
-    command!("list")
+    Command::new("list")
         .about("List surfaces contained in the data")
         .arg(arg!(-d --dump "Show details of each data"))
         .arg(arg!(<FILE> "Target file").value_parser(clap::value_parser!(PathBuf)))
