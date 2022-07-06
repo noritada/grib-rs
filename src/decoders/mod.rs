@@ -1,3 +1,4 @@
+mod bitmap;
 mod common;
 pub use common::*;
 mod complex;
