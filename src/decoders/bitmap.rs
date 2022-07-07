@@ -61,3 +61,49 @@ fn has_zero_at_offset(byte: &u8, offset: &usize) -> bool {
     let masked = byte & (MASK >> offset);
     masked == 0
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn bitmap_iterator_works() {
+        let bitmap = vec![0b01001100u8, 0b01110000, 0b11110000];
+        let values = (0..10).into_iter().map(|n| n as f32).collect::<Vec<_>>();
+        let values = values.into_iter();
+
+        let iter = BitmapDecodeIterator::new(bitmap.iter(), values);
+        let actual = iter.collect::<Vec<_>>();
+        let expected = vec![
+            f32::NAN,
+            0.0,
+            f32::NAN,
+            f32::NAN,
+            1.0,
+            2.0,
+            f32::NAN,
+            f32::NAN,
+            f32::NAN,
+            3.0,
+            4.0,
+            5.0,
+            f32::NAN,
+            f32::NAN,
+            f32::NAN,
+            f32::NAN,
+            6.0,
+            7.0,
+            8.0,
+            9.0,
+            f32::NAN,
+            f32::NAN,
+            f32::NAN,
+            f32::NAN,
+        ];
+
+        actual
+            .iter()
+            .zip(expected.iter())
+            .all(|(a, b)| (a.is_nan() && b.is_nan()) || (a == b));
+    }
+}
