@@ -23,6 +23,21 @@ pub fn cli() -> Command<'static> {
         )
 }
 
+fn write_output(
+    out_path: &PathBuf,
+    values: &[f32],
+    to_bytes: fn(&f32) -> [u8; 4],
+) -> Result<(), cli::CliError> {
+    File::create(out_path)
+        .and_then(|f| {
+            let mut stream = BufWriter::new(f);
+            values
+                .iter()
+                .try_for_each(|f| stream.write_all(&to_bytes(f)))
+        })
+        .map_err(|e| cli::CliError::IO(e, out_path.to_string_lossy().to_string()))
+}
+
 pub fn exec(args: &ArgMatches) -> Result<(), cli::CliError> {
     let file_name = args.get_one::<PathBuf>("FILE").unwrap();
     let grib = cli::grib(file_name)?;
@@ -31,30 +46,13 @@ pub fn exec(args: &ArgMatches) -> Result<(), cli::CliError> {
 
     if args.contains_id("big-endian") {
         let out_path = args.get_one::<PathBuf>("big-endian").unwrap();
-        File::create(out_path)
-            .and_then(|f| {
-                let mut stream = BufWriter::new(f);
-                for value in values.iter() {
-                    stream.write_all(&value.to_be_bytes())?;
-                }
-                Ok(())
-            })
-            .map_err(|e| cli::CliError::IO(e, out_path.to_string_lossy().to_string()))?;
+        write_output(out_path, &values, |f| f.to_be_bytes())
     } else if args.contains_id("little-endian") {
         let out_path = args.get_one::<PathBuf>("little-endian").unwrap();
-        File::create(out_path)
-            .and_then(|f| {
-                let mut stream = BufWriter::new(f);
-                for value in values.iter() {
-                    stream.write_all(&value.to_le_bytes())?;
-                }
-                Ok(())
-            })
-            .map_err(|e| cli::CliError::IO(e, out_path.to_string_lossy().to_string()))?;
+        write_output(out_path, &values, |f| f.to_le_bytes())
     } else {
         cli::start_pager();
         println!("{:#?}", values);
+        Ok(())
     }
-
-    Ok(())
 }
