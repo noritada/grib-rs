@@ -19,11 +19,10 @@ where
     }
 }
 
-impl<'b, B, I, N> Iterator for BitmapDecodeIterator<B, I>
+impl<'b, B, I> Iterator for BitmapDecodeIterator<B, I>
 where
     B: Iterator<Item = &'b u8>,
-    I: Iterator<Item = N>,
-    Option<f32>: From<Option<N>>,
+    I: Iterator<Item = f32>,
 {
     type Item = f32;
 
@@ -40,7 +39,7 @@ where
         if has_zero_at_offset(byte, &offset) {
             Some(f32::NAN)
         } else {
-            self.values.next().into()
+            self.values.next()
         }
     }
 
