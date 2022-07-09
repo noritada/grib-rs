@@ -77,7 +77,12 @@ impl<R: Grib2Read> Grib2DataDecode<R> for RunLengthEncodingDecoder {
         };
 
         let decoded: Result<Vec<_>, _> = (*decoded_levels).iter().map(level_to_value).collect();
-        let decoder = BitmapDecodeIterator::new(bitmap.iter(), decoded?.into_iter());
+        // Taking first `num_points` is needed.  Since the bitmap is represented as a
+        // sequence of bytes, for example, if there are 9 grid points, the
+        // number of iterations will probably be 16, which is greater than the
+        // original number of grid points.
+        let decoder = BitmapDecodeIterator::new(bitmap.iter(), decoded?.into_iter())
+            .take(sect5_body.num_points as usize);
         let decoded = decoder.collect::<Vec<_>>();
         let decoded = decoded.into_boxed_slice();
         Ok(decoded)
