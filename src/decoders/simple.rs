@@ -3,6 +3,7 @@ use std::cell::RefMut;
 use std::convert::TryInto;
 
 use crate::context::{SectionBody, SectionInfo};
+use crate::decoders::bitmap::BitmapDecodeIterator;
 use crate::decoders::common::*;
 use crate::error::*;
 use crate::reader::Grib2Read;
@@ -27,20 +28,14 @@ pub(crate) struct SimplePackingDecoder {}
 impl<R: Grib2Read> Grib2DataDecode<R> for SimplePackingDecoder {
     fn decode(
         sect5: &SectionInfo,
-        sect6: &SectionInfo,
+        bitmap: Vec<u8>,
         sect7: &SectionInfo,
         mut reader: RefMut<R>,
     ) -> Result<Box<[f32]>, GribError> {
-        let (sect5_body, sect6_body) = match (sect5.body.as_ref(), sect6.body.as_ref()) {
-            (Some(SectionBody::Section5(b5)), Some(SectionBody::Section6(b6))) => (b5, b6),
+        let sect5_body = match sect5.body.as_ref() {
+            Some(SectionBody::Section5(b5)) => b5,
             _ => return Err(GribError::InternalDataError),
         };
-
-        if sect6_body.bitmap_indicator != 255 {
-            return Err(GribError::DecodeError(
-                DecodeError::BitMapIndicatorUnsupported,
-            ));
-        }
 
         let sect5_data = reader.read_sect_body_bytes(sect5)?;
         let ref_val = read_as!(f32, sect5_data, 6);
@@ -67,7 +62,9 @@ impl<R: Grib2Read> Grib2DataDecode<R> for SimplePackingDecoder {
         }
 
         let iter = NBitwiseIterator::new(&sect7_data, usize::from(nbit));
-        let decoded = SimplePackingDecodeIterator::new(iter, ref_val, exp, dig).collect::<Vec<_>>();
+        let decoder = SimplePackingDecodeIterator::new(iter, ref_val, exp, dig);
+        let decoder = BitmapDecodeIterator::new(bitmap.iter(), decoder);
+        let decoded = decoder.collect::<Vec<_>>();
         if decoded.len() != sect5_body.num_points as usize {
             return Err(GribError::DecodeError(
                 DecodeError::SimplePackingDecodeError(SimplePackingDecodeError::LengthMismatch),
@@ -120,6 +117,7 @@ mod tests {
     use std::io::{BufReader, Cursor, Read};
 
     use crate::context::from_reader;
+    use crate::decoders::bitmap::create_bitmap_for_nonnullable_data;
 
     #[test]
     fn decode_simple_packing() {
@@ -157,7 +155,7 @@ mod tests {
 
         let grib = from_reader(f).unwrap();
         let index = 0;
-        let (sect5, sect6, sect7) = grib
+        let (sect5, _sect6, sect7) = grib
             .submessages
             .get(index)
             .and_then(|submsg| {
@@ -172,7 +170,16 @@ mod tests {
 
         let reader = grib.reader.borrow_mut();
 
-        let actual = SimplePackingDecoder::decode(sect5, sect6, sect7, reader).unwrap();
+        // FIXME: Bitmap creation process is hardcoded, assuming that the bitmap
+        // indicator is 0xff.
+        let num_points = if let Some(SectionBody::Section5(sect5_body)) = &sect5.body {
+            sect5_body.num_points as usize
+        } else {
+            0
+        };
+        let bitmap = create_bitmap_for_nonnullable_data(num_points);
+
+        let actual = SimplePackingDecoder::decode(sect5, bitmap, sect7, reader).unwrap();
         let expected = vec![0f32; 0x002d0000].into_boxed_slice();
         assert_eq!(actual, expected);
     }

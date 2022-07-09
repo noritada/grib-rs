@@ -2,6 +2,7 @@ use std::cell::RefMut;
 use std::convert::TryInto;
 
 use crate::context::{SectionBody, SectionInfo};
+use crate::decoders::bitmap::BitmapDecodeIterator;
 use crate::decoders::common::*;
 use crate::error::*;
 use crate::reader::Grib2Read;
@@ -27,20 +28,14 @@ pub(crate) struct RunLengthEncodingDecoder {}
 impl<R: Grib2Read> Grib2DataDecode<R> for RunLengthEncodingDecoder {
     fn decode(
         sect5: &SectionInfo,
-        sect6: &SectionInfo,
+        bitmap: Vec<u8>,
         sect7: &SectionInfo,
         mut reader: RefMut<R>,
     ) -> Result<Box<[f32]>, GribError> {
-        let (sect5_body, sect6_body) = match (sect5.body.as_ref(), sect6.body.as_ref()) {
-            (Some(SectionBody::Section5(b5)), Some(SectionBody::Section6(b6))) => (b5, b6),
+        let sect5_body = match sect5.body.as_ref() {
+            Some(SectionBody::Section5(b5)) => b5,
             _ => return Err(GribError::InternalDataError),
         };
-
-        if sect6_body.bitmap_indicator != 255 {
-            return Err(GribError::DecodeError(
-                DecodeError::BitMapIndicatorUnsupported,
-            ));
-        }
 
         let sect5_data = reader.read_sect_body_bytes(sect5)?;
         let nbit = read_as!(u8, sect5_data, 6);
@@ -82,7 +77,9 @@ impl<R: Grib2Read> Grib2DataDecode<R> for RunLengthEncodingDecoder {
         };
 
         let decoded: Result<Vec<_>, _> = (*decoded_levels).iter().map(level_to_value).collect();
-        let decoded = decoded?.into_boxed_slice();
+        let decoder = BitmapDecodeIterator::new(bitmap.iter(), decoded?.into_iter());
+        let decoded = decoder.collect::<Vec<_>>();
+        let decoded = decoded.into_boxed_slice();
         Ok(decoded)
     }
 }

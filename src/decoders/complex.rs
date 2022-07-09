@@ -4,6 +4,7 @@ use std::convert::TryInto;
 use std::iter;
 
 use crate::context::{SectionBody, SectionInfo};
+use crate::decoders::bitmap::BitmapDecodeIterator;
 use crate::decoders::common::*;
 use crate::decoders::simple::*;
 use crate::error::*;
@@ -28,20 +29,14 @@ pub(crate) struct ComplexPackingDecoder {}
 impl<R: Grib2Read> Grib2DataDecode<R> for ComplexPackingDecoder {
     fn decode(
         sect5: &SectionInfo,
-        sect6: &SectionInfo,
+        bitmap: Vec<u8>,
         sect7: &SectionInfo,
         mut reader: RefMut<R>,
     ) -> Result<Box<[f32]>, GribError> {
-        let (sect5_body, sect6_body) = match (sect5.body.as_ref(), sect6.body.as_ref()) {
-            (Some(SectionBody::Section5(b5)), Some(SectionBody::Section6(b6))) => (b5, b6),
+        let sect5_body = match sect5.body.as_ref() {
+            Some(SectionBody::Section5(b5)) => b5,
             _ => return Err(GribError::InternalDataError),
         };
-
-        if sect6_body.bitmap_indicator != 255 {
-            return Err(GribError::DecodeError(
-                DecodeError::BitMapIndicatorUnsupported,
-            ));
-        }
 
         let sect5_data = reader.read_sect_body_bytes(sect5)?;
         let ref_val = read_as!(f32, sect5_data, 6);
@@ -127,8 +122,9 @@ impl<R: Grib2Read> Grib2DataDecode<R> for ComplexPackingDecoder {
         );
 
         let spdiff_unpacked = SpatialDiff2ndOrderDecodeIterator::new(spdiff_packed_iter);
-        let decoded = SimplePackingDecodeIterator::new(spdiff_unpacked, ref_val, exp, dig)
-            .collect::<Vec<_>>();
+        let decoder = SimplePackingDecodeIterator::new(spdiff_unpacked, ref_val, exp, dig);
+        let decoder = BitmapDecodeIterator::new(bitmap.iter(), decoder);
+        let decoded = decoder.collect::<Vec<_>>();
         if decoded.len() != sect5_body.num_points as usize {
             return Err(GribError::DecodeError(
                 DecodeError::SimplePackingDecodeError(SimplePackingDecodeError::LengthMismatch),

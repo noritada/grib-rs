@@ -61,6 +61,15 @@ fn has_zero_at_offset(byte: &u8, offset: &usize) -> bool {
     masked == 0
 }
 
+pub(crate) fn create_bitmap_for_nonnullable_data(num_points: usize) -> Vec<u8> {
+    let (div, mod_) = (num_points / 8, num_points % 8);
+    if mod_ == 0 {
+        vec![0b11111111u8; div]
+    } else {
+        vec![0b11111111u8; div + 1]
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
