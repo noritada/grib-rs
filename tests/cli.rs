@@ -647,6 +647,42 @@ fn decode_jpeg2000_code_stream_as_little_endian() -> Result<(), Box<dyn std::err
     Ok(())
 }
 
+#[test]
+fn decode_simple_packing_with_bitmap_as_little_endian() -> Result<(), Box<dyn std::error::Error>> {
+    let tempfile = utils::jma_msmguid_file()?;
+    let arg_path = tempfile.path();
+
+    let dir = TempDir::new()?;
+    let out_path = dir.path().join("out.bin");
+    let out_path = format!("{}", out_path.display());
+
+    let mut cmd = Command::cargo_bin(CMD_NAME)?;
+    cmd.arg("decode")
+        .arg(arg_path)
+        .arg("0")
+        .arg("-l")
+        .arg(&out_path);
+    cmd.assert()
+        .success()
+        .stdout(predicate::str::is_empty())
+        .stderr(predicate::str::is_empty());
+
+    let expected = utils::msmguid_le_bin_bytes()?;
+    let expected: Vec<_> = expected
+        .chunks(4)
+        .into_iter()
+        .map(|b| match b {
+            [0x9a, 0xd1, 0x58, 0x62] => vec![0x00, 0x00, 0xc0, 0x7f],
+            b => b.to_vec(),
+        })
+        .flatten()
+        .collect();
+    let actual = utils::cat_as_bytes(&out_path)?;
+    assert_eq!(actual, expected);
+
+    Ok(())
+}
+
 macro_rules! test_subcommands_without_args {
     ($(($name:ident, $str:expr),)*) => ($(
         #[test]
