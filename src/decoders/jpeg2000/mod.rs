@@ -2,7 +2,7 @@ use openjpeg_sys as opj;
 use std::cell::RefMut;
 use std::convert::TryInto;
 
-use crate::context::{SectionBody, SectionInfo};
+use crate::context::SectionInfo;
 use crate::decoders::bitmap::BitmapDecodeIterator;
 use crate::decoders::common::*;
 use crate::decoders::simple::*;
@@ -33,16 +33,12 @@ pub(crate) struct Jpeg2000CodeStreamDecoder {}
 
 impl<R: Grib2Read> Grib2DataDecode<R> for Jpeg2000CodeStreamDecoder {
     fn decode(
+        sect3_num_points: usize,
         sect5: &SectionInfo,
         bitmap: Vec<u8>,
         sect7: &SectionInfo,
         mut reader: RefMut<R>,
     ) -> Result<Box<[f32]>, GribError> {
-        let sect5_body = match sect5.body.as_ref() {
-            Some(SectionBody::Section5(b5)) => b5,
-            _ => return Err(GribError::InternalDataError),
-        };
-
         let sect5_data = reader.read_sect_body_bytes(sect5)?;
         let ref_val = read_as!(f32, sect5_data, 6);
         let exp = read_as!(u16, sect5_data, 10).as_grib_int();
@@ -69,10 +65,9 @@ impl<R: Grib2Read> Grib2DataDecode<R> for Jpeg2000CodeStreamDecoder {
         // sequence of bytes, for example, if there are 9 grid points, the
         // number of iterations will probably be 16, which is greater than the
         // original number of grid points.
-        let decoder =
-            BitmapDecodeIterator::new(bitmap.iter(), decoder).take(sect5_body.num_points as usize);
+        let decoder = BitmapDecodeIterator::new(bitmap.iter(), decoder).take(sect3_num_points);
         let decoded = decoder.collect::<Vec<_>>();
-        if decoded.len() != sect5_body.num_points as usize {
+        if decoded.len() != sect3_num_points {
             return Err(GribError::DecodeError(
                 DecodeError::SimplePackingDecodeError(SimplePackingDecodeError::LengthMismatch),
             ));

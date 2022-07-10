@@ -143,11 +143,12 @@ impl<R: Grib2Read> Grib2<R> {
 
     /// Decodes grid values of a surface specified by the index `i`.
     pub fn get_values(&self, i: usize) -> Result<Box<[f32]>, GribError> {
-        let (sect5, sect6, sect7) = self
+        let (sect3, sect5, sect6, sect7) = self
             .submessages
             .get(i)
             .and_then(|submsg| {
                 Some((
+                    self.sections.get(submsg.section3)?,
                     self.sections.get(submsg.section5)?,
                     self.sections.get(submsg.section6)?,
                     self.sections.get(submsg.section7)?,
@@ -156,7 +157,7 @@ impl<R: Grib2Read> Grib2<R> {
             .ok_or(GribError::InternalDataError)?;
 
         let reader = self.reader.borrow_mut();
-        let values = decoders::dispatch(sect5, sect6, sect7, reader)?;
+        let values = decoders::dispatch(sect3, sect5, sect6, sect7, reader)?;
         Ok(values)
     }
 
