@@ -90,14 +90,77 @@ fn list() -> Result<(), Box<dyn std::error::Error>> {
     let tempfile = utils::jma_tornado_nowcast_file()?;
     let arg_path = tempfile.path();
 
-    let out_str = "   id │ Parameter                       Generating process  Forecast time 1st fixed surface 2nd fixed surface
-    0 │ code '0' is not implemented     Analysis                    0 [m]               NaN               NaN
-    1 │ code '0' is not implemented     Forecast                   10 [m]               NaN               NaN
-    2 │ code '0' is not implemented     Forecast                   20 [m]               NaN               NaN
-    3 │ code '0' is not implemented     Forecast                   30 [m]               NaN               NaN
-    4 │ code '0' is not implemented     Forecast                   40 [m]               NaN               NaN
-    5 │ code '0' is not implemented     Forecast                   50 [m]               NaN               NaN
-    6 │ code '0' is not implemented     Forecast                   60 [m]               NaN               NaN
+    let out_str = "   id │ Parameter                       Generating process  Forecast time 1st fixed surface 2nd fixed surface |   #points (nan/total)
+    0 │ code '0' is not implemented     Analysis                    0 [m]               NaN               NaN |          0/     86016
+    1 │ code '0' is not implemented     Forecast                   10 [m]               NaN               NaN |          0/     86016
+    2 │ code '0' is not implemented     Forecast                   20 [m]               NaN               NaN |          0/     86016
+    3 │ code '0' is not implemented     Forecast                   30 [m]               NaN               NaN |          0/     86016
+    4 │ code '0' is not implemented     Forecast                   40 [m]               NaN               NaN |          0/     86016
+    5 │ code '0' is not implemented     Forecast                   50 [m]               NaN               NaN |          0/     86016
+    6 │ code '0' is not implemented     Forecast                   60 [m]               NaN               NaN |          0/     86016
+";
+
+    let mut cmd = Command::cargo_bin(CMD_NAME)?;
+    cmd.arg("list").arg(arg_path);
+    cmd.assert()
+        .success()
+        .stdout(predicate::str::diff(out_str))
+        .stderr(predicate::str::is_empty());
+
+    Ok(())
+}
+
+#[test]
+fn list_data_with_nan_values() -> Result<(), Box<dyn std::error::Error>> {
+    let tempfile = utils::jma_msmguid_file()?;
+    let arg_path = tempfile.path();
+
+    let out_str = "   id │ Parameter                       Generating process  Forecast time 1st fixed surface 2nd fixed surface |   #points (nan/total)
+    0 │ code '192' is not implemented   Forecast                    0 [h]               NaN               NaN |     106575/    268800
+    1 │ Total precipitation rate        Forecast                    0 [h]               NaN               NaN |     106575/    268800
+    2 │ code '192' is not implemented   Forecast                    3 [h]               NaN               NaN |     106575/    268800
+    3 │ Total precipitation rate        Forecast                    3 [h]               NaN               NaN |     106575/    268800
+    4 │ code '192' is not implemented   Forecast                    6 [h]               NaN               NaN |     106575/    268800
+    5 │ Total precipitation rate        Forecast                    6 [h]               NaN               NaN |     106575/    268800
+    6 │ Total precipitation rate        Forecast                    3 [h]               NaN               NaN |     106575/    268800
+    7 │ code '192' is not implemented   Forecast                    9 [h]               NaN               NaN |     106575/    268800
+    8 │ Total precipitation rate        Forecast                    9 [h]               NaN               NaN |     106575/    268800
+    9 │ code '192' is not implemented   Forecast                   12 [h]               NaN               NaN |     106575/    268800
+   10 │ Total precipitation rate        Forecast                   12 [h]               NaN               NaN |     106575/    268800
+   11 │ Total precipitation rate        Forecast                    9 [h]               NaN               NaN |     106575/    268800
+   12 │ code '192' is not implemented   Forecast                   15 [h]               NaN               NaN |     106575/    268800
+   13 │ Total precipitation rate        Forecast                   15 [h]               NaN               NaN |     106575/    268800
+   14 │ code '192' is not implemented   Forecast                   18 [h]               NaN               NaN |     106575/    268800
+   15 │ Total precipitation rate        Forecast                   18 [h]               NaN               NaN |     106575/    268800
+   16 │ Total precipitation rate        Forecast                   15 [h]               NaN               NaN |     106575/    268800
+   17 │ code '192' is not implemented   Forecast                   21 [h]               NaN               NaN |     106575/    268800
+   18 │ Total precipitation rate        Forecast                   21 [h]               NaN               NaN |     106575/    268800
+   19 │ code '192' is not implemented   Forecast                   24 [h]               NaN               NaN |     106575/    268800
+   20 │ Total precipitation rate        Forecast                   24 [h]               NaN               NaN |     106575/    268800
+   21 │ Total precipitation rate        Forecast                   21 [h]               NaN               NaN |     106575/    268800
+   22 │ code '192' is not implemented   Forecast                   27 [h]               NaN               NaN |     106575/    268800
+   23 │ Total precipitation rate        Forecast                   27 [h]               NaN               NaN |     106575/    268800
+   24 │ code '192' is not implemented   Forecast                   30 [h]               NaN               NaN |     106575/    268800
+   25 │ Total precipitation rate        Forecast                   30 [h]               NaN               NaN |     106575/    268800
+   26 │ Total precipitation rate        Forecast                   27 [h]               NaN               NaN |     106575/    268800
+   27 │ code '192' is not implemented   Forecast                   33 [h]               NaN               NaN |     106575/    268800
+   28 │ Total precipitation rate        Forecast                   33 [h]               NaN               NaN |     106575/    268800
+   29 │ code '192' is not implemented   Forecast                   36 [h]               NaN               NaN |     106575/    268800
+   30 │ Total precipitation rate        Forecast                   36 [h]               NaN               NaN |     106575/    268800
+   31 │ Total precipitation rate        Forecast                   33 [h]               NaN               NaN |     106575/    268800
+   32 │ Thunderstorm probability        Forecast                    0 [h]               NaN               NaN |      14446/     17061
+   33 │ Thunderstorm probability        Forecast                    3 [h]               NaN               NaN |      14446/     17061
+   34 │ Thunderstorm probability        Forecast                    6 [h]               NaN               NaN |      14446/     17061
+   35 │ Thunderstorm probability        Forecast                    9 [h]               NaN               NaN |      14446/     17061
+   36 │ Thunderstorm probability        Forecast                   12 [h]               NaN               NaN |      14446/     17061
+   37 │ Thunderstorm probability        Forecast                   15 [h]               NaN               NaN |      14446/     17061
+   38 │ Thunderstorm probability        Forecast                   18 [h]               NaN               NaN |      14446/     17061
+   39 │ Thunderstorm probability        Forecast                   21 [h]               NaN               NaN |      14446/     17061
+   40 │ Thunderstorm probability        Forecast                   24 [h]               NaN               NaN |      14446/     17061
+   41 │ Thunderstorm probability        Forecast                   27 [h]               NaN               NaN |      14446/     17061
+   42 │ Thunderstorm probability        Forecast                   30 [h]               NaN               NaN |      14446/     17061
+   43 │ Thunderstorm probability        Forecast                   33 [h]               NaN               NaN |      14446/     17061
+   44 │ Thunderstorm probability        Forecast                   36 [h]               NaN               NaN |      14446/     17061
 ";
 
     let mut cmd = Command::cargo_bin(CMD_NAME)?;
@@ -118,6 +181,7 @@ fn list_with_opt_d() -> Result<(), Box<dyn std::error::Error>> {
     let out_str = "\
 0
 Grid:                                   Latitude/longitude
+  Number of points:                     86016
 Product:                                Analysis or forecast at a horizontal level or in a horizontal layer at a point in time
   Parameter Category:                   code '193' is not implemented
   Parameter:                            code '0' is not implemented
@@ -131,9 +195,11 @@ Product:                                Analysis or forecast at a horizontal lev
   2nd Scale Factor:                     Missing
   2nd Scaled Value:                     Missing
 Data Representation:                    Run length packing with level values
+  Number of represented values:         86016
 
 1
 Grid:                                   Latitude/longitude
+  Number of points:                     86016
 Product:                                Analysis or forecast at a horizontal level or in a horizontal layer at a point in time
   Parameter Category:                   code '193' is not implemented
   Parameter:                            code '0' is not implemented
@@ -147,9 +213,11 @@ Product:                                Analysis or forecast at a horizontal lev
   2nd Scale Factor:                     Missing
   2nd Scaled Value:                     Missing
 Data Representation:                    Run length packing with level values
+  Number of represented values:         86016
 
 2
 Grid:                                   Latitude/longitude
+  Number of points:                     86016
 Product:                                Analysis or forecast at a horizontal level or in a horizontal layer at a point in time
   Parameter Category:                   code '193' is not implemented
   Parameter:                            code '0' is not implemented
@@ -163,9 +231,11 @@ Product:                                Analysis or forecast at a horizontal lev
   2nd Scale Factor:                     Missing
   2nd Scaled Value:                     Missing
 Data Representation:                    Run length packing with level values
+  Number of represented values:         86016
 
 3
 Grid:                                   Latitude/longitude
+  Number of points:                     86016
 Product:                                Analysis or forecast at a horizontal level or in a horizontal layer at a point in time
   Parameter Category:                   code '193' is not implemented
   Parameter:                            code '0' is not implemented
@@ -179,9 +249,11 @@ Product:                                Analysis or forecast at a horizontal lev
   2nd Scale Factor:                     Missing
   2nd Scaled Value:                     Missing
 Data Representation:                    Run length packing with level values
+  Number of represented values:         86016
 
 4
 Grid:                                   Latitude/longitude
+  Number of points:                     86016
 Product:                                Analysis or forecast at a horizontal level or in a horizontal layer at a point in time
   Parameter Category:                   code '193' is not implemented
   Parameter:                            code '0' is not implemented
@@ -195,9 +267,11 @@ Product:                                Analysis or forecast at a horizontal lev
   2nd Scale Factor:                     Missing
   2nd Scaled Value:                     Missing
 Data Representation:                    Run length packing with level values
+  Number of represented values:         86016
 
 5
 Grid:                                   Latitude/longitude
+  Number of points:                     86016
 Product:                                Analysis or forecast at a horizontal level or in a horizontal layer at a point in time
   Parameter Category:                   code '193' is not implemented
   Parameter:                            code '0' is not implemented
@@ -211,9 +285,11 @@ Product:                                Analysis or forecast at a horizontal lev
   2nd Scale Factor:                     Missing
   2nd Scaled Value:                     Missing
 Data Representation:                    Run length packing with level values
+  Number of represented values:         86016
 
 6
 Grid:                                   Latitude/longitude
+  Number of points:                     86016
 Product:                                Analysis or forecast at a horizontal level or in a horizontal layer at a point in time
   Parameter Category:                   code '193' is not implemented
   Parameter:                            code '0' is not implemented
@@ -227,6 +303,7 @@ Product:                                Analysis or forecast at a horizontal lev
   2nd Scale Factor:                     Missing
   2nd Scaled Value:                     Missing
 Data Representation:                    Run length packing with level values
+  Number of represented values:         86016
 
 ";
 

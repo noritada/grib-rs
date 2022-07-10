@@ -355,10 +355,26 @@ impl<'a> SubMessage<'a> {
         }
     }
 
+    pub fn grid_def(&self) -> &GridDefinition {
+        // panics should not happen if data is correct
+        match self.3.body.body.as_ref().unwrap() {
+            SectionBody::Section3(data) => data,
+            _ => panic!("something unexpected happened"),
+        }
+    }
+
     pub fn prod_def(&self) -> &ProdDefinition {
         // panics should not happen if data is correct
         match self.4.body.body.as_ref().unwrap() {
             SectionBody::Section4(data) => data,
+            _ => panic!("something unexpected happened"),
+        }
+    }
+
+    pub fn repr_def(&self) -> &ReprDefinition {
+        // panics should not happen if data is correct
+        match self.5.body.body.as_ref().unwrap() {
+            SectionBody::Section5(data) => data,
             _ => panic!("something unexpected happened"),
         }
     }
@@ -387,6 +403,7 @@ impl<'a> SubMessage<'a> {
         format!(
             "\
 Grid:                                   {}
+  Number of points:                     {}
 Product:                                {}
   Parameter Category:                   {}
   Parameter:                            {}
@@ -400,8 +417,10 @@ Product:                                {}
   2nd Scale Factor:                     {}
   2nd Scaled Value:                     {}
 Data Representation:                    {}
+  Number of represented values:         {}
 ",
             self.3.describe().unwrap_or_default(),
+            self.grid_def().num_points,
             self.4.describe().unwrap_or_default(),
             category
                 .map(|v| CodeTable4_1::new(self.indicator().discipline)
@@ -428,6 +447,7 @@ Data Representation:                    {}
             fixed_surfaces_info.4,
             fixed_surfaces_info.5,
             self.5.describe().unwrap_or_default(),
+            self.repr_def().num_points,
         )
     }
 }
