@@ -2,7 +2,7 @@ name: CD
 
 on:
   push:
-    branches: [ master ]
+    branches: [ master, release/v[0-9].[0-9] ]
 
 jobs:
   deploy:
