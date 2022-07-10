@@ -4,7 +4,7 @@ use std::fmt::{self, Display, Formatter};
 use std::fs::File;
 use std::io::{BufReader, Error};
 use std::num::ParseIntError;
-use std::path::Path;
+use std::path::PathBuf;
 #[cfg(unix)]
 use which::which;
 
@@ -40,8 +40,7 @@ impl From<ParseIntError> for CliError {
     }
 }
 
-pub fn grib(file_name: &str) -> Result<Grib2<SeekableGrib2Reader<BufReader<File>>>, CliError> {
-    let path = Path::new(file_name);
+pub fn grib(path: &PathBuf) -> Result<Grib2<SeekableGrib2Reader<BufReader<File>>>, CliError> {
     let f = File::open(&path).map_err(|e| CliError::IO(e, path.display().to_string()))?;
     let f = BufReader::new(f);
     Ok(grib::from_reader(f)?)

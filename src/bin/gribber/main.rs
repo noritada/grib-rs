@@ -1,12 +1,12 @@
-use clap::{crate_name, crate_version, App, AppSettings};
+use clap::{crate_name, crate_version, Command};
 
 mod cli;
 mod commands;
 
-fn app() -> App<'static> {
-    App::new(crate_name!())
+fn app() -> Command<'static> {
+    Command::new(crate_name!())
         .version(crate_version!())
-        .setting(AppSettings::ArgRequiredElseHelp)
+        .arg_required_else_help(true)
         .subcommands(commands::cli())
 }
 

@@ -77,13 +77,15 @@ impl FixedSurface {
 
     /// Checks if the scale factor should be treated as missing.
     pub fn scale_factor_is_nan(&self) -> bool {
-        // Handle as NaN if all bits are 1. Note that this is i8::MIN + 1 and not i8::MIN.
+        // Handle as NaN if all bits are 1. Note that this is i8::MIN + 1 and not
+        // i8::MIN.
         self.scale_factor == i8::MIN + 1
     }
 
     /// Checks if the scaled value should be treated as missing.
     pub fn value_is_nan(&self) -> bool {
-        // Handle as NaN if all bits are 1. Note that this is i32::MIN + 1 and not i32::MIN.
+        // Handle as NaN if all bits are 1. Note that this is i32::MIN + 1 and not
+        // i32::MIN.
         self.scaled_value == i32::MIN + 1
     }
 

@@ -1,29 +1,25 @@
-use clap::{App, Arg, ArgMatches};
+use clap::{arg, ArgMatches, Command};
 use console::{Style, Term};
 use std::fmt::{self, Display, Formatter};
+use std::path::PathBuf;
 
 use grib::codetables::{CodeTable4_2, CodeTable4_3, Lookup};
-use grib::context::SubMessageIterator;
+use grib::context::SubmessageIterator;
 
 use crate::cli;
 
-pub fn cli() -> App<'static> {
-    App::new("list")
+pub fn cli() -> Command<'static> {
+    Command::new("list")
         .about("List surfaces contained in the data")
-        .arg(
-            Arg::new("dump")
-                .help("Show details of each data")
-                .short('d')
-                .long("dump"),
-        )
-        .arg(Arg::new("file").required(true))
+        .arg(arg!(-d --dump "Show details of each data"))
+        .arg(arg!(<FILE> "Target file").value_parser(clap::value_parser!(PathBuf)))
 }
 
 pub fn exec(args: &ArgMatches) -> Result<(), cli::CliError> {
-    let file_name = args.value_of("file").unwrap();
+    let file_name = args.get_one::<PathBuf>("FILE").unwrap();
     let grib = cli::grib(file_name)?;
 
-    let mode = if args.is_present("dump") {
+    let mode = if args.contains_id("dump") {
         ListViewMode::Dump
     } else {
         ListViewMode::OneLine
@@ -48,12 +44,12 @@ pub fn exec(args: &ArgMatches) -> Result<(), cli::CliError> {
 }
 
 struct ListView<'i> {
-    data: SubMessageIterator<'i>,
+    data: SubmessageIterator<'i>,
     mode: ListViewMode,
 }
 
 impl<'i> ListView<'i> {
-    fn new(data: SubMessageIterator<'i>, mode: ListViewMode) -> Self {
+    fn new(data: SubmessageIterator<'i>, mode: ListViewMode) -> Self {
         Self { data, mode }
     }
 
@@ -115,8 +111,8 @@ impl<'i> Display for ListView<'i> {
                             (first.value().to_string(), second.value().to_string())
                         })
                         .unwrap_or((String::new(), String::new()));
-                    let num_grid_points = submessage.grid_def().num_points;
-                    let num_points_represented = submessage.repr_def().num_points;
+                    let num_grid_points = submessage.grid_def().num_points();
+                    let num_points_represented = submessage.repr_def().num_points();
                     writeln!(
                         f,
                         "{:>5} │ {:<31} {:<18} {:>14} {:>17} {:>17} | {:>10}/{:>10}",

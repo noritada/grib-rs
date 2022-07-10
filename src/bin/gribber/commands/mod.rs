@@ -1,8 +1,8 @@
-use clap::{App, ArgMatches};
+use clap::{ArgMatches, Command};
 
 use crate::cli;
 
-pub fn cli() -> Vec<App<'static>> {
+pub fn cli() -> Vec<Command<'static>> {
     vec![decode::cli(), info::cli(), inspect::cli(), list::cli()]
 }
 

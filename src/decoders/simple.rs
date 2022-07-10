@@ -7,20 +7,13 @@ use crate::decoders::bitmap::BitmapDecodeIterator;
 use crate::decoders::common::*;
 use crate::error::*;
 use crate::reader::Grib2Read;
-use crate::utils::{GribInt, NBitwiseIterator};
+use crate::utils::{read_as, GribInt, NBitwiseIterator};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum SimplePackingDecodeError {
     NotSupported,
     OriginalFieldValueTypeNotSupported,
     LengthMismatch,
-}
-
-macro_rules! read_as {
-    ($ty:ty, $buf:ident, $start:expr) => {{
-        let end = $start + std::mem::size_of::<$ty>();
-        <$ty>::from_be_bytes($buf[$start..end].try_into().unwrap())
-    }};
 }
 
 pub(crate) struct SimplePackingDecoder {}
@@ -33,7 +26,7 @@ impl<R: Grib2Read> Grib2DataDecode<R> for SimplePackingDecoder {
         sect7: &SectionInfo,
         mut reader: RefMut<R>,
     ) -> Result<Box<[f32]>, GribError> {
-        let sect5_data = reader.read_sect_body_bytes(sect5)?;
+        let sect5_data = reader.read_sect_payload_as_slice(sect5)?;
         let ref_val = read_as!(f32, sect5_data, 6);
         let exp = read_as!(u16, sect5_data, 10).as_grib_int();
         let dig = read_as!(u16, sect5_data, 12).as_grib_int();
@@ -48,10 +41,10 @@ impl<R: Grib2Read> Grib2DataDecode<R> for SimplePackingDecoder {
             ));
         }
 
-        let sect7_data = reader.read_sect_body_bytes(sect7)?;
+        let sect7_data = reader.read_sect_payload_as_slice(sect7)?;
 
-        // Based on the implementation of wgrib2, if nbits equals 0, return a constant field where
-        // the data value at each grid point is the reference value.
+        // Based on the implementation of wgrib2, if nbits equals 0, return a constant
+        // field where the data value at each grid point is the reference value.
         if nbit == 0 {
             let decoded = vec![ref_val; sect3_num_points];
             return Ok(decoded.into_boxed_slice());
