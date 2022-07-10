@@ -2,7 +2,8 @@ use openjpeg_sys as opj;
 use std::cell::RefMut;
 use std::convert::TryInto;
 
-use crate::context::{SectionBody, SectionInfo};
+use crate::context::SectionInfo;
+use crate::decoders::bitmap::BitmapDecodeIterator;
 use crate::decoders::common::*;
 use crate::decoders::simple::*;
 use crate::error::*;
@@ -25,22 +26,12 @@ pub(crate) struct Jpeg2000CodeStreamDecoder {}
 
 impl<R: Grib2Read> Grib2DataDecode<R> for Jpeg2000CodeStreamDecoder {
     fn decode(
+        sect3_num_points: usize,
         sect5: &SectionInfo,
-        sect6: &SectionInfo,
+        bitmap: Vec<u8>,
         sect7: &SectionInfo,
         mut reader: RefMut<R>,
     ) -> Result<Box<[f32]>, GribError> {
-        let (sect5_body, sect6_body) = match (sect5.body.as_ref(), sect6.body.as_ref()) {
-            (Some(SectionBody::Section5(b5)), Some(SectionBody::Section6(b6))) => (b5, b6),
-            _ => return Err(GribError::InternalDataError),
-        };
-
-        if sect6_body.bitmap_indicator != 255 {
-            return Err(GribError::DecodeError(
-                DecodeError::BitMapIndicatorUnsupported,
-            ));
-        }
-
         let sect5_data = reader.read_sect_payload_as_slice(sect5)?;
         let ref_val = read_as!(f32, sect5_data, 6);
         let exp = read_as!(u16, sect5_data, 10).as_grib_int();
@@ -62,9 +53,14 @@ impl<R: Grib2Read> Grib2DataDecode<R> for Jpeg2000CodeStreamDecoder {
             .map_err(|e| GribError::DecodeError(DecodeError::Jpeg2000CodeStreamDecodeError(e)))?;
         let jp2_unpacked = decode_jp2(stream)
             .map_err(|e| GribError::DecodeError(DecodeError::Jpeg2000CodeStreamDecodeError(e)))?;
-        let decoded =
-            SimplePackingDecodeIterator::new(jp2_unpacked, ref_val, exp, dig).collect::<Vec<_>>();
-        if decoded.len() != sect5_body.num_points() as usize {
+        let decoder = SimplePackingDecodeIterator::new(jp2_unpacked, ref_val, exp, dig);
+        // Taking first `num_points` is needed.  Since the bitmap is represented as a
+        // sequence of bytes, for example, if there are 9 grid points, the
+        // number of iterations will probably be 16, which is greater than the
+        // original number of grid points.
+        let decoder = BitmapDecodeIterator::new(bitmap.iter(), decoder).take(sect3_num_points);
+        let decoded = decoder.collect::<Vec<_>>();
+        if decoded.len() != sect3_num_points {
             return Err(GribError::DecodeError(
                 DecodeError::SimplePackingDecodeError(SimplePackingDecodeError::LengthMismatch),
             ));

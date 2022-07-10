@@ -32,6 +32,8 @@ from zip archives and compressed.
   (originally in `tornado_170301.zip` for "竜巻発生確度ナウキャスト")
 * `Z__C_RJTD_20170221120000_MSG_GPV_Gll0p5deg_Pys_B20170221120000_F2017022115-2017022212_grib2.bin.xz`
   (originally in `kousa_170301.zip` for "黄砂予測モデルGPV")
+* `Z__C_RJTD_20190304000000_MSM_GUID_Rjp_P-all_FH03-39_Toorg_grib2.bin.xz`
+  (originally in `msmguid_1903.zip` for "MSMガイダンス (格子形式)")
 
 Following data file is based on files downloaded from the above page:
 
@@ -56,6 +58,8 @@ $ wgrib2 -d 1.4 -order we:ns -no_header -ieee kousa-wgrib2-be.bin Z__C_RJTD_2017
 $ wgrib2 -d 1.4 -order we:ns -no_header -bin kousa-wgrib2-le.bin Z__C_RJTD_20170221120000_MSG_GPV_Gll0p5deg_Pys_B20170221120000_F2017022115-2017022212_grib2.bin
 
 $ wgrib2 -d 1.3 -order we:ns -no_header -bin meps-wgrib2-le.bin Z__C_RJTD_20190605000000_MEPS_GPV_Rjp_L-pall_FH00-15_grib2.bin.0-20
+
+$ wgrib2 -d 1.1 -order we:ns -no_header -bin msmguid-wgrib2-le.bin Z__C_RJTD_20190304000000_MSM_GUID_Rjp_P-all_FH03-39_Toorg_grib2.bin
 
 $ wgrib2 -d 1 -no_header -bin cmc-glb-wgrib2-le.bin CMC_glb_TMP_ISBL_1_latlon.24x.24_2021051800_P000.grib2
 ```
