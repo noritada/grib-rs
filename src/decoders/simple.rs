@@ -117,7 +117,6 @@ mod tests {
     use std::io::{BufReader, Cursor, Read};
 
     use crate::context::from_reader;
-    use crate::decoders::bitmap::create_bitmap_for_nonnullable_data;
 
     #[test]
     fn decode_simple_packing() {
@@ -155,33 +154,8 @@ mod tests {
 
         let grib = from_reader(f).unwrap();
         let index = 0;
-        let (sect3, sect5, _sect6, sect7) = grib
-            .submessages
-            .get(index)
-            .and_then(|submsg| {
-                Some((
-                    grib.sections.get(submsg.section3)?,
-                    grib.sections.get(submsg.section5)?,
-                    grib.sections.get(submsg.section6)?,
-                    grib.sections.get(submsg.section7)?,
-                ))
-            })
-            .ok_or(GribError::InternalDataError)
-            .unwrap();
-
-        let reader = grib.reader.borrow_mut();
-
-        // FIXME: Bitmap creation process is hardcoded, assuming that the bitmap
-        // indicator is 0xff.
-        let num_points = if let Some(SectionBody::Section3(sect3_body)) = &sect3.body {
-            sect3_body.num_points as usize
-        } else {
-            0
-        };
-        let bitmap = create_bitmap_for_nonnullable_data(num_points);
-
-        let actual =
-            SimplePackingDecoder::decode(num_points, sect5, bitmap, sect7, reader).unwrap();
+        // Runs `SimplePackingDecoder::decode()` internally.
+        let actual = grib.get_values(index).unwrap();
         let expected = vec![0f32; 0x002d0000].into_boxed_slice();
         assert_eq!(actual, expected);
     }
