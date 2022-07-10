@@ -74,13 +74,14 @@ impl<'i> Display for ListView<'i> {
         match self.mode {
             ListViewMode::OneLine => {
                 let header = format!(
-                    "{:>5} │ {:<31} {:<18} {:>14} {:>17} {:>17}\n",
+                    "{:>5} │ {:<31} {:<18} {:>14} {:>17} {:>17} | {:>21}\n",
                     "id",
                     "Parameter",
                     "Generating process",
                     "Forecast time",
                     "1st fixed surface",
-                    "2nd fixed surface"
+                    "2nd fixed surface",
+                    "#points (nan/total)"
                 );
                 let style = Style::new().bold();
                 write!(f, "{}", style.apply_to(header))?;
@@ -110,10 +111,19 @@ impl<'i> Display for ListView<'i> {
                             (first.value().to_string(), second.value().to_string())
                         })
                         .unwrap_or((String::new(), String::new()));
+                    let num_grid_points = submessage.grid_def().num_points();
+                    let num_points_represented = submessage.repr_def().num_points();
                     writeln!(
                         f,
-                        "{:>5} │ {:<31} {:<18} {:>14} {:>17} {:>17}",
-                        i, category, generating_process, forecast_time, surfaces.0, surfaces.1,
+                        "{:>5} │ {:<31} {:<18} {:>14} {:>17} {:>17} | {:>10}/{:>10}",
+                        i,
+                        category,
+                        generating_process,
+                        forecast_time,
+                        surfaces.0,
+                        surfaces.1,
+                        num_grid_points - num_points_represented,
+                        num_grid_points
                     )?;
                 }
             }
