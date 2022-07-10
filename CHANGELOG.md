@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2022-07-10
+### Added
+
+- Library `grib`
+  - Support for Section 6 (Bit-map Section).
+
+### Changed
+
+- Library `grib`
+  - There is a small change in arguments of `decoders::dispatch()`.
+- CLI application `gribber` built on the top of the Rust library
+  - The "list" subcommand now displays the number of grid points and ones whose values are NaN.
+  - The version of `clap` used is now 3.2 (no change in behavior).
+
+### Contributors
+
+- Thanks for sending PRs to this release:
+  - @resistor
+
 ## [0.4.3] - 2022-01-15
 
 ### Changed
@@ -109,6 +128,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - inspect: display of information mainly for development purpose such as template numbers
     - list: display of a list of sections (the style is still tentative)
 
+[0.5.0]: https://github.com/noritada/grib-rs/compare/v0.4.3...v0.5.0
 [0.4.3]: https://github.com/noritada/grib-rs/compare/v0.4.2...v0.4.3
 [0.4.2]: https://github.com/noritada/grib-rs/compare/v0.4.1...v0.4.2
 [0.4.1]: https://github.com/noritada/grib-rs/compare/v0.4.0...v0.4.1
