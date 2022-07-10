@@ -9,19 +9,12 @@ use crate::decoders::common::*;
 use crate::decoders::simple::*;
 use crate::error::*;
 use crate::reader::Grib2Read;
-use crate::utils::{GribInt, NBitwiseIterator};
+use crate::utils::{read_as, GribInt, NBitwiseIterator};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum ComplexPackingDecodeError {
     NotSupported,
     LengthMismatch,
-}
-
-macro_rules! read_as {
-    ($ty:ty, $buf:ident, $start:expr) => {{
-        let end = $start + std::mem::size_of::<$ty>();
-        <$ty>::from_be_bytes($buf[$start..end].try_into().unwrap())
-    }};
 }
 
 pub(crate) struct ComplexPackingDecoder {}
@@ -34,7 +27,7 @@ impl<R: Grib2Read> Grib2DataDecode<R> for ComplexPackingDecoder {
         sect7: &SectionInfo,
         mut reader: RefMut<R>,
     ) -> Result<Box<[f32]>, GribError> {
-        let sect5_data = reader.read_sect_body_bytes(sect5)?;
+        let sect5_data = reader.read_sect_payload_as_slice(sect5)?;
         let ref_val = read_as!(f32, sect5_data, 6);
         let exp = read_as!(u16, sect5_data, 10).as_grib_int();
         let dig = read_as!(u16, sect5_data, 12).as_grib_int();
@@ -49,7 +42,7 @@ impl<R: Grib2Read> Grib2DataDecode<R> for ComplexPackingDecoder {
         let spdiff_level = read_as!(u8, sect5_data, 42);
         let spdiff_param_octet = read_as!(u8, sect5_data, 43);
 
-        let sect7_data = reader.read_sect_body_bytes(sect7)?;
+        let sect7_data = reader.read_sect_payload_as_slice(sect7)?;
 
         let z1 = read_as!(u16, sect7_data, 0).as_grib_int();
         let z2 = read_as!(u16, sect7_data, 2).as_grib_int();

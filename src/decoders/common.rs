@@ -58,11 +58,11 @@ pub fn dispatch<R: Grib2Read>(
         ) => (b3, b5, b6),
         _ => return Err(GribError::InternalDataError),
     };
-    let sect3_num_points = sect3_body.num_points as usize;
+    let sect3_num_points = sect3_body.num_points() as usize;
 
     let bitmap = match sect6_body.bitmap_indicator {
         0x00 => {
-            let sect6_data = reader.read_sect_body_bytes(sect6)?;
+            let sect6_data = reader.read_sect_payload_as_slice(sect6)?;
             sect6_data[1..].into()
         }
         0xff => {
@@ -75,7 +75,7 @@ pub fn dispatch<R: Grib2Read>(
             ));
         }
     };
-    let decoded = match sect5_body.repr_tmpl_num {
+    let decoded = match sect5_body.repr_tmpl_num() {
         0 => SimplePackingDecoder::decode(sect3_num_points, sect5, bitmap, sect7, reader)?,
         3 => ComplexPackingDecoder::decode(sect3_num_points, sect5, bitmap, sect7, reader)?,
         40 => Jpeg2000CodeStreamDecoder::decode(sect3_num_points, sect5, bitmap, sect7, reader)?,

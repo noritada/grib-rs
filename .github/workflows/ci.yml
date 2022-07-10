@@ -64,4 +64,7 @@ jobs:
         with:
           submodules: 'true'
       - name: Run test with sanitizer
-        run: env RUSTFLAGS="-Z sanitizer=address" cargo test --target x86_64-unknown-linux-gnu --workspace
+        env:
+          RUSTFLAGS: -Z sanitizer=address
+          RUSTDOCFLAGS: -Z sanitizer=address
+        run: cargo test --target x86_64-unknown-linux-gnu --workspace
