@@ -825,7 +825,7 @@ macro_rules! test_subcommands_with_non_grib {
             cmd.assert()
                 .failure()
                 .stdout(predicate::str::is_empty())
-                .stderr(predicate::str::diff("Not GRIB data\n"));
+                .stderr(predicate::str::diff("error: Not GRIB data\n"));
 
             Ok(())
         }
@@ -851,7 +851,7 @@ macro_rules! test_subcommands_with_too_small_file {
                 .failure()
                 .stdout(predicate::str::is_empty())
                 .stderr(predicate::str::diff(
-                    "Read error: failed to fill whole buffer\n",
+                    "error: Read error: failed to fill whole buffer\n",
                 ));
 
             Ok(())

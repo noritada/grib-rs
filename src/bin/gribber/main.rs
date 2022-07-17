@@ -18,7 +18,8 @@ fn real_main() -> Result<(), cli::CliError> {
 
 fn main() {
     if let Err(ref e) = real_main() {
-        eprintln!("{}", e);
+        let red = console::Style::new().red();
+        eprintln!("{}: {}", red.apply_to("error"), e);
         std::process::exit(1);
     }
 }
