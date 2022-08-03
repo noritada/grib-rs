@@ -13,18 +13,20 @@ fn main() -> Result<(), Box<dyn Error>> {
     // Take the first argument as an input file path and the second argument as
     // forecast time in hours.
     let mut args = env::args().skip(1);
-    if let (Some(file_name), Some(forecast_time)) = (args.next(), args.next()) {
-        let path = Path::new(&file_name);
+    if let (Some(file_path), Some(forecast_time)) = (args.next(), args.next()) {
         let forecast_time = forecast_time.parse::<u32>()?;
-        find_surfaces(path, forecast_time)
+        find_surfaces(&file_path, forecast_time)
     } else {
         panic!("Usage: find_surfaces <path> <forecast_time>");
     }
 }
 
-fn find_surfaces(path: &Path, forecast_time_hours: u32) -> Result<(), Box<dyn Error>> {
+fn find_surfaces<P>(path: P, forecast_time_hours: u32) -> Result<(), Box<dyn Error>>
+where
+    P: AsRef<Path>,
+{
     // Open the input file in a normal way.
-    let f = File::open(&path)?;
+    let f = File::open(path)?;
     let f = BufReader::new(f);
 
     // Read with the reader.
