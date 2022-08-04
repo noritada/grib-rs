@@ -26,8 +26,11 @@ use std::fs::File;
 use std::io::BufReader;
 use std::path::Path;
 
-fn find_submessages(path: &Path, forecast_time_hours: u32) {
-    let f = File::open(&path).unwrap();
+fn find_submessages<P>(path: P, forecast_time_hours: u32)
+where
+    P: AsRef<Path>,
+{
+    let f = File::open(path).unwrap();
     let f = BufReader::new(f);
 
     let grib2 = grib::from_reader(f).unwrap();
@@ -49,8 +52,8 @@ fn find_submessages(path: &Path, forecast_time_hours: u32) {
 }
 
 fn main() {
-    let path = Path::new("datafile.grib");
-    find_submessages(path, 3);
+    let path = "datafile.grib";
+    find_submessages(&path, 3);
 }
 ```
 
