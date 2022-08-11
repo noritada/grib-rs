@@ -37,11 +37,14 @@ pub(crate) fn jma_msmguid_file() -> Result<NamedTempFile, io::Error> {
     )
 }
 
-fn unxz_to_tempfile(file_path: PathBuf) -> Result<NamedTempFile, io::Error> {
+fn unxz_to_tempfile<P>(file_path: P) -> Result<NamedTempFile, io::Error>
+where
+    P: AsRef<Path>,
+{
     let mut buf = Vec::new();
     let mut out = NamedTempFile::new()?;
 
-    let f = File::open(&file_path)?;
+    let f = File::open(file_path)?;
     let f = BufReader::new(f);
     let mut f = XzDecoder::new(f);
     f.read_to_end(&mut buf)?;
@@ -78,10 +81,13 @@ pub(crate) fn msmguid_le_bin_bytes() -> Result<Vec<u8>, io::Error> {
     unxz_as_bytes(testdata_dir().join("gen").join("msmguid-wgrib2-le.bin.xz"))
 }
 
-fn unxz_as_bytes(file_path: PathBuf) -> Result<Vec<u8>, io::Error> {
+fn unxz_as_bytes<P>(file_path: P) -> Result<Vec<u8>, io::Error>
+where
+    P: AsRef<Path>,
+{
     let mut buf = Vec::new();
 
-    let f = File::open(&file_path)?;
+    let f = File::open(file_path)?;
     let f = BufReader::new(f);
     let mut f = XzDecoder::new(f);
     f.read_to_end(&mut buf)?;
