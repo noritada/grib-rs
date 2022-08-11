@@ -11,17 +11,19 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     // Take the first argument as an input file path.
     let mut args = env::args().skip(1);
-    if let Some(file_name) = args.next() {
-        let path = Path::new(&file_name);
-        list_surfaces(path)
+    if let Some(file_path) = args.next() {
+        list_surfaces(&file_path)
     } else {
         panic!("Usage: list_surfaces <path>");
     }
 }
 
-fn list_surfaces(path: &Path) -> Result<(), Box<dyn Error>> {
+fn list_surfaces<P>(path: P) -> Result<(), Box<dyn Error>>
+where
+    P: AsRef<Path>,
+{
     // Open the input file in a normal way.
-    let f = File::open(&path)?;
+    let f = File::open(path)?;
     let f = BufReader::new(f);
 
     // Read with the reader.

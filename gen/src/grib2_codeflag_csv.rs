@@ -3,7 +3,7 @@ use std::collections::BTreeMap;
 use std::error::Error;
 use std::fmt;
 use std::fs::File;
-use std::path::PathBuf;
+use std::path::Path;
 use std::str::FromStr;
 
 use crate::*;
@@ -45,8 +45,15 @@ impl CodeDB {
         }
     }
 
-    pub fn load(&mut self, path: PathBuf) -> Result<(), Box<dyn Error>> {
-        let basename = path.file_stem().ok_or("unexpected path")?.to_string_lossy();
+    pub fn load<P>(&mut self, path: P) -> Result<(), Box<dyn Error>>
+    where
+        P: AsRef<Path>,
+    {
+        let basename = path
+            .as_ref()
+            .file_stem()
+            .ok_or("unexpected path")?
+            .to_string_lossy();
         let words: Vec<_> = basename.split('_').take(4).collect();
         if let ["GRIB2", "CodeFlag", section, number] = words[..] {
             let section = section.parse::<u8>()?;
@@ -59,8 +66,11 @@ impl CodeDB {
         Ok(())
     }
 
-    fn parse_file(path: PathBuf) -> Result<Vec<(OptArg, CodeTable)>, Box<dyn Error>> {
-        let f = File::open(&path)?;
+    fn parse_file<P>(path: P) -> Result<Vec<(OptArg, CodeTable)>, Box<dyn Error>>
+    where
+        P: AsRef<Path>,
+    {
+        let f = File::open(path)?;
         let mut reader = csv::Reader::from_reader(f);
         let mut out_tables = Vec::<(OptArg, CodeTable)>::new();
 
@@ -203,8 +213,7 @@ mod tests {
 
     #[test]
     fn parse_file_no_subtitle() {
-        let path = PathBuf::from(PATH_STR_0);
-        let tables = CodeDB::parse_file(path).unwrap();
+        let tables = CodeDB::parse_file(PATH_STR_0).unwrap();
 
         let expected_title = "Foo".to_owned();
         let expected_data = vec![(
@@ -238,8 +247,7 @@ mod tests {
 
     #[test]
     fn parse_file_with_subtitle_l1() {
-        let path = PathBuf::from(PATH_STR_2);
-        let tables = CodeDB::parse_file(path).unwrap();
+        let tables = CodeDB::parse_file(PATH_STR_2).unwrap();
 
         let expected_title = "Baz".to_owned();
         let expected_data = vec![
@@ -297,8 +305,7 @@ mod tests {
 
     #[test]
     fn parse_file_with_subtitle_l2() {
-        let path = PathBuf::from(PATH_STR_3);
-        let tables = CodeDB::parse_file(path).unwrap();
+        let tables = CodeDB::parse_file(PATH_STR_3).unwrap();
 
         let expected_title = "Baz".to_owned();
         let expected_data = vec![
@@ -362,7 +369,7 @@ mod tests {
     #[test]
     fn export() {
         let mut db = CodeDB::new();
-        db.load(PathBuf::from(PATH_STR_0)).unwrap();
+        db.load(PATH_STR_0).unwrap();
         assert_eq!(
             db.export((0, 0, OptArg::None)),
             "\
@@ -377,10 +384,10 @@ const CODE_TABLE_0_0: &[& str] = &[
     #[test]
     fn format() {
         let mut db = CodeDB::new();
-        db.load(PathBuf::from(PATH_STR_0)).unwrap();
-        db.load(PathBuf::from(PATH_STR_1)).unwrap();
-        db.load(PathBuf::from(PATH_STR_2)).unwrap();
-        db.load(PathBuf::from(PATH_STR_3)).unwrap();
+        db.load(PATH_STR_0).unwrap();
+        db.load(PATH_STR_1).unwrap();
+        db.load(PATH_STR_2).unwrap();
+        db.load(PATH_STR_3).unwrap();
         assert_eq!(
             format!("{}", db),
             "\
@@ -449,7 +456,7 @@ const CODE_TABLE_4_2_20_0: &[& str] = &[
     #[test]
     fn codetable_to_vec() {
         let mut db = CodeDB::new();
-        db.load(PathBuf::from(PATH_STR_0)).unwrap();
+        db.load(PATH_STR_0).unwrap();
         assert_eq!(
             db.get((0, 0, OptArg::None)).unwrap().to_vec(),
             vec!["0A", "0B",]

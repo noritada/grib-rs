@@ -3,7 +3,7 @@ use std::collections::BTreeMap;
 use std::error::Error;
 use std::fmt;
 use std::fs::File;
-use std::path::PathBuf;
+use std::path::Path;
 
 use crate::*;
 
@@ -50,8 +50,15 @@ impl CodeDB {
         }
     }
 
-    pub fn load(&mut self, path: PathBuf) -> Result<(), Box<dyn Error>> {
-        let basename = path.file_stem().ok_or("unexpected path")?.to_string_lossy();
+    pub fn load<P>(&mut self, path: P) -> Result<(), Box<dyn Error>>
+    where
+        P: AsRef<Path>,
+    {
+        let basename = path
+            .as_ref()
+            .file_stem()
+            .ok_or("unexpected path")?
+            .to_string_lossy();
         match &*basename {
             "C00" => {
                 self.data.insert(0, Self::parse_file_c00(path)?);
@@ -65,7 +72,10 @@ impl CodeDB {
         Ok(())
     }
 
-    pub fn parse_file_c00(path: PathBuf) -> Result<CodeTable, Box<dyn Error>> {
+    pub fn parse_file_c00<P>(path: P) -> Result<CodeTable, Box<dyn Error>>
+    where
+        P: AsRef<Path>,
+    {
         let f = File::open(&path)?;
         let mut reader = csv::Reader::from_reader(f);
         let mut codetable = CodeTable::new("Common Code Table C-0".to_owned());
@@ -78,8 +88,11 @@ impl CodeDB {
         Ok(codetable)
     }
 
-    pub fn parse_file_c11(path: PathBuf) -> Result<CodeTable, Box<dyn Error>> {
-        let f = File::open(&path)?;
+    pub fn parse_file_c11<P>(path: P) -> Result<CodeTable, Box<dyn Error>>
+    where
+        P: AsRef<Path>,
+    {
+        let f = File::open(path)?;
         let mut reader = csv::Reader::from_reader(f);
         let mut codetable = CodeTable::new("Common Code Table C-11".to_owned());
 
@@ -136,8 +149,7 @@ mod tests {
 
     #[test]
     fn parse_file_c00() {
-        let path = PathBuf::from(PATH_STR_C00);
-        let table = CodeDB::parse_file_c00(path).unwrap();
+        let table = CodeDB::parse_file_c00(PATH_STR_C00).unwrap();
         assert_eq!(table.desc, "Common Code Table C-0");
         assert_eq!(
             table.data,
@@ -159,8 +171,7 @@ mod tests {
 
     #[test]
     fn parse_file_c11() {
-        let path = PathBuf::from(PATH_STR_C11);
-        let table = CodeDB::parse_file_c11(path).unwrap();
+        let table = CodeDB::parse_file_c11(PATH_STR_C11).unwrap();
         assert_eq!(table.desc, "Common Code Table C-11");
         assert_eq!(
             table.data,
@@ -189,7 +200,7 @@ mod tests {
     #[test]
     fn export_c00() {
         let mut db = CodeDB::new();
-        db.load(PathBuf::from(PATH_STR_C00)).unwrap();
+        db.load(PATH_STR_C00).unwrap();
         assert_eq!(
             db.export(0),
             "\
@@ -206,8 +217,8 @@ const COMMON_CODE_TABLE_00: &[& str] = &[
     #[test]
     fn format() {
         let mut db = CodeDB::new();
-        db.load(PathBuf::from(PATH_STR_C00)).unwrap();
-        db.load(PathBuf::from(PATH_STR_C11)).unwrap();
+        db.load(PATH_STR_C00).unwrap();
+        db.load(PATH_STR_C11).unwrap();
         assert_eq!(
             format!("{}", db),
             "\
@@ -244,8 +255,8 @@ const COMMON_CODE_TABLE_11: &[& str] = &[
     #[test]
     fn codetable_to_vec() {
         let mut db = CodeDB::new();
-        db.load(PathBuf::from(PATH_STR_C00)).unwrap();
-        db.load(PathBuf::from(PATH_STR_C11)).unwrap();
+        db.load(PATH_STR_C00).unwrap();
+        db.load(PATH_STR_C11).unwrap();
         assert_eq!(
             db.get(0).unwrap().to_vec(),
             vec![

@@ -13,18 +13,20 @@ fn main() -> Result<(), Box<dyn Error>> {
     // Take the first argument as an input file path and the second argument as a
     // surface index.
     let mut args = env::args().skip(1);
-    if let (Some(file_name), Some(index)) = (args.next(), args.next()) {
-        let path = Path::new(&file_name);
+    if let (Some(file_path), Some(index)) = (args.next(), args.next()) {
         let index = index.parse::<usize>()?;
-        decode_surface(path, index)
+        decode_surface(&file_path, index)
     } else {
         panic!("Usage: decode_surface <path> <index>");
     }
 }
 
-fn decode_surface(path: &Path, index: usize) -> Result<(), Box<dyn Error>> {
+fn decode_surface<P>(path: P, index: usize) -> Result<(), Box<dyn Error>>
+where
+    P: AsRef<Path>,
+{
     // Open the input file in a normal way.
-    let f = File::open(&path)?;
+    let f = File::open(path)?;
     let f = BufReader::new(f);
 
     // Read with the reader.
