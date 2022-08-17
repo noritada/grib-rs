@@ -4,7 +4,7 @@
 //! This section provides example code of data operations using some GRIB
 //! processing libraries and tools.
 //!
-//! # Listing all submessages inside a GRIB message
+//! ## Listing all submessages inside a GRIB message
 //!
 //! wgrib2:
 //!
@@ -72,7 +72,7 @@
 //! gribber list datafile.grib
 //! ```
 //!
-//! # Finding submessages that match some conditions inside a GRIB message
+//! ## Finding submessages that match some conditions inside a GRIB message
 //!
 //! wgrib2:
 //!
