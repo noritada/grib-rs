@@ -17,7 +17,8 @@
 //! ```python
 //! import pygrib
 //!
-//! grib = pygrib.open("datafile.grib")
+//! path = "testdata/icon_global_icosahedral_single-level_2021112018_000_TOT_PREC.grib2"
+//! grib = pygrib.open(path)
 //! for submessage in grib:
 //!     print(submessage)
 //! ```
@@ -60,7 +61,7 @@
 //! }
 //!
 //! fn main() {
-//!     let path = "datafile.grib";
+//!     let path = "testdata/icon_global_icosahedral_single-level_2021112018_000_TOT_PREC.grib2";
 //!     list_submessages(&path);
 //! }
 //! ```
@@ -84,7 +85,8 @@
 //! ```python
 //! import pygrib
 //!
-//! grib = pygrib.open("datafile.grib")
+//! path = "testdata/icon_global_icosahedral_single-level_2021112018_000_TOT_PREC.grib2"
+//! grib = pygrib.open(path)
 //! for submessage in grib.select(forecastTime=3):
 //!     print(submessage)
 //! ```
@@ -125,7 +127,7 @@
 //! }
 //!
 //! fn main() {
-//!     let path = "datafile.grib";
+//!     let path = "testdata/icon_global_icosahedral_single-level_2021112018_000_TOT_PREC.grib2";
 //!     find_submessages(&path, 3);
 //! }
 //! ```
