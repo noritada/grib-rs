@@ -10,7 +10,7 @@ fn app() -> Command<'static> {
         .subcommands(commands::cli())
 }
 
-fn real_main() -> Result<(), cli::CliError> {
+fn real_main() -> anyhow::Result<()> {
     let matches = app().get_matches();
 
     commands::dispatch(matches)

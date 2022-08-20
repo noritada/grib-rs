@@ -12,6 +12,7 @@ categories = ["science"]
 keywords = ["GRIB", "weather", "meteorology"]
 
 [dependencies]
+anyhow = "1"
 chrono = "0.4"
 clap = { version = "3.2", features = ["cargo"] }
 console = "0.15"

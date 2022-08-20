@@ -1,12 +1,10 @@
 use clap::{ArgMatches, Command};
 
-use crate::cli;
-
 pub fn cli() -> Vec<Command<'static>> {
     vec![decode::cli(), info::cli(), inspect::cli(), list::cli()]
 }
 
-pub fn dispatch(matches: ArgMatches) -> Result<(), cli::CliError> {
+pub fn dispatch(matches: ArgMatches) -> anyhow::Result<()> {
     match matches.subcommand() {
         Some(("decode", args)) => decode::exec(args),
         Some(("info", args)) => info::exec(args),

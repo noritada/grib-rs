@@ -15,7 +15,7 @@ pub fn cli() -> Command<'static> {
         .arg(arg!(<FILE> "Target file").value_parser(clap::value_parser!(PathBuf)))
 }
 
-pub fn exec(args: &ArgMatches) -> Result<(), cli::CliError> {
+pub fn exec(args: &ArgMatches) -> anyhow::Result<()> {
     let file_name = args.get_one::<PathBuf>("FILE").unwrap();
     let grib = cli::grib(file_name)?;
 
