@@ -16,7 +16,7 @@
 //! wgrib2:
 //!
 //! ```shell
-//! wgrib2 datafile.grib
+//! $ wgrib2 datafile.grib
 //! ```
 //!
 //! pygrib:
@@ -76,7 +76,7 @@
 //! gribber:
 //!
 //! ```shell
-//! gribber list datafile.grib
+//! $ gribber list datafile.grib
 //! ```
 //!
 //! ## Finding submessages that match some conditions inside a GRIB message
@@ -84,7 +84,7 @@
 //! wgrib2:
 //!
 //! ```shell
-//! wgrib2 datafile.grib -match ':3 hour fcst:'
+//! $ wgrib2 datafile.grib -match ':3 hour fcst:'
 //! ```
 //!
 //! pygrib:
@@ -142,7 +142,7 @@
 //! gribber:
 //!
 //! ```shell
-//! gribber list datafile.grib | grep '3 Hour'
+//! $ gribber list datafile.grib | grep '3 Hour'
 //! ```
 //!
 //! (gribber's API for finding submessages is still in the conceptual stage and
