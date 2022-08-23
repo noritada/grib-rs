@@ -1,3 +1,10 @@
+//! A tutorial for handling GRIB2 data in Rust.
+//!
+//! # Table of contents
+//!
+//! 1. [Comparison of GRIB2 data operation libraries/tools](#comparison-of-grib2-data-operation-librariestools)
+//!     * [Listing all submessages inside a GRIB message](#listing-all-submessages-inside-a-grib-message)
+//!     * [Finding submessages that match some conditions inside a GRIB message](#finding-submessages-that-match-some-conditions-inside-a-grib-message)
 //!
 //! # Comparison of GRIB2 data operation libraries/tools
 //!
