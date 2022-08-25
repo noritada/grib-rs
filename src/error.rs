@@ -10,6 +10,7 @@ pub enum GribError {
     ParseError(ParseError),
     ValidationError(ValidationError),
     DecodeError(DecodeError),
+    OperationError(String),
 }
 
 impl Error for GribError {
@@ -43,6 +44,7 @@ impl Display for GribError {
             Self::ParseError(e) => write!(f, "{}", e),
             Self::ValidationError(e) => write!(f, "{}", e),
             Self::DecodeError(e) => write!(f, "{:#?}", e),
+            Self::OperationError(s) => write!(f, "{}", s),
         }
     }
 }
