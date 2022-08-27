@@ -1,50 +1,19 @@
 #[cfg(unix)]
 use pager::Pager;
-use std::fmt::{self, Display, Formatter};
 use std::fs::File;
-use std::io::{BufReader, Error};
-use std::num::ParseIntError;
+use std::io::BufReader;
 use std::path::Path;
 #[cfg(unix)]
 use which::which;
 
 use grib::context::Grib2;
-use grib::error::*;
 use grib::reader::SeekableGrib2Reader;
 
-pub enum CliError {
-    Grib(GribError),
-    ParseNumber(ParseIntError),
-    IO(Error, String),
-}
-
-impl Display for CliError {
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        match self {
-            Self::Grib(e) => write!(f, "{}", e),
-            Self::ParseNumber(e) => write!(f, "{:#?}", e),
-            Self::IO(e, path) => write!(f, "{}: {}", e, path),
-        }
-    }
-}
-
-impl From<GribError> for CliError {
-    fn from(e: GribError) -> Self {
-        Self::Grib(e)
-    }
-}
-
-impl From<ParseIntError> for CliError {
-    fn from(e: ParseIntError) -> Self {
-        Self::ParseNumber(e)
-    }
-}
-
-pub fn grib<P>(path: P) -> Result<Grib2<SeekableGrib2Reader<BufReader<File>>>, CliError>
+pub fn grib<P>(path: P) -> anyhow::Result<Grib2<SeekableGrib2Reader<BufReader<File>>>>
 where
     P: AsRef<Path>,
 {
-    let f = File::open(&path).map_err(|e| CliError::IO(e, path.as_ref().display().to_string()))?;
+    let f = File::open(&path)?;
     let f = BufReader::new(f);
     Ok(grib::from_reader(f)?)
 }

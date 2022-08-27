@@ -150,18 +150,30 @@ impl<R: Grib2Read> Grib2<R> {
 
     /// Decodes grid values of a surface specified by the index `i`.
     pub fn get_values(&self, i: usize) -> Result<Box<[f32]>, GribError> {
-        let (sect3, sect5, sect6, sect7) = self
+        let submsg = self
             .submessages
             .get(i)
-            .and_then(|submsg| {
-                Some((
-                    self.sections.get(submsg.sections.3)?,
-                    self.sections.get(submsg.sections.5)?,
-                    self.sections.get(submsg.sections.6)?,
-                    self.sections.get(submsg.sections.7)?,
-                ))
-            })
-            .ok_or(GribError::InternalDataError)?;
+            .ok_or(GribError::OperationError(format!("no such index: {}", i)))?;
+
+        fn get_sections<'a>(
+            sections: &'a [SectionInfo],
+            submessage: &'a Grib2SubmessageIndex,
+        ) -> Option<(
+            &'a SectionInfo,
+            &'a SectionInfo,
+            &'a SectionInfo,
+            &'a SectionInfo,
+        )> {
+            Some((
+                sections.get(submessage.sections.3)?,
+                sections.get(submessage.sections.5)?,
+                sections.get(submessage.sections.6)?,
+                sections.get(submessage.sections.7)?,
+            ))
+        }
+
+        let (sect3, sect5, sect6, sect7) =
+            get_sections(&self.sections, submsg).ok_or(GribError::InternalDataError)?;
 
         let reader = self.reader.borrow_mut();
         let values = decoders::dispatch(sect3, sect5, sect6, sect7, reader)?;

@@ -1,3 +1,4 @@
+use anyhow::Result;
 use clap::{arg, ArgMatches, Command};
 use std::fs::File;
 use std::io::{BufWriter, Write};
@@ -23,22 +24,17 @@ pub fn cli() -> Command<'static> {
         )
 }
 
-fn write_output(
-    out_path: &PathBuf,
-    values: &[f32],
-    to_bytes: fn(&f32) -> [u8; 4],
-) -> Result<(), cli::CliError> {
-    File::create(out_path)
-        .and_then(|f| {
-            let mut stream = BufWriter::new(f);
-            values
-                .iter()
-                .try_for_each(|f| stream.write_all(&to_bytes(f)))
-        })
-        .map_err(|e| cli::CliError::IO(e, out_path.to_string_lossy().to_string()))
+fn write_output(out_path: &PathBuf, values: &[f32], to_bytes: fn(&f32) -> [u8; 4]) -> Result<()> {
+    let _ = File::create(out_path).and_then(|f| {
+        let mut stream = BufWriter::new(f);
+        values
+            .iter()
+            .try_for_each(|f| stream.write_all(&to_bytes(f)))
+    })?;
+    Ok(())
 }
 
-pub fn exec(args: &ArgMatches) -> Result<(), cli::CliError> {
+pub fn exec(args: &ArgMatches) -> Result<()> {
     let file_name = args.get_one::<PathBuf>("FILE").unwrap();
     let grib = cli::grib(file_name)?;
     let index = args.get_one::<usize>("INDEX").unwrap();

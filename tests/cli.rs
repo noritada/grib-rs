@@ -760,6 +760,21 @@ fn decode_simple_packing_with_bitmap_as_little_endian() -> Result<(), Box<dyn st
     Ok(())
 }
 
+#[test]
+fn try_to_decode_submessage_with_nonexisting_index() -> Result<(), Box<dyn std::error::Error>> {
+    let tempfile = utils::jma_kousa_file()?;
+    let arg_path = tempfile.path();
+
+    let mut cmd = Command::cargo_bin(CMD_NAME)?;
+    cmd.arg("decode").arg(arg_path).arg("9999");
+    cmd.assert()
+        .failure()
+        .stdout(predicate::str::is_empty())
+        .stderr(predicate::str::diff("error: no such index: 9999\n"));
+
+    Ok(())
+}
+
 macro_rules! test_subcommands_without_args {
     ($(($name:ident, $str:expr),)*) => ($(
         #[test]
@@ -825,7 +840,7 @@ macro_rules! test_subcommands_with_non_grib {
             cmd.assert()
                 .failure()
                 .stdout(predicate::str::is_empty())
-                .stderr(predicate::str::diff("Not GRIB data\n"));
+                .stderr(predicate::str::diff("error: Not GRIB data\n"));
 
             Ok(())
         }
@@ -851,7 +866,7 @@ macro_rules! test_subcommands_with_too_small_file {
                 .failure()
                 .stdout(predicate::str::is_empty())
                 .stderr(predicate::str::diff(
-                    "Read error: failed to fill whole buffer\n",
+                    "error: Read error: failed to fill whole buffer\n",
                 ));
 
             Ok(())
