@@ -1,5 +1,7 @@
+use once_cell::sync::Lazy;
 #[cfg(unix)]
 use pager::Pager;
+use regex::Regex;
 use std::fs::File;
 use std::io::BufReader;
 use std::path::Path;
@@ -29,3 +31,63 @@ pub fn start_pager() {
 
 #[cfg(not(unix))]
 pub fn start_pager() {}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct MessageIndex(pub(crate) usize, pub(crate) usize);
+
+impl std::str::FromStr for MessageIndex {
+    type Err = anyhow::Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        static RE: Lazy<Regex> = Lazy::new(|| {
+            Regex::new(
+                r"(?x)      # insignificant whitespace mode
+                ^
+                ([0-9]+)    # message index
+                \.         # separator
+                ([0-9]+)    # submessage index
+                $",
+            )
+            .unwrap()
+        });
+        let cap = RE.captures(s).ok_or(anyhow::anyhow!(
+            "message index must be specified as 'N.M' where N and M are both integers"
+        ))?;
+        let message_index = cap.get(1).unwrap();
+        let message_index = usize::from_str(message_index.as_str()).unwrap();
+        let submessage_index = cap.get(2).unwrap();
+        let submessage_index = usize::from_str(submessage_index.as_str()).unwrap();
+        Ok(Self(message_index, submessage_index))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn successful_parsing_message_index() -> Result<(), Box<dyn std::error::Error>> {
+        let actual = "1.1".parse::<MessageIndex>()?;
+        let expected = MessageIndex(1, 1);
+        assert_eq!(actual, expected);
+        Ok(())
+    }
+
+    macro_rules! test_message_index_parsing_failures {
+        ($(($name:ident, $input:expr),)*) => ($(
+            #[test]
+            fn $name() {
+                let result= $input.parse::<MessageIndex>();
+                assert!(result.is_err());
+            }
+        )*);
+    }
+
+    test_message_index_parsing_failures! {
+        (message_index_parsing_failure_due_to_wrong_separator, "1_1"),
+        (message_index_parsing_failure_due_to_non_digit_message_index, "a.1"),
+        (message_index_parsing_failure_due_to_non_digit_submessage_index, "1.a"),
+        (message_index_parsing_failure_due_to_garbase_before_index, "_1.1"),
+        (message_index_parsing_failure_due_to_garbase_after_index, "1.1_"),
+    }
+}

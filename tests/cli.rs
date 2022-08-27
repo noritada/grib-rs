@@ -508,7 +508,7 @@ fn decode_run_length_encoding() -> Result<(), Box<dyn std::error::Error>> {
     let arg_path = tempfile.path();
 
     let mut cmd = Command::cargo_bin(CMD_NAME)?;
-    cmd.arg("decode").arg(arg_path).arg("3");
+    cmd.arg("decode").arg(arg_path).arg("0.3");
     cmd.assert().success().stderr(predicate::str::is_empty());
 
     Ok(())
@@ -520,7 +520,7 @@ fn decode_simple_packing() -> Result<(), Box<dyn std::error::Error>> {
     let arg_path = tempfile.path();
 
     let mut cmd = Command::cargo_bin(CMD_NAME)?;
-    cmd.arg("decode").arg(arg_path).arg("3");
+    cmd.arg("decode").arg(arg_path).arg("0.3");
     cmd.assert().success().stderr(predicate::str::is_empty());
 
     Ok(())
@@ -532,7 +532,7 @@ fn decode_complex_packing() -> Result<(), Box<dyn std::error::Error>> {
     let arg_path = tempfile.path();
 
     let mut cmd = Command::cargo_bin(CMD_NAME)?;
-    cmd.arg("decode").arg(arg_path).arg("2");
+    cmd.arg("decode").arg(arg_path).arg("0.2");
     cmd.assert().success().stderr(predicate::str::is_empty());
 
     Ok(())
@@ -550,7 +550,7 @@ fn decode_run_length_packing_as_big_endian() -> Result<(), Box<dyn std::error::E
     let mut cmd = Command::cargo_bin(CMD_NAME)?;
     cmd.arg("decode")
         .arg(arg_path)
-        .arg("3")
+        .arg("0.3")
         .arg("-b")
         .arg(&out_path);
     cmd.assert()
@@ -586,7 +586,7 @@ fn decode_run_length_packing_as_little_endian() -> Result<(), Box<dyn std::error
     let mut cmd = Command::cargo_bin(CMD_NAME)?;
     cmd.arg("decode")
         .arg(arg_path)
-        .arg("3")
+        .arg("0.3")
         .arg("-l")
         .arg(&out_path);
     cmd.assert()
@@ -622,7 +622,7 @@ fn decode_simple_packing_as_big_endian() -> Result<(), Box<dyn std::error::Error
     let mut cmd = Command::cargo_bin(CMD_NAME)?;
     cmd.arg("decode")
         .arg(arg_path)
-        .arg("3")
+        .arg("0.3")
         .arg("-b")
         .arg(&out_path);
     cmd.assert()
@@ -649,7 +649,7 @@ fn decode_simple_packing_as_little_endian() -> Result<(), Box<dyn std::error::Er
     let mut cmd = Command::cargo_bin(CMD_NAME)?;
     cmd.arg("decode")
         .arg(arg_path)
-        .arg("3")
+        .arg("0.3")
         .arg("-l")
         .arg(&out_path);
     cmd.assert()
@@ -676,7 +676,7 @@ fn decode_complex_packing_as_little_endian() -> Result<(), Box<dyn std::error::E
     let mut cmd = Command::cargo_bin(CMD_NAME)?;
     cmd.arg("decode")
         .arg(arg_path)
-        .arg("2")
+        .arg("0.2")
         .arg("-l")
         .arg(&out_path);
     cmd.assert()
@@ -702,7 +702,7 @@ fn decode_jpeg2000_code_stream_as_little_endian() -> Result<(), Box<dyn std::err
     let mut cmd = Command::cargo_bin(CMD_NAME)?;
     cmd.arg("decode")
         .arg(arg_path)
-        .arg("0")
+        .arg("0.0")
         .arg("-l")
         .arg(&out_path);
     cmd.assert()
@@ -736,7 +736,7 @@ fn decode_simple_packing_with_bitmap_as_little_endian() -> Result<(), Box<dyn st
     let mut cmd = Command::cargo_bin(CMD_NAME)?;
     cmd.arg("decode")
         .arg(arg_path)
-        .arg("0")
+        .arg("0.0")
         .arg("-l")
         .arg(&out_path);
     cmd.assert()
@@ -766,10 +766,11 @@ fn try_to_decode_submessage_with_nonexisting_index() -> Result<(), Box<dyn std::
     let arg_path = tempfile.path();
 
     let mut cmd = Command::cargo_bin(CMD_NAME)?;
-    cmd.arg("decode").arg(arg_path).arg("9999");
+    cmd.arg("decode").arg(arg_path).arg("0.9999");
     cmd.assert()
         .failure()
         .stdout(predicate::str::is_empty())
+        // FIXME: the index in the error message should be fixed
         .stderr(predicate::str::diff("error: no such index: 9999\n"));
 
     Ok(())
