@@ -146,7 +146,7 @@ mod tests {
         let f = Cursor::new(buf);
 
         let grib = from_reader(f).unwrap();
-        let index = 0;
+        let index = (0, 0);
         // Runs `SimplePackingDecoder::decode()` internally.
         let actual = grib.get_values(index).unwrap();
         let expected = vec![0f32; 0x002d0000].into_boxed_slice();

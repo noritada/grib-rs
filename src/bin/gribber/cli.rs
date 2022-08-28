@@ -33,9 +33,9 @@ pub fn start_pager() {
 pub fn start_pager() {}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) struct MessageIndex(pub(crate) usize, pub(crate) usize);
+pub(crate) struct CliMessageIndex(pub(crate) grib::context::MessageIndex);
 
-impl std::str::FromStr for MessageIndex {
+impl std::str::FromStr for CliMessageIndex {
     type Err = anyhow::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -57,7 +57,8 @@ impl std::str::FromStr for MessageIndex {
         let message_index = usize::from_str(message_index.as_str()).unwrap();
         let submessage_index = cap.get(2).unwrap();
         let submessage_index = usize::from_str(submessage_index.as_str()).unwrap();
-        Ok(Self(message_index, submessage_index))
+        let inner = (message_index, submessage_index);
+        Ok(Self(inner))
     }
 }
 
@@ -67,8 +68,8 @@ mod tests {
 
     #[test]
     fn successful_parsing_message_index() -> Result<(), Box<dyn std::error::Error>> {
-        let actual = "1.1".parse::<MessageIndex>()?;
-        let expected = MessageIndex(1, 1);
+        let actual = "1.1".parse::<CliMessageIndex>()?;
+        let expected = CliMessageIndex((1, 1));
         assert_eq!(actual, expected);
         Ok(())
     }
@@ -77,7 +78,7 @@ mod tests {
         ($(($name:ident, $input:expr),)*) => ($(
             #[test]
             fn $name() {
-                let result= $input.parse::<MessageIndex>();
+                let result= $input.parse::<CliMessageIndex>();
                 assert!(result.is_err());
             }
         )*);

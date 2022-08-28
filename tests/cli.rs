@@ -770,8 +770,7 @@ fn try_to_decode_submessage_with_nonexisting_index() -> Result<(), Box<dyn std::
     cmd.assert()
         .failure()
         .stdout(predicate::str::is_empty())
-        // FIXME: the index in the error message should be fixed
-        .stderr(predicate::str::diff("error: no such index: 9999\n"));
+        .stderr(predicate::str::diff("error: no such index: 0.9999\n"));
 
     Ok(())
 }
