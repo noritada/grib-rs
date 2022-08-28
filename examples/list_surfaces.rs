@@ -75,7 +75,7 @@ where
         println!(
             "{:<31} {:>14} {:>17}",
             parameter.to_string(),
-            forecast_time.to_string(),
+            forecast_time,
             elevation_level
         );
     }

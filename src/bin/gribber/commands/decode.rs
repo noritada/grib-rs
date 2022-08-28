@@ -25,7 +25,7 @@ pub fn cli() -> Command<'static> {
 }
 
 fn write_output(out_path: &PathBuf, values: &[f32], to_bytes: fn(&f32) -> [u8; 4]) -> Result<()> {
-    let _ = File::create(out_path).and_then(|f| {
+    File::create(out_path).and_then(|f| {
         let mut stream = BufWriter::new(f);
         values
             .iter()

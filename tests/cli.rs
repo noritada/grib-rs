@@ -562,11 +562,10 @@ fn decode_run_length_packing_as_big_endian() -> Result<(), Box<dyn std::error::E
     let expected: Vec<_> = expected
         .chunks(4)
         .into_iter()
-        .map(|b| match b {
+        .flat_map(|b| match b {
             [0x62, 0x58, 0xd1, 0x9a] => vec![0x7f, 0xc0, 0x00, 0x00],
             b => b.to_vec(),
         })
-        .flatten()
         .collect();
     let actual = utils::cat_as_bytes(&out_path)?;
     assert_eq!(actual, expected);
@@ -598,11 +597,10 @@ fn decode_run_length_packing_as_little_endian() -> Result<(), Box<dyn std::error
     let expected: Vec<_> = expected
         .chunks(4)
         .into_iter()
-        .map(|b| match b {
+        .flat_map(|b| match b {
             [0x9a, 0xd1, 0x58, 0x62] => vec![0x00, 0x00, 0xc0, 0x7f],
             b => b.to_vec(),
         })
-        .flatten()
         .collect();
     let actual = utils::cat_as_bytes(&out_path)?;
     assert_eq!(actual, expected);
@@ -748,11 +746,10 @@ fn decode_simple_packing_with_bitmap_as_little_endian() -> Result<(), Box<dyn st
     let expected: Vec<_> = expected
         .chunks(4)
         .into_iter()
-        .map(|b| match b {
+        .flat_map(|b| match b {
             [0x9a, 0xd1, 0x58, 0x62] => vec![0x00, 0x00, 0xc0, 0x7f],
             b => b.to_vec(),
         })
-        .flatten()
         .collect();
     let actual = utils::cat_as_bytes(&out_path)?;
     assert_eq!(actual, expected);
