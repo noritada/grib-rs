@@ -50,9 +50,11 @@ impl std::str::FromStr for CliMessageIndex {
             )
             .unwrap()
         });
-        let cap = RE.captures(s).ok_or(anyhow::anyhow!(
-            "message index must be specified as 'N.M' where N and M are both integers"
-        ))?;
+        let cap = RE.captures(s).ok_or_else(|| {
+            anyhow::anyhow!(
+                "message index must be specified as 'N.M' where N and M are both integers"
+            )
+        })?;
         let message_index = cap.get(1).unwrap();
         let message_index = usize::from_str(message_index.as_str()).unwrap();
         let submessage_index = cap.get(2).unwrap();

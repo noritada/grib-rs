@@ -152,13 +152,9 @@ impl<R: Grib2Read> Grib2<R> {
     pub fn get_values(&self, message_index: MessageIndex) -> Result<Box<[f32]>, GribError> {
         // message part of message_index is ignored as of now
         let (index, subindex) = message_index;
-        let submsg = self
-            .submessages
-            .get(subindex)
-            .ok_or(GribError::OperationError(format!(
-                "no such index: {}.{}",
-                index, subindex
-            )))?;
+        let submsg = self.submessages.get(subindex).ok_or_else(|| {
+            GribError::OperationError(format!("no such index: {}.{}", index, subindex))
+        })?;
 
         fn get_sections<'a>(
             sections: &'a [SectionInfo],
