@@ -32,7 +32,7 @@ where
     // Read with the reader.
     let grib2 = grib::from_reader(f)?;
 
-    for (index, submessage) in grib2.iter().enumerate() {
+    for (index, submessage) in grib2.iter() {
         let ft = submessage.prod_def().forecast_time();
         if let Some(ForecastTime {
             unit: Name(Table4_4::Hour),
@@ -40,7 +40,7 @@ where
         }) = ft
         {
             if hours == forecast_time_hours {
-                println!("{}: {}", index, hours);
+                println!("{}.{}: {}", index.0, index.1, hours);
             }
         }
     }

@@ -33,7 +33,7 @@ where
 
     let grib2 = grib::from_reader(f).unwrap();
 
-    for submessage in grib2.iter() {
+    for (_index, submessage) in grib2.iter() {
         let discipline = submessage.indicator().discipline;
         let category = submessage.prod_def().parameter_category().unwrap();
         let parameter = submessage.prod_def().parameter_number().unwrap();

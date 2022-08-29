@@ -219,25 +219,28 @@ impl<'a> SubmessageIterator<'a> {
 }
 
 impl<'a> Iterator for SubmessageIterator<'a> {
-    type Item = SubMessage<'a>;
+    type Item = (MessageIndex, SubMessage<'a>);
 
-    fn next(&mut self) -> Option<SubMessage<'a>> {
+    fn next(&mut self) -> Option<Self::Item> {
         let submessage_index = self.indices.get(self.pos)?;
         self.pos += 1;
 
-        Some(SubMessage(
-            self.new_submessage_section(0)?,
-            self.new_submessage_section(1)?,
-            submessage_index
-                .sections
-                .2
-                .and_then(|i| self.new_submessage_section(i)),
-            self.new_submessage_section(submessage_index.sections.3)?,
-            self.new_submessage_section(submessage_index.sections.4)?,
-            self.new_submessage_section(submessage_index.sections.5)?,
-            self.new_submessage_section(submessage_index.sections.6)?,
-            self.new_submessage_section(submessage_index.sections.7)?,
-            self.new_submessage_section(self.sections.len() - 1)?,
+        Some((
+            (submessage_index.message, submessage_index.submessage),
+            SubMessage(
+                self.new_submessage_section(0)?,
+                self.new_submessage_section(1)?,
+                submessage_index
+                    .sections
+                    .2
+                    .and_then(|i| self.new_submessage_section(i)),
+                self.new_submessage_section(submessage_index.sections.3)?,
+                self.new_submessage_section(submessage_index.sections.4)?,
+                self.new_submessage_section(submessage_index.sections.5)?,
+                self.new_submessage_section(submessage_index.sections.6)?,
+                self.new_submessage_section(submessage_index.sections.7)?,
+                self.new_submessage_section(self.sections.len() - 1)?,
+            ),
         ))
     }
 
@@ -246,7 +249,7 @@ impl<'a> Iterator for SubmessageIterator<'a> {
         (size, Some(size))
     }
 
-    fn nth(&mut self, n: usize) -> Option<SubMessage<'a>> {
+    fn nth(&mut self, n: usize) -> Option<Self::Item> {
         self.pos = n;
         self.next()
     }

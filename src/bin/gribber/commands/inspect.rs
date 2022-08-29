@@ -215,17 +215,18 @@ impl<'i> Display for InspectSubMessagesItem<'i> {
         }
 
         let header = format!(
-            "{:>5} │ {:>5} {:>5} {:>5} {:>5} {:>5} {:>5} │ {:<7} {:<7} {:<7}\n",
+            "{:>8} │ {:>5} {:>5} {:>5} {:>5} {:>5} {:>5} │ {:<7} {:<7} {:<7}\n",
             "id", "S2", "S3", "S4", "S5", "S6", "S7", "Tmpl3", "Tmpl4", "Tmpl5",
         );
         let style = Style::new().bold();
         write!(f, "{}", style.apply_to(header))?;
 
-        for (i, submessage) in self.data.clone().enumerate() {
+        for (i, submessage) in self.data.clone() {
+            let id = format!("{}.{}", i.0, i.1);
             writeln!(
                 f,
-                "{:>5} │ {} {} {} {} {} {} │ {} {} {}",
-                i,
+                "{:>8} │ {} {} {} {} {} {} │ {} {} {}",
+                id,
                 format_section_index_optional(&submessage.2),
                 format_section_index(&submessage.3),
                 format_section_index(&submessage.4),

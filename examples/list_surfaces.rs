@@ -30,7 +30,7 @@ where
     let grib2 = grib::from_reader(f)?;
 
     // Iterate over surfaces.
-    for submessage in grib2.iter() {
+    for (_index, submessage) in grib2.iter() {
         // In GRIB data, attribute information such as elements are represented as
         // numeric values. To convert those numeric values to strings, we use
         // tables called Code Tables. Code Table 4.2 is required for the textual

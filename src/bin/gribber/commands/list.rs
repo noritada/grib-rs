@@ -71,10 +71,11 @@ impl<'i> ListView<'i> {
 
 impl<'i> Display for ListView<'i> {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        let entries = self.data.clone();
         match self.mode {
             ListViewMode::OneLine => {
                 let header = format!(
-                    "{:>5} │ {:<31} {:<18} {:>14} {:>17} {:>17} | {:>21}\n",
+                    "{:>8} │ {:<31} {:<18} {:>14} {:>17} {:>17} | {:>21}\n",
                     "id",
                     "Parameter",
                     "Generating process",
@@ -86,7 +87,8 @@ impl<'i> Display for ListView<'i> {
                 let style = Style::new().bold();
                 write!(f, "{}", style.apply_to(header))?;
 
-                for (i, submessage) in self.data.clone().enumerate() {
+                for (i, submessage) in entries {
+                    let id = format!("{}.{}", i.0, i.1);
                     let prod_def = submessage.prod_def();
                     let category = prod_def
                         .parameter_category()
@@ -115,8 +117,8 @@ impl<'i> Display for ListView<'i> {
                     let num_points_represented = submessage.repr_def().num_points();
                     writeln!(
                         f,
-                        "{:>5} │ {:<31} {:<18} {:>14} {:>17} {:>17} | {:>10}/{:>10}",
-                        i,
+                        "{:>8} │ {:<31} {:<18} {:>14} {:>17} {:>17} | {:>10}/{:>10}",
+                        id,
                         category,
                         generating_process,
                         forecast_time,
@@ -128,8 +130,9 @@ impl<'i> Display for ListView<'i> {
                 }
             }
             ListViewMode::Dump => {
-                for (i, submessage) in self.data.clone().enumerate() {
-                    write!(f, "{}\n{}\n", i, submessage.describe())?;
+                for (i, submessage) in entries {
+                    let id = format!("{}.{}", i.0, i.1);
+                    write!(f, "{}\n{}\n", id, submessage.describe())?;
                 }
             }
         }
