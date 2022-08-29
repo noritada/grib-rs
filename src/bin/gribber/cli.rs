@@ -33,7 +33,7 @@ pub fn start_pager() {
 pub fn start_pager() {}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) struct CliMessageIndex(pub(crate) grib::context::MessageIndex);
+pub(crate) struct CliMessageIndex(pub(crate) grib::datatypes::MessageIndex);
 
 impl std::str::FromStr for CliMessageIndex {
     type Err = anyhow::Error;

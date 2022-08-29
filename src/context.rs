@@ -106,7 +106,7 @@ impl<R: Grib2Read> Grib2<R> {
         // tentatively extract only submessages in the first message
         let submessages = submessages
             .into_iter()
-            .filter(|index| index.message == 0)
+            .filter(|index| index.message_index().0 == 0)
             .collect::<Vec<_>>();
         Ok(Self {
             reader: RefCell::new(sect_stream.into_reader()),
@@ -166,10 +166,10 @@ impl<R: Grib2Read> Grib2<R> {
             &'a SectionInfo,
         )> {
             Some((
-                sections.get(submessage.sections.3)?,
-                sections.get(submessage.sections.5)?,
-                sections.get(submessage.sections.6)?,
-                sections.get(submessage.sections.7)?,
+                sections.get(submessage.3)?,
+                sections.get(submessage.5)?,
+                sections.get(submessage.6)?,
+                sections.get(submessage.7)?,
             ))
         }
 
@@ -226,19 +226,18 @@ impl<'a> Iterator for SubmessageIterator<'a> {
         self.pos += 1;
 
         Some((
-            (submessage_index.message, submessage_index.submessage),
+            submessage_index.message_index(),
             SubMessage(
                 self.new_submessage_section(0)?,
                 self.new_submessage_section(1)?,
                 submessage_index
-                    .sections
                     .2
                     .and_then(|i| self.new_submessage_section(i)),
-                self.new_submessage_section(submessage_index.sections.3)?,
-                self.new_submessage_section(submessage_index.sections.4)?,
-                self.new_submessage_section(submessage_index.sections.5)?,
-                self.new_submessage_section(submessage_index.sections.6)?,
-                self.new_submessage_section(submessage_index.sections.7)?,
+                self.new_submessage_section(submessage_index.3)?,
+                self.new_submessage_section(submessage_index.4)?,
+                self.new_submessage_section(submessage_index.5)?,
+                self.new_submessage_section(submessage_index.6)?,
+                self.new_submessage_section(submessage_index.7)?,
                 self.new_submessage_section(self.sections.len() - 1)?,
             ),
         ))
@@ -391,8 +390,6 @@ impl<'a> SubMessageSection<'a> {
         self.template_code().and_then(|code| code.describe())
     }
 }
-
-pub type MessageIndex = (usize, usize);
 
 #[cfg(test)]
 mod tests {
