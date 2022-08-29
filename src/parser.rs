@@ -283,15 +283,10 @@ where
                         8 => {
                             let ret = Some(Ok(Grib2SubmessageIndex::new(
                                 (message_count, submessage_count),
-                                self.sect0,
-                                self.sect1,
-                                self.sect2,
-                                self.sect3,
-                                sect4,
-                                sect5,
-                                sect6,
-                                sect7,
-                                pos,
+                                (
+                                    self.sect0, self.sect1, self.sect2, self.sect3, sect4, sect5,
+                                    sect6, sect7, pos,
+                                ),
                             )));
 
                             // if pos is 0, it is dummy
