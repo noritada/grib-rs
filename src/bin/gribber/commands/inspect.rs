@@ -2,6 +2,7 @@ use clap::{arg, ArgMatches, Command};
 use console::{Style, Term};
 use std::fmt::{self, Display, Formatter};
 use std::path::PathBuf;
+use std::slice::Iter;
 
 use grib::context::{SectionInfo, SubMessageSection, SubmessageIterator, TemplateInfo};
 
@@ -148,11 +149,11 @@ impl<'i> InspectItem<'i> {
 }
 
 struct InspectSectionsItem<'i> {
-    data: &'i [SectionInfo],
+    data: Iter<'i, SectionInfo>,
 }
 
 impl<'i> InspectSectionsItem<'i> {
-    fn new(data: &'i [SectionInfo]) -> Self {
+    fn new(data: Iter<'i, SectionInfo>) -> Self {
         Self { data }
     }
 
@@ -163,7 +164,7 @@ impl<'i> InspectSectionsItem<'i> {
 
 impl<'i> Display for InspectSectionsItem<'i> {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        for (i, sect) in self.data.iter().enumerate() {
+        for (i, sect) in self.data.clone().enumerate() {
             writeln!(
                 f,
                 "{:>5} │ {:016x} - {:016x} │ Section {}",

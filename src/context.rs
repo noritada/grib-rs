@@ -181,8 +181,8 @@ impl<R: Grib2Read> Grib2<R> {
         Ok(values)
     }
 
-    pub fn sections(&self) -> &[SectionInfo] {
-        &self.sections
+    pub fn sections(&self) -> std::slice::Iter<SectionInfo> {
+        self.sections.iter()
     }
 
     pub fn list_templates(&self) -> Vec<TemplateInfo> {
