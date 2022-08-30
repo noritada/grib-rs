@@ -109,11 +109,6 @@ impl<R: Grib2Read> Grib2<R> {
         let mut cacher = Vec::new();
         let parser = Grib2SubmessageIndexStream::new(sect_stream.by_ref()).with_cacher(&mut cacher);
         let submessages = parser.collect::<Result<Vec<_>, _>>()?;
-        // tentatively extract only submessages in the first message
-        let submessages = submessages
-            .into_iter()
-            .filter(|index| index.message_index().0 == 0)
-            .collect::<Vec<_>>();
         Ok(Self {
             reader: RefCell::new(sect_stream.into_reader()),
             sections: cacher.into_boxed_slice(),
