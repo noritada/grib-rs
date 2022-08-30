@@ -85,12 +85,30 @@ Type of processed data:                 Analysis and forecast products
     Ok(())
 }
 
-#[test]
-fn list() -> Result<(), Box<dyn std::error::Error>> {
-    let tempfile = utils::jma_tornado_nowcast_file()?;
-    let arg_path = tempfile.path();
+macro_rules! test_list_subcommand_and_options {
+    ($(($name:ident, $input:expr, $args:expr, $expected_stdout:expr),)*) => ($(
+        #[test]
+        fn $name() -> Result<(), Box<dyn std::error::Error>> {
+            let input = $input;
 
-    let out_str = "      id │ Parameter                       Generating process  Forecast time 1st fixed surface 2nd fixed surface |   #points (nan/total)
+            let mut cmd = Command::cargo_bin(CMD_NAME)?;
+            cmd.arg("list").args($args).arg(input.path());
+            cmd.assert()
+                .success()
+                .stdout(predicate::str::diff($expected_stdout))
+                .stderr(predicate::str::is_empty());
+
+            Ok(())
+        }
+    )*);
+}
+
+test_list_subcommand_and_options! {
+    (
+        list_grib2_with_multiple_submessages_without_nan_values,
+        utils::jma_tornado_nowcast_file()?,
+        Vec::<&str>::new(),
+        "      id │ Parameter                       Generating process  Forecast time 1st fixed surface 2nd fixed surface |   #points (nan/total)
      0.0 │ code '0' is not implemented     Analysis                    0 [m]               NaN               NaN |          0/     86016
      0.1 │ code '0' is not implemented     Forecast                   10 [m]               NaN               NaN |          0/     86016
      0.2 │ code '0' is not implemented     Forecast                   20 [m]               NaN               NaN |          0/     86016
@@ -98,24 +116,13 @@ fn list() -> Result<(), Box<dyn std::error::Error>> {
      0.4 │ code '0' is not implemented     Forecast                   40 [m]               NaN               NaN |          0/     86016
      0.5 │ code '0' is not implemented     Forecast                   50 [m]               NaN               NaN |          0/     86016
      0.6 │ code '0' is not implemented     Forecast                   60 [m]               NaN               NaN |          0/     86016
-";
-
-    let mut cmd = Command::cargo_bin(CMD_NAME)?;
-    cmd.arg("list").arg(arg_path);
-    cmd.assert()
-        .success()
-        .stdout(predicate::str::diff(out_str))
-        .stderr(predicate::str::is_empty());
-
-    Ok(())
-}
-
-#[test]
-fn list_data_with_nan_values() -> Result<(), Box<dyn std::error::Error>> {
-    let tempfile = utils::jma_msmguid_file()?;
-    let arg_path = tempfile.path();
-
-    let out_str = "      id │ Parameter                       Generating process  Forecast time 1st fixed surface 2nd fixed surface |   #points (nan/total)
+"
+    ),
+    (
+        list_grib2_with_multiple_submessages_with_nan_values,
+        utils::jma_msmguid_file()?,
+        Vec::<&str>::new(),
+        "      id │ Parameter                       Generating process  Forecast time 1st fixed surface 2nd fixed surface |   #points (nan/total)
      0.0 │ code '192' is not implemented   Forecast                    0 [h]               NaN               NaN |     106575/    268800
      0.1 │ Total precipitation rate        Forecast                    0 [h]               NaN               NaN |     106575/    268800
      0.2 │ code '192' is not implemented   Forecast                    3 [h]               NaN               NaN |     106575/    268800
@@ -161,24 +168,13 @@ fn list_data_with_nan_values() -> Result<(), Box<dyn std::error::Error>> {
     0.42 │ Thunderstorm probability        Forecast                   30 [h]               NaN               NaN |      14446/     17061
     0.43 │ Thunderstorm probability        Forecast                   33 [h]               NaN               NaN |      14446/     17061
     0.44 │ Thunderstorm probability        Forecast                   36 [h]               NaN               NaN |      14446/     17061
-";
-
-    let mut cmd = Command::cargo_bin(CMD_NAME)?;
-    cmd.arg("list").arg(arg_path);
-    cmd.assert()
-        .success()
-        .stdout(predicate::str::diff(out_str))
-        .stderr(predicate::str::is_empty());
-
-    Ok(())
-}
-
-#[test]
-fn list_with_opt_d() -> Result<(), Box<dyn std::error::Error>> {
-    let tempfile = utils::jma_tornado_nowcast_file()?;
-    let arg_path = tempfile.path();
-
-    let out_str = "\
+"
+    ),
+    (
+        list_grib2_with_multiple_submessages_with_opt_d,
+        utils::jma_tornado_nowcast_file()?,
+        vec!["-d"],
+        "\
 0.0
 Grid:                                   Latitude/longitude
   Number of points:                     86016
@@ -305,16 +301,8 @@ Product:                                Analysis or forecast at a horizontal lev
 Data Representation:                    Run length packing with level values
   Number of represented values:         86016
 
-";
-
-    let mut cmd = Command::cargo_bin(CMD_NAME)?;
-    cmd.arg("list").arg("-d").arg(arg_path);
-    cmd.assert()
-        .success()
-        .stdout(predicate::str::diff(out_str))
-        .stderr(predicate::str::is_empty());
-
-    Ok(())
+"
+    ),
 }
 
 #[test]
