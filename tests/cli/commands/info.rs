@@ -5,7 +5,7 @@ use std::process::Command;
 
 #[test]
 fn info() -> Result<(), Box<dyn std::error::Error>> {
-    let tempfile = utils::jma_tornado_nowcast_file()?;
+    let tempfile = utils::testdata::grib2::jma_tornado_nowcast()?;
     let arg_path = tempfile.path();
 
     let out_str = "\

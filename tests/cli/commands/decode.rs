@@ -22,17 +22,17 @@ macro_rules! test_operation_with_no_options {
 test_operation_with_no_options! {
     (
         decoding_simple_packing,
-        utils::jma_kousa_file()?,
+        utils::testdata::grib2::jma_kousa()?,
         "0.3"
     ),
     (
         decoding_complex_packing,
-        utils::jma_meps_file()?,
+        utils::testdata::grib2::jma_meps()?,
         "0.2"
     ),
     (
         decoding_run_length_encoding,
-        utils::jma_tornado_nowcast_file()?,
+        utils::testdata::grib2::jma_tornado_nowcast()?,
         "0.3"
     ),
 }
@@ -69,30 +69,30 @@ macro_rules! test_operation_with_data_without_nan_values_and_byte_order_options 
 test_operation_with_data_without_nan_values_and_byte_order_options! {
     (
         decoding_simple_packing_as_big_endian,
-        utils::jma_kousa_file()?,
+        utils::testdata::grib2::jma_kousa()?,
         "0.3",
         "-b",
-        utils::kousa_be_bin_bytes()?
+        utils::testdata::flat_binary::jma_kousa_be()?
     ),
     (
         decoding_simple_packing_as_little_endian,
-        utils::jma_kousa_file()?,
+        utils::testdata::grib2::jma_kousa()?,
         "0.3",
         "-l",
-        utils::kousa_le_bin_bytes()?
+        utils::testdata::flat_binary::jma_kousa_le()?
     ),
     (
         decoding_complex_packing_as_little_endian,
-        utils::jma_meps_file()?,
+        utils::testdata::grib2::jma_meps()?,
         "0.2",
         "-l",
-        utils::meps_le_bin_bytes()?
+        utils::testdata::flat_binary::jma_meps_le()?
     ),
 }
 
 #[test]
 fn decoding_run_length_packing_as_big_endian() -> Result<(), Box<dyn std::error::Error>> {
-    let tempfile = utils::jma_tornado_nowcast_file()?;
+    let tempfile = utils::testdata::grib2::jma_tornado_nowcast()?;
     let arg_path = tempfile.path();
 
     let dir = TempDir::new()?;
@@ -110,7 +110,7 @@ fn decoding_run_length_packing_as_big_endian() -> Result<(), Box<dyn std::error:
         .stdout(predicate::str::is_empty())
         .stderr(predicate::str::is_empty());
 
-    let expected = utils::tornado_nowcast_be_bin_bytes()?;
+    let expected = utils::testdata::flat_binary::jma_tornado_nowcast_be()?;
     let expected: Vec<_> = expected
         .chunks(4)
         .into_iter()
@@ -165,23 +165,24 @@ macro_rules! test_operation_with_data_with_nan_values_as_little_endian {
 test_operation_with_data_with_nan_values_as_little_endian! {
     (
         decoding_run_length_packing_as_little_endian,
-        utils::jma_tornado_nowcast_file()?,
+        utils::testdata::grib2::jma_tornado_nowcast()?,
         "0.3",
         "-l",
-        utils::tornado_nowcast_le_bin_bytes()?
+        utils::testdata::flat_binary::jma_tornado_nowcast_le()?
     ),
     (
         decoding_simple_packing_with_bitmap_as_little_endian,
-        utils::jma_msmguid_file()?,
+        utils::testdata::grib2::jma_msmguid()?,
         "0.0",
         "-l",
-        utils::msmguid_le_bin_bytes()?
+        utils::testdata::flat_binary::jma_msmguid_le()?
     ),
 }
 
 #[test]
 fn decoding_jpeg2001_code_stream_as_little_endian() -> Result<(), Box<dyn std::error::Error>> {
-    let arg_path = utils::cmc_glb_file_path();
+    let tempfile = utils::testdata::grib2::cmc_glb()?;
+    let arg_path = tempfile.path();
 
     let dir = TempDir::new()?;
     let out_path = dir.path().join("out.bin");
@@ -203,7 +204,7 @@ fn decoding_jpeg2001_code_stream_as_little_endian() -> Result<(), Box<dyn std::e
     let ref_val = f32::from_be_bytes([0x45, 0x0e, 0xcc, 0x05]);
     let exp: i16 = -2;
     let dig: i16 = 1;
-    let expected = utils::cmc_glb_le_bin_bytes()?;
+    let expected = utils::testdata::flat_binary::cmc_glb_le()?;
     let expected = utils::encode_le_bytes_using_simple_packing(expected, ref_val, exp, dig);
     let actual = utils::cat_as_bytes(&out_path)?;
     let actual = utils::encode_le_bytes_using_simple_packing(actual, ref_val, exp, dig);
@@ -214,7 +215,7 @@ fn decoding_jpeg2001_code_stream_as_little_endian() -> Result<(), Box<dyn std::e
 
 #[test]
 fn trial_to_decode_submessage_with_nonexisting_index() -> Result<(), Box<dyn std::error::Error>> {
-    let tempfile = utils::jma_kousa_file()?;
+    let tempfile = utils::testdata::grib2::jma_kousa()?;
     let arg_path = tempfile.path();
 
     let mut cmd = Command::cargo_bin(CMD_NAME)?;

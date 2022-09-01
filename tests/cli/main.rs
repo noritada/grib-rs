@@ -115,7 +115,7 @@ macro_rules! test_subcommands_with_non_grib {
     ($(($name:ident, $str:expr),)*) => ($(
         #[test]
         fn $name() -> Result<(), Box<dyn std::error::Error>> {
-            let tempfile = utils::non_grib_file()?;
+            let tempfile = utils::testdata::non_grib_file()?;
             let arg_path = tempfile.path();
 
             let mut cmd = Command::cargo_bin(CMD_NAME)?;
@@ -140,7 +140,7 @@ macro_rules! test_subcommands_with_too_small_file {
     ($(($name:ident, $str:expr),)*) => ($(
         #[test]
         fn $name() -> Result<(), Box<dyn std::error::Error>> {
-            let tempfile = utils::too_small_file()?;
+            let tempfile = utils::testdata::too_small_file()?;
             let arg_path = tempfile.path();
 
             let mut cmd = Command::cargo_bin(CMD_NAME)?;

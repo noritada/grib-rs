@@ -24,7 +24,7 @@ macro_rules! test_display_with_no_options {
 test_display_with_no_options! {
     (
         displaying_grib2_with_multiple_submessages_without_nan_values,
-        utils::jma_tornado_nowcast_file()?,
+        utils::testdata::grib2::jma_tornado_nowcast()?,
         Vec::<&str>::new(),
         "      id │ Parameter                       Generating process  Forecast time 1st fixed surface 2nd fixed surface |   #points (nan/total)
      0.0 │ code '0' is not implemented     Analysis                    0 [m]               NaN               NaN |          0/     86016
@@ -38,7 +38,7 @@ test_display_with_no_options! {
     ),
     (
         displaying_grib2_with_multiple_submessages_with_nan_values,
-        utils::jma_msmguid_file()?,
+        utils::testdata::grib2::jma_msmguid()?,
         Vec::<&str>::new(),
         "      id │ Parameter                       Generating process  Forecast time 1st fixed surface 2nd fixed surface |   #points (nan/total)
      0.0 │ code '192' is not implemented   Forecast                    0 [h]               NaN               NaN |     106575/    268800
@@ -90,7 +90,7 @@ test_display_with_no_options! {
     ),
     (
         displaying_grib2_with_multiple_submessages_with_opt_d,
-        utils::jma_tornado_nowcast_file()?,
+        utils::testdata::grib2::jma_tornado_nowcast()?,
         vec!["-d"],
         "\
 0.0

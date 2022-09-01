@@ -23,7 +23,7 @@ macro_rules! test_display_with_arguments {
 test_display_with_arguments! {
     (
         display_without_options,
-        utils::jma_tornado_nowcast_file()?,
+        utils::testdata::grib2::jma_tornado_nowcast()?,
         Vec::<&str>::new(),
         "\
 Sections:
@@ -78,7 +78,7 @@ Templates:
     ),
     (
         display_with_opt_s,
-        utils::jma_tornado_nowcast_file()?,
+        utils::testdata::grib2::jma_tornado_nowcast()?,
         vec!["-s"],
         "    0 │ 0000000000000000 - 0000000000000010 │ Section 0
     1 │ 0000000000000010 - 0000000000000025 │ Section 1
@@ -116,7 +116,7 @@ Templates:
     ),
     (
         display_with_opt_m,
-        utils::jma_tornado_nowcast_file()?,
+        utils::testdata::grib2::jma_tornado_nowcast()?,
         vec!["-m"],
         "      id │    S2    S3    S4    S5    S6    S7 │ Tmpl3   Tmpl4   Tmpl5  
      0.0 │     -     2     3     4     5     6 │ 3.0     4.0     5.200  
@@ -130,7 +130,7 @@ Templates:
     ),
     (
         display_with_opt_t,
-        utils::jma_tornado_nowcast_file()?,
+        utils::testdata::grib2::jma_tornado_nowcast()?,
         vec!["-t"],
         "\
 3.0      - Latitude/longitude
@@ -142,7 +142,7 @@ Templates:
 
 #[test]
 fn display_with_all_options() -> Result<(), Box<dyn std::error::Error>> {
-    let tempfile = utils::jma_tornado_nowcast_file()?;
+    let tempfile = utils::testdata::grib2::jma_tornado_nowcast()?;
     let arg_path = tempfile.path();
 
     let mut cmd = Command::cargo_bin(CMD_NAME)?;
