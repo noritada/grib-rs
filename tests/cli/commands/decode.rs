@@ -35,6 +35,11 @@ test_operation_with_no_options! {
         utils::testdata::grib2::jma_tornado_nowcast()?,
         "0.3"
     ),
+    (
+        decoding_multi_message_data,
+        utils::testdata::grib2::multi_message_data(3)?,
+        "2.0"
+    ),
 }
 
 macro_rules! test_operation_with_data_without_nan_values_and_byte_order_options {
@@ -213,17 +218,43 @@ fn decoding_jpeg2001_code_stream_as_little_endian() -> Result<(), Box<dyn std::e
     Ok(())
 }
 
-#[test]
-fn trial_to_decode_submessage_with_nonexisting_index() -> Result<(), Box<dyn std::error::Error>> {
-    let tempfile = utils::testdata::grib2::jma_kousa()?;
-    let arg_path = tempfile.path();
+macro_rules! test_trial_to_decode_nonexisting_submessage {
+    ($(($name:ident, $input:expr, $message_index:expr),)*) => ($(
+        #[test]
+        fn $name() -> Result<(), Box<dyn std::error::Error>> {
+            let input = $input;
 
-    let mut cmd = Command::cargo_bin(CMD_NAME)?;
-    cmd.arg("decode").arg(arg_path).arg("0.9999");
-    cmd.assert()
-        .failure()
-        .stdout(predicate::str::is_empty())
-        .stderr(predicate::str::diff("error: no such index: 0.9999\n"));
+            let mut cmd = Command::cargo_bin(CMD_NAME)?;
+            cmd.arg("decode").arg(input.path()).arg($message_index);
+            cmd.assert()
+                .failure()
+                .stdout(predicate::str::is_empty())
+                .stderr(predicate::str::contains("error: no such index:"));
 
-    Ok(())
+            Ok(())
+        }
+    )*);
+}
+
+test_trial_to_decode_nonexisting_submessage! {
+    (
+        trial_to_decode_submessage_with_nonexisting_submessage_index,
+        utils::testdata::grib2::jma_kousa()?,
+        "0.999"
+    ),
+    (
+        trial_to_decode_submessage_with_nonexisting_message_index,
+        utils::testdata::grib2::jma_kousa()?,
+        "1.0"
+    ),
+    (
+        trial_to_decode_submessage_with_nonexisting_submessage_index_for_multi_message_data,
+        utils::testdata::grib2::multi_message_data(3)?,
+        "0.1"
+    ),
+    (
+        trial_to_decode_submessage_with_nonexisting_message_index_for_multi_message_data,
+        utils::testdata::grib2::multi_message_data(3)?,
+        "999.0"
+    ),
 }
