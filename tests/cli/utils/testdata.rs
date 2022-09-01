@@ -1,5 +1,6 @@
 use crate::utils::{cat_to_tempfile, unxz_as_bytes, unxz_to_tempfile};
-use std::io::{self, Write};
+use std::fs::File;
+use std::io::{self, BufReader, Read, Write};
 use std::path::{Path, PathBuf};
 use tempfile::NamedTempFile;
 
@@ -37,6 +38,10 @@ pub(crate) mod grib2 {
         testdata_dir().join("CMC_glb_TMP_ISBL_1_latlon.24x.24_2021051800_P000.grib2")
     }
 
+    fn dwd_icon_file() -> PathBuf {
+        testdata_dir().join("icon_global_icosahedral_single-level_2021112018_000_TOT_PREC.grib2")
+    }
+
     pub(crate) fn jma_kousa() -> Result<NamedTempFile, io::Error> {
         unxz_to_tempfile(
             testdata_dir()
@@ -63,6 +68,20 @@ pub(crate) mod grib2 {
             testdata_dir()
                 .join("Z__C_RJTD_20160822020000_NOWC_GPV_Ggis10km_Pphw10_FH0000-0100_grib2.bin.xz"),
         )
+    }
+
+    pub(crate) fn multi_message_data(n: usize) -> Result<NamedTempFile, io::Error> {
+        let mut buf = Vec::new();
+        let mut out = NamedTempFile::new()?;
+
+        let f = File::open(dwd_icon_file())?;
+        let mut f = BufReader::new(f);
+        f.read_to_end(&mut buf)?;
+        for _ in 0..n {
+            out.write_all(&buf)?;
+        }
+
+        Ok(out)
     }
 }
 
