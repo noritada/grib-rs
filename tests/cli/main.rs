@@ -111,81 +111,83 @@ test_subcommands_with_nonexisting_file! {
     (inspect_with_nonexisting_file, "inspect"),
 }
 
-macro_rules! test_subcommands_with_non_grib {
-    ($(($name:ident, $str:expr),)*) => ($(
+macro_rules! test_subcommands_with_wrong_input_files {
+    ($(($name:ident, $command:expr, $input:expr, $stderr:expr),)*) => ($(
         #[test]
         fn $name() -> Result<(), Box<dyn std::error::Error>> {
-            let tempfile = utils::testdata::non_grib_file()?;
-            let arg_path = tempfile.path();
+            let input = $input;
 
             let mut cmd = Command::cargo_bin(CMD_NAME)?;
-            cmd.arg($str).arg(arg_path);
+            cmd.arg($command).arg(input.path());
             cmd.assert()
                 .failure()
                 .stdout(predicate::str::is_empty())
-                .stderr(predicate::str::diff("error: Not GRIB data\n"));
+                .stderr($stderr);
 
             Ok(())
         }
     )*);
 }
 
-test_subcommands_with_non_grib! {
-    (info_with_non_grib, "info"),
-    (list_with_non_grib, "list"),
-    (inspect_with_non_grib, "inspect"),
-}
-
-macro_rules! test_subcommands_with_empty_file {
-    ($(($name:ident, $str:expr),)*) => ($(
-        #[test]
-        fn $name() -> Result<(), Box<dyn std::error::Error>> {
-            let tempfile = utils::testdata::empty_file()?;
-            let arg_path = tempfile.path();
-
-            let mut cmd = Command::cargo_bin(CMD_NAME)?;
-            cmd.arg($str).arg(arg_path);
-            cmd.assert()
-                .failure()
-                .stdout(predicate::str::is_empty())
-                .stderr(predicate::str::diff(
-                    "error: empty GRIB2 data\n",
-                ));
-
-            Ok(())
-        }
-    )*);
-}
-
-test_subcommands_with_empty_file! {
-    (info_with_empty_file, "info"),
-    (list_with_empty_file, "list"),
-    (inspect_with_empty_file, "inspect"),
-}
-
-macro_rules! test_subcommands_with_too_small_file {
-    ($(($name:ident, $str:expr),)*) => ($(
-        #[test]
-        fn $name() -> Result<(), Box<dyn std::error::Error>> {
-            let tempfile = utils::testdata::too_small_file()?;
-            let arg_path = tempfile.path();
-
-            let mut cmd = Command::cargo_bin(CMD_NAME)?;
-            cmd.arg($str).arg(arg_path);
-            cmd.assert()
-                .failure()
-                .stdout(predicate::str::is_empty())
-                .stderr(predicate::str::diff(
-                    "error: Read error: failed to fill whole buffer\n",
-                ));
-
-            Ok(())
-        }
-    )*);
-}
-
-test_subcommands_with_too_small_file! {
-    (info_with_too_small_file, "info"),
-    (list_with_too_small_file, "list"),
-    (inspect_with_too_small_file, "inspect"),
+test_subcommands_with_wrong_input_files! {
+    (
+        info_with_non_grib,
+        "info",
+        utils::testdata::non_grib_file()?,
+        predicate::str::diff("error: Not GRIB data\n")
+    ),
+    (
+        inspect_with_non_grib,
+        "inspect",
+        utils::testdata::non_grib_file()?,
+        predicate::str::diff("error: Not GRIB data\n")
+    ),
+    (
+        list_with_non_grib,
+        "list",
+        utils::testdata::non_grib_file()?,
+        predicate::str::diff("error: Not GRIB data\n")
+    ),
+    (
+        info_with_empty_file,
+        "info",
+        utils::testdata::empty_file()?,
+        predicate::str::diff("error: empty GRIB2 data\n")
+    ),
+    (
+        inspect_with_empty_file,
+        "inspect",
+        utils::testdata::empty_file()?,
+        predicate::str::diff("error: empty GRIB2 data\n")
+    ),
+    (
+        list_with_empty_file,
+        "list",
+        utils::testdata::empty_file()?,
+        predicate::str::diff("error: empty GRIB2 data\n")
+    ),
+    (
+        info_with_too_small_file,
+        "info",
+        utils::testdata::too_small_file()?,
+        predicate::str::diff(
+            "error: Read error: failed to fill whole buffer\n",
+        )
+    ),
+    (
+        inspect_with_too_small_file,
+        "inspect",
+        utils::testdata::too_small_file()?,
+        predicate::str::diff(
+            "error: Read error: failed to fill whole buffer\n",
+        )
+    ),
+    (
+        list_with_too_small_file,
+        "list",
+        utils::testdata::too_small_file()?,
+        predicate::str::diff(
+            "error: Read error: failed to fill whole buffer\n",
+        )
+    ),
 }
