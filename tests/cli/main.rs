@@ -136,6 +136,33 @@ test_subcommands_with_non_grib! {
     (inspect_with_non_grib, "inspect"),
 }
 
+macro_rules! test_subcommands_with_empty_file {
+    ($(($name:ident, $str:expr),)*) => ($(
+        #[test]
+        fn $name() -> Result<(), Box<dyn std::error::Error>> {
+            let tempfile = utils::testdata::empty_file()?;
+            let arg_path = tempfile.path();
+
+            let mut cmd = Command::cargo_bin(CMD_NAME)?;
+            cmd.arg($str).arg(arg_path);
+            cmd.assert()
+                .failure()
+                .stdout(predicate::str::is_empty())
+                .stderr(predicate::str::diff(
+                    "error: empty GRIB2 data\n",
+                ));
+
+            Ok(())
+        }
+    )*);
+}
+
+test_subcommands_with_empty_file! {
+    (info_with_empty_file, "info"),
+    (list_with_empty_file, "list"),
+    (inspect_with_empty_file, "inspect"),
+}
+
 macro_rules! test_subcommands_with_too_small_file {
     ($(($name:ident, $str:expr),)*) => ($(
         #[test]
