@@ -7,6 +7,11 @@ fn testdata_dir() -> &'static Path {
     Path::new("testdata")
 }
 
+#[inline]
+pub(crate) fn empty_file() -> Result<NamedTempFile, io::Error> {
+    NamedTempFile::new()
+}
+
 pub(crate) fn too_small_file() -> Result<NamedTempFile, io::Error> {
     let mut out = NamedTempFile::new()?;
     out.write_all(b"foo")?;
