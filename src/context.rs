@@ -97,6 +97,12 @@ pub struct Grib2<R> {
     pub(crate) submessages: Vec<Grib2SubmessageIndex>,
 }
 
+impl<R> Grib2<R> {
+    pub fn len(&self) -> usize {
+        self.submessages.len()
+    }
+}
+
 impl<R: Grib2Read> Grib2<R> {
     pub fn read(r: R) -> Result<Self, GribError> {
         let mut sect_stream = Grib2SectionStream::new(r);
