@@ -7,4 +7,4 @@ pub mod parser;
 pub mod reader;
 mod utils;
 
-pub use context::{from_reader, from_slice};
+pub use context::{from_reader, from_slice, Grib2};
