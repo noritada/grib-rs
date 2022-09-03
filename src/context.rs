@@ -101,6 +101,20 @@ impl<R> Grib2<R> {
     pub fn len(&self) -> usize {
         self.submessages.len()
     }
+
+    /// Iterates over submessages.
+    #[inline]
+    pub fn iter(&self) -> SubmessageIterator {
+        self.submessages()
+    }
+
+    pub fn submessages(&self) -> SubmessageIterator {
+        SubmessageIterator::new(&self.submessages, &self.sections)
+    }
+
+    pub fn sections(&self) -> std::slice::Iter<SectionInfo> {
+        self.sections.iter()
+    }
 }
 
 impl<R: Grib2Read> Grib2<R> {
@@ -121,16 +135,6 @@ impl<R: Grib2Read> Grib2<R> {
     ) -> Result<Grib2<SeekableGrib2Reader<SR>>, GribError> {
         let r = SeekableGrib2Reader::new(r);
         Grib2::<SeekableGrib2Reader<SR>>::read(r)
-    }
-
-    /// Iterates over submessages.
-    #[inline]
-    pub fn iter(&self) -> SubmessageIterator {
-        self.submessages()
-    }
-
-    pub fn submessages(&self) -> SubmessageIterator {
-        SubmessageIterator::new(&self.submessages, &self.sections)
     }
 
     /// Decodes grid values of a surface specified by `message_index`.
@@ -154,10 +158,6 @@ impl<R: Grib2Read> Grib2<R> {
             reader,
         )?;
         Ok(values)
-    }
-
-    pub fn sections(&self) -> std::slice::Iter<SectionInfo> {
-        self.sections.iter()
     }
 
     pub fn list_templates(&self) -> Vec<TemplateInfo> {
