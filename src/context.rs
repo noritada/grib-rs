@@ -123,22 +123,6 @@ impl<R: Grib2Read> Grib2<R> {
         Grib2::<SeekableGrib2Reader<SR>>::read(r)
     }
 
-    pub fn info(&self) -> Result<(&Indicator, &Identification), GribError> {
-        match (self.sections.get(0), self.sections.get(1)) {
-            (
-                Some(SectionInfo {
-                    body: Some(SectionBody::Section0(sect0_body)),
-                    ..
-                }),
-                Some(SectionInfo {
-                    body: Some(SectionBody::Section1(sect1_body)),
-                    ..
-                }),
-            ) => Ok((sect0_body, sect1_body)),
-            _ => Err(GribError::InternalDataError),
-        }
-    }
-
     /// Iterates over submessages.
     #[inline]
     pub fn iter(&self) -> SubmessageIterator {
