@@ -3,26 +3,10 @@ use assert_cmd::prelude::*;
 use predicates::prelude::*;
 use std::process::Command;
 
-macro_rules! test_display_with_arguments {
-    ($(($name:ident, $input:expr, $args:expr, $expected:expr),)*) => ($(
-        #[test]
-        fn $name() -> Result<(), Box<dyn std::error::Error>> {
-            let input = $input;
-            let mut cmd = Command::cargo_bin(CMD_NAME)?;
-            cmd.arg("inspect").args($args).arg(input.path());
-            cmd.assert()
-                .success()
-                .stdout(predicate::str::diff($expected))
-                .stderr(predicate::str::is_empty());
-
-            Ok(())
-        }
-    )*);
-}
-
-test_display_with_arguments! {
+crate::commands::test_simple_display! {
     (
         display_multiple_submessages_without_options,
+        "inspect",
         utils::testdata::grib2::jma_tornado_nowcast()?,
         Vec::<&str>::new(),
         "\
@@ -78,6 +62,7 @@ Templates:
     ),
     (
         display_multiple_messages_without_options,
+        "inspect",
         utils::testdata::grib2::multi_message_data(3)?,
         Vec::<&str>::new(),
         "\
@@ -124,6 +109,7 @@ Templates:
     ),
     (
         display_with_opt_s,
+        "inspect",
         utils::testdata::grib2::jma_tornado_nowcast()?,
         vec!["-s"],
         "    0 │ 0000000000000000 - 0000000000000010 │ Section 0
@@ -162,6 +148,7 @@ Templates:
     ),
     (
         display_with_opt_m,
+        "inspect",
         utils::testdata::grib2::jma_tornado_nowcast()?,
         vec!["-m"],
         "      id │    S2    S3    S4    S5    S6    S7 │ Tmpl3   Tmpl4   Tmpl5  
@@ -176,6 +163,7 @@ Templates:
     ),
     (
         display_with_opt_t,
+        "inspect",
         utils::testdata::grib2::jma_tornado_nowcast()?,
         vec!["-t"],
         "\

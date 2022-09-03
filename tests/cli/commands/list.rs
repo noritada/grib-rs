@@ -3,27 +3,10 @@ use assert_cmd::prelude::*;
 use predicates::prelude::*;
 use std::process::Command;
 
-macro_rules! test_display_with_no_options {
-    ($(($name:ident, $input:expr, $args:expr, $expected_stdout:expr),)*) => ($(
-        #[test]
-        fn $name() -> Result<(), Box<dyn std::error::Error>> {
-            let input = $input;
-
-            let mut cmd = Command::cargo_bin(CMD_NAME)?;
-            cmd.arg("list").args($args).arg(input.path());
-            cmd.assert()
-                .success()
-                .stdout(predicate::str::diff($expected_stdout))
-                .stderr(predicate::str::is_empty());
-
-            Ok(())
-        }
-    )*);
-}
-
-test_display_with_no_options! {
+crate::commands::test_simple_display! {
     (
         displaying_grib2_with_multiple_submessages_without_nan_values,
+        "list",
         utils::testdata::grib2::jma_tornado_nowcast()?,
         Vec::<&str>::new(),
         "      id │ Parameter                       Generating process  Forecast time 1st fixed surface 2nd fixed surface |   #points (nan/total)
@@ -38,6 +21,7 @@ test_display_with_no_options! {
     ),
     (
         displaying_grib2_with_multiple_submessages_with_nan_values,
+        "list",
         utils::testdata::grib2::jma_msmguid()?,
         Vec::<&str>::new(),
         "      id │ Parameter                       Generating process  Forecast time 1st fixed surface 2nd fixed surface |   #points (nan/total)
@@ -90,6 +74,7 @@ test_display_with_no_options! {
     ),
     (
         displaying_grib2_with_multiple_messages,
+        "list",
         utils::testdata::grib2::multi_message_data(3)?,
         Vec::<&str>::new(),
         "      id │ Parameter                       Generating process  Forecast time 1st fixed surface 2nd fixed surface |   #points (nan/total)
@@ -100,6 +85,7 @@ test_display_with_no_options! {
     ),
     (
         displaying_grib2_with_multiple_submessages_with_opt_d,
+        "list",
         utils::testdata::grib2::jma_tornado_nowcast()?,
         vec!["-d"],
         "\
@@ -233,6 +219,7 @@ Data Representation:                    Run length packing with level values
     ),
     (
         displaying_grib2_with_multiple_messages_with_opt_d,
+        "list",
         utils::testdata::grib2::multi_message_data(3)?,
         vec!["-d"],
         "\
