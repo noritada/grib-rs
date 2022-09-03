@@ -92,9 +92,9 @@ pub fn from_slice(bytes: &[u8]) -> Result<Grib2<SeekableGrib2Reader<Cursor<&[u8]
 }
 
 pub struct Grib2<R> {
-    pub(crate) reader: RefCell<R>,
-    pub(crate) sections: Box<[SectionInfo]>,
-    pub(crate) submessages: Vec<Grib2SubmessageIndex>,
+    reader: RefCell<R>,
+    sections: Box<[SectionInfo]>,
+    submessages: Vec<Grib2SubmessageIndex>,
 }
 
 impl<R> Grib2<R> {
