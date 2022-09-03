@@ -3,28 +3,12 @@ use assert_cmd::prelude::*;
 use predicates::prelude::*;
 use std::process::Command;
 
-macro_rules! test_display {
-    ($(($name:ident, $input:expr, $expected_stdout:expr),)*) => ($(
-        #[test]
-        fn $name() -> Result<(), Box<dyn std::error::Error>> {
-            let input = $input;
-
-            let mut cmd = Command::cargo_bin(CMD_NAME)?;
-            cmd.arg("info").arg(input.path());
-            cmd.assert()
-                .success()
-                .stdout(predicate::str::diff($expected_stdout))
-                .stderr(predicate::str::is_empty());
-
-            Ok(())
-        }
-    )*);
-}
-
-test_display! {
+crate::commands::test_simple_display! {
     (
         display_of_single_message_data,
+        "info",
         utils::testdata::grib2::jma_tornado_nowcast()?,
+        Vec::<&str>::new(),
         "\
 Message 0
 
@@ -43,7 +27,9 @@ Message 0
     ),
     (
         display_of_multi_message_data,
+        "info",
         utils::testdata::grib2::multi_message_data(3)?,
+        Vec::<&str>::new(),
         "\
 Message 0
 
