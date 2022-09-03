@@ -46,6 +46,8 @@ Please check the [ROADMAP](ROADMAP.md) to see planned features.
 
 ## API
 
+API Documentation of the released version of the library crate is [available on Docs.rs](https://docs.rs/grib/latest/grib/) although it is not extensive. The development version is [available on GitHub Pages](https://noritada.github.io/grib-rs/grib/index.html).
+
 The [examples](examples) may help you understand the API. The functionality is still inadequate, and we are working on expanding the basic functionality as our top priority in this project, so we would be happy to receive any requests.
 
 ## CLI application `gribber`
