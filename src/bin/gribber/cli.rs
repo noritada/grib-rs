@@ -8,8 +8,8 @@ use std::path::Path;
 #[cfg(unix)]
 use which::which;
 
-use grib::context::Grib2;
 use grib::reader::SeekableGrib2Reader;
+use grib::Grib2;
 
 pub fn grib<P>(path: P) -> anyhow::Result<Grib2<SeekableGrib2Reader<BufReader<File>>>>
 where
