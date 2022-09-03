@@ -98,20 +98,87 @@ pub struct Grib2<R> {
 }
 
 impl<R> Grib2<R> {
+    /// Returns the length of submessages in the data.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// fn main() -> Result<(), Box<dyn std::error::Error>> {
+    ///     let f = std::fs::File::open(
+    ///         "testdata/icon_global_icosahedral_single-level_2021112018_000_TOT_PREC.grib2",
+    ///     )?;
+    ///     let f = std::io::BufReader::new(f);
+    ///     let grib2 = grib::from_reader(f)?;
+    ///
+    ///     assert_eq!(grib2.len(), 1);
+    ///     Ok(())
+    /// }
+    /// ```
     pub fn len(&self) -> usize {
         self.submessages.len()
     }
 
-    /// Iterates over submessages.
+    /// Returns an iterator over submessages in the data.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// fn main() -> Result<(), Box<dyn std::error::Error>> {
+    ///     let f = std::fs::File::open(
+    ///         "testdata/icon_global_icosahedral_single-level_2021112018_000_TOT_PREC.grib2",
+    ///     )?;
+    ///     let f = std::io::BufReader::new(f);
+    ///     let grib2 = grib::from_reader(f)?;
+    ///
+    ///     let mut iter = grib2.iter();
+    ///     let first = iter.next();
+    ///     assert!(first.is_some());
+    ///
+    ///     let first = first.unwrap();
+    ///     let (message_index, _) = first;
+    ///     assert_eq!(message_index, (0, 0));
+    ///
+    ///     let second = iter.next();
+    ///     assert!(second.is_none());
+    ///     Ok(())
+    /// }
+    /// ```
     #[inline]
     pub fn iter(&self) -> SubmessageIterator {
         self.submessages()
     }
 
+    /// Returns an iterator over submessages in the data.
+    ///
+    /// This is an alias to [`Grib2::iter()`].
     pub fn submessages(&self) -> SubmessageIterator {
         SubmessageIterator::new(&self.submessages, &self.sections)
     }
 
+    /// Returns an iterator over sections in the data.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// fn main() -> Result<(), Box<dyn std::error::Error>> {
+    ///     let f = std::fs::File::open(
+    ///         "testdata/icon_global_icosahedral_single-level_2021112018_000_TOT_PREC.grib2",
+    ///     )?;
+    ///     let f = std::io::BufReader::new(f);
+    ///     let grib2 = grib::from_reader(f)?;
+    ///
+    ///     let mut iter = grib2.sections();
+    ///     let first = iter.next();
+    ///     assert!(first.is_some());
+    ///
+    ///     let first = first.unwrap();
+    ///     assert_eq!(first.num, 0);
+    ///
+    ///     let tenth = iter.nth(9);
+    ///     assert!(tenth.is_none());
+    ///     Ok(())
+    /// }
+    /// ```
     pub fn sections(&self) -> std::slice::Iter<SectionInfo> {
         self.sections.iter()
     }
