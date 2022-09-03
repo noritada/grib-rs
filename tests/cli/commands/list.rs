@@ -89,6 +89,16 @@ test_display_with_no_options! {
 "
     ),
     (
+        displaying_grib2_with_multiple_messages,
+        utils::testdata::grib2::multi_message_data(3)?,
+        Vec::<&str>::new(),
+        "      id │ Parameter                       Generating process  Forecast time 1st fixed surface 2nd fixed surface |   #points (nan/total)
+     0.0 │ Total precipitation rate        Forecast                    0 [m]                 0               NaN |          0/   2949120
+     1.0 │ Total precipitation rate        Forecast                    0 [m]                 0               NaN |          0/   2949120
+     2.0 │ Total precipitation rate        Forecast                    0 [m]                 0               NaN |          0/   2949120
+"
+    ),
+    (
         displaying_grib2_with_multiple_submessages_with_opt_d,
         utils::testdata::grib2::jma_tornado_nowcast()?,
         vec!["-d"],
@@ -218,6 +228,67 @@ Product:                                Analysis or forecast at a horizontal lev
   2nd Scaled Value:                     Missing
 Data Representation:                    Run length packing with level values
   Number of represented values:         86016
+
+"
+    ),
+    (
+        displaying_grib2_with_multiple_messages_with_opt_d,
+        utils::testdata::grib2::multi_message_data(3)?,
+        vec!["-d"],
+        "\
+0.0
+Grid:                                   General unstructured grid
+  Number of points:                     2949120
+Product:                                Average, accumulation, extreme values or other statistically processed values at a horizontal level or in a horizontal layer in a continuous or non-continuous time interval
+  Parameter Category:                   Moisture
+  Parameter:                            Total precipitation rate
+  Generating Proceess:                  Forecast
+  Forecast Time:                        0
+  Forecast Time Unit:                   Minute
+  1st Fixed Surface Type:               Ground or water surface
+  1st Scale Factor:                     0
+  1st Scaled Value:                     0
+  2nd Fixed Surface Type:               code '255' is not implemented
+  2nd Scale Factor:                     Missing
+  2nd Scaled Value:                     Missing
+Data Representation:                    Grid point data - simple packing
+  Number of represented values:         2949120
+
+1.0
+Grid:                                   General unstructured grid
+  Number of points:                     2949120
+Product:                                Average, accumulation, extreme values or other statistically processed values at a horizontal level or in a horizontal layer in a continuous or non-continuous time interval
+  Parameter Category:                   Moisture
+  Parameter:                            Total precipitation rate
+  Generating Proceess:                  Forecast
+  Forecast Time:                        0
+  Forecast Time Unit:                   Minute
+  1st Fixed Surface Type:               Ground or water surface
+  1st Scale Factor:                     0
+  1st Scaled Value:                     0
+  2nd Fixed Surface Type:               code '255' is not implemented
+  2nd Scale Factor:                     Missing
+  2nd Scaled Value:                     Missing
+Data Representation:                    Grid point data - simple packing
+  Number of represented values:         2949120
+
+2.0
+Grid:                                   General unstructured grid
+  Number of points:                     2949120
+Product:                                Average, accumulation, extreme values or other statistically processed values at a horizontal level or in a horizontal layer in a continuous or non-continuous time interval
+  Parameter Category:                   Moisture
+  Parameter:                            Total precipitation rate
+  Generating Proceess:                  Forecast
+  Forecast Time:                        0
+  Forecast Time Unit:                   Minute
+  1st Fixed Surface Type:               Ground or water surface
+  1st Scale Factor:                     0
+  1st Scaled Value:                     0
+  2nd Fixed Surface Type:               code '255' is not implemented
+  2nd Scale Factor:                     Missing
+  2nd Scaled Value:                     Missing
+Data Representation:                    Grid point data - simple packing
+  Number of represented values:         2949120
 
 "
     ),

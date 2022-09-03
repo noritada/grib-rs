@@ -22,7 +22,7 @@ macro_rules! test_display_with_arguments {
 
 test_display_with_arguments! {
     (
-        display_without_options,
+        display_multiple_submessages_without_options,
         utils::testdata::grib2::jma_tornado_nowcast()?,
         Vec::<&str>::new(),
         "\
@@ -74,6 +74,52 @@ Templates:
 3.0      - Latitude/longitude
 4.0      - Analysis or forecast at a horizontal level or in a horizontal layer at a point in time
 5.200    - Run length packing with level values
+"
+    ),
+    (
+        display_multiple_messages_without_options,
+        utils::testdata::grib2::multi_message_data(3)?,
+        Vec::<&str>::new(),
+        "\
+Sections:
+    0 │ 0000000000000000 - 0000000000000010 │ Section 0
+    1 │ 0000000000000010 - 0000000000000025 │ Section 1
+    2 │ 0000000000000025 - 0000000000000040 │ Section 2
+    3 │ 0000000000000040 - 0000000000000063 │ Section 3
+    4 │ 0000000000000063 - 000000000000009d │ Section 4
+    5 │ 000000000000009d - 00000000000000b2 │ Section 5
+    6 │ 00000000000000b2 - 00000000000000b8 │ Section 6
+    7 │ 00000000000000b8 - 00000000000000bd │ Section 7
+    8 │ 00000000000000bd - 00000000000000c1 │ Section 8
+    9 │ 00000000000000c1 - 00000000000000d1 │ Section 0
+   10 │ 00000000000000d1 - 00000000000000e6 │ Section 1
+   11 │ 00000000000000e6 - 0000000000000101 │ Section 2
+   12 │ 0000000000000101 - 0000000000000124 │ Section 3
+   13 │ 0000000000000124 - 000000000000015e │ Section 4
+   14 │ 000000000000015e - 0000000000000173 │ Section 5
+   15 │ 0000000000000173 - 0000000000000179 │ Section 6
+   16 │ 0000000000000179 - 000000000000017e │ Section 7
+   17 │ 000000000000017e - 0000000000000182 │ Section 8
+   18 │ 0000000000000182 - 0000000000000192 │ Section 0
+   19 │ 0000000000000192 - 00000000000001a7 │ Section 1
+   20 │ 00000000000001a7 - 00000000000001c2 │ Section 2
+   21 │ 00000000000001c2 - 00000000000001e5 │ Section 3
+   22 │ 00000000000001e5 - 000000000000021f │ Section 4
+   23 │ 000000000000021f - 0000000000000234 │ Section 5
+   24 │ 0000000000000234 - 000000000000023a │ Section 6
+   25 │ 000000000000023a - 000000000000023f │ Section 7
+   26 │ 000000000000023f - 0000000000000243 │ Section 8
+
+SubMessages:
+      id │    S2    S3    S4    S5    S6    S7 │ Tmpl3   Tmpl4   Tmpl5  
+     0.0 │     2     3     4     5     6     7 │ 3.101   4.8     5.0    
+     1.0 │    11    12    13    14    15    16 │ 3.101   4.8     5.0    
+     2.0 │    20    21    22    23    24    25 │ 3.101   4.8     5.0    
+
+Templates:
+3.101    - General unstructured grid
+4.8      - Average, accumulation, extreme values or other statistically processed values at a horizontal level or in a horizontal layer in a continuous or non-continuous time interval
+5.0      - Grid point data - simple packing
 "
     ),
     (

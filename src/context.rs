@@ -109,11 +109,6 @@ impl<R: Grib2Read> Grib2<R> {
         let mut cacher = Vec::new();
         let parser = Grib2SubmessageIndexStream::new(sect_stream.by_ref()).with_cacher(&mut cacher);
         let submessages = parser.collect::<Result<Vec<_>, _>>()?;
-        // tentatively extract only submessages in the first message
-        let submessages = submessages
-            .into_iter()
-            .filter(|index| index.message_index().0 == 0)
-            .collect::<Vec<_>>();
         Ok(Self {
             reader: RefCell::new(sect_stream.into_reader()),
             sections: cacher.into_boxed_slice(),
@@ -156,34 +151,24 @@ impl<R: Grib2Read> Grib2<R> {
 
     /// Decodes grid values of a surface specified by `message_index`.
     pub fn get_values(&self, message_index: MessageIndex) -> Result<Box<[f32]>, GribError> {
-        // message part of message_index is ignored as of now
-        let (index, subindex) = message_index;
-        let submsg = self.submessages.get(subindex).ok_or_else(|| {
-            GribError::OperationError(format!("no such index: {}.{}", index, subindex))
-        })?;
-
-        fn get_sections<'a>(
-            sections: &'a [SectionInfo],
-            submessage: &'a Grib2SubmessageIndex,
-        ) -> Option<(
-            &'a SectionInfo,
-            &'a SectionInfo,
-            &'a SectionInfo,
-            &'a SectionInfo,
-        )> {
-            Some((
-                sections.get(submessage.3)?,
-                sections.get(submessage.5)?,
-                sections.get(submessage.6)?,
-                sections.get(submessage.7)?,
-            ))
-        }
-
-        let (sect3, sect5, sect6, sect7) =
-            get_sections(&self.sections, submsg).ok_or(GribError::InternalDataError)?;
+        let (_, submessage) = self
+            .iter()
+            .find(|(index, _)| *index == message_index)
+            .ok_or_else(|| {
+                GribError::OperationError(format!(
+                    "no such index: {}.{}",
+                    message_index.0, message_index.1
+                ))
+            })?;
 
         let reader = self.reader.borrow_mut();
-        let values = decoders::dispatch(sect3, sect5, sect6, sect7, reader)?;
+        let values = decoders::dispatch(
+            submessage.3.body,
+            submessage.5.body,
+            submessage.6.body,
+            submessage.7.body,
+            reader,
+        )?;
         Ok(values)
     }
 
