@@ -118,6 +118,12 @@ impl<R> Grib2<R> {
         self.submessages.len()
     }
 
+    /// Returns `true` if self has zero submessages.
+    #[inline]
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+
     /// Returns an iterator over submessages in the data.
     ///
     /// # Examples
