@@ -45,7 +45,7 @@ Sections:
    31 │ 000000000000284d - 0000000000002851 │ Section 8
 
 SubMessages:
-      id │    S2    S3    S4    S5    S6    S7 │ Tmpl3   Tmpl4   Tmpl5  
+      id │    S2    S3    S4    S5    S6    S7 │ Tmpl3   Tmpl4   Tmpl5
      0.0 │     -     2     3     4     5     6 │ 3.0     4.0     5.200  
      0.1 │     -     2     7     8     9    10 │ 3.0     4.0     5.200  
      0.2 │     -     2    11    12    13    14 │ 3.0     4.0     5.200  
@@ -96,7 +96,7 @@ Sections:
    26 │ 000000000000023f - 0000000000000243 │ Section 8
 
 SubMessages:
-      id │    S2    S3    S4    S5    S6    S7 │ Tmpl3   Tmpl4   Tmpl5  
+      id │    S2    S3    S4    S5    S6    S7 │ Tmpl3   Tmpl4   Tmpl5
      0.0 │     2     3     4     5     6     7 │ 3.101   4.8     5.0    
      1.0 │    11    12    13    14    15    16 │ 3.101   4.8     5.0    
      2.0 │    20    21    22    23    24    25 │ 3.101   4.8     5.0    
@@ -151,7 +151,7 @@ Templates:
         "inspect",
         utils::testdata::grib2::jma_tornado_nowcast()?,
         vec!["-m"],
-        "      id │    S2    S3    S4    S5    S6    S7 │ Tmpl3   Tmpl4   Tmpl5  
+        "      id │    S2    S3    S4    S5    S6    S7 │ Tmpl3   Tmpl4   Tmpl5
      0.0 │     -     2     3     4     5     6 │ 3.0     4.0     5.200  
      0.1 │     -     2     7     8     9    10 │ 3.0     4.0     5.200  
      0.2 │     -     2    11    12    13    14 │ 3.0     4.0     5.200  
