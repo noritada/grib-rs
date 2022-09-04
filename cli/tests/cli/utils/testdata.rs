@@ -4,8 +4,8 @@ use std::io::{self, BufReader, Read, Write};
 use std::path::{Path, PathBuf};
 use tempfile::NamedTempFile;
 
-fn testdata_dir() -> &'static Path {
-    Path::new("testdata")
+fn testdata_dir() -> PathBuf {
+    Path::new(concat!(env!("CARGO_MANIFEST_DIR"), "/..")).join("testdata")
 }
 
 #[inline]
