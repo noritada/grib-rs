@@ -1,4 +1,4 @@
-use std::cell::RefCell;
+use std::cell::{RefCell, RefMut};
 use std::collections::HashSet;
 use std::fmt::{self, Display, Formatter};
 use std::io::{Cursor, Read, Seek};
@@ -150,15 +150,15 @@ impl<R> Grib2<R> {
     /// }
     /// ```
     #[inline]
-    pub fn iter(&self) -> SubmessageIterator {
+    pub fn iter(&self) -> SubmessageIterator<R> {
         self.submessages()
     }
 
     /// Returns an iterator over submessages in the data.
     ///
     /// This is an alias to [`Grib2::iter()`].
-    pub fn submessages(&self) -> SubmessageIterator {
-        SubmessageIterator::new(&self.submessages, &self.sections)
+    pub fn submessages(&self) -> SubmessageIterator<R> {
+        SubmessageIterator::new(&self)
     }
 
     /// Returns an iterator over sections in the data.
@@ -222,14 +222,7 @@ impl<R: Grib2Read> Grib2<R> {
                 ))
             })?;
 
-        let reader = self.reader.borrow_mut();
-        let values = decoders::dispatch(
-            submessage.3.body,
-            submessage.5.body,
-            submessage.6.body,
-            submessage.7.body,
-            reader,
-        )?;
+        let values = decoders::dispatch(submessage)?;
         Ok(values)
     }
 
@@ -246,31 +239,29 @@ fn get_templates(sects: &[SectionInfo]) -> Vec<TemplateInfo> {
 }
 
 #[derive(Clone)]
-pub struct SubmessageIterator<'a> {
-    indices: &'a [Grib2SubmessageIndex],
-    sections: &'a [SectionInfo],
+pub struct SubmessageIterator<'a, R> {
+    context: &'a Grib2<R>,
     pos: usize,
 }
 
-impl<'a> SubmessageIterator<'a> {
-    fn new(indices: &'a [Grib2SubmessageIndex], sections: &'a [SectionInfo]) -> Self {
-        Self {
-            indices,
-            sections,
-            pos: 0,
-        }
+impl<'a, R> SubmessageIterator<'a, R> {
+    fn new(context: &'a Grib2<R>) -> Self {
+        Self { context, pos: 0 }
     }
 
     fn new_submessage_section(&self, index: usize) -> Option<SubMessageSection<'a>> {
-        Some(SubMessageSection::new(index, self.sections.get(index)?))
+        Some(SubMessageSection::new(
+            index,
+            self.context.sections.get(index)?,
+        ))
     }
 }
 
-impl<'a> Iterator for SubmessageIterator<'a> {
-    type Item = (MessageIndex, SubMessage<'a>);
+impl<'a, R> Iterator for SubmessageIterator<'a, R> {
+    type Item = (MessageIndex, SubMessage<'a, R>);
 
     fn next(&mut self) -> Option<Self::Item> {
-        let submessage_index = self.indices.get(self.pos)?;
+        let submessage_index = self.context.submessages.get(self.pos)?;
         self.pos += 1;
 
         Some((
@@ -286,13 +277,14 @@ impl<'a> Iterator for SubmessageIterator<'a> {
                 self.new_submessage_section(submessage_index.5)?,
                 self.new_submessage_section(submessage_index.6)?,
                 self.new_submessage_section(submessage_index.7)?,
-                self.new_submessage_section(self.sections.len() - 1)?,
+                self.new_submessage_section(self.context.sections.len() - 1)?,
+                self.context.reader.borrow_mut(),
             ),
         ))
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
-        let size = self.indices.len();
+        let size = self.context.submessages.len();
         (size, Some(size))
     }
 
@@ -302,7 +294,7 @@ impl<'a> Iterator for SubmessageIterator<'a> {
     }
 }
 
-pub struct SubMessage<'a>(
+pub struct SubMessage<'a, R>(
     pub SubMessageSection<'a>,
     pub SubMessageSection<'a>,
     pub Option<SubMessageSection<'a>>,
@@ -312,9 +304,10 @@ pub struct SubMessage<'a>(
     pub SubMessageSection<'a>,
     pub SubMessageSection<'a>,
     pub SubMessageSection<'a>,
+    pub(crate) RefMut<'a, R>,
 );
 
-impl<'a> SubMessage<'a> {
+impl<'a, R> SubMessage<'a, R> {
     pub fn indicator(&self) -> &Indicator {
         // panics should not happen if data is correct
         match self.0.body.body.as_ref().unwrap() {
@@ -417,6 +410,13 @@ Data Representation:                    {}
             self.5.describe().unwrap_or_default(),
             self.repr_def().num_points(),
         )
+    }
+}
+
+impl<'a, R: Grib2Read> SubMessage<'a, R> {
+    pub fn decode(self) -> Result<Box<[f32]>, GribError> {
+        let values = decoders::dispatch(self)?;
+        Ok(values)
     }
 }
 
