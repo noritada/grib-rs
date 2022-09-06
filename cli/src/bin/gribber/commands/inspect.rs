@@ -1,5 +1,5 @@
 use clap::{arg, ArgMatches, Command};
-use console::{Style, Term};
+use console::Style;
 use std::fmt::{self, Display, Formatter};
 use std::path::PathBuf;
 use std::slice::Iter;
@@ -54,43 +54,7 @@ pub fn exec(args: &ArgMatches) -> anyhow::Result<()> {
         view.add(InspectItem::Templates(InspectTemplatesItem::new(tmpls)));
     }
 
-    let user_attended = console::user_attended();
-
-    let term = Term::stdout();
-    let (height, _width) = term.size();
-    if view.num_lines() > height.into() {
-        cli::start_pager();
-    }
-
-    if user_attended {
-        console::set_colors_enabled(true);
-    }
-
-    let with_header = view.with_headers();
-    let mut items = view.items.into_iter().peekable();
-    loop {
-        let item = match items.next() {
-            None => break,
-            Some(i) => i,
-        };
-
-        if with_header {
-            let yellow = Style::new().yellow().bold();
-            let s = format!("{}:", item.title());
-            println!("{}", yellow.apply_to(s));
-        }
-
-        match item {
-            InspectItem::Sections(item) => print!("{}", item),
-            InspectItem::SubMessages(item) => print!("{}", item),
-            InspectItem::Templates(item) => print!("{}", item),
-        }
-
-        if items.peek().is_some() {
-            println!();
-        }
-    }
-
+    cli::display_in_pager(view);
     Ok(())
 }
 
@@ -110,7 +74,9 @@ impl<'i> InspectView<'i> {
     fn with_headers(&self) -> bool {
         self.items.len() >= 2
     }
+}
 
+impl<'i> cli::PredictableNumLines for InspectView<'i> {
     fn num_lines(&self) -> usize {
         let mut count = 0;
         for item in self.items.iter() {
@@ -121,6 +87,37 @@ impl<'i> InspectView<'i> {
         }
         count += self.items.len() - 1; // empty lines
         count
+    }
+}
+
+impl<'i> Display for InspectView<'i> {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        let with_header = self.with_headers();
+        let mut items = self.items.iter().peekable();
+        loop {
+            let item = match items.next() {
+                None => break,
+                Some(i) => i,
+            };
+
+            if with_header {
+                let yellow = Style::new().yellow().bold();
+                let s = format!("{}:", item.title());
+                writeln!(f, "{}", yellow.apply_to(s))?;
+            }
+
+            match item {
+                InspectItem::Sections(item) => write!(f, "{}", item)?,
+                InspectItem::SubMessages(item) => write!(f, "{}", item)?,
+                InspectItem::Templates(item) => write!(f, "{}", item)?,
+            }
+
+            if items.peek().is_some() {
+                writeln!(f)?;
+            }
+        }
+
+        Ok(())
     }
 }
 

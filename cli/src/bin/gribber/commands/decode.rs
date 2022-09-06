@@ -1,5 +1,6 @@
 use anyhow::Result;
 use clap::{arg, ArgMatches, Command};
+use std::fmt;
 use std::fs::File;
 use std::io::{BufWriter, Write};
 use std::path::PathBuf;
@@ -48,8 +49,24 @@ pub fn exec(args: &ArgMatches) -> Result<()> {
         let out_path = args.get_one::<PathBuf>("little-endian").unwrap();
         write_output(out_path, &values, |f| f.to_le_bytes())
     } else {
-        cli::start_pager();
-        println!("{:#?}", values);
+        cli::display_in_pager(DecodeTextDisplay(&values));
+        Ok(())
+    }
+}
+
+struct DecodeTextDisplay<'a>(&'a [f32]);
+
+impl<'a> cli::PredictableNumLines for DecodeTextDisplay<'a> {
+    fn num_lines(&self) -> usize {
+        let Self(inner) = self;
+        inner.len()
+    }
+}
+
+impl<'i> fmt::Display for DecodeTextDisplay<'i> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let Self(inner) = self;
+        writeln!(f, "{:#?}", inner)?;
         Ok(())
     }
 }

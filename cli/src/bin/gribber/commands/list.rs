@@ -1,5 +1,5 @@
 use clap::{arg, ArgMatches, Command};
-use console::{Style, Term};
+use console::Style;
 use std::fmt::{self, Display, Formatter};
 use std::path::PathBuf;
 
@@ -25,20 +25,7 @@ pub fn exec(args: &ArgMatches) -> anyhow::Result<()> {
         ListViewMode::OneLine
     };
     let view = ListView::new(grib.submessages(), mode);
-
-    let user_attended = console::user_attended();
-
-    let term = Term::stdout();
-    let (height, _width) = term.size();
-    if view.num_lines() > height.into() {
-        cli::start_pager();
-    }
-
-    if user_attended {
-        console::set_colors_enabled(true);
-    }
-
-    print!("{}", view);
+    cli::display_in_pager(view);
 
     Ok(())
 }
@@ -52,7 +39,9 @@ impl<'i> ListView<'i> {
     fn new(data: SubmessageIterator<'i>, mode: ListViewMode) -> Self {
         Self { data, mode }
     }
+}
 
+impl<'i> cli::PredictableNumLines for ListView<'i> {
     fn num_lines(&self) -> usize {
         match self.mode {
             ListViewMode::OneLine => {

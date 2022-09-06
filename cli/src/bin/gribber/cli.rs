@@ -24,8 +24,31 @@ where
     Ok(grib)
 }
 
+pub(crate) fn display_in_pager<V>(view: V)
+where
+    V: PredictableNumLines + std::fmt::Display,
+{
+    let user_attended = console::user_attended();
+
+    let term = console::Term::stdout();
+    let (height, _width) = term.size();
+    if view.num_lines() > height.into() {
+        start_pager();
+    }
+
+    if user_attended {
+        console::set_colors_enabled(true);
+    }
+
+    print!("{}", view);
+}
+
+pub(crate) trait PredictableNumLines {
+    fn num_lines(&self) -> usize;
+}
+
 #[cfg(unix)]
-pub fn start_pager() {
+fn start_pager() {
     if which("less").is_ok() {
         Pager::with_pager("less -R").setup();
     } else {
@@ -34,7 +57,7 @@ pub fn start_pager() {
 }
 
 #[cfg(not(unix))]
-pub fn start_pager() {}
+fn start_pager() {}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct CliMessageIndex(pub(crate) grib::datatypes::MessageIndex);
