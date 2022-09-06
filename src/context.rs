@@ -210,22 +210,6 @@ impl<R: Grib2Read> Grib2<R> {
         Grib2::<SeekableGrib2Reader<SR>>::read(r)
     }
 
-    /// Decodes grid values of a surface specified by `message_index`.
-    pub fn get_values(&self, message_index: MessageIndex) -> Result<Box<[f32]>, GribError> {
-        let (_, submessage) = self
-            .iter()
-            .find(|(index, _)| *index == message_index)
-            .ok_or_else(|| {
-                GribError::OperationError(format!(
-                    "no such index: {}.{}",
-                    message_index.0, message_index.1
-                ))
-            })?;
-
-        let values = decoders::dispatch(submessage)?;
-        Ok(values)
-    }
-
     pub fn list_templates(&self) -> Vec<TemplateInfo> {
         get_templates(&self.sections)
     }
@@ -426,6 +410,7 @@ Data Representation:                    {}
 }
 
 impl<'a, R: Grib2Read> SubMessage<'a, R> {
+    /// Decodes grid values of `self`.
     pub fn decode(self) -> Result<Box<[f32]>, GribError> {
         let values = decoders::dispatch(self)?;
         Ok(values)
