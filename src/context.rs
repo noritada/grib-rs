@@ -294,6 +294,18 @@ impl<'a, R> Iterator for SubmessageIterator<'a, R> {
     }
 }
 
+impl<'a, R> IntoIterator for &'a SubmessageIterator<'a, R> {
+    type Item = (MessageIndex, SubMessage<'a, R>);
+    type IntoIter = SubmessageIterator<'a, R>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        SubmessageIterator {
+            context: self.context,
+            pos: self.pos,
+        }
+    }
+}
+
 pub struct SubMessage<'a, R>(
     pub SubMessageSection<'a>,
     pub SubMessageSection<'a>,

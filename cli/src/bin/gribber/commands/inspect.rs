@@ -219,7 +219,7 @@ impl<'i, R> Display for InspectSubMessagesItem<'i, R> {
         let style = Style::new().bold();
         writeln!(f, "{}", style.apply_to(header.trim_end()))?;
 
-        for (i, submessage) in self.data.clone() {
+        for (i, submessage) in &self.data {
             let id = format!("{}.{}", i.0, i.1);
             writeln!(
                 f,

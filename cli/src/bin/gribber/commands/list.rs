@@ -60,7 +60,7 @@ impl<'i, R> cli::PredictableNumLines for ListView<'i, R> {
 
 impl<'i, R> Display for ListView<'i, R> {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        let entries = self.data.clone();
+        let entries = &self.data;
         match self.mode {
             ListViewMode::OneLine => {
                 let header = format!(
