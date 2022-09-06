@@ -39,8 +39,12 @@ pub fn exec(args: &ArgMatches) -> Result<()> {
     let file_name = args.get_one::<PathBuf>("FILE").unwrap();
     let grib = cli::grib(file_name)?;
     let index = args.get_one::<String>("INDEX").unwrap();
-    let cli::CliMessageIndex(index) = index.parse()?;
-    let values = grib.get_values(index)?;
+    let cli::CliMessageIndex(message_index) = index.parse()?;
+    let (_, submessage) = grib
+        .iter()
+        .find(|(index, _)| *index == message_index)
+        .ok_or_else(|| anyhow::anyhow!("no such index: {}.{}", message_index.0, message_index.1))?;
+    let values = submessage.decode()?;
 
     if args.contains_id("big-endian") {
         let out_path = args.get_one::<PathBuf>("big-endian").unwrap();

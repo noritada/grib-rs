@@ -30,18 +30,18 @@ pub fn exec(args: &ArgMatches) -> anyhow::Result<()> {
     Ok(())
 }
 
-struct ListView<'i> {
-    data: SubmessageIterator<'i>,
+struct ListView<'i, R> {
+    data: SubmessageIterator<'i, R>,
     mode: ListViewMode,
 }
 
-impl<'i> ListView<'i> {
-    fn new(data: SubmessageIterator<'i>, mode: ListViewMode) -> Self {
+impl<'i, R> ListView<'i, R> {
+    fn new(data: SubmessageIterator<'i, R>, mode: ListViewMode) -> Self {
         Self { data, mode }
     }
 }
 
-impl<'i> cli::PredictableNumLines for ListView<'i> {
+impl<'i, R> cli::PredictableNumLines for ListView<'i, R> {
     fn num_lines(&self) -> usize {
         match self.mode {
             ListViewMode::OneLine => {
@@ -58,9 +58,9 @@ impl<'i> cli::PredictableNumLines for ListView<'i> {
     }
 }
 
-impl<'i> Display for ListView<'i> {
+impl<'i, R> Display for ListView<'i, R> {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        let entries = self.data.clone();
+        let entries = &self.data;
         match self.mode {
             ListViewMode::OneLine => {
                 let header = format!(

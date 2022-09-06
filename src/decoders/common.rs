@@ -1,6 +1,6 @@
 use std::cell::RefMut;
 
-use crate::context::{SectionBody, SectionInfo};
+use crate::context::{SectionBody, SectionInfo, SubMessage};
 use crate::decoders::bitmap::create_bitmap_for_nonnullable_data;
 use crate::decoders::complex::*;
 use crate::decoders::jpeg2000::*;
@@ -43,14 +43,16 @@ impl From<RunLengthEncodingDecodeError> for DecodeError {
     }
 }
 
-pub fn dispatch<R: Grib2Read>(
-    sect3: &SectionInfo,
-    sect5: &SectionInfo,
-    sect6: &SectionInfo,
-    sect7: &SectionInfo,
-    mut reader: RefMut<R>,
-) -> Result<Box<[f32]>, GribError> {
-    let (sect3_body, sect5_body, sect6_body) = match (&sect3.body, &sect5.body, &sect6.body) {
+pub fn dispatch<'a, R: Grib2Read>(submessage: SubMessage<'a, R>) -> Result<Box<[f32]>, GribError> {
+    let mut reader = submessage.9;
+    let sect5 = submessage.5.body;
+    let sect6 = submessage.6.body;
+    let sect7 = submessage.7.body;
+    let (sect3_body, sect5_body, sect6_body) = match (
+        submessage.3.body.body.as_ref(),
+        sect5.body.as_ref(),
+        sect6.body.as_ref(),
+    ) {
         (
             Some(SectionBody::Section3(b3)),
             Some(SectionBody::Section5(b5)),
