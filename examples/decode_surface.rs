@@ -13,15 +13,16 @@ fn main() -> Result<(), Box<dyn Error>> {
     // Take the first argument as an input file path and the second argument as a
     // surface index.
     let mut args = env::args().skip(1);
-    if let (Some(file_path), Some(index)) = (args.next(), args.next()) {
-        let index = index.parse::<usize>()?;
+    if let (Some(file_path), Some(index), Some(subindex)) = (args.next(), args.next(), args.next())
+    {
+        let index: (usize, usize) = (index.parse()?, subindex.parse()?);
         decode_surface(&file_path, index)
     } else {
         panic!("Usage: decode_surface <path> <index>");
     }
 }
 
-fn decode_surface<P>(path: P, index: usize) -> Result<(), Box<dyn Error>>
+fn decode_surface<P>(path: P, message_index: (usize, usize)) -> Result<(), Box<dyn Error>>
 where
     P: AsRef<Path>,
 {
@@ -32,9 +33,15 @@ where
     // Read with the reader.
     let grib2 = grib::from_reader(f)?;
 
+    // Find the target submessage.
+    let (_index, submessage) = grib2
+        .iter()
+        .find(|(index, _)| *index == message_index)
+        .ok_or_else(|| "no such index")?;
+
     // There are various methods available for compressing GRIB2 data, but some are
     // not yet supported by this library and may return errors.
-    let values = grib2.get_values(index)?;
+    let values = submessage.decode()?;
 
     // Iterate over decoded values.
     for value in values.iter() {

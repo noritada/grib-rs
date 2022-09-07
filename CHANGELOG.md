@@ -5,6 +5,42 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Added
+
+- Library `grib`
+  - Multi-message data support in `Grib2` using newly introduced iterator-based parsers internally.
+  - New method `Grib2::len()` for submessage list length checking.
+- CLI application `gribber` built on the top of the Rust library
+  - Multi-message data support.
+
+### Changed
+
+- Library `grib`
+  - `Grib2` is now re-exported at the crate root.
+  - Unnecessarily strong trait boundaries for `Grib2::iter()`, `Grib2::submessages()`, and `Grib2::sections()` are removed.
+  - `Grib2::sections()` now return an iterator instead of a slice.
+  - Non-API changes
+    - Development version of the library's API documentation is now available on GitHub Pages.
+- CLI application `gribber` built on the top of the Rust library
+  - The application now uses `anyhow` for error handling instead of a custom error type in order to reduce boilerplate code.
+  - User-invisible changes
+    - Duplication in test code for CLI has been eliminated so that commonalities and differences between test cases get clarified.
+    - Test code for CLI has been reorganized for better accessibility.
+- Others
+  - Source code for CLI has been separated from the "grib" library package as "grib-cli" for the separation of dependencies.
+
+### Removed
+
+- Library `grib`
+  - `Grib2::scan()` has been removed in favor of newly introduced iterator-based parsers.
+  - `Grib2::info()` has been removed since it does not make sense for multi-message data.
+
+### Fixed
+
+- CLI application `gribber` built on the top of the Rust library
+  - Fixed an issue that "Something unexpected happend" is shown when a wrong message index is given to the "decode" subcommand
+
 ## [0.5.0] - 2022-07-10
 ### Added
 
@@ -128,6 +164,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - inspect: display of information mainly for development purpose such as template numbers
     - list: display of a list of sections (the style is still tentative)
 
+[unreleased]: https://github.com/noritada/grib-rs/compare/v0.5.0...HEAD
 [0.5.0]: https://github.com/noritada/grib-rs/compare/v0.4.3...v0.5.0
 [0.4.3]: https://github.com/noritada/grib-rs/compare/v0.4.2...v0.4.3
 [0.4.2]: https://github.com/noritada/grib-rs/compare/v0.4.1...v0.4.2

@@ -1,4 +1,4 @@
-use std::cell::RefCell;
+use std::cell::{RefCell, RefMut};
 use std::collections::HashSet;
 use std::fmt::{self, Display, Formatter};
 use std::io::{Cursor, Read, Seek};
@@ -92,9 +92,102 @@ pub fn from_slice(bytes: &[u8]) -> Result<Grib2<SeekableGrib2Reader<Cursor<&[u8]
 }
 
 pub struct Grib2<R> {
-    pub(crate) reader: RefCell<R>,
-    pub(crate) sections: Box<[SectionInfo]>,
-    pub(crate) submessages: Vec<Grib2SubmessageIndex>,
+    reader: RefCell<R>,
+    sections: Box<[SectionInfo]>,
+    submessages: Vec<Grib2SubmessageIndex>,
+}
+
+impl<R> Grib2<R> {
+    /// Returns the length of submessages in the data.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// fn main() -> Result<(), Box<dyn std::error::Error>> {
+    ///     let f = std::fs::File::open(
+    ///         "testdata/icon_global_icosahedral_single-level_2021112018_000_TOT_PREC.grib2",
+    ///     )?;
+    ///     let f = std::io::BufReader::new(f);
+    ///     let grib2 = grib::from_reader(f)?;
+    ///
+    ///     assert_eq!(grib2.len(), 1);
+    ///     Ok(())
+    /// }
+    /// ```
+    pub fn len(&self) -> usize {
+        self.submessages.len()
+    }
+
+    /// Returns `true` if `self` has zero submessages.
+    #[inline]
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+
+    /// Returns an iterator over submessages in the data.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// fn main() -> Result<(), Box<dyn std::error::Error>> {
+    ///     let f = std::fs::File::open(
+    ///         "testdata/icon_global_icosahedral_single-level_2021112018_000_TOT_PREC.grib2",
+    ///     )?;
+    ///     let f = std::io::BufReader::new(f);
+    ///     let grib2 = grib::from_reader(f)?;
+    ///
+    ///     let mut iter = grib2.iter();
+    ///     let first = iter.next();
+    ///     assert!(first.is_some());
+    ///
+    ///     let first = first.unwrap();
+    ///     let (message_index, _) = first;
+    ///     assert_eq!(message_index, (0, 0));
+    ///
+    ///     let second = iter.next();
+    ///     assert!(second.is_none());
+    ///     Ok(())
+    /// }
+    /// ```
+    #[inline]
+    pub fn iter(&self) -> SubmessageIterator<R> {
+        self.submessages()
+    }
+
+    /// Returns an iterator over submessages in the data.
+    ///
+    /// This is an alias to [`Grib2::iter()`].
+    pub fn submessages(&self) -> SubmessageIterator<R> {
+        SubmessageIterator::new(&self)
+    }
+
+    /// Returns an iterator over sections in the data.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// fn main() -> Result<(), Box<dyn std::error::Error>> {
+    ///     let f = std::fs::File::open(
+    ///         "testdata/icon_global_icosahedral_single-level_2021112018_000_TOT_PREC.grib2",
+    ///     )?;
+    ///     let f = std::io::BufReader::new(f);
+    ///     let grib2 = grib::from_reader(f)?;
+    ///
+    ///     let mut iter = grib2.sections();
+    ///     let first = iter.next();
+    ///     assert!(first.is_some());
+    ///
+    ///     let first = first.unwrap();
+    ///     assert_eq!(first.num, 0);
+    ///
+    ///     let tenth = iter.nth(9);
+    ///     assert!(tenth.is_none());
+    ///     Ok(())
+    /// }
+    /// ```
+    pub fn sections(&self) -> std::slice::Iter<SectionInfo> {
+        self.sections.iter()
+    }
 }
 
 impl<R: Grib2Read> Grib2<R> {
@@ -103,11 +196,6 @@ impl<R: Grib2Read> Grib2<R> {
         let mut cacher = Vec::new();
         let parser = Grib2SubmessageIndexStream::new(sect_stream.by_ref()).with_cacher(&mut cacher);
         let submessages = parser.collect::<Result<Vec<_>, _>>()?;
-        // tentatively extract only submessages in the first message
-        let submessages = submessages
-            .into_iter()
-            .filter(|index| index.message == 0)
-            .collect::<Vec<_>>();
         Ok(Self {
             reader: RefCell::new(sect_stream.into_reader()),
             sections: cacher.into_boxed_slice(),
@@ -120,56 +208,6 @@ impl<R: Grib2Read> Grib2<R> {
     ) -> Result<Grib2<SeekableGrib2Reader<SR>>, GribError> {
         let r = SeekableGrib2Reader::new(r);
         Grib2::<SeekableGrib2Reader<SR>>::read(r)
-    }
-
-    pub fn info(&self) -> Result<(&Indicator, &Identification), GribError> {
-        match (self.sections.get(0), self.sections.get(1)) {
-            (
-                Some(SectionInfo {
-                    body: Some(SectionBody::Section0(sect0_body)),
-                    ..
-                }),
-                Some(SectionInfo {
-                    body: Some(SectionBody::Section1(sect1_body)),
-                    ..
-                }),
-            ) => Ok((sect0_body, sect1_body)),
-            _ => Err(GribError::InternalDataError),
-        }
-    }
-
-    /// Iterates over submessages.
-    #[inline]
-    pub fn iter(&self) -> SubmessageIterator {
-        self.submessages()
-    }
-
-    pub fn submessages(&self) -> SubmessageIterator {
-        SubmessageIterator::new(&self.submessages, &self.sections)
-    }
-
-    /// Decodes grid values of a surface specified by the index `i`.
-    pub fn get_values(&self, i: usize) -> Result<Box<[f32]>, GribError> {
-        let (sect3, sect5, sect6, sect7) = self
-            .submessages
-            .get(i)
-            .and_then(|submsg| {
-                Some((
-                    self.sections.get(submsg.sections.3)?,
-                    self.sections.get(submsg.sections.5)?,
-                    self.sections.get(submsg.sections.6)?,
-                    self.sections.get(submsg.sections.7)?,
-                ))
-            })
-            .ok_or(GribError::InternalDataError)?;
-
-        let reader = self.reader.borrow_mut();
-        let values = decoders::dispatch(sect3, sect5, sect6, sect7, reader)?;
-        Ok(values)
-    }
-
-    pub fn sections(&self) -> &[SectionInfo] {
-        &self.sections
     }
 
     pub fn list_templates(&self) -> Vec<TemplateInfo> {
@@ -185,61 +223,74 @@ fn get_templates(sects: &[SectionInfo]) -> Vec<TemplateInfo> {
 }
 
 #[derive(Clone)]
-pub struct SubmessageIterator<'a> {
-    indices: &'a [Grib2SubmessageIndex],
-    sections: &'a [SectionInfo],
+pub struct SubmessageIterator<'a, R> {
+    context: &'a Grib2<R>,
     pos: usize,
 }
 
-impl<'a> SubmessageIterator<'a> {
-    fn new(indices: &'a [Grib2SubmessageIndex], sections: &'a [SectionInfo]) -> Self {
-        Self {
-            indices,
-            sections,
-            pos: 0,
-        }
+impl<'a, R> SubmessageIterator<'a, R> {
+    fn new(context: &'a Grib2<R>) -> Self {
+        Self { context, pos: 0 }
     }
 
     fn new_submessage_section(&self, index: usize) -> Option<SubMessageSection<'a>> {
-        Some(SubMessageSection::new(index, self.sections.get(index)?))
+        Some(SubMessageSection::new(
+            index,
+            self.context.sections.get(index)?,
+        ))
     }
 }
 
-impl<'a> Iterator for SubmessageIterator<'a> {
-    type Item = SubMessage<'a>;
+impl<'a, R> Iterator for SubmessageIterator<'a, R> {
+    type Item = (MessageIndex, SubMessage<'a, R>);
 
-    fn next(&mut self) -> Option<SubMessage<'a>> {
-        let submessage_index = self.indices.get(self.pos)?;
+    fn next(&mut self) -> Option<Self::Item> {
+        let submessage_index = self.context.submessages.get(self.pos)?;
         self.pos += 1;
 
-        Some(SubMessage(
-            self.new_submessage_section(0)?,
-            self.new_submessage_section(1)?,
-            submessage_index
-                .sections
-                .2
-                .and_then(|i| self.new_submessage_section(i)),
-            self.new_submessage_section(submessage_index.sections.3)?,
-            self.new_submessage_section(submessage_index.sections.4)?,
-            self.new_submessage_section(submessage_index.sections.5)?,
-            self.new_submessage_section(submessage_index.sections.6)?,
-            self.new_submessage_section(submessage_index.sections.7)?,
-            self.new_submessage_section(self.sections.len() - 1)?,
+        Some((
+            submessage_index.message_index(),
+            SubMessage(
+                self.new_submessage_section(0)?,
+                self.new_submessage_section(1)?,
+                submessage_index
+                    .2
+                    .and_then(|i| self.new_submessage_section(i)),
+                self.new_submessage_section(submessage_index.3)?,
+                self.new_submessage_section(submessage_index.4)?,
+                self.new_submessage_section(submessage_index.5)?,
+                self.new_submessage_section(submessage_index.6)?,
+                self.new_submessage_section(submessage_index.7)?,
+                self.new_submessage_section(self.context.sections.len() - 1)?,
+                self.context.reader.borrow_mut(),
+            ),
         ))
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
-        let size = self.indices.len();
+        let size = self.context.submessages.len();
         (size, Some(size))
     }
 
-    fn nth(&mut self, n: usize) -> Option<SubMessage<'a>> {
+    fn nth(&mut self, n: usize) -> Option<Self::Item> {
         self.pos = n;
         self.next()
     }
 }
 
-pub struct SubMessage<'a>(
+impl<'a, R> IntoIterator for &'a SubmessageIterator<'a, R> {
+    type Item = (MessageIndex, SubMessage<'a, R>);
+    type IntoIter = SubmessageIterator<'a, R>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        SubmessageIterator {
+            context: self.context,
+            pos: self.pos,
+        }
+    }
+}
+
+pub struct SubMessage<'a, R>(
     pub SubMessageSection<'a>,
     pub SubMessageSection<'a>,
     pub Option<SubMessageSection<'a>>,
@@ -249,9 +300,10 @@ pub struct SubMessage<'a>(
     pub SubMessageSection<'a>,
     pub SubMessageSection<'a>,
     pub SubMessageSection<'a>,
+    pub(crate) RefMut<'a, R>,
 );
 
-impl<'a> SubMessage<'a> {
+impl<'a, R> SubMessage<'a, R> {
     pub fn indicator(&self) -> &Indicator {
         // panics should not happen if data is correct
         match self.0.body.body.as_ref().unwrap() {
@@ -354,6 +406,14 @@ Data Representation:                    {}
             self.5.describe().unwrap_or_default(),
             self.repr_def().num_points(),
         )
+    }
+}
+
+impl<'a, R: Grib2Read> SubMessage<'a, R> {
+    /// Decodes grid values of `self`.
+    pub fn decode(self) -> Result<Box<[f32]>, GribError> {
+        let values = decoders::dispatch(self)?;
+        Ok(values)
     }
 }
 

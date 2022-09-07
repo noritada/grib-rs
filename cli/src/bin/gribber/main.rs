@@ -10,7 +10,7 @@ fn app() -> Command<'static> {
         .subcommands(commands::cli())
 }
 
-fn real_main() -> Result<(), cli::CliError> {
+fn real_main() -> anyhow::Result<()> {
     let matches = app().get_matches();
 
     commands::dispatch(matches)
@@ -18,7 +18,8 @@ fn real_main() -> Result<(), cli::CliError> {
 
 fn main() {
     if let Err(ref e) = real_main() {
-        eprintln!("{}", e);
+        let red = console::Style::new().red();
+        eprintln!("{}: {}", red.apply_to("error"), e);
         std::process::exit(1);
     }
 }

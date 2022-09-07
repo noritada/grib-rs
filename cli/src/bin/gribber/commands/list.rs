@@ -1,5 +1,5 @@
 use clap::{arg, ArgMatches, Command};
-use console::{Style, Term};
+use console::Style;
 use std::fmt::{self, Display, Formatter};
 use std::path::PathBuf;
 
@@ -15,7 +15,7 @@ pub fn cli() -> Command<'static> {
         .arg(arg!(<FILE> "Target file").value_parser(clap::value_parser!(PathBuf)))
 }
 
-pub fn exec(args: &ArgMatches) -> Result<(), cli::CliError> {
+pub fn exec(args: &ArgMatches) -> anyhow::Result<()> {
     let file_name = args.get_one::<PathBuf>("FILE").unwrap();
     let grib = cli::grib(file_name)?;
 
@@ -25,34 +25,23 @@ pub fn exec(args: &ArgMatches) -> Result<(), cli::CliError> {
         ListViewMode::OneLine
     };
     let view = ListView::new(grib.submessages(), mode);
-
-    let user_attended = console::user_attended();
-
-    let term = Term::stdout();
-    let (height, _width) = term.size();
-    if view.num_lines() > height.into() {
-        cli::start_pager();
-    }
-
-    if user_attended {
-        console::set_colors_enabled(true);
-    }
-
-    print!("{}", view);
+    cli::display_in_pager(view);
 
     Ok(())
 }
 
-struct ListView<'i> {
-    data: SubmessageIterator<'i>,
+struct ListView<'i, R> {
+    data: SubmessageIterator<'i, R>,
     mode: ListViewMode,
 }
 
-impl<'i> ListView<'i> {
-    fn new(data: SubmessageIterator<'i>, mode: ListViewMode) -> Self {
+impl<'i, R> ListView<'i, R> {
+    fn new(data: SubmessageIterator<'i, R>, mode: ListViewMode) -> Self {
         Self { data, mode }
     }
+}
 
+impl<'i, R> cli::PredictableNumLines for ListView<'i, R> {
     fn num_lines(&self) -> usize {
         match self.mode {
             ListViewMode::OneLine => {
@@ -69,12 +58,13 @@ impl<'i> ListView<'i> {
     }
 }
 
-impl<'i> Display for ListView<'i> {
+impl<'i, R> Display for ListView<'i, R> {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        let entries = &self.data;
         match self.mode {
             ListViewMode::OneLine => {
                 let header = format!(
-                    "{:>5} │ {:<31} {:<18} {:>14} {:>17} {:>17} | {:>21}\n",
+                    "{:>8} │ {:<31} {:<18} {:>14} {:>17} {:>17} | {:>21}\n",
                     "id",
                     "Parameter",
                     "Generating process",
@@ -86,7 +76,8 @@ impl<'i> Display for ListView<'i> {
                 let style = Style::new().bold();
                 write!(f, "{}", style.apply_to(header))?;
 
-                for (i, submessage) in self.data.clone().enumerate() {
+                for (i, submessage) in entries {
+                    let id = format!("{}.{}", i.0, i.1);
                     let prod_def = submessage.prod_def();
                     let category = prod_def
                         .parameter_category()
@@ -115,8 +106,8 @@ impl<'i> Display for ListView<'i> {
                     let num_points_represented = submessage.repr_def().num_points();
                     writeln!(
                         f,
-                        "{:>5} │ {:<31} {:<18} {:>14} {:>17} {:>17} | {:>10}/{:>10}",
-                        i,
+                        "{:>8} │ {:<31} {:<18} {:>14} {:>17} {:>17} | {:>10}/{:>10}",
+                        id,
                         category,
                         generating_process,
                         forecast_time,
@@ -128,8 +119,9 @@ impl<'i> Display for ListView<'i> {
                 }
             }
             ListViewMode::Dump => {
-                for (i, submessage) in self.data.clone().enumerate() {
-                    write!(f, "{}\n{}\n", i, submessage.describe())?;
+                for (i, submessage) in entries {
+                    let id = format!("{}.{}", i.0, i.1);
+                    write!(f, "{}\n{}\n", id, submessage.describe())?;
                 }
             }
         }

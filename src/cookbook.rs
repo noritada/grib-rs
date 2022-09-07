@@ -47,7 +47,7 @@
 //!
 //!     let grib2 = grib::from_reader(f).unwrap();
 //!
-//!     for submessage in grib2.iter() {
+//!     for (_index, submessage) in grib2.iter() {
 //!         let discipline = submessage.indicator().discipline;
 //!         let category = submessage.prod_def().parameter_category().unwrap();
 //!         let parameter = submessage.prod_def().parameter_number().unwrap();
@@ -117,7 +117,7 @@
 //!
 //!     let grib2 = grib::from_reader(f).unwrap();
 //!
-//!     for (index, submessage) in grib2.iter().enumerate() {
+//!     for (index, submessage) in grib2.iter() {
 //!         let ft = submessage.prod_def().forecast_time();
 //!         match ft {
 //!             Some(ForecastTime {
@@ -125,7 +125,7 @@
 //!                 value: hours,
 //!             }) => {
 //!                 if hours == forecast_time_hours {
-//!                     println!("{}: {}", index, hours);
+//!                     println!("{}.{}: {}", index.0, index.1, hours);
 //!                 }
 //!             }
 //!             _ => {}

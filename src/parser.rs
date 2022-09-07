@@ -281,14 +281,13 @@ where
                             sect7 = pos;
                         }
                         8 => {
-                            let ret = Some(Ok(Grib2SubmessageIndex {
-                                message: message_count,
-                                submessage: submessage_count,
-                                sections: (
+                            let ret = Some(Ok(Grib2SubmessageIndex::new(
+                                (message_count, submessage_count),
+                                (
                                     self.sect0, self.sect1, self.sect2, self.sect3, sect4, sect5,
                                     sect6, sect7, pos,
                                 ),
-                            }));
+                            )));
 
                             // if pos is 0, it is dummy
                             if pos != 0 {
@@ -575,18 +574,19 @@ mod tests {
     }
 
     fn digest_submessage_index_iter_item(item: Grib2SubmessageIndex) -> SubmessageDigest {
+        let (message_index, submessage_index) = item.message_index();
         (
-            item.message,
-            item.submessage,
-            item.sections.0,
-            item.sections.1,
-            item.sections.2,
-            item.sections.3,
-            item.sections.4,
-            item.sections.5,
-            item.sections.6,
-            item.sections.7,
-            item.sections.8,
+            message_index,
+            submessage_index,
+            item.0,
+            item.1,
+            item.2,
+            item.3,
+            item.4,
+            item.5,
+            item.6,
+            item.7,
+            item.8,
         )
     }
 

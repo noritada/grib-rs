@@ -1,7 +1,8 @@
 use clap::{arg, ArgMatches, Command};
-use console::{Style, Term};
+use console::Style;
 use std::fmt::{self, Display, Formatter};
 use std::path::PathBuf;
+use std::slice::Iter;
 
 use grib::context::{SectionInfo, SubMessageSection, SubmessageIterator, TemplateInfo};
 
@@ -23,7 +24,7 @@ of debugging, enhancement, and education.\
         )
 }
 
-pub fn exec(args: &ArgMatches) -> Result<(), cli::CliError> {
+pub fn exec(args: &ArgMatches) -> anyhow::Result<()> {
     let file_name = args.get_one::<PathBuf>("FILE").unwrap();
     let grib = cli::grib(file_name)?;
 
@@ -53,63 +54,29 @@ pub fn exec(args: &ArgMatches) -> Result<(), cli::CliError> {
         view.add(InspectItem::Templates(InspectTemplatesItem::new(tmpls)));
     }
 
-    let user_attended = console::user_attended();
-
-    let term = Term::stdout();
-    let (height, _width) = term.size();
-    if view.num_lines() > height.into() {
-        cli::start_pager();
-    }
-
-    if user_attended {
-        console::set_colors_enabled(true);
-    }
-
-    let with_header = view.with_headers();
-    let mut items = view.items.into_iter().peekable();
-    loop {
-        let item = match items.next() {
-            None => break,
-            Some(i) => i,
-        };
-
-        if with_header {
-            let yellow = Style::new().yellow().bold();
-            let s = format!("{}:", item.title());
-            println!("{}", yellow.apply_to(s));
-        }
-
-        match item {
-            InspectItem::Sections(item) => print!("{}", item),
-            InspectItem::SubMessages(item) => print!("{}", item),
-            InspectItem::Templates(item) => print!("{}", item),
-        }
-
-        if items.peek().is_some() {
-            println!();
-        }
-    }
-
+    cli::display_in_pager(view);
     Ok(())
 }
 
-struct InspectView<'i> {
-    items: Vec<InspectItem<'i>>,
+struct InspectView<'i, R> {
+    items: Vec<InspectItem<'i, R>>,
 }
 
-impl<'i> InspectView<'i> {
+impl<'i, R> InspectView<'i, R> {
     fn new() -> Self {
         Self { items: Vec::new() }
     }
 
-    fn add(&mut self, item: InspectItem<'i>) {
+    fn add(&mut self, item: InspectItem<'i, R>) {
         self.items.push(item);
     }
 
     fn with_headers(&self) -> bool {
         self.items.len() >= 2
     }
+}
 
+impl<'i, R> cli::PredictableNumLines for InspectView<'i, R> {
     fn num_lines(&self) -> usize {
         let mut count = 0;
         for item in self.items.iter() {
@@ -123,13 +90,44 @@ impl<'i> InspectView<'i> {
     }
 }
 
-enum InspectItem<'i> {
+impl<'i, R> Display for InspectView<'i, R> {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        let with_header = self.with_headers();
+        let mut items = self.items.iter().peekable();
+        loop {
+            let item = match items.next() {
+                None => break,
+                Some(i) => i,
+            };
+
+            if with_header {
+                let yellow = Style::new().yellow().bold();
+                let s = format!("{}:", item.title());
+                writeln!(f, "{}", yellow.apply_to(s))?;
+            }
+
+            match item {
+                InspectItem::Sections(item) => write!(f, "{}", item)?,
+                InspectItem::SubMessages(item) => write!(f, "{}", item)?,
+                InspectItem::Templates(item) => write!(f, "{}", item)?,
+            }
+
+            if items.peek().is_some() {
+                writeln!(f)?;
+            }
+        }
+
+        Ok(())
+    }
+}
+
+enum InspectItem<'i, R> {
     Sections(InspectSectionsItem<'i>),
-    SubMessages(InspectSubMessagesItem<'i>),
+    SubMessages(InspectSubMessagesItem<'i, R>),
     Templates(InspectTemplatesItem),
 }
 
-impl<'i> InspectItem<'i> {
+impl<'i, R> InspectItem<'i, R> {
     fn title(&self) -> &'static str {
         match self {
             InspectItem::Sections(_) => "Sections",
@@ -148,11 +146,11 @@ impl<'i> InspectItem<'i> {
 }
 
 struct InspectSectionsItem<'i> {
-    data: &'i [SectionInfo],
+    data: Iter<'i, SectionInfo>,
 }
 
 impl<'i> InspectSectionsItem<'i> {
-    fn new(data: &'i [SectionInfo]) -> Self {
+    fn new(data: Iter<'i, SectionInfo>) -> Self {
         Self { data }
     }
 
@@ -163,7 +161,7 @@ impl<'i> InspectSectionsItem<'i> {
 
 impl<'i> Display for InspectSectionsItem<'i> {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        for (i, sect) in self.data.iter().enumerate() {
+        for (i, sect) in self.data.clone().enumerate() {
             writeln!(
                 f,
                 "{:>5} │ {:016x} - {:016x} │ Section {}",
@@ -177,12 +175,12 @@ impl<'i> Display for InspectSectionsItem<'i> {
     }
 }
 
-struct InspectSubMessagesItem<'i> {
-    data: SubmessageIterator<'i>,
+struct InspectSubMessagesItem<'i, R> {
+    data: SubmessageIterator<'i, R>,
 }
 
-impl<'i> InspectSubMessagesItem<'i> {
-    fn new(data: SubmessageIterator<'i>) -> Self {
+impl<'i, R> InspectSubMessagesItem<'i, R> {
+    fn new(data: SubmessageIterator<'i, R>) -> Self {
         Self { data }
     }
 
@@ -192,7 +190,7 @@ impl<'i> InspectSubMessagesItem<'i> {
     }
 }
 
-impl<'i> Display for InspectSubMessagesItem<'i> {
+impl<'i, R> Display for InspectSubMessagesItem<'i, R> {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         fn format_section_index(s: &SubMessageSection) -> String {
             format!("{:>5}", s.index.to_string())
@@ -215,17 +213,18 @@ impl<'i> Display for InspectSubMessagesItem<'i> {
         }
 
         let header = format!(
-            "{:>5} │ {:>5} {:>5} {:>5} {:>5} {:>5} {:>5} │ {:<7} {:<7} {:<7}\n",
+            "{:>8} │ {:>5} {:>5} {:>5} {:>5} {:>5} {:>5} │ {:<7} {:<7} {:<7}",
             "id", "S2", "S3", "S4", "S5", "S6", "S7", "Tmpl3", "Tmpl4", "Tmpl5",
         );
         let style = Style::new().bold();
-        write!(f, "{}", style.apply_to(header))?;
+        writeln!(f, "{}", style.apply_to(header.trim_end()))?;
 
-        for (i, submessage) in self.data.clone().enumerate() {
+        for (i, submessage) in &self.data {
+            let id = format!("{}.{}", i.0, i.1);
             writeln!(
                 f,
-                "{:>5} │ {} {} {} {} {} {} │ {} {} {}",
-                i,
+                "{:>8} │ {} {} {} {} {} {} │ {} {} {}",
+                id,
                 format_section_index_optional(&submessage.2),
                 format_section_index(&submessage.3),
                 format_section_index(&submessage.4),

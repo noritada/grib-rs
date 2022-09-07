@@ -35,7 +35,7 @@ jobs:
         rustup target add x86_64-unknown-linux-musl
         sudo apt -qq install musl-tools
     - name: Build
-      run: cargo build --release --target ${{ matrix.target }} --verbose
+      run: cargo build --release --target ${{ matrix.target }} --verbose --workspace
     - name: Create an archive to maintain the file permission (in non-Windows environments)
       if: matrix.target != 'x86_64-pc-windows-msvc'
       run: |

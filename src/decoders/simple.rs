@@ -146,9 +146,13 @@ mod tests {
         let f = Cursor::new(buf);
 
         let grib = from_reader(f).unwrap();
-        let index = 0;
+        let message_index = (0, 0);
+        let (_, submessage) = grib
+            .iter()
+            .find(|(index, _)| *index == message_index)
+            .unwrap();
         // Runs `SimplePackingDecoder::decode()` internally.
-        let actual = grib.get_values(index).unwrap();
+        let actual = submessage.decode().unwrap();
         let expected = vec![0f32; 0x002d0000].into_boxed_slice();
         assert_eq!(actual, expected);
     }
