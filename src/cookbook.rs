@@ -1,4 +1,4 @@
-//! A tutorial for handling GRIB2 data in Rust.
+//! A cookbook of examples for GRIB2 data handling.
 //!
 //! # Table of contents
 //!
