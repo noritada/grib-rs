@@ -2,16 +2,16 @@
 //!
 //! # Table of contents
 //!
-//! 1. [Comparison of GRIB2 data operation libraries/tools](#comparison-of-grib2-data-operation-librariestools)
-//!     * [Listing all submessages inside a GRIB message](#listing-all-submessages-inside-a-grib-message)
-//!     * [Finding submessages that match some conditions inside a GRIB message](#finding-submessages-that-match-some-conditions-inside-a-grib-message)
+//! 1. [Comparison of various GRIB2 data library/tool operations](#comparison-of-various-grib2-data-librarytool-operations)
+//!     * [Listing all submessages inside](#listing-all-submessages-inside)
+//!     * [Finding submessages inside that match some condition](#finding-submessages-inside-that-match-some-condition)
 //!
-//! # Comparison of GRIB2 data operation libraries/tools
+//! # Comparison of various GRIB2 data library/tool operations
 //!
 //! This section provides example code of data operations using some GRIB
 //! processing libraries and tools.
 //!
-//! ## Listing all submessages inside a GRIB message
+//! ## Listing all submessages inside
 //!
 //! wgrib2:
 //!
@@ -79,7 +79,7 @@
 //! $ gribber list datafile.grib
 //! ```
 //!
-//! ## Finding submessages that match some conditions inside a GRIB message
+//! ## Finding submessages inside that match some condition
 //!
 //! wgrib2:
 //!
