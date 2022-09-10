@@ -18,7 +18,7 @@ where
     let f = File::open(&path)?;
     let f = BufReader::new(f);
     let grib = grib::from_reader(f)?;
-    if grib.len() == 0 {
+    if grib.is_empty() {
         anyhow::bail!("empty GRIB2 data")
     }
     Ok(grib)

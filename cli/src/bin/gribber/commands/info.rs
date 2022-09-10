@@ -27,7 +27,7 @@ pub fn exec(args: &ArgMatches) -> anyhow::Result<()> {
         if let (Some(SectionBody::Section0(sect0_body)), Some(SectionBody::Section1(sect1_body))) =
             (&submessage.0.body.body, &submessage.1.body.body)
         {
-            print!("{}", InfoView(message_index.0, &sect0_body, &sect1_body));
+            print!("{}", InfoView(message_index.0, sect0_body, sect1_body));
         }
     }
     Ok(())
