@@ -16,14 +16,18 @@ struct Record {
     subtitle: String,
     #[serde(rename = "CodeFlag")]
     code_flag: String,
+    #[allow(dead_code)]
     #[serde(rename = "Value")]
     value: String,
     #[serde(rename = "MeaningParameterDescription_en")]
     description: String,
+    #[allow(dead_code)]
     #[serde(rename = "Note_en")]
     note: String,
+    #[allow(dead_code)]
     #[serde(rename = "UnitComments_en")]
     unit: String,
+    #[allow(dead_code)]
     #[serde(rename = "Status")]
     status: String,
 }
