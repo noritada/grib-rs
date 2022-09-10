@@ -2,9 +2,13 @@
 //!
 //! # Table of contents
 //!
-//! 1. [Comparison of various GRIB2 data library/tool operations](#comparison-of-various-grib2-data-librarytool-operations)
-//!     * [Listing all submessages inside](#listing-all-submessages-inside)
-//!     * [Finding submessages inside that match some condition](#finding-submessages-inside-that-match-some-condition)
+//! 1. [Comparison of various GRIB2 data library/tool operations][cmp]
+//!     * [Listing all submessages inside][cmp-listing]
+//!     * [Finding submessages inside that match some condition][cmp-finding]
+//!
+//! [cmp]: #comparison-of-various-grib2-data-librarytool-operations
+//! [cmp-listing]: #listing-all-submessages-inside
+//! [cmp-finding]: #finding-submessages-inside-that-match-some-condition
 //!
 //! # Comparison of various GRIB2 data library/tool operations
 //!

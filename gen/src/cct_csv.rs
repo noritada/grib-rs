@@ -11,24 +11,29 @@ use crate::*;
 struct C00Record {
     #[serde(rename = "GRIB version number")]
     grib_version: String,
+    #[allow(dead_code)]
     #[serde(rename = "BUFR version number")]
     bufr_version: String,
+    #[allow(dead_code)]
     #[serde(rename = "CREX version number")]
     crex_version: String,
     #[serde(rename = "Effective date")]
     date: String,
+    #[allow(dead_code)]
     #[serde(rename = "Status")]
     status: String,
 }
 
 #[derive(Debug, Deserialize)]
 struct C11Record {
+    #[allow(dead_code)]
     #[serde(rename = "CREX2")]
     crex2: String,
     #[serde(rename = "GRIB2_BUFR4")]
     grib2_bufr4: String,
     #[serde(rename = "OriginatingGeneratingCentre_en")]
     center: String,
+    #[allow(dead_code)]
     #[serde(rename = "Status")]
     status: String,
 }
