@@ -12,7 +12,7 @@ categories = ["science"]
 keywords = ["GRIB", "weather", "meteorology"]
 
 [workspace]
-members = ["cli"]
+members = ["gen", "cli"]
 
 [dependencies]
 chrono = "0.4.20" # avoiding vulnerable time 0.1 dependency
