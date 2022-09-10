@@ -43,7 +43,7 @@ impl From<RunLengthEncodingDecodeError> for DecodeError {
     }
 }
 
-pub fn dispatch<'a, R: Grib2Read>(submessage: SubMessage<'a, R>) -> Result<Box<[f32]>, GribError> {
+pub fn dispatch<R: Grib2Read>(submessage: SubMessage<R>) -> Result<Box<[f32]>, GribError> {
     let mut reader = submessage.9;
     let sect5 = submessage.5.body;
     let sect6 = submessage.6.body;

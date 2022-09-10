@@ -158,7 +158,7 @@ impl<R> Grib2<R> {
     ///
     /// This is an alias to [`Grib2::iter()`].
     pub fn submessages(&self) -> SubmessageIterator<R> {
-        SubmessageIterator::new(&self)
+        SubmessageIterator::new(self)
     }
 
     /// Returns an iterator over sections in the data.
