@@ -13,6 +13,10 @@ homepage = "https://github.com/noritada/grib-rs"
 categories = ["science"]
 keywords = ["GRIB", "weather", "meteorology"]
 
+[[bin]]
+name = "gribber"
+path = "src/main.rs"
+
 [dependencies]
 anyhow = "1"
 clap = { version = "3.2", features = ["cargo"] }
