@@ -54,11 +54,7 @@ impl<R: Grib2Read> Grib2DataDecode<R> for Jpeg2000CodeStreamDecoder {
         let jp2_unpacked = decode_jp2(stream)
             .map_err(|e| GribError::DecodeError(DecodeError::Jpeg2000CodeStreamDecodeError(e)))?;
         let decoder = SimplePackingDecodeIterator::new(jp2_unpacked, ref_val, exp, dig);
-        // Taking first `num_points` is needed.  Since the bitmap is represented as a
-        // sequence of bytes, for example, if there are 9 grid points, the
-        // number of iterations will probably be 16, which is greater than the
-        // original number of grid points.
-        let decoder = BitmapDecodeIterator::new(bitmap.iter(), decoder).take(sect3_num_points);
+        let decoder = BitmapDecodeIterator::new(bitmap.iter(), decoder, sect3_num_points)?;
         let decoded = decoder.collect::<Vec<_>>();
         if decoded.len() != sect3_num_points {
             return Err(GribError::DecodeError(

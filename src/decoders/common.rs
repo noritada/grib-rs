@@ -17,6 +17,7 @@ pub enum DecodeError {
     ComplexPackingDecodeError(ComplexPackingDecodeError),
     Jpeg2000CodeStreamDecodeError(Jpeg2000CodeStreamDecodeError),
     RunLengthEncodingDecodeError(RunLengthEncodingDecodeError),
+    LengthMismatch,
 }
 
 impl From<SimplePackingDecodeError> for DecodeError {

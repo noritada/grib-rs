@@ -52,11 +52,7 @@ impl<R: Grib2Read> Grib2DataDecode<R> for SimplePackingDecoder {
 
         let iter = NBitwiseIterator::new(&sect7_data, usize::from(nbit));
         let decoder = SimplePackingDecodeIterator::new(iter, ref_val, exp, dig);
-        // Taking first `num_points` is needed.  Since the bitmap is represented as a
-        // sequence of bytes, for example, if there are 9 grid points, the
-        // number of iterations will probably be 16, which is greater than the
-        // original number of grid points.
-        let decoder = BitmapDecodeIterator::new(bitmap.iter(), decoder).take(sect3_num_points);
+        let decoder = BitmapDecodeIterator::new(bitmap.iter(), decoder, sect3_num_points)?;
         let decoded = decoder.collect::<Vec<_>>();
         if decoded.len() != sect3_num_points {
             return Err(GribError::DecodeError(

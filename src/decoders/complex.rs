@@ -112,11 +112,7 @@ impl<R: Grib2Read> Grib2DataDecode<R> for ComplexPackingDecoder {
 
         let spdiff_unpacked = SpatialDiff2ndOrderDecodeIterator::new(spdiff_packed_iter);
         let decoder = SimplePackingDecodeIterator::new(spdiff_unpacked, ref_val, exp, dig);
-        // Taking first `num_points` is needed.  Since the bitmap is represented as a
-        // sequence of bytes, for example, if there are 9 grid points, the
-        // number of iterations will probably be 16, which is greater than the
-        // original number of grid points.
-        let decoder = BitmapDecodeIterator::new(bitmap.iter(), decoder).take(sect3_num_points);
+        let decoder = BitmapDecodeIterator::new(bitmap.iter(), decoder, sect3_num_points)?;
         let decoded = decoder.collect::<Vec<_>>();
         if decoded.len() != sect3_num_points {
             return Err(GribError::DecodeError(
