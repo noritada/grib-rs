@@ -181,7 +181,7 @@ where
                 );
                 let bits = width * length;
                 let (pos_end, offset_bit) = (self.pos + bits / 8, bits % 8);
-                let offset_byte = if offset_bit > 0 { 1 } else { 0 };
+                let offset_byte = usize::from(offset_bit > 0);
                 let group_values =
                     NBitwiseIterator::new(&self.data[self.pos..pos_end + offset_byte], width)
                         .with_offset(self.start_offset_bits)
