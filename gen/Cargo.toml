@@ -1,13 +1,13 @@
 [package]
 name = "grib-build"
 version = "0.3.0"
-authors = ["Noritada Kobayashi <noritada.kobayashi@gmail.com>"]
-edition = "2021"
-license = "MIT OR Apache-2.0"
 description = "Data definition parsers for the grib crate, used internally as a build-dependency"
-readme = "../README.md"
-repository = "https://github.com/noritada/grib-rs"
-homepage = "https://github.com/noritada/grib-rs"
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+readme.workspace = true
+repository.workspace = true
+homepage.workspace = true
 
 [dependencies]
 csv = "1"
