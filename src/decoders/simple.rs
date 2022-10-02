@@ -46,11 +46,6 @@ impl Grib2DataDecode for SimplePackingDecoder {
         let decoder =
             BitmapDecodeIterator::new(encoded.bitmap.iter(), decoder, encoded.num_points_total)?;
         let decoded = decoder.collect::<Vec<_>>();
-        if decoded.len() != encoded.num_points_total {
-            return Err(GribError::DecodeError(
-                DecodeError::SimplePackingDecodeError(SimplePackingDecodeError::LengthMismatch),
-            ));
-        }
         Ok(decoded.into_boxed_slice())
     }
 }
