@@ -6,6 +6,7 @@ use crate::decoders::run_length::*;
 use crate::decoders::simple::*;
 use crate::error::*;
 use crate::reader::Grib2Read;
+use num::ToPrimitive;
 
 pub(crate) struct Grib2SubmessageEncoded {
     pub(crate) num_points_total: usize,
@@ -13,6 +14,33 @@ pub(crate) struct Grib2SubmessageEncoded {
     pub(crate) sect5_payload: Box<[u8]>,
     pub(crate) bitmap: Vec<u8>,
     pub(crate) sect7_payload: Box<[u8]>,
+}
+
+pub(crate) enum Grib2UnpackedDataIterator<I> {
+    FixedValue(std::vec::IntoIter<f32>),
+    SimplePacking(SimplePackingDecodeIterator<I>),
+}
+
+impl<I, N> Iterator for Grib2UnpackedDataIterator<I>
+where
+    I: Iterator<Item = N>,
+    N: ToPrimitive,
+{
+    type Item = f32;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        match self {
+            Self::FixedValue(inner) => inner.next(),
+            Self::SimplePacking(inner) => inner.next(),
+        }
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        match self {
+            Self::FixedValue(inner) => inner.size_hint(),
+            Self::SimplePacking(inner) => inner.size_hint(),
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]

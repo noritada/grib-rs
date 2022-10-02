@@ -32,15 +32,17 @@ impl Grib2DataDecode for SimplePackingDecoder {
             ));
         }
 
-        // Based on the implementation of wgrib2, if nbits equals 0, return a constant
-        // field where the data value at each grid point is the reference value.
-        if nbit == 0 {
-            let decoded = vec![ref_val; encoded.num_points_total];
-            return Ok(decoded.into_boxed_slice());
-        }
-
-        let iter = NBitwiseIterator::new(&encoded.sect7_payload, usize::from(nbit));
-        let decoder = SimplePackingDecodeIterator::new(iter, ref_val, exp, dig);
+        let decoder = if nbit == 0 {
+            // Based on the implementation of wgrib2, if nbits equals 0, return a constant
+            // field where the data value at each grid point is the reference value.
+            let decoded = vec![ref_val; encoded.num_points_encoded];
+            Grib2UnpackedDataIterator::FixedValue(decoded.into_iter())
+        } else {
+            let iter = NBitwiseIterator::new(&encoded.sect7_payload, usize::from(nbit));
+            Grib2UnpackedDataIterator::SimplePacking(SimplePackingDecodeIterator::new(
+                iter, ref_val, exp, dig,
+            ))
+        };
         let decoder =
             BitmapDecodeIterator::new(encoded.bitmap.iter(), decoder, encoded.num_points_total)?;
         let decoded = decoder.collect::<Vec<_>>();
