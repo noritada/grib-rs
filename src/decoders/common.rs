@@ -101,7 +101,12 @@ pub fn dispatch<R: Grib2Read>(submessage: SubMessage<R>) -> Result<Box<[f32]>, G
             let decoded = decoder.collect::<Vec<_>>();
             decoded.into_boxed_slice()
         }
-        3 => ComplexPackingDecoder::decode(encoded)?,
+        3 => {
+            let decoder = ComplexPackingDecoder::decode(encoded)?;
+            let decoder = BitmapDecodeIterator::new(bitmap.iter(), decoder, num_points_total)?;
+            let decoded = decoder.collect::<Vec<_>>();
+            decoded.into_boxed_slice()
+        }
         40 => Jpeg2000CodeStreamDecoder::decode(encoded)?,
         200 => RunLengthEncodingDecoder::decode(encoded)?,
         _ => {

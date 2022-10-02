@@ -2,7 +2,6 @@ use num::ToPrimitive;
 use std::convert::TryInto;
 use std::iter;
 
-use crate::decoders::bitmap::BitmapDecodeIterator;
 use crate::decoders::common::*;
 use crate::decoders::simple::*;
 use crate::error::*;
@@ -16,8 +15,10 @@ pub enum ComplexPackingDecodeError {
 
 pub(crate) struct ComplexPackingDecoder {}
 
-impl Grib2DataDecode for ComplexPackingDecoder {
-    fn decode(encoded: Grib2SubmessageEncoded) -> Result<Box<[f32]>, GribError> {
+impl ComplexPackingDecoder {
+    pub(crate) fn decode(
+        encoded: Grib2SubmessageEncoded,
+    ) -> Result<impl Iterator<Item = f32>, GribError> {
         let sect5_data = encoded.sect5_payload;
         let ref_val = read_as!(f32, sect5_data, 6);
         let exp = read_as!(u16, sect5_data, 10).as_grib_int();
@@ -63,7 +64,7 @@ impl Grib2DataDecode for ComplexPackingDecoder {
         );
         let group_widths_iter = group_widths_iter
             .take(ngroup as usize)
-            .map(|v| u32::from(group_width_ref) + v);
+            .map(move |v| u32::from(group_width_ref) + v);
 
         let group_lens_iter = NBitwiseIterator::new(
             sect7_data[group_widths_end_octet..group_lens_end_octet].to_vec(),
@@ -71,7 +72,7 @@ impl Grib2DataDecode for ComplexPackingDecoder {
         );
         let group_lens_iter = group_lens_iter
             .take((ngroup - 1) as usize)
-            .map(|v| group_len_ref + u32::from(group_len_inc) * v)
+            .map(move |v| group_len_ref + u32::from(group_len_inc) * v)
             .chain(iter::once(group_len_last));
 
         let unpacked_data = ComplexPackingValueDecodeIterator::new(
@@ -102,10 +103,7 @@ impl Grib2DataDecode for ComplexPackingDecoder {
 
         let spdiff_unpacked = SpatialDiff2ndOrderDecodeIterator::new(spdiff_packed_iter);
         let decoder = SimplePackingDecodeIterator::new(spdiff_unpacked, ref_val, exp, dig);
-        let decoder =
-            BitmapDecodeIterator::new(encoded.bitmap.iter(), decoder, encoded.num_points_total)?;
-        let decoded = decoder.collect::<Vec<_>>();
-        Ok(decoded.into_boxed_slice())
+        Ok(decoder)
     }
 }
 
