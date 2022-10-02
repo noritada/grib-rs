@@ -1,12 +1,9 @@
 use num::ToPrimitive;
-use std::cell::RefMut;
 use std::convert::TryInto;
 
-use crate::context::SectionInfo;
 use crate::decoders::bitmap::BitmapDecodeIterator;
 use crate::decoders::common::*;
 use crate::error::*;
-use crate::reader::Grib2Read;
 use crate::utils::{read_as, GribInt, NBitwiseIterator};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -18,15 +15,9 @@ pub enum SimplePackingDecodeError {
 
 pub(crate) struct SimplePackingDecoder {}
 
-impl<R: Grib2Read> Grib2DataDecode<R> for SimplePackingDecoder {
-    fn decode(
-        sect3_num_points: usize,
-        sect5: &SectionInfo,
-        bitmap: Vec<u8>,
-        sect7: &SectionInfo,
-        mut reader: RefMut<R>,
-    ) -> Result<Box<[f32]>, GribError> {
-        let sect5_data = reader.read_sect_payload_as_slice(sect5)?;
+impl Grib2DataDecode for SimplePackingDecoder {
+    fn decode(encoded: Grib2SubmessageEncoded) -> Result<Box<[f32]>, GribError> {
+        let sect5_data = encoded.sect5_payload;
         let ref_val = read_as!(f32, sect5_data, 6);
         let exp = read_as!(u16, sect5_data, 10).as_grib_int();
         let dig = read_as!(u16, sect5_data, 12).as_grib_int();
@@ -41,20 +32,19 @@ impl<R: Grib2Read> Grib2DataDecode<R> for SimplePackingDecoder {
             ));
         }
 
-        let sect7_data = reader.read_sect_payload_as_slice(sect7)?;
-
         // Based on the implementation of wgrib2, if nbits equals 0, return a constant
         // field where the data value at each grid point is the reference value.
         if nbit == 0 {
-            let decoded = vec![ref_val; sect3_num_points];
+            let decoded = vec![ref_val; encoded.num_points_total];
             return Ok(decoded.into_boxed_slice());
         }
 
-        let iter = NBitwiseIterator::new(&sect7_data, usize::from(nbit));
+        let iter = NBitwiseIterator::new(&encoded.sect7_payload, usize::from(nbit));
         let decoder = SimplePackingDecodeIterator::new(iter, ref_val, exp, dig);
-        let decoder = BitmapDecodeIterator::new(bitmap.iter(), decoder, sect3_num_points)?;
+        let decoder =
+            BitmapDecodeIterator::new(encoded.bitmap.iter(), decoder, encoded.num_points_total)?;
         let decoded = decoder.collect::<Vec<_>>();
-        if decoded.len() != sect3_num_points {
+        if decoded.len() != encoded.num_points_total {
             return Err(GribError::DecodeError(
                 DecodeError::SimplePackingDecodeError(SimplePackingDecodeError::LengthMismatch),
             ));

@@ -1,14 +1,11 @@
 use num::ToPrimitive;
-use std::cell::RefMut;
 use std::convert::TryInto;
 use std::iter;
 
-use crate::context::SectionInfo;
 use crate::decoders::bitmap::BitmapDecodeIterator;
 use crate::decoders::common::*;
 use crate::decoders::simple::*;
 use crate::error::*;
-use crate::reader::Grib2Read;
 use crate::utils::{read_as, GribInt, NBitwiseIterator};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -19,15 +16,9 @@ pub enum ComplexPackingDecodeError {
 
 pub(crate) struct ComplexPackingDecoder {}
 
-impl<R: Grib2Read> Grib2DataDecode<R> for ComplexPackingDecoder {
-    fn decode(
-        sect3_num_points: usize,
-        sect5: &SectionInfo,
-        bitmap: Vec<u8>,
-        sect7: &SectionInfo,
-        mut reader: RefMut<R>,
-    ) -> Result<Box<[f32]>, GribError> {
-        let sect5_data = reader.read_sect_payload_as_slice(sect5)?;
+impl Grib2DataDecode for ComplexPackingDecoder {
+    fn decode(encoded: Grib2SubmessageEncoded) -> Result<Box<[f32]>, GribError> {
+        let sect5_data = encoded.sect5_payload;
         let ref_val = read_as!(f32, sect5_data, 6);
         let exp = read_as!(u16, sect5_data, 10).as_grib_int();
         let dig = read_as!(u16, sect5_data, 12).as_grib_int();
@@ -42,8 +33,7 @@ impl<R: Grib2Read> Grib2DataDecode<R> for ComplexPackingDecoder {
         let spdiff_level = read_as!(u8, sect5_data, 42);
         let spdiff_param_octet = read_as!(u8, sect5_data, 43);
 
-        let sect7_data = reader.read_sect_payload_as_slice(sect7)?;
-
+        let sect7_data = encoded.sect7_payload;
         let z1 = read_as!(u16, sect7_data, 0).as_grib_int();
         let z2 = read_as!(u16, sect7_data, 2).as_grib_int();
         let z_min = read_as!(u16, sect7_data, 4).as_grib_int();
@@ -112,9 +102,10 @@ impl<R: Grib2Read> Grib2DataDecode<R> for ComplexPackingDecoder {
 
         let spdiff_unpacked = SpatialDiff2ndOrderDecodeIterator::new(spdiff_packed_iter);
         let decoder = SimplePackingDecodeIterator::new(spdiff_unpacked, ref_val, exp, dig);
-        let decoder = BitmapDecodeIterator::new(bitmap.iter(), decoder, sect3_num_points)?;
+        let decoder =
+            BitmapDecodeIterator::new(encoded.bitmap.iter(), decoder, encoded.num_points_total)?;
         let decoded = decoder.collect::<Vec<_>>();
-        if decoded.len() != sect3_num_points {
+        if decoded.len() != encoded.num_points_total {
             return Err(GribError::DecodeError(
                 DecodeError::SimplePackingDecodeError(SimplePackingDecodeError::LengthMismatch),
             ));
