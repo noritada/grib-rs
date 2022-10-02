@@ -79,7 +79,7 @@ impl Grib2DataDecode for ComplexPackingDecoder {
             group_widths_iter,
             group_lens_iter,
             z_min,
-            &sect7_data[group_lens_end_octet..],
+            sect7_data[group_lens_end_octet..].to_vec(),
         );
 
         if spdiff_level != 2 {
@@ -115,23 +115,23 @@ impl Grib2DataDecode for ComplexPackingDecoder {
 }
 
 #[derive(Clone)]
-struct ComplexPackingValueDecodeIterator<'a, I, J, K> {
+struct ComplexPackingValueDecodeIterator<I, J, K> {
     ref_iter: I,
     width_iter: J,
     length_iter: K,
     z_min: i32,
-    data: &'a [u8],
+    data: Vec<u8>,
     pos: usize,
     start_offset_bits: usize,
 }
 
-impl<'a, I, J, K> ComplexPackingValueDecodeIterator<'a, I, J, K> {
+impl<I, J, K> ComplexPackingValueDecodeIterator<I, J, K> {
     pub(crate) fn new(
         ref_iter: I,
         width_iter: J,
         length_iter: K,
         z_min: i16,
-        data: &'a [u8],
+        data: Vec<u8>,
     ) -> Self {
         Self {
             ref_iter,
@@ -145,8 +145,8 @@ impl<'a, I, J, K> ComplexPackingValueDecodeIterator<'a, I, J, K> {
     }
 }
 
-impl<'a, I: Iterator<Item = N>, J: Iterator<Item = O>, K: Iterator<Item = P>, N, O, P> Iterator
-    for ComplexPackingValueDecodeIterator<'a, I, J, K>
+impl<I: Iterator<Item = N>, J: Iterator<Item = O>, K: Iterator<Item = P>, N, O, P> Iterator
+    for ComplexPackingValueDecodeIterator<I, J, K>
 where
     N: ToPrimitive,
     O: ToPrimitive,
