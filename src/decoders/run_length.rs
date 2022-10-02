@@ -1,6 +1,5 @@
 use std::convert::TryInto;
 
-use crate::decoders::bitmap::BitmapDecodeIterator;
 use crate::decoders::common::*;
 use crate::error::*;
 use crate::utils::{read_as, NBitwiseIterator};
@@ -15,8 +14,10 @@ pub enum RunLengthEncodingDecodeError {
 
 pub(crate) struct RunLengthEncodingDecoder {}
 
-impl Grib2DataDecode for RunLengthEncodingDecoder {
-    fn decode(encoded: Grib2SubmessageEncoded) -> Result<Box<[f32]>, GribError> {
+impl RunLengthEncodingDecoder {
+    pub(crate) fn decode(
+        encoded: Grib2SubmessageEncoded,
+    ) -> Result<impl Iterator<Item = f32>, GribError> {
         let sect5_data = encoded.sect5_payload;
         let nbit = read_as!(u8, sect5_data, 6);
         let maxv = read_as!(u16, sect5_data, 7);
@@ -55,14 +56,7 @@ impl Grib2DataDecode for RunLengthEncodingDecoder {
         };
 
         let decoded: Result<Vec<_>, _> = (*decoded_levels).iter().map(level_to_value).collect();
-        let decoder = BitmapDecodeIterator::new(
-            encoded.bitmap.iter(),
-            decoded?.into_iter(),
-            encoded.num_points_total,
-        )?;
-        let decoded = decoder.collect::<Vec<_>>();
-        let decoded = decoded.into_boxed_slice();
-        Ok(decoded)
+        Ok(decoded?.into_iter())
     }
 }
 

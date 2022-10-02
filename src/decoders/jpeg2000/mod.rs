@@ -1,7 +1,6 @@
 use openjpeg_sys as opj;
 use std::convert::TryInto;
 
-use crate::decoders::bitmap::BitmapDecodeIterator;
 use crate::decoders::common::*;
 use crate::decoders::simple::*;
 use crate::error::*;
@@ -21,8 +20,10 @@ pub enum Jpeg2000CodeStreamDecodeError {
 
 pub(crate) struct Jpeg2000CodeStreamDecoder {}
 
-impl Grib2DataDecode for Jpeg2000CodeStreamDecoder {
-    fn decode(encoded: Grib2SubmessageEncoded) -> Result<Box<[f32]>, GribError> {
+impl Jpeg2000CodeStreamDecoder {
+    pub(crate) fn decode(
+        encoded: Grib2SubmessageEncoded,
+    ) -> Result<impl Iterator<Item = f32>, GribError> {
         let sect5_data = encoded.sect5_payload;
         let ref_val = read_as!(f32, sect5_data, 6);
         let exp = read_as!(u16, sect5_data, 10).as_grib_int();
@@ -43,10 +44,7 @@ impl Grib2DataDecode for Jpeg2000CodeStreamDecoder {
         let jp2_unpacked = decode_jp2(stream)
             .map_err(|e| GribError::DecodeError(DecodeError::Jpeg2000CodeStreamDecodeError(e)))?;
         let decoder = SimplePackingDecodeIterator::new(jp2_unpacked, ref_val, exp, dig);
-        let decoder =
-            BitmapDecodeIterator::new(encoded.bitmap.iter(), decoder, encoded.num_points_total)?;
-        let decoded = decoder.collect::<Vec<_>>();
-        Ok(decoded.into_boxed_slice())
+        Ok(decoder)
     }
 }
 

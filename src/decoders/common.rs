@@ -8,10 +8,8 @@ use crate::error::*;
 use crate::reader::Grib2Read;
 
 pub(crate) struct Grib2SubmessageEncoded {
-    pub(crate) num_points_total: usize,
     pub(crate) num_points_encoded: usize,
     pub(crate) sect5_payload: Box<[u8]>,
-    pub(crate) bitmap: Vec<u8>,
     pub(crate) sect7_payload: Box<[u8]>,
 }
 
@@ -85,39 +83,38 @@ pub fn dispatch<R: Grib2Read>(submessage: SubMessage<R>) -> Result<Box<[f32]>, G
         }
     };
     let encoded = Grib2SubmessageEncoded {
-        num_points_total: sect3_num_points,
         num_points_encoded: sect5_body.num_points() as usize,
         sect5_payload: reader.read_sect_payload_as_slice(sect5)?,
-        bitmap,
         sect7_payload: reader.read_sect_payload_as_slice(sect7)?,
     };
 
-    let bitmap = encoded.bitmap.clone(); // tentative clone
-    let num_points_total = encoded.num_points_total;
+    let num_points_total = sect3_num_points;
     let decoded = match sect5_body.repr_tmpl_num() {
         0 => {
             let decoder = SimplePackingDecoder::decode(encoded)?;
             let decoder = BitmapDecodeIterator::new(bitmap.iter(), decoder, num_points_total)?;
-            let decoded = decoder.collect::<Vec<_>>();
-            decoded.into_boxed_slice()
+            decoder.collect::<Vec<_>>()
         }
         3 => {
             let decoder = ComplexPackingDecoder::decode(encoded)?;
             let decoder = BitmapDecodeIterator::new(bitmap.iter(), decoder, num_points_total)?;
-            let decoded = decoder.collect::<Vec<_>>();
-            decoded.into_boxed_slice()
+            decoder.collect::<Vec<_>>()
         }
-        40 => Jpeg2000CodeStreamDecoder::decode(encoded)?,
-        200 => RunLengthEncodingDecoder::decode(encoded)?,
+        40 => {
+            let decoder = Jpeg2000CodeStreamDecoder::decode(encoded)?;
+            let decoder = BitmapDecodeIterator::new(bitmap.iter(), decoder, num_points_total)?;
+            decoder.collect::<Vec<_>>()
+        }
+        200 => {
+            let decoder = RunLengthEncodingDecoder::decode(encoded)?;
+            let decoder = BitmapDecodeIterator::new(bitmap.iter(), decoder, num_points_total)?;
+            decoder.collect::<Vec<_>>()
+        }
         _ => {
             return Err(GribError::DecodeError(
                 DecodeError::TemplateNumberUnsupported,
             ))
         }
     };
-    Ok(decoded)
-}
-
-pub(crate) trait Grib2DataDecode {
-    fn decode(encoded: Grib2SubmessageEncoded) -> Result<Box<[f32]>, GribError>;
+    Ok(decoded.into_boxed_slice())
 }
