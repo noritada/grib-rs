@@ -1,12 +1,11 @@
 use crate::context::{SectionBody, SubMessage};
-use crate::decoders::bitmap::create_bitmap_for_nonnullable_data;
+use crate::decoders::bitmap::{create_bitmap_for_nonnullable_data, BitmapDecodeIterator};
 use crate::decoders::complex::*;
 use crate::decoders::jpeg2000::*;
 use crate::decoders::run_length::*;
 use crate::decoders::simple::*;
 use crate::error::*;
 use crate::reader::Grib2Read;
-use num::ToPrimitive;
 
 pub(crate) struct Grib2SubmessageEncoded {
     pub(crate) num_points_total: usize,
@@ -14,33 +13,6 @@ pub(crate) struct Grib2SubmessageEncoded {
     pub(crate) sect5_payload: Box<[u8]>,
     pub(crate) bitmap: Vec<u8>,
     pub(crate) sect7_payload: Box<[u8]>,
-}
-
-pub(crate) enum Grib2UnpackedDataIterator<I> {
-    FixedValue(std::vec::IntoIter<f32>),
-    SimplePacking(SimplePackingDecodeIterator<I>),
-}
-
-impl<I, N> Iterator for Grib2UnpackedDataIterator<I>
-where
-    I: Iterator<Item = N>,
-    N: ToPrimitive,
-{
-    type Item = f32;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        match self {
-            Self::FixedValue(inner) => inner.next(),
-            Self::SimplePacking(inner) => inner.next(),
-        }
-    }
-
-    fn size_hint(&self) -> (usize, Option<usize>) {
-        match self {
-            Self::FixedValue(inner) => inner.size_hint(),
-            Self::SimplePacking(inner) => inner.size_hint(),
-        }
-    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -120,8 +92,15 @@ pub fn dispatch<R: Grib2Read>(submessage: SubMessage<R>) -> Result<Box<[f32]>, G
         sect7_payload: reader.read_sect_payload_as_slice(sect7)?,
     };
 
+    let bitmap = encoded.bitmap.clone(); // tentative clone
+    let num_points_total = encoded.num_points_total;
     let decoded = match sect5_body.repr_tmpl_num() {
-        0 => SimplePackingDecoder::decode(encoded)?,
+        0 => {
+            let decoder = SimplePackingDecoder::decode(encoded)?;
+            let decoder = BitmapDecodeIterator::new(bitmap.iter(), decoder, num_points_total)?;
+            let decoded = decoder.collect::<Vec<_>>();
+            decoded.into_boxed_slice()
+        }
         3 => ComplexPackingDecoder::decode(encoded)?,
         40 => Jpeg2000CodeStreamDecoder::decode(encoded)?,
         200 => RunLengthEncodingDecoder::decode(encoded)?,

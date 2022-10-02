@@ -1,10 +1,36 @@
 use num::ToPrimitive;
 use std::convert::TryInto;
 
-use crate::decoders::bitmap::BitmapDecodeIterator;
 use crate::decoders::common::*;
 use crate::error::*;
 use crate::utils::{read_as, GribInt, NBitwiseIterator};
+
+pub(crate) enum SimplePackingDecodeIteratorWrapper<I> {
+    FixedValue(std::vec::IntoIter<f32>),
+    SimplePacking(SimplePackingDecodeIterator<I>),
+}
+
+impl<I, N> Iterator for SimplePackingDecodeIteratorWrapper<I>
+where
+    I: Iterator<Item = N>,
+    N: ToPrimitive,
+{
+    type Item = f32;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        match self {
+            Self::FixedValue(inner) => inner.next(),
+            Self::SimplePacking(inner) => inner.next(),
+        }
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        match self {
+            Self::FixedValue(inner) => inner.size_hint(),
+            Self::SimplePacking(inner) => inner.size_hint(),
+        }
+    }
+}
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum SimplePackingDecodeError {
@@ -15,8 +41,10 @@ pub enum SimplePackingDecodeError {
 
 pub(crate) struct SimplePackingDecoder {}
 
-impl Grib2DataDecode for SimplePackingDecoder {
-    fn decode(encoded: Grib2SubmessageEncoded) -> Result<Box<[f32]>, GribError> {
+impl SimplePackingDecoder {
+    pub(crate) fn decode(
+        encoded: Grib2SubmessageEncoded,
+    ) -> Result<impl Iterator<Item = f32>, GribError> {
         let sect5_data = encoded.sect5_payload;
         let ref_val = read_as!(f32, sect5_data, 6);
         let exp = read_as!(u16, sect5_data, 10).as_grib_int();
@@ -36,17 +64,13 @@ impl Grib2DataDecode for SimplePackingDecoder {
             // Based on the implementation of wgrib2, if nbits equals 0, return a constant
             // field where the data value at each grid point is the reference value.
             let decoded = vec![ref_val; encoded.num_points_encoded];
-            Grib2UnpackedDataIterator::FixedValue(decoded.into_iter())
+            SimplePackingDecodeIteratorWrapper::FixedValue(decoded.into_iter())
         } else {
             let iter = NBitwiseIterator::new(encoded.sect7_payload.to_vec(), usize::from(nbit));
-            Grib2UnpackedDataIterator::SimplePacking(SimplePackingDecodeIterator::new(
-                iter, ref_val, exp, dig,
-            ))
+            let iter = SimplePackingDecodeIterator::new(iter, ref_val, exp, dig);
+            SimplePackingDecodeIteratorWrapper::SimplePacking(iter)
         };
-        let decoder =
-            BitmapDecodeIterator::new(encoded.bitmap.iter(), decoder, encoded.num_points_total)?;
-        let decoded = decoder.collect::<Vec<_>>();
-        Ok(decoded.into_boxed_slice())
+        Ok(decoder)
     }
 }
 
