@@ -37,7 +37,7 @@ impl Grib2DataDecode for RunLengthEncodingDecoder {
         }
 
         let decoded_levels = rleunpack(
-            &encoded.sect7_payload,
+            encoded.sect7_payload.to_vec(),
             nbit,
             maxv,
             Some(encoded.num_points_encoded),
@@ -68,7 +68,7 @@ impl Grib2DataDecode for RunLengthEncodingDecoder {
 
 // Since maxv is represented as a 16-bit integer, values are 16 bits or less.
 fn rleunpack(
-    input: &[u8],
+    input: Vec<u8>,
     nbit: u8,
     maxv: u16,
     expected_len: Option<usize>,
@@ -124,7 +124,7 @@ mod tests {
         let output: Vec<u16> = output.iter().map(|n| n + 240).collect();
 
         assert_eq!(
-            rleunpack(&input, 8, 250, Some(21)),
+            rleunpack(input, 8, 250, Some(21)),
             Ok(output.into_boxed_slice())
         );
     }
@@ -134,6 +134,6 @@ mod tests {
         let input: Vec<u8> = vec![0x00, 0x14, 0x1c];
         let output: Vec<u16> = vec![0; 6065];
 
-        assert_eq!(rleunpack(&input, 8, 3, None), Ok(output.into_boxed_slice()));
+        assert_eq!(rleunpack(input, 8, 3, None), Ok(output.into_boxed_slice()));
     }
 }

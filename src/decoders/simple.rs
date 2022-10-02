@@ -38,7 +38,7 @@ impl Grib2DataDecode for SimplePackingDecoder {
             let decoded = vec![ref_val; encoded.num_points_encoded];
             Grib2UnpackedDataIterator::FixedValue(decoded.into_iter())
         } else {
-            let iter = NBitwiseIterator::new(&encoded.sect7_payload, usize::from(nbit));
+            let iter = NBitwiseIterator::new(encoded.sect7_payload.to_vec(), usize::from(nbit));
             Grib2UnpackedDataIterator::SimplePacking(SimplePackingDecodeIterator::new(
                 iter, ref_val, exp, dig,
             ))
@@ -103,7 +103,7 @@ mod tests {
         let expected: Vec<f32> = vec![7.987_831_6e-7, 9.030_913e-7];
 
         let ref_val = f32::from_be_bytes(ref_val_bytes[..].try_into().unwrap());
-        let iter = NBitwiseIterator::new(&input, 16);
+        let iter = NBitwiseIterator::new(input, 16);
         let actual =
             SimplePackingDecodeIterator::new(iter, ref_val, exp.as_grib_int(), dig.as_grib_int())
                 .collect::<Vec<_>>();

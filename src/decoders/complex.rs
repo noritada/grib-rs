@@ -52,13 +52,13 @@ impl Grib2DataDecode for ComplexPackingDecoder {
             group_widths_end_octet + get_octet_length(group_len_nbit, ngroup);
 
         let group_refs_iter = NBitwiseIterator::new(
-            &sect7_data[params_end_octet..group_refs_end_octet],
+            sect7_data[params_end_octet..group_refs_end_octet].to_vec(),
             usize::from(nbit),
         );
         let group_refs_iter = group_refs_iter.take(ngroup as usize);
 
         let group_widths_iter = NBitwiseIterator::new(
-            &sect7_data[group_refs_end_octet..group_widths_end_octet],
+            sect7_data[group_refs_end_octet..group_widths_end_octet].to_vec(),
             usize::from(group_width_nbit),
         );
         let group_widths_iter = group_widths_iter
@@ -66,7 +66,7 @@ impl Grib2DataDecode for ComplexPackingDecoder {
             .map(|v| u32::from(group_width_ref) + v);
 
         let group_lens_iter = NBitwiseIterator::new(
-            &sect7_data[group_widths_end_octet..group_lens_end_octet],
+            sect7_data[group_widths_end_octet..group_lens_end_octet].to_vec(),
             usize::from(group_len_nbit),
         );
         let group_lens_iter = group_lens_iter
@@ -164,12 +164,14 @@ where
                 let bits = width * length;
                 let (pos_end, offset_bit) = (self.pos + bits / 8, bits % 8);
                 let offset_byte = if offset_bit > 0 { 1 } else { 0 };
-                let group_values =
-                    NBitwiseIterator::new(&self.data[self.pos..pos_end + offset_byte], width)
-                        .with_offset(self.start_offset_bits)
-                        .take(length)
-                        .map(|v| v.as_grib_int() + _ref + self.z_min)
-                        .collect::<Vec<i32>>();
+                let group_values = NBitwiseIterator::new(
+                    self.data[self.pos..pos_end + offset_byte].to_vec(),
+                    width,
+                )
+                .with_offset(self.start_offset_bits)
+                .take(length)
+                .map(|v| v.as_grib_int() + _ref + self.z_min)
+                .collect::<Vec<i32>>();
                 self.pos = pos_end;
                 self.start_offset_bits = offset_byte;
                 Some(group_values)
