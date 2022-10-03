@@ -17,8 +17,8 @@ macro_rules! test_subcommands_without_args {
                     predicate::str::starts_with(
                         "error: The following required arguments were not provided:",
                     )
-                        .and(predicate::str::contains("USAGE:"))
-                        .and(predicate::str::contains("SUBCOMMANDS:").not()),
+                        .and(predicate::str::contains("Usage:"))
+                        .and(predicate::str::contains("Commands:").not()),
                 );
 
             Ok(())

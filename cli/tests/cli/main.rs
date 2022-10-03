@@ -14,9 +14,9 @@ fn help() -> Result<(), Box<dyn std::error::Error>> {
     cmd.assert()
         .success()
         .stdout(
-            predicate::str::contains("USAGE:")
-                .and(predicate::str::contains("OPTIONS:"))
-                .and(predicate::str::contains("SUBCOMMANDS:")),
+            predicate::str::contains("Usage:")
+                .and(predicate::str::contains("Options:"))
+                .and(predicate::str::contains("Commands:")),
         )
         .stderr(predicate::str::is_empty());
 
@@ -47,11 +47,9 @@ fn no_such_subcommand() -> Result<(), Box<dyn std::error::Error>> {
         .failure()
         .stdout(predicate::str::is_empty())
         .stderr(
-            predicate::str::starts_with(
-                "error: Found argument 'foo' which wasn't expected, or isn't valid in this context",
-            )
-            .and(predicate::str::contains("USAGE:"))
-            .and(predicate::str::contains("SUBCOMMANDS:").not()),
+            predicate::str::starts_with("error: The subcommand 'foo' wasn't recognized")
+                .and(predicate::str::contains("Usage:"))
+                .and(predicate::str::contains("Commands:").not()),
         );
 
     Ok(())
