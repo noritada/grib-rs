@@ -1,6 +1,6 @@
 use clap::{ArgMatches, Command};
 
-pub fn cli() -> Vec<Command<'static>> {
+pub fn cli() -> Vec<Command> {
     vec![decode::cli(), info::cli(), inspect::cli(), list::cli()]
 }
 

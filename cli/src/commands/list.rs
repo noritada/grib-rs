@@ -8,7 +8,7 @@ use grib::context::SubmessageIterator;
 
 use crate::cli;
 
-pub fn cli() -> Command<'static> {
+pub fn cli() -> Command {
     Command::new("list")
         .about("List surfaces contained in the data")
         .arg(arg!(-d --dump "Show details of each data"))

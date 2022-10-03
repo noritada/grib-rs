@@ -8,7 +8,7 @@ use grib::context::{SectionInfo, SubMessageSection, SubmessageIterator, Template
 
 use crate::cli;
 
-pub fn cli() -> Command<'static> {
+pub fn cli() -> Command {
     Command::new("inspect")
         .about("Inspect and describes the data structure")
         .arg(arg!(-s --sections "Print sections constructing the GRIB message"))
