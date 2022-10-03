@@ -11,7 +11,7 @@ use grib::datatypes::{Identification, Indicator};
 
 use crate::cli;
 
-pub fn cli() -> Command<'static> {
+pub fn cli() -> Command {
     Command::new("info")
         .about("Show identification information")
         .arg(arg!(<FILE> "Target file").value_parser(clap::value_parser!(PathBuf)))
