@@ -53,19 +53,18 @@ The [examples](examples) may help you understand the API. The functionality is s
 ## CLI application `gribber`
 
 ```
-USAGE:
-    gribber [SUBCOMMAND]
+Usage: gribber [COMMAND]
 
-OPTIONS:
-    -h, --help       Print help information
-    -V, --version    Print version information
+Commands:
+  decode   Export decoded data
+  info     Show identification information
+  inspect  Inspect and describes the data structure
+  list     List surfaces contained in the data
+  help     Print this message or the help of the given subcommand(s)
 
-SUBCOMMANDS:
-    decode     Export decoded data
-    help       Print this message or the help of the given subcommand(s)
-    info       Show identification information
-    inspect    Inspect and describes the data structure
-    list       List surfaces contained in the data
+Options:
+  -h, --help     Print help information
+  -V, --version  Print version information
 ```
 
 Note that binaries exported from `gribber decode --big-endian` use `0x7fc00000` as a missing value, although those from `wgrib` use `0x6258d19a`.
