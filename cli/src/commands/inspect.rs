@@ -1,4 +1,4 @@
-use clap::{arg, ArgMatches, Command};
+use clap::{arg, ArgAction, ArgMatches, Command};
 use console::Style;
 use std::fmt::{self, Display, Formatter};
 use std::path::PathBuf;
@@ -11,9 +11,18 @@ use crate::cli;
 pub fn cli() -> Command {
     Command::new("inspect")
         .about("Inspect and describes the data structure")
-        .arg(arg!(-s --sections "Print sections constructing the GRIB message"))
-        .arg(arg!(-m --submessages "Print submessages in the GRIB message"))
-        .arg(arg!(-t --templates "Print templates used in the GRIB message"))
+        .arg(
+            arg!(-s --sections "Print sections constructing the GRIB message")
+                .action(ArgAction::SetTrue),
+        )
+        .arg(
+            arg!(-m --submessages "Print submessages in the GRIB message")
+                .action(ArgAction::SetTrue),
+        )
+        .arg(
+            arg!(-t --templates "Print templates used in the GRIB message")
+                .action(ArgAction::SetTrue),
+        )
         .arg(arg!(<FILE> "Target file").value_parser(clap::value_parser!(PathBuf)))
         .after_help(
             "\
@@ -29,17 +38,17 @@ pub fn exec(args: &ArgMatches) -> anyhow::Result<()> {
     let grib = cli::grib(file_name)?;
 
     let mut view = InspectView::new();
-    if args.contains_id("sections") {
+    if args.get_flag("sections") {
         view.add(InspectItem::Sections(InspectSectionsItem::new(
             grib.sections(),
         )));
     }
-    if args.contains_id("submessages") {
+    if args.get_flag("submessages") {
         view.add(InspectItem::SubMessages(InspectSubMessagesItem::new(
             grib.submessages(),
         )));
     }
-    if args.contains_id("templates") {
+    if args.get_flag("templates") {
         let tmpls = grib.list_templates();
         view.add(InspectItem::Templates(InspectTemplatesItem::new(tmpls)));
     }

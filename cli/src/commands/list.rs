@@ -1,4 +1,4 @@
-use clap::{arg, ArgMatches, Command};
+use clap::{arg, ArgAction, ArgMatches, Command};
 use console::Style;
 use std::fmt::{self, Display, Formatter};
 use std::path::PathBuf;
@@ -11,7 +11,7 @@ use crate::cli;
 pub fn cli() -> Command {
     Command::new("list")
         .about("List surfaces contained in the data")
-        .arg(arg!(-d --dump "Show details of each data"))
+        .arg(arg!(-d --dump "Show details of each data").action(ArgAction::SetTrue))
         .arg(arg!(<FILE> "Target file").value_parser(clap::value_parser!(PathBuf)))
 }
 
@@ -19,7 +19,7 @@ pub fn exec(args: &ArgMatches) -> anyhow::Result<()> {
     let file_name = args.get_one::<PathBuf>("FILE").unwrap();
     let grib = cli::grib(file_name)?;
 
-    let mode = if args.contains_id("dump") {
+    let mode = if args.get_flag("dump") {
         ListViewMode::Dump
     } else {
         ListViewMode::OneLine
