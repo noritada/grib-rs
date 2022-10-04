@@ -18,7 +18,7 @@ pub(crate) struct ComplexPackingDecoder {}
 impl ComplexPackingDecoder {
     pub(crate) fn decode(
         encoded: Grib2SubmessageEncoded,
-    ) -> Result<impl Iterator<Item = f32>, GribError> {
+    ) -> Result<SimplePackingDecodeIterator<impl Iterator<Item = i32>>, GribError> {
         let sect5_data = encoded.sect5_payload;
         let ref_val = read_as!(f32, sect5_data, 6);
         let exp = read_as!(u16, sect5_data, 10).as_grib_int();

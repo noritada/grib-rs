@@ -17,7 +17,7 @@ pub(crate) struct RunLengthEncodingDecoder {}
 impl RunLengthEncodingDecoder {
     pub(crate) fn decode(
         encoded: Grib2SubmessageEncoded,
-    ) -> Result<impl Iterator<Item = f32>, GribError> {
+    ) -> Result<std::vec::IntoIter<f32>, GribError> {
         let sect5_data = encoded.sect5_payload;
         let nbit = read_as!(u8, sect5_data, 6);
         let maxv = read_as!(u16, sect5_data, 7);

@@ -6,11 +6,49 @@ use crate::decoders::run_length::*;
 use crate::decoders::simple::*;
 use crate::error::*;
 use crate::reader::Grib2Read;
+use num::ToPrimitive;
 
 pub(crate) struct Grib2SubmessageEncoded {
     pub(crate) num_points_encoded: usize,
     pub(crate) sect5_payload: Box<[u8]>,
     pub(crate) sect7_payload: Box<[u8]>,
+}
+
+pub(crate) enum Grib2SubmessageDecoderWrapper<I, J, K> {
+    Template0(SimplePackingDecodeIteratorWrapper<I>),
+    Template3(SimplePackingDecodeIterator<J>),
+    Template40(SimplePackingDecodeIterator<K>),
+    Template200(std::vec::IntoIter<f32>),
+}
+
+impl<I, J, K> Iterator for Grib2SubmessageDecoderWrapper<I, J, K>
+where
+    I: Iterator,
+    <I as Iterator>::Item: ToPrimitive,
+    J: Iterator,
+    <J as Iterator>::Item: ToPrimitive,
+    K: Iterator,
+    <K as Iterator>::Item: ToPrimitive,
+{
+    type Item = f32;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        match self {
+            Self::Template0(inner) => inner.next(),
+            Self::Template3(inner) => inner.next(),
+            Self::Template40(inner) => inner.next(),
+            Self::Template200(inner) => inner.next(),
+        }
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        match self {
+            Self::Template0(inner) => inner.size_hint(),
+            Self::Template3(inner) => inner.size_hint(),
+            Self::Template40(inner) => inner.size_hint(),
+            Self::Template200(inner) => inner.size_hint(),
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -89,26 +127,14 @@ pub fn dispatch<R: Grib2Read>(submessage: SubMessage<R>) -> Result<Box<[f32]>, G
     };
 
     let num_points_total = sect3_num_points;
-    let decoded = match sect5_body.repr_tmpl_num() {
-        0 => {
-            let decoder = SimplePackingDecoder::decode(encoded)?;
-            let decoder = BitmapDecodeIterator::new(bitmap.iter(), decoder, num_points_total)?;
-            decoder.collect::<Vec<_>>()
-        }
-        3 => {
-            let decoder = ComplexPackingDecoder::decode(encoded)?;
-            let decoder = BitmapDecodeIterator::new(bitmap.iter(), decoder, num_points_total)?;
-            decoder.collect::<Vec<_>>()
-        }
+    let decoder = match sect5_body.repr_tmpl_num() {
+        0 => Grib2SubmessageDecoderWrapper::Template0(SimplePackingDecoder::decode(encoded)?),
+        3 => Grib2SubmessageDecoderWrapper::Template3(ComplexPackingDecoder::decode(encoded)?),
         40 => {
-            let decoder = Jpeg2000CodeStreamDecoder::decode(encoded)?;
-            let decoder = BitmapDecodeIterator::new(bitmap.iter(), decoder, num_points_total)?;
-            decoder.collect::<Vec<_>>()
+            Grib2SubmessageDecoderWrapper::Template40(Jpeg2000CodeStreamDecoder::decode(encoded)?)
         }
         200 => {
-            let decoder = RunLengthEncodingDecoder::decode(encoded)?;
-            let decoder = BitmapDecodeIterator::new(bitmap.iter(), decoder, num_points_total)?;
-            decoder.collect::<Vec<_>>()
+            Grib2SubmessageDecoderWrapper::Template200(RunLengthEncodingDecoder::decode(encoded)?)
         }
         _ => {
             return Err(GribError::DecodeError(
@@ -116,5 +142,7 @@ pub fn dispatch<R: Grib2Read>(submessage: SubMessage<R>) -> Result<Box<[f32]>, G
             ))
         }
     };
+    let decoder = BitmapDecodeIterator::new(bitmap.iter(), decoder, num_points_total)?;
+    let decoded = decoder.collect::<Vec<f32>>();
     Ok(decoded.into_boxed_slice())
 }
