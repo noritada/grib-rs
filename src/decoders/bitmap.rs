@@ -1,8 +1,11 @@
 use std::iter::Peekable;
 
+use crate::{decoders::common::DecodeError, error::GribError};
+
 pub(crate) struct BitmapDecodeIterator<B: Iterator, I> {
     bitmap: Peekable<B>,
     values: I,
+    len: usize,
     offset: usize,
 }
 
@@ -10,12 +13,17 @@ impl<'b, B, I> BitmapDecodeIterator<B, I>
 where
     B: Iterator<Item = &'b u8>,
 {
-    pub(crate) fn new(bitmap: B, values: I) -> Self {
-        Self {
+    pub(crate) fn new(bitmap: B, values: I, len: usize) -> Result<Self, GribError> {
+        let (bitmap_len, _) = bitmap.size_hint();
+        if bitmap_len * 8 < len {
+            return Err(GribError::DecodeError(DecodeError::LengthMismatch));
+        }
+        Ok(Self {
             bitmap: bitmap.peekable(),
             values,
+            len,
             offset: 0,
-        }
+        })
     }
 }
 
@@ -28,6 +36,9 @@ where
 
     fn next(&mut self) -> Option<f32> {
         let offset = self.offset;
+        if offset >= self.len {
+            return None;
+        }
         let byte = if self.offset < 7 {
             self.offset += 1;
             self.bitmap.peek()?
@@ -44,13 +55,7 @@ where
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
-        let (b_min, b_max) = self.bitmap.size_hint();
-        let min = b_min * 8 - 7;
-        if let Some(max) = b_max {
-            (min, Some(max * 8))
-        } else {
-            (min, None)
-        }
+        (self.len, Some(self.len))
     }
 }
 
@@ -80,7 +85,7 @@ mod test {
         let values = (0..10).into_iter().map(|n| n as f32).collect::<Vec<_>>();
         let values = values.into_iter();
 
-        let iter = BitmapDecodeIterator::new(bitmap.iter(), values);
+        let iter = BitmapDecodeIterator::new(bitmap.iter(), values, 24).unwrap();
         let actual = iter.collect::<Vec<_>>();
         let expected = vec![
             f32::NAN,

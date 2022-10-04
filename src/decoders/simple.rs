@@ -1,13 +1,36 @@
 use num::ToPrimitive;
-use std::cell::RefMut;
 use std::convert::TryInto;
 
-use crate::context::SectionInfo;
-use crate::decoders::bitmap::BitmapDecodeIterator;
 use crate::decoders::common::*;
 use crate::error::*;
-use crate::reader::Grib2Read;
 use crate::utils::{read_as, GribInt, NBitwiseIterator};
+
+pub(crate) enum SimplePackingDecodeIteratorWrapper<I> {
+    FixedValue(std::vec::IntoIter<f32>),
+    SimplePacking(SimplePackingDecodeIterator<I>),
+}
+
+impl<I, N> Iterator for SimplePackingDecodeIteratorWrapper<I>
+where
+    I: Iterator<Item = N>,
+    N: ToPrimitive,
+{
+    type Item = f32;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        match self {
+            Self::FixedValue(inner) => inner.next(),
+            Self::SimplePacking(inner) => inner.next(),
+        }
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        match self {
+            Self::FixedValue(inner) => inner.size_hint(),
+            Self::SimplePacking(inner) => inner.size_hint(),
+        }
+    }
+}
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum SimplePackingDecodeError {
@@ -18,15 +41,11 @@ pub enum SimplePackingDecodeError {
 
 pub(crate) struct SimplePackingDecoder {}
 
-impl<R: Grib2Read> Grib2DataDecode<R> for SimplePackingDecoder {
-    fn decode(
-        sect3_num_points: usize,
-        sect5: &SectionInfo,
-        bitmap: Vec<u8>,
-        sect7: &SectionInfo,
-        mut reader: RefMut<R>,
-    ) -> Result<Box<[f32]>, GribError> {
-        let sect5_data = reader.read_sect_payload_as_slice(sect5)?;
+impl SimplePackingDecoder {
+    pub(crate) fn decode(
+        encoded: Grib2SubmessageEncoded,
+    ) -> Result<impl Iterator<Item = f32>, GribError> {
+        let sect5_data = encoded.sect5_payload;
         let ref_val = read_as!(f32, sect5_data, 6);
         let exp = read_as!(u16, sect5_data, 10).as_grib_int();
         let dig = read_as!(u16, sect5_data, 12).as_grib_int();
@@ -41,29 +60,17 @@ impl<R: Grib2Read> Grib2DataDecode<R> for SimplePackingDecoder {
             ));
         }
 
-        let sect7_data = reader.read_sect_payload_as_slice(sect7)?;
-
-        // Based on the implementation of wgrib2, if nbits equals 0, return a constant
-        // field where the data value at each grid point is the reference value.
-        if nbit == 0 {
-            let decoded = vec![ref_val; sect3_num_points];
-            return Ok(decoded.into_boxed_slice());
-        }
-
-        let iter = NBitwiseIterator::new(&sect7_data, usize::from(nbit));
-        let decoder = SimplePackingDecodeIterator::new(iter, ref_val, exp, dig);
-        // Taking first `num_points` is needed.  Since the bitmap is represented as a
-        // sequence of bytes, for example, if there are 9 grid points, the
-        // number of iterations will probably be 16, which is greater than the
-        // original number of grid points.
-        let decoder = BitmapDecodeIterator::new(bitmap.iter(), decoder).take(sect3_num_points);
-        let decoded = decoder.collect::<Vec<_>>();
-        if decoded.len() != sect3_num_points {
-            return Err(GribError::DecodeError(
-                DecodeError::SimplePackingDecodeError(SimplePackingDecodeError::LengthMismatch),
-            ));
-        }
-        Ok(decoded.into_boxed_slice())
+        let decoder = if nbit == 0 {
+            // Based on the implementation of wgrib2, if nbits equals 0, return a constant
+            // field where the data value at each grid point is the reference value.
+            let decoded = vec![ref_val; encoded.num_points_encoded];
+            SimplePackingDecodeIteratorWrapper::FixedValue(decoded.into_iter())
+        } else {
+            let iter = NBitwiseIterator::new(encoded.sect7_payload.to_vec(), usize::from(nbit));
+            let iter = SimplePackingDecodeIterator::new(iter, ref_val, exp, dig);
+            SimplePackingDecodeIteratorWrapper::SimplePacking(iter)
+        };
+        Ok(decoder)
     }
 }
 
@@ -120,7 +127,7 @@ mod tests {
         let expected: Vec<f32> = vec![7.987_831_6e-7, 9.030_913e-7];
 
         let ref_val = f32::from_be_bytes(ref_val_bytes[..].try_into().unwrap());
-        let iter = NBitwiseIterator::new(&input, 16);
+        let iter = NBitwiseIterator::new(input, 16);
         let actual =
             SimplePackingDecodeIterator::new(iter, ref_val, exp.as_grib_int(), dig.as_grib_int())
                 .collect::<Vec<_>>();

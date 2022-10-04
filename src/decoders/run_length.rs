@@ -1,11 +1,7 @@
-use std::cell::RefMut;
 use std::convert::TryInto;
 
-use crate::context::{SectionBody, SectionInfo};
-use crate::decoders::bitmap::BitmapDecodeIterator;
 use crate::decoders::common::*;
 use crate::error::*;
-use crate::reader::Grib2Read;
 use crate::utils::{read_as, NBitwiseIterator};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -18,20 +14,11 @@ pub enum RunLengthEncodingDecodeError {
 
 pub(crate) struct RunLengthEncodingDecoder {}
 
-impl<R: Grib2Read> Grib2DataDecode<R> for RunLengthEncodingDecoder {
-    fn decode(
-        sect3_num_points: usize,
-        sect5: &SectionInfo,
-        bitmap: Vec<u8>,
-        sect7: &SectionInfo,
-        mut reader: RefMut<R>,
-    ) -> Result<Box<[f32]>, GribError> {
-        let sect5_body = match sect5.body.as_ref() {
-            Some(SectionBody::Section5(b5)) => b5,
-            _ => return Err(GribError::InternalDataError),
-        };
-
-        let sect5_data = reader.read_sect_payload_as_slice(sect5)?;
+impl RunLengthEncodingDecoder {
+    pub(crate) fn decode(
+        encoded: Grib2SubmessageEncoded,
+    ) -> Result<impl Iterator<Item = f32>, GribError> {
+        let sect5_data = encoded.sect5_payload;
         let nbit = read_as!(u8, sect5_data, 6);
         let maxv = read_as!(u16, sect5_data, 7);
         let max_level = read_as!(u16, sect5_data, 9);
@@ -50,13 +37,11 @@ impl<R: Grib2Read> Grib2DataDecode<R> for RunLengthEncodingDecoder {
             pos += std::mem::size_of::<u16>();
         }
 
-        let sect7_data = reader.read_sect_payload_as_slice(sect7)?;
-
         let decoded_levels = rleunpack(
-            &sect7_data,
+            encoded.sect7_payload.to_vec(),
             nbit,
             maxv,
-            Some(sect5_body.num_points() as usize),
+            Some(encoded.num_points_encoded),
         )
         .map_err(DecodeError::RunLengthEncodingDecodeError)?;
 
@@ -71,21 +56,13 @@ impl<R: Grib2Read> Grib2DataDecode<R> for RunLengthEncodingDecoder {
         };
 
         let decoded: Result<Vec<_>, _> = (*decoded_levels).iter().map(level_to_value).collect();
-        // Taking first `num_points` is needed.  Since the bitmap is represented as a
-        // sequence of bytes, for example, if there are 9 grid points, the
-        // number of iterations will probably be 16, which is greater than the
-        // original number of grid points.
-        let decoder =
-            BitmapDecodeIterator::new(bitmap.iter(), decoded?.into_iter()).take(sect3_num_points);
-        let decoded = decoder.collect::<Vec<_>>();
-        let decoded = decoded.into_boxed_slice();
-        Ok(decoded)
+        Ok(decoded?.into_iter())
     }
 }
 
 // Since maxv is represented as a 16-bit integer, values are 16 bits or less.
 fn rleunpack(
-    input: &[u8],
+    input: Vec<u8>,
     nbit: u8,
     maxv: u16,
     expected_len: Option<usize>,
@@ -141,7 +118,7 @@ mod tests {
         let output: Vec<u16> = output.iter().map(|n| n + 240).collect();
 
         assert_eq!(
-            rleunpack(&input, 8, 250, Some(21)),
+            rleunpack(input, 8, 250, Some(21)),
             Ok(output.into_boxed_slice())
         );
     }
@@ -151,6 +128,6 @@ mod tests {
         let input: Vec<u8> = vec![0x00, 0x14, 0x1c];
         let output: Vec<u16> = vec![0; 6065];
 
-        assert_eq!(rleunpack(&input, 8, 3, None), Ok(output.into_boxed_slice()));
+        assert_eq!(rleunpack(input, 8, 3, None), Ok(output.into_boxed_slice()));
     }
 }
