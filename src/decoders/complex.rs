@@ -13,98 +13,92 @@ pub enum ComplexPackingDecodeError {
     LengthMismatch,
 }
 
-pub(crate) struct ComplexPackingDecoder {}
+pub(crate) fn decode(
+    encoded: Grib2SubmessageEncoded,
+) -> Result<SimplePackingDecodeIterator<impl Iterator<Item = i32>>, GribError> {
+    let sect5_data = encoded.sect5_payload;
+    let ref_val = read_as!(f32, sect5_data, 6);
+    let exp = read_as!(u16, sect5_data, 10).as_grib_int();
+    let dig = read_as!(u16, sect5_data, 12).as_grib_int();
+    let nbit = read_as!(u8, sect5_data, 14);
+    let ngroup = read_as!(u32, sect5_data, 26);
+    let group_width_ref = read_as!(u8, sect5_data, 30);
+    let group_width_nbit = read_as!(u8, sect5_data, 31);
+    let group_len_ref = read_as!(u32, sect5_data, 32);
+    let group_len_inc = read_as!(u8, sect5_data, 36);
+    let group_len_last = read_as!(u32, sect5_data, 37);
+    let group_len_nbit = read_as!(u8, sect5_data, 41);
+    let spdiff_level = read_as!(u8, sect5_data, 42);
+    let spdiff_param_octet = read_as!(u8, sect5_data, 43);
 
-impl ComplexPackingDecoder {
-    pub(crate) fn decode(
-        encoded: Grib2SubmessageEncoded,
-    ) -> Result<SimplePackingDecodeIterator<impl Iterator<Item = i32>>, GribError> {
-        let sect5_data = encoded.sect5_payload;
-        let ref_val = read_as!(f32, sect5_data, 6);
-        let exp = read_as!(u16, sect5_data, 10).as_grib_int();
-        let dig = read_as!(u16, sect5_data, 12).as_grib_int();
-        let nbit = read_as!(u8, sect5_data, 14);
-        let ngroup = read_as!(u32, sect5_data, 26);
-        let group_width_ref = read_as!(u8, sect5_data, 30);
-        let group_width_nbit = read_as!(u8, sect5_data, 31);
-        let group_len_ref = read_as!(u32, sect5_data, 32);
-        let group_len_inc = read_as!(u8, sect5_data, 36);
-        let group_len_last = read_as!(u32, sect5_data, 37);
-        let group_len_nbit = read_as!(u8, sect5_data, 41);
-        let spdiff_level = read_as!(u8, sect5_data, 42);
-        let spdiff_param_octet = read_as!(u8, sect5_data, 43);
+    let sect7_data = encoded.sect7_payload;
+    let z1 = read_as!(u16, sect7_data, 0).as_grib_int();
+    let z2 = read_as!(u16, sect7_data, 2).as_grib_int();
+    let z_min = read_as!(u16, sect7_data, 4).as_grib_int();
 
-        let sect7_data = encoded.sect7_payload;
-        let z1 = read_as!(u16, sect7_data, 0).as_grib_int();
-        let z2 = read_as!(u16, sect7_data, 2).as_grib_int();
-        let z_min = read_as!(u16, sect7_data, 4).as_grib_int();
-
-        fn get_octet_length(nbit: u8, ngroup: u32) -> usize {
-            let total_bit: u32 = ngroup * u32::from(nbit);
-            let total_octet: f32 = total_bit as f32 / 8_f32;
-            total_octet.ceil() as usize
-        }
-
-        let params_end_octet = 6;
-        let group_refs_end_octet = params_end_octet + get_octet_length(nbit, ngroup);
-        let group_widths_end_octet =
-            group_refs_end_octet + get_octet_length(group_width_nbit, ngroup);
-        let group_lens_end_octet =
-            group_widths_end_octet + get_octet_length(group_len_nbit, ngroup);
-
-        let group_refs_iter = NBitwiseIterator::new(
-            sect7_data[params_end_octet..group_refs_end_octet].to_vec(),
-            usize::from(nbit),
-        );
-        let group_refs_iter = group_refs_iter.take(ngroup as usize);
-
-        let group_widths_iter = NBitwiseIterator::new(
-            sect7_data[group_refs_end_octet..group_widths_end_octet].to_vec(),
-            usize::from(group_width_nbit),
-        );
-        let group_widths_iter = group_widths_iter
-            .take(ngroup as usize)
-            .map(move |v| u32::from(group_width_ref) + v);
-
-        let group_lens_iter = NBitwiseIterator::new(
-            sect7_data[group_widths_end_octet..group_lens_end_octet].to_vec(),
-            usize::from(group_len_nbit),
-        );
-        let group_lens_iter = group_lens_iter
-            .take((ngroup - 1) as usize)
-            .map(move |v| group_len_ref + u32::from(group_len_inc) * v)
-            .chain(iter::once(group_len_last));
-
-        let unpacked_data = ComplexPackingValueDecodeIterator::new(
-            group_refs_iter,
-            group_widths_iter,
-            group_lens_iter,
-            z_min,
-            sect7_data[group_lens_end_octet..].to_vec(),
-        );
-
-        if spdiff_level != 2 {
-            return Err(GribError::DecodeError(
-                DecodeError::ComplexPackingDecodeError(ComplexPackingDecodeError::NotSupported),
-            ));
-        }
-
-        if spdiff_param_octet != 2 {
-            return Err(GribError::DecodeError(
-                DecodeError::ComplexPackingDecodeError(ComplexPackingDecodeError::NotSupported),
-            ));
-        }
-
-        let spdiff_packed_iter = unpacked_data.flatten();
-        assert_eq!(
-            spdiff_packed_iter.clone().take(2).collect::<Vec<_>>(),
-            [i32::from(z1), i32::from(z2)]
-        );
-
-        let spdiff_unpacked = SpatialDiff2ndOrderDecodeIterator::new(spdiff_packed_iter);
-        let decoder = SimplePackingDecodeIterator::new(spdiff_unpacked, ref_val, exp, dig);
-        Ok(decoder)
+    fn get_octet_length(nbit: u8, ngroup: u32) -> usize {
+        let total_bit: u32 = ngroup * u32::from(nbit);
+        let total_octet: f32 = total_bit as f32 / 8_f32;
+        total_octet.ceil() as usize
     }
+
+    let params_end_octet = 6;
+    let group_refs_end_octet = params_end_octet + get_octet_length(nbit, ngroup);
+    let group_widths_end_octet = group_refs_end_octet + get_octet_length(group_width_nbit, ngroup);
+    let group_lens_end_octet = group_widths_end_octet + get_octet_length(group_len_nbit, ngroup);
+
+    let group_refs_iter = NBitwiseIterator::new(
+        sect7_data[params_end_octet..group_refs_end_octet].to_vec(),
+        usize::from(nbit),
+    );
+    let group_refs_iter = group_refs_iter.take(ngroup as usize);
+
+    let group_widths_iter = NBitwiseIterator::new(
+        sect7_data[group_refs_end_octet..group_widths_end_octet].to_vec(),
+        usize::from(group_width_nbit),
+    );
+    let group_widths_iter = group_widths_iter
+        .take(ngroup as usize)
+        .map(move |v| u32::from(group_width_ref) + v);
+
+    let group_lens_iter = NBitwiseIterator::new(
+        sect7_data[group_widths_end_octet..group_lens_end_octet].to_vec(),
+        usize::from(group_len_nbit),
+    );
+    let group_lens_iter = group_lens_iter
+        .take((ngroup - 1) as usize)
+        .map(move |v| group_len_ref + u32::from(group_len_inc) * v)
+        .chain(iter::once(group_len_last));
+
+    let unpacked_data = ComplexPackingValueDecodeIterator::new(
+        group_refs_iter,
+        group_widths_iter,
+        group_lens_iter,
+        z_min,
+        sect7_data[group_lens_end_octet..].to_vec(),
+    );
+
+    if spdiff_level != 2 {
+        return Err(GribError::DecodeError(
+            DecodeError::ComplexPackingDecodeError(ComplexPackingDecodeError::NotSupported),
+        ));
+    }
+
+    if spdiff_param_octet != 2 {
+        return Err(GribError::DecodeError(
+            DecodeError::ComplexPackingDecodeError(ComplexPackingDecodeError::NotSupported),
+        ));
+    }
+
+    let spdiff_packed_iter = unpacked_data.flatten();
+    assert_eq!(
+        spdiff_packed_iter.clone().take(2).collect::<Vec<_>>(),
+        [i32::from(z1), i32::from(z2)]
+    );
+
+    let spdiff_unpacked = SpatialDiff2ndOrderDecodeIterator::new(spdiff_packed_iter);
+    let decoder = SimplePackingDecodeIterator::new(spdiff_unpacked, ref_val, exp, dig);
+    Ok(decoder)
 }
 
 #[derive(Clone)]

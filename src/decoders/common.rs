@@ -1,9 +1,11 @@
 use crate::context::{SectionBody, SubMessage};
 use crate::decoders::bitmap::{create_bitmap_for_nonnullable_data, BitmapDecodeIterator};
-use crate::decoders::complex::*;
-use crate::decoders::jpeg2000::*;
-use crate::decoders::run_length::*;
-use crate::decoders::simple::*;
+use crate::decoders::complex::{self, ComplexPackingDecodeError};
+use crate::decoders::jpeg2000::{self, Jpeg2000CodeStreamDecodeError};
+use crate::decoders::run_length::{self, RunLengthEncodingDecodeError};
+use crate::decoders::simple::{
+    self, SimplePackingDecodeError, SimplePackingDecodeIterator, SimplePackingDecodeIteratorWrapper,
+};
 use crate::error::*;
 use crate::reader::Grib2Read;
 use num::ToPrimitive;
@@ -128,14 +130,10 @@ pub fn dispatch<R: Grib2Read>(submessage: SubMessage<R>) -> Result<Box<[f32]>, G
 
     let num_points_total = sect3_num_points;
     let decoder = match sect5_body.repr_tmpl_num() {
-        0 => Grib2SubmessageDecoderWrapper::Template0(SimplePackingDecoder::decode(encoded)?),
-        3 => Grib2SubmessageDecoderWrapper::Template3(ComplexPackingDecoder::decode(encoded)?),
-        40 => {
-            Grib2SubmessageDecoderWrapper::Template40(Jpeg2000CodeStreamDecoder::decode(encoded)?)
-        }
-        200 => {
-            Grib2SubmessageDecoderWrapper::Template200(RunLengthEncodingDecoder::decode(encoded)?)
-        }
+        0 => Grib2SubmessageDecoderWrapper::Template0(simple::decode(encoded)?),
+        3 => Grib2SubmessageDecoderWrapper::Template3(complex::decode(encoded)?),
+        40 => Grib2SubmessageDecoderWrapper::Template40(jpeg2000::decode(encoded)?),
+        200 => Grib2SubmessageDecoderWrapper::Template200(run_length::decode(encoded)?),
         _ => {
             return Err(GribError::DecodeError(
                 DecodeError::TemplateNumberUnsupported,
