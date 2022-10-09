@@ -90,10 +90,10 @@ impl Grib2SubmessageDecoder {
         &self,
     ) -> Result<Grib2DecodedValues<impl Iterator<Item = f32> + '_>, GribError> {
         let decoder = match self.template_num {
-            0 => Grib2SubmessageDecoderWrapper::Template0(simple::decode(self)?),
-            3 => Grib2SubmessageDecoderWrapper::Template3(complex::decode(self)?),
-            40 => Grib2SubmessageDecoderWrapper::Template40(jpeg2000::decode(self)?),
-            200 => Grib2SubmessageDecoderWrapper::Template200(run_length::decode(self)?),
+            0 => Grib2SubmessageDecoderIteratorWrapper::Template0(simple::decode(self)?),
+            3 => Grib2SubmessageDecoderIteratorWrapper::Template3(complex::decode(self)?),
+            40 => Grib2SubmessageDecoderIteratorWrapper::Template40(jpeg2000::decode(self)?),
+            200 => Grib2SubmessageDecoderIteratorWrapper::Template200(run_length::decode(self)?),
             _ => {
                 return Err(GribError::DecodeError(
                     DecodeError::TemplateNumberUnsupported,
@@ -125,14 +125,14 @@ where
     }
 }
 
-pub(crate) enum Grib2SubmessageDecoderWrapper<I, J, K> {
+enum Grib2SubmessageDecoderIteratorWrapper<I, J, K> {
     Template0(SimplePackingDecodeIteratorWrapper<I>),
     Template3(SimplePackingDecodeIterator<J>),
     Template40(SimplePackingDecodeIterator<K>),
     Template200(std::vec::IntoIter<f32>),
 }
 
-impl<I, J, K> Iterator for Grib2SubmessageDecoderWrapper<I, J, K>
+impl<I, J, K> Iterator for Grib2SubmessageDecoderIteratorWrapper<I, J, K>
 where
     I: Iterator,
     <I as Iterator>::Item: ToPrimitive,
