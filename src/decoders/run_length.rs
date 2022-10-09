@@ -86,7 +86,7 @@ fn rleunpack(
             exp = 1;
         } else {
             let prev = cached.ok_or(RunLengthEncodingDecodeError::InvalidFirstValue)?;
-            let length: usize = ((value as u16 - rlbase) as usize) * exp;
+            let length: usize = ((value - rlbase) as usize) * exp;
             out_buf.append(&mut vec![prev; length]);
             exp *= lngu;
         }

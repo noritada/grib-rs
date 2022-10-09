@@ -99,7 +99,7 @@ impl<I: Iterator<Item = N>, N: ToPrimitive> Iterator for SimplePackingDecodeIter
         match self.iter.next() {
             Some(encoded) => {
                 let encoded = encoded.to_f32().unwrap();
-                let diff = (encoded * 2_f32.powi(self.exp)) as f32;
+                let diff = encoded * 2_f32.powi(self.exp);
                 let dig_factor = 10_f32.powi(-self.dig);
                 let value: f32 = (self.ref_val + diff) * dig_factor;
                 Some(value)
