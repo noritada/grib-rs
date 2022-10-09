@@ -39,39 +39,35 @@ pub enum SimplePackingDecodeError {
     LengthMismatch,
 }
 
-pub(crate) struct SimplePackingDecoder {}
+pub(crate) fn decode(
+    target: &Grib2SubmessageDecoder,
+) -> Result<SimplePackingDecodeIteratorWrapper<impl Iterator<Item = u32> + '_>, GribError> {
+    let sect5_data = &target.sect5_payload;
+    let ref_val = read_as!(f32, sect5_data, 6);
+    let exp = read_as!(u16, sect5_data, 10).as_grib_int();
+    let dig = read_as!(u16, sect5_data, 12).as_grib_int();
+    let nbit = read_as!(u8, sect5_data, 14);
+    let value_type = read_as!(u8, sect5_data, 15);
 
-impl SimplePackingDecoder {
-    pub(crate) fn decode(
-        encoded: Grib2SubmessageEncoded,
-    ) -> Result<impl Iterator<Item = f32>, GribError> {
-        let sect5_data = encoded.sect5_payload;
-        let ref_val = read_as!(f32, sect5_data, 6);
-        let exp = read_as!(u16, sect5_data, 10).as_grib_int();
-        let dig = read_as!(u16, sect5_data, 12).as_grib_int();
-        let nbit = read_as!(u8, sect5_data, 14);
-        let value_type = read_as!(u8, sect5_data, 15);
-
-        if value_type != 0 {
-            return Err(GribError::DecodeError(
-                DecodeError::SimplePackingDecodeError(
-                    SimplePackingDecodeError::OriginalFieldValueTypeNotSupported,
-                ),
-            ));
-        }
-
-        let decoder = if nbit == 0 {
-            // Based on the implementation of wgrib2, if nbits equals 0, return a constant
-            // field where the data value at each grid point is the reference value.
-            let decoded = vec![ref_val; encoded.num_points_encoded];
-            SimplePackingDecodeIteratorWrapper::FixedValue(decoded.into_iter())
-        } else {
-            let iter = NBitwiseIterator::new(encoded.sect7_payload.to_vec(), usize::from(nbit));
-            let iter = SimplePackingDecodeIterator::new(iter, ref_val, exp, dig);
-            SimplePackingDecodeIteratorWrapper::SimplePacking(iter)
-        };
-        Ok(decoder)
+    if value_type != 0 {
+        return Err(GribError::DecodeError(
+            DecodeError::SimplePackingDecodeError(
+                SimplePackingDecodeError::OriginalFieldValueTypeNotSupported,
+            ),
+        ));
     }
+
+    let decoder = if nbit == 0 {
+        // Based on the implementation of wgrib2, if nbits equals 0, return a constant
+        // field where the data value at each grid point is the reference value.
+        let decoded = vec![ref_val; target.num_points_encoded];
+        SimplePackingDecodeIteratorWrapper::FixedValue(decoded.into_iter())
+    } else {
+        let iter = NBitwiseIterator::new(&target.sect7_payload, usize::from(nbit));
+        let iter = SimplePackingDecodeIterator::new(iter, ref_val, exp, dig);
+        SimplePackingDecodeIteratorWrapper::SimplePacking(iter)
+    };
+    Ok(decoder)
 }
 
 pub(crate) struct SimplePackingDecodeIterator<I> {
@@ -127,7 +123,7 @@ mod tests {
         let expected: Vec<f32> = vec![7.987_831_6e-7, 9.030_913e-7];
 
         let ref_val = f32::from_be_bytes(ref_val_bytes[..].try_into().unwrap());
-        let iter = NBitwiseIterator::new(input, 16);
+        let iter = NBitwiseIterator::new(&input, 16);
         let actual =
             SimplePackingDecodeIterator::new(iter, ref_val, exp.as_grib_int(), dig.as_grib_int())
                 .collect::<Vec<_>>();
@@ -158,9 +154,10 @@ mod tests {
             .iter()
             .find(|(index, _)| *index == message_index)
             .unwrap();
+        let decoder = Grib2SubmessageDecoder::from(submessage).unwrap();
         // Runs `SimplePackingDecoder::decode()` internally.
-        let actual = submessage.decode().unwrap();
-        let expected = vec![0f32; 0x002d0000].into_boxed_slice();
+        let actual = decoder.dispatch().unwrap().collect::<Vec<_>>();
+        let expected = vec![0f32; 0x002d0000];
         assert_eq!(actual, expected);
     }
 }

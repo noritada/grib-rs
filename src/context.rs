@@ -8,7 +8,6 @@ use crate::codetables::{
     CodeTable3_1, CodeTable4_0, CodeTable4_1, CodeTable4_2, CodeTable4_3, CodeTable5_0, Lookup,
 };
 use crate::datatypes::*;
-use crate::decoders;
 use crate::error::*;
 use crate::parser::Grib2SubmessageIndexStream;
 use crate::reader::{Grib2Read, Grib2SectionStream, SeekableGrib2Reader, SECT8_ES_SIZE};
@@ -406,14 +405,6 @@ Data Representation:                    {}
             self.5.describe().unwrap_or_default(),
             self.repr_def().num_points(),
         )
-    }
-}
-
-impl<'a, R: Grib2Read> SubMessage<'a, R> {
-    /// Decodes grid values of `self`.
-    pub fn decode(self) -> Result<Box<[f32]>, GribError> {
-        let values = decoders::dispatch(self)?;
-        Ok(values)
     }
 }
 
