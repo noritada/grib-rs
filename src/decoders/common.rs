@@ -86,7 +86,9 @@ impl Grib2SubmessageDecoder {
     }
 
     /// Dispatches a decoding process and gets an iterator of decoded values.
-    pub fn dispatch(&self) -> Result<impl Iterator<Item = f32> + '_, GribError> {
+    pub fn dispatch(
+        &self,
+    ) -> Result<Grib2DecodedValues<impl Iterator<Item = f32> + '_>, GribError> {
         let decoder = match self.template_num {
             0 => Grib2SubmessageDecoderWrapper::Template0(simple::decode(self)?),
             3 => Grib2SubmessageDecoderWrapper::Template3(complex::decode(self)?),
@@ -100,7 +102,26 @@ impl Grib2SubmessageDecoder {
         };
         let decoder =
             BitmapDecodeIterator::new(self.bitmap.iter(), decoder, self.num_points_total)?;
-        Ok(decoder)
+        Ok(Grib2DecodedValues(decoder))
+    }
+}
+
+pub struct Grib2DecodedValues<'b, I>(BitmapDecodeIterator<std::slice::Iter<'b, u8>, I>);
+
+impl<'a, I> Iterator for Grib2DecodedValues<'a, I>
+where
+    I: Iterator<Item = f32>,
+{
+    type Item = f32;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let Self(inner) = self;
+        inner.next()
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        let Self(inner) = self;
+        inner.size_hint()
     }
 }
 
