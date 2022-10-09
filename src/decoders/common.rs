@@ -11,6 +11,33 @@ use crate::reader::Grib2Read;
 use num::ToPrimitive;
 
 /// Decoder for grid point values of GRIB2 submessages.
+///
+/// # Examples
+/// ```
+/// use grib::decoders::Grib2SubmessageDecoder;
+///
+/// fn main() -> Result<(), Box<dyn std::error::Error>> {
+///     let f =
+///         std::fs::File::open("testdata/CMC_glb_TMP_ISBL_1_latlon.24x.24_2021051800_P000.grib2")?;
+///     let f = std::io::BufReader::new(f);
+///     let grib2 = grib::from_reader(f)?;
+///     let (_index, first_submessage) = grib2.iter().next().unwrap();
+///
+///     let decoder = Grib2SubmessageDecoder::from(first_submessage)?;
+///     let mut decoded = decoder.dispatch()?;
+///     assert_eq!(decoded.size_hint(), (1126500, Some(1126500)));
+///
+///     let first_value = decoded.next();
+///     assert_eq!(first_value.map(|f| f.round()), Some(236.0_f32));
+///
+///     let last_value = decoded.nth(1126498);
+///     assert_eq!(last_value.map(|f| f.round()), Some(286.0_f32));
+///
+///     let next_to_last_value = decoded.next();
+///     assert_eq!(next_to_last_value, None);
+///     Ok(())
+/// }
+/// ```
 pub struct Grib2SubmessageDecoder {
     num_points_total: usize,
     pub(crate) num_points_encoded: usize,
