@@ -39,12 +39,16 @@ where
         .find(|(index, _)| *index == message_index)
         .ok_or_else(|| "no such index")?;
 
+    // Prepare a decoder.
+    let decoder = grib::decoders::Grib2SubmessageDecoder::from(submessage)?;
+
+    // Actually dispatch a decoding process and get an iterator of decoded values.
     // There are various methods available for compressing GRIB2 data, but some are
     // not yet supported by this library and may return errors.
-    let values = submessage.decode()?;
+    let values = decoder.dispatch()?;
 
     // Iterate over decoded values.
-    for value in values.iter() {
+    for value in values {
         println!("{}", value);
     }
 

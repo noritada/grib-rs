@@ -154,9 +154,10 @@ mod tests {
             .iter()
             .find(|(index, _)| *index == message_index)
             .unwrap();
+        let decoder = Grib2SubmessageDecoder::from(submessage).unwrap();
         // Runs `SimplePackingDecoder::decode()` internally.
-        let actual = submessage.decode().unwrap();
-        let expected = vec![0f32; 0x002d0000].into_boxed_slice();
+        let actual = decoder.dispatch().unwrap().collect::<Vec<_>>();
+        let expected = vec![0f32; 0x002d0000];
         assert_eq!(actual, expected);
     }
 }

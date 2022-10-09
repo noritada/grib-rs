@@ -10,7 +10,8 @@ use crate::error::*;
 use crate::reader::Grib2Read;
 use num::ToPrimitive;
 
-pub(crate) struct Grib2SubmessageDecoder {
+/// Decoder for grid point values of GRIB2 submessages.
+pub struct Grib2SubmessageDecoder {
     num_points_total: usize,
     pub(crate) num_points_encoded: usize,
     template_num: u16,
@@ -38,7 +39,8 @@ impl Grib2SubmessageDecoder {
         }
     }
 
-    pub(crate) fn from<R: Grib2Read>(submessage: SubMessage<R>) -> Result<Self, GribError> {
+    /// Sets up a decoder for grid point values of `submessage`.
+    pub fn from<R: Grib2Read>(submessage: SubMessage<R>) -> Result<Self, GribError> {
         let mut reader = submessage.9;
         let sect5 = submessage.5.body;
         let sect6 = submessage.6.body;
@@ -83,7 +85,8 @@ impl Grib2SubmessageDecoder {
         ))
     }
 
-    pub(crate) fn dispatch(&self) -> Result<Box<[f32]>, GribError> {
+    /// Dispatches a decoding process and gets an iterator of decoded values.
+    pub fn dispatch(&self) -> Result<impl Iterator<Item = f32> + '_, GribError> {
         let decoder = match self.template_num {
             0 => Grib2SubmessageDecoderWrapper::Template0(simple::decode(self)?),
             3 => Grib2SubmessageDecoderWrapper::Template3(complex::decode(self)?),
@@ -97,8 +100,7 @@ impl Grib2SubmessageDecoder {
         };
         let decoder =
             BitmapDecodeIterator::new(self.bitmap.iter(), decoder, self.num_points_total)?;
-        let decoded = decoder.collect::<Vec<f32>>();
-        Ok(decoded.into_boxed_slice())
+        Ok(decoder)
     }
 }
 

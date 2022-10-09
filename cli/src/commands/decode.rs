@@ -25,12 +25,14 @@ pub fn cli() -> Command {
         )
 }
 
-fn write_output(out_path: &PathBuf, values: &[f32], to_bytes: fn(&f32) -> [u8; 4]) -> Result<()> {
+fn write_output(
+    out_path: &PathBuf,
+    mut values: impl Iterator<Item = f32>,
+    to_bytes: fn(&f32) -> [u8; 4],
+) -> Result<()> {
     File::create(out_path).and_then(|f| {
         let mut stream = BufWriter::new(f);
-        values
-            .iter()
-            .try_for_each(|f| stream.write_all(&to_bytes(f)))
+        values.try_for_each(|f| stream.write_all(&to_bytes(&f)))
     })?;
     Ok(())
 }
@@ -44,16 +46,17 @@ pub fn exec(args: &ArgMatches) -> Result<()> {
         .iter()
         .find(|(index, _)| *index == message_index)
         .ok_or_else(|| anyhow::anyhow!("no such index: {}.{}", message_index.0, message_index.1))?;
-    let values = submessage.decode()?;
+    let decoder = grib::decoders::Grib2SubmessageDecoder::from(submessage)?;
+    let values = decoder.dispatch()?;
 
     if args.contains_id("big-endian") {
         let out_path = args.get_one::<PathBuf>("big-endian").unwrap();
-        write_output(out_path, &values, |f| f.to_be_bytes())
+        write_output(out_path, values, |f| f.to_be_bytes())
     } else if args.contains_id("little-endian") {
         let out_path = args.get_one::<PathBuf>("little-endian").unwrap();
-        write_output(out_path, &values, |f| f.to_le_bytes())
+        write_output(out_path, values, |f| f.to_le_bytes())
     } else {
-        cli::display_in_pager(DecodeTextDisplay(&values));
+        cli::display_in_pager(DecodeTextDisplay(&values.collect::<Vec<_>>()));
         Ok(())
     }
 }
