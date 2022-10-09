@@ -412,7 +412,8 @@ Data Representation:                    {}
 impl<'a, R: Grib2Read> SubMessage<'a, R> {
     /// Decodes grid values of `self`.
     pub fn decode(self) -> Result<Box<[f32]>, GribError> {
-        let values = decoders::dispatch(self)?;
+        let decoder = decoders::Grib2SubmessageDecoder::from(self)?;
+        let values = decoder.dispatch()?;
         Ok(values)
     }
 }

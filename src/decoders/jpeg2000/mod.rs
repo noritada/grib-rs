@@ -19,9 +19,9 @@ pub enum Jpeg2000CodeStreamDecodeError {
 }
 
 pub(crate) fn decode(
-    encoded: Grib2SubmessageEncoded,
+    target: &Grib2SubmessageDecoder,
 ) -> Result<SimplePackingDecodeIterator<impl Iterator<Item = i32>>, GribError> {
-    let sect5_data = encoded.sect5_payload;
+    let sect5_data = &target.sect5_payload;
     let ref_val = read_as!(f32, sect5_data, 6);
     let exp = read_as!(u16, sect5_data, 10).as_grib_int();
     let dig = read_as!(u16, sect5_data, 12).as_grib_int();
@@ -36,7 +36,7 @@ pub(crate) fn decode(
         ));
     }
 
-    let stream = Stream::from_bytes(&encoded.sect7_payload)
+    let stream = Stream::from_bytes(&target.sect7_payload)
         .map_err(|e| GribError::DecodeError(DecodeError::Jpeg2000CodeStreamDecodeError(e)))?;
     let jp2_unpacked = decode_jp2(stream)
         .map_err(|e| GribError::DecodeError(DecodeError::Jpeg2000CodeStreamDecodeError(e)))?;

@@ -13,9 +13,9 @@ pub enum RunLengthEncodingDecodeError {
 }
 
 pub(crate) fn decode(
-    encoded: Grib2SubmessageEncoded,
+    target: &Grib2SubmessageDecoder,
 ) -> Result<std::vec::IntoIter<f32>, GribError> {
-    let sect5_data = encoded.sect5_payload;
+    let sect5_data = &target.sect5_payload;
     let nbit = read_as!(u8, sect5_data, 6);
     let maxv = read_as!(u16, sect5_data, 7);
     let max_level = read_as!(u16, sect5_data, 9);
@@ -35,10 +35,10 @@ pub(crate) fn decode(
     }
 
     let decoded_levels = rleunpack(
-        encoded.sect7_payload.to_vec(),
+        &target.sect7_payload,
         nbit,
         maxv,
-        Some(encoded.num_points_encoded),
+        Some(target.num_points_encoded),
     )
     .map_err(DecodeError::RunLengthEncodingDecodeError)?;
 
@@ -58,7 +58,7 @@ pub(crate) fn decode(
 
 // Since maxv is represented as a 16-bit integer, values are 16 bits or less.
 fn rleunpack(
-    input: Vec<u8>,
+    input: &[u8],
     nbit: u8,
     maxv: u16,
     expected_len: Option<usize>,
@@ -114,7 +114,7 @@ mod tests {
         let output: Vec<u16> = output.iter().map(|n| n + 240).collect();
 
         assert_eq!(
-            rleunpack(input, 8, 250, Some(21)),
+            rleunpack(&input, 8, 250, Some(21)),
             Ok(output.into_boxed_slice())
         );
     }
@@ -124,6 +124,6 @@ mod tests {
         let input: Vec<u8> = vec![0x00, 0x14, 0x1c];
         let output: Vec<u16> = vec![0; 6065];
 
-        assert_eq!(rleunpack(input, 8, 3, None), Ok(output.into_boxed_slice()));
+        assert_eq!(rleunpack(&input, 8, 3, None), Ok(output.into_boxed_slice()));
     }
 }

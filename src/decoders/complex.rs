@@ -13,10 +13,10 @@ pub enum ComplexPackingDecodeError {
     LengthMismatch,
 }
 
-pub(crate) fn decode(
-    encoded: Grib2SubmessageEncoded,
-) -> Result<SimplePackingDecodeIterator<impl Iterator<Item = i32>>, GribError> {
-    let sect5_data = encoded.sect5_payload;
+pub(crate) fn decode<'a>(
+    target: &'a Grib2SubmessageDecoder,
+) -> Result<SimplePackingDecodeIterator<impl Iterator<Item = i32> + 'a>, GribError> {
+    let sect5_data = &target.sect5_payload;
     let ref_val = read_as!(f32, sect5_data, 6);
     let exp = read_as!(u16, sect5_data, 10).as_grib_int();
     let dig = read_as!(u16, sect5_data, 12).as_grib_int();
@@ -31,7 +31,7 @@ pub(crate) fn decode(
     let spdiff_level = read_as!(u8, sect5_data, 42);
     let spdiff_param_octet = read_as!(u8, sect5_data, 43);
 
-    let sect7_data = encoded.sect7_payload;
+    let sect7_data = &target.sect7_payload;
     let z1 = read_as!(u16, sect7_data, 0).as_grib_int();
     let z2 = read_as!(u16, sect7_data, 2).as_grib_int();
     let z_min = read_as!(u16, sect7_data, 4).as_grib_int();
@@ -48,13 +48,13 @@ pub(crate) fn decode(
     let group_lens_end_octet = group_widths_end_octet + get_octet_length(group_len_nbit, ngroup);
 
     let group_refs_iter = NBitwiseIterator::new(
-        sect7_data[params_end_octet..group_refs_end_octet].to_vec(),
+        &sect7_data[params_end_octet..group_refs_end_octet],
         usize::from(nbit),
     );
     let group_refs_iter = group_refs_iter.take(ngroup as usize);
 
     let group_widths_iter = NBitwiseIterator::new(
-        sect7_data[group_refs_end_octet..group_widths_end_octet].to_vec(),
+        &sect7_data[group_refs_end_octet..group_widths_end_octet],
         usize::from(group_width_nbit),
     );
     let group_widths_iter = group_widths_iter
@@ -62,7 +62,7 @@ pub(crate) fn decode(
         .map(move |v| u32::from(group_width_ref) + v);
 
     let group_lens_iter = NBitwiseIterator::new(
-        sect7_data[group_widths_end_octet..group_lens_end_octet].to_vec(),
+        &sect7_data[group_widths_end_octet..group_lens_end_octet],
         usize::from(group_len_nbit),
     );
     let group_lens_iter = group_lens_iter
@@ -156,14 +156,12 @@ where
                 let bits = width * length;
                 let (pos_end, offset_bit) = (self.pos + bits / 8, bits % 8);
                 let offset_byte = usize::from(offset_bit > 0);
-                let group_values = NBitwiseIterator::new(
-                    self.data[self.pos..pos_end + offset_byte].to_vec(),
-                    width,
-                )
-                .with_offset(self.start_offset_bits)
-                .take(length)
-                .map(|v| v.as_grib_int() + _ref + self.z_min)
-                .collect::<Vec<i32>>();
+                let group_values =
+                    NBitwiseIterator::new(&self.data[self.pos..pos_end + offset_byte], width)
+                        .with_offset(self.start_offset_bits)
+                        .take(length)
+                        .map(|v| v.as_grib_int() + _ref + self.z_min)
+                        .collect::<Vec<i32>>();
                 self.pos = pos_end;
                 self.start_offset_bits = offset_byte;
                 Some(group_values)

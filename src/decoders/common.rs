@@ -10,10 +10,96 @@ use crate::error::*;
 use crate::reader::Grib2Read;
 use num::ToPrimitive;
 
-pub(crate) struct Grib2SubmessageEncoded {
+pub(crate) struct Grib2SubmessageDecoder {
+    num_points_total: usize,
     pub(crate) num_points_encoded: usize,
+    template_num: u16,
     pub(crate) sect5_payload: Box<[u8]>,
+    bitmap: Vec<u8>,
     pub(crate) sect7_payload: Box<[u8]>,
+}
+
+impl Grib2SubmessageDecoder {
+    fn new(
+        num_points_total: usize,
+        num_points_encoded: usize,
+        template_num: u16,
+        sect5_payload: Box<[u8]>,
+        bitmap: Vec<u8>,
+        sect7_payload: Box<[u8]>,
+    ) -> Self {
+        Self {
+            num_points_total,
+            num_points_encoded,
+            template_num,
+            sect5_payload,
+            bitmap,
+            sect7_payload,
+        }
+    }
+
+    pub(crate) fn from<R: Grib2Read>(submessage: SubMessage<R>) -> Result<Self, GribError> {
+        let mut reader = submessage.9;
+        let sect5 = submessage.5.body;
+        let sect6 = submessage.6.body;
+        let sect7 = submessage.7.body;
+        let (sect3_body, sect5_body, sect6_body) = match (
+            submessage.3.body.body.as_ref(),
+            sect5.body.as_ref(),
+            sect6.body.as_ref(),
+        ) {
+            (
+                Some(SectionBody::Section3(b3)),
+                Some(SectionBody::Section5(b5)),
+                Some(SectionBody::Section6(b6)),
+            ) => (b3, b5, b6),
+            _ => return Err(GribError::InternalDataError),
+        };
+        let sect3_num_points = sect3_body.num_points() as usize;
+
+        let bitmap = match sect6_body.bitmap_indicator {
+            0x00 => {
+                let sect6_data = reader.read_sect_payload_as_slice(sect6)?;
+                sect6_data[1..].into()
+            }
+            0xff => {
+                let num_points = sect3_num_points;
+                create_bitmap_for_nonnullable_data(num_points)
+            }
+            _ => {
+                return Err(GribError::DecodeError(
+                    DecodeError::BitMapIndicatorUnsupported,
+                ));
+            }
+        };
+
+        Ok(Self::new(
+            sect3_num_points,
+            sect5_body.num_points() as usize,
+            sect5_body.repr_tmpl_num(),
+            reader.read_sect_payload_as_slice(sect5)?,
+            bitmap,
+            reader.read_sect_payload_as_slice(sect7)?,
+        ))
+    }
+
+    pub(crate) fn dispatch(&self) -> Result<Box<[f32]>, GribError> {
+        let decoder = match self.template_num {
+            0 => Grib2SubmessageDecoderWrapper::Template0(simple::decode(self)?),
+            3 => Grib2SubmessageDecoderWrapper::Template3(complex::decode(self)?),
+            40 => Grib2SubmessageDecoderWrapper::Template40(jpeg2000::decode(self)?),
+            200 => Grib2SubmessageDecoderWrapper::Template200(run_length::decode(self)?),
+            _ => {
+                return Err(GribError::DecodeError(
+                    DecodeError::TemplateNumberUnsupported,
+                ))
+            }
+        };
+        let decoder =
+            BitmapDecodeIterator::new(self.bitmap.iter(), decoder, self.num_points_total)?;
+        let decoded = decoder.collect::<Vec<f32>>();
+        Ok(decoded.into_boxed_slice())
+    }
 }
 
 pub(crate) enum Grib2SubmessageDecoderWrapper<I, J, K> {
@@ -86,61 +172,4 @@ impl From<RunLengthEncodingDecodeError> for DecodeError {
     fn from(e: RunLengthEncodingDecodeError) -> Self {
         Self::RunLengthEncodingDecodeError(e)
     }
-}
-
-pub fn dispatch<R: Grib2Read>(submessage: SubMessage<R>) -> Result<Box<[f32]>, GribError> {
-    let mut reader = submessage.9;
-    let sect5 = submessage.5.body;
-    let sect6 = submessage.6.body;
-    let sect7 = submessage.7.body;
-    let (sect3_body, sect5_body, sect6_body) = match (
-        submessage.3.body.body.as_ref(),
-        sect5.body.as_ref(),
-        sect6.body.as_ref(),
-    ) {
-        (
-            Some(SectionBody::Section3(b3)),
-            Some(SectionBody::Section5(b5)),
-            Some(SectionBody::Section6(b6)),
-        ) => (b3, b5, b6),
-        _ => return Err(GribError::InternalDataError),
-    };
-    let sect3_num_points = sect3_body.num_points() as usize;
-
-    let bitmap = match sect6_body.bitmap_indicator {
-        0x00 => {
-            let sect6_data = reader.read_sect_payload_as_slice(sect6)?;
-            sect6_data[1..].into()
-        }
-        0xff => {
-            let num_points = sect3_num_points;
-            create_bitmap_for_nonnullable_data(num_points)
-        }
-        _ => {
-            return Err(GribError::DecodeError(
-                DecodeError::BitMapIndicatorUnsupported,
-            ));
-        }
-    };
-    let encoded = Grib2SubmessageEncoded {
-        num_points_encoded: sect5_body.num_points() as usize,
-        sect5_payload: reader.read_sect_payload_as_slice(sect5)?,
-        sect7_payload: reader.read_sect_payload_as_slice(sect7)?,
-    };
-
-    let num_points_total = sect3_num_points;
-    let decoder = match sect5_body.repr_tmpl_num() {
-        0 => Grib2SubmessageDecoderWrapper::Template0(simple::decode(encoded)?),
-        3 => Grib2SubmessageDecoderWrapper::Template3(complex::decode(encoded)?),
-        40 => Grib2SubmessageDecoderWrapper::Template40(jpeg2000::decode(encoded)?),
-        200 => Grib2SubmessageDecoderWrapper::Template200(run_length::decode(encoded)?),
-        _ => {
-            return Err(GribError::DecodeError(
-                DecodeError::TemplateNumberUnsupported,
-            ))
-        }
-    };
-    let decoder = BitmapDecodeIterator::new(bitmap.iter(), decoder, num_points_total)?;
-    let decoded = decoder.collect::<Vec<f32>>();
-    Ok(decoded.into_boxed_slice())
 }
