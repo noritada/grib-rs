@@ -13,9 +13,9 @@ pub enum ComplexPackingDecodeError {
     LengthMismatch,
 }
 
-pub(crate) fn decode<'a>(
-    target: &'a Grib2SubmessageDecoder,
-) -> Result<SimplePackingDecodeIterator<impl Iterator<Item = i32> + 'a>, GribError> {
+pub(crate) fn decode(
+    target: &Grib2SubmessageDecoder,
+) -> Result<SimplePackingDecodeIterator<impl Iterator<Item = i32> + '_>, GribError> {
     let sect5_data = &target.sect5_payload;
     let ref_val = read_as!(f32, sect5_data, 6);
     let exp = read_as!(u16, sect5_data, 10).as_grib_int();
