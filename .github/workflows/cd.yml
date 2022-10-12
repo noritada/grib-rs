@@ -26,9 +26,9 @@ jobs:
       with:
         rust-version: ${{ matrix.rust }}
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
-        submodules: 'true'
+        submodules: recursive
     - name: Setup musl
       if: matrix.os == 'ubuntu-latest'
       run: |
