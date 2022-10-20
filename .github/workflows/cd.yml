@@ -8,8 +8,6 @@ jobs:
   deploy:
     strategy:
       matrix:
-        os: [ubuntu-latest, macOS-latest, windows-latest]
-        rust: [stable]
         include:
           - os: ubuntu-latest
             target: x86_64-unknown-linux-musl
@@ -21,14 +19,14 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-    - name: Setup Rust
-      uses: hecrj/setup-rust-action@v1.3.4
-      with:
-        rust-version: ${{ matrix.rust }}
     - name: Checkout
       uses: actions/checkout@v3
       with:
         submodules: recursive
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        targets: ${{ matrix.target }}
     - name: Setup musl
       if: matrix.os == 'ubuntu-latest'
       run: |

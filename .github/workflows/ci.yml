@@ -13,17 +13,14 @@ jobs:
     name: Lint and Clippy
     runs-on: ubuntu-latest
     steps:
-      - name: Install Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: nightly
-          profile: minimal
-          override: true
-          components: 'rustfmt,clippy'
       - name: Checkout
         uses: actions/checkout@v3
         with:
           submodules: recursive
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: clippy, rustfmt
       - name: Run rustfmt
         run: cargo fmt --all -- --check
       - name: Run clippy
@@ -34,19 +31,16 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macOS-latest, windows-latest]
-        rust: [stable]
 
     runs-on: ${{ matrix.os }}
 
     steps:
-    - name: Setup Rust
-      uses: hecrj/setup-rust-action@v1.3.4
-      with:
-        rust-version: ${{ matrix.rust }}
     - name: Checkout
       uses: actions/checkout@v3
       with:
         submodules: recursive
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
     - name: Build
       run: cargo build --verbose --workspace
     - name: Run tests
@@ -56,13 +50,12 @@ jobs:
     name: Address sanitizer
     runs-on: ubuntu-latest
     steps:
-      - name: Install Rust
-        uses: actions-rs/toolchain@v1
-        with: {toolchain: nightly, profile: minimal, override: true}
       - name: Checkout
         uses: actions/checkout@v3
         with:
           submodules: recursive
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@nightly
       - name: Run test with sanitizer
         env:
           RUSTFLAGS: -Z sanitizer=address
