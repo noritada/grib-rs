@@ -35,5 +35,6 @@ openjpeg-sys = "1.0.5" # avoiding 1.0.2/1.0.4
 grib-build = { path = "gen", version = "0.3.0" }
 
 [profile.release]
+strip = true
 lto = true
 codegen-units = 1
