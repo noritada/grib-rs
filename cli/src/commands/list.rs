@@ -121,7 +121,7 @@ impl<'i, R> Display for ListView<'i, R> {
             ListViewMode::Dump => {
                 for (i, submessage) in entries {
                     let id = format!("{}.{}", i.0, i.1);
-                    write!(f, "{}\n{}\n", id, submessage.describe())?;
+                    write!(f, "{id}\n{}\n", submessage.describe())?;
                 }
             }
         }

@@ -10,9 +10,9 @@ fn main() {
     let output_path = Path::new(&out_dir).join("cct.rs");
     for path in &input_file_names {
         db.load(path).unwrap();
-        println!("cargo:rerun-if-changed={}", path);
+        println!("cargo:rerun-if-changed={path}");
     }
-    fs::write(&output_path, format!("{}", db)).unwrap();
+    fs::write(output_path, format!("{db}")).unwrap();
 
     let input_file_names = [
         "def/GRIB2/GRIB2_CodeFlag_0_0_CodeTable_en.csv",
@@ -33,9 +33,9 @@ fn main() {
     let output_path = Path::new(&out_dir).join("grib2_codeflag.rs");
     for path in &input_file_names {
         db.load(path).unwrap();
-        println!("cargo:rerun-if-changed={}", path);
+        println!("cargo:rerun-if-changed={path}");
     }
-    fs::write(&output_path, format!("{}", db)).unwrap();
+    fs::write(output_path, format!("{db}")).unwrap();
 
     println!("cargo:rerun-if-changed=build.rs");
 }

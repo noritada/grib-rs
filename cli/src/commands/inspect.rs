@@ -116,9 +116,9 @@ impl<'i, R> Display for InspectView<'i, R> {
             }
 
             match item {
-                InspectItem::Sections(item) => write!(f, "{}", item)?,
-                InspectItem::SubMessages(item) => write!(f, "{}", item)?,
-                InspectItem::Templates(item) => write!(f, "{}", item)?,
+                InspectItem::Sections(item) => write!(f, "{item}")?,
+                InspectItem::SubMessages(item) => write!(f, "{item}")?,
+                InspectItem::Templates(item) => write!(f, "{item}")?,
             }
 
             if items.peek().is_some() {
@@ -210,15 +210,15 @@ impl<'i, R> Display for InspectSubMessagesItem<'i, R> {
                 None => "-".to_string(),
                 Some(id) => id.index.to_string(),
             };
-            format!("{:>5}", s)
+            format!("{s:>5}")
         }
 
         fn format_template(template: Option<TemplateInfo>) -> String {
             let s = match template {
                 None => "-".to_string(),
-                Some(info) => format!("{}", info),
+                Some(info) => format!("{info}"),
             };
-            format!("{:<7}", s)
+            format!("{s:<7}")
         }
 
         let header = format!(
@@ -268,10 +268,10 @@ impl Display for InspectTemplatesItem {
         for tmpl in self.data.iter() {
             match tmpl.describe() {
                 Some(s) => {
-                    writeln!(f, "{:<8} - {}", tmpl.to_string(), s)?;
+                    writeln!(f, "{:<8} - {s}", tmpl.to_string())?;
                 }
                 None => {
-                    writeln!(f, "{}", tmpl)?;
+                    writeln!(f, "{tmpl}")?;
                 }
             }
         }

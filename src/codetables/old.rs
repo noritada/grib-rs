@@ -8,7 +8,7 @@ impl Display for LookupResult {
             Ok(s) => s.to_string(),
             Err(e) => e.to_string(),
         };
-        write!(f, "{}", s)
+        write!(f, "{s}")
     }
 }
 
@@ -20,7 +20,7 @@ pub enum ConversionError {
 impl Display for ConversionError {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         match self {
-            Self::Unimplemented(code) => write!(f, "code '{}' is not implemented", code),
+            Self::Unimplemented(code) => write!(f, "code '{code}' is not implemented"),
         }
     }
 }

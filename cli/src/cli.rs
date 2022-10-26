@@ -40,7 +40,7 @@ where
         console::set_colors_enabled(true);
     }
 
-    print!("{}", view);
+    print!("{view}");
 }
 
 pub(crate) trait PredictableNumLines {

@@ -120,7 +120,7 @@ impl CodeDB {
     }
 
     fn get_variable_name(&self, id: u8) -> String {
-        format!("COMMON_CODE_TABLE_{:02}", id)
+        format!("COMMON_CODE_TABLE_{id:02}")
     }
 
     pub fn get(&self, id: u8) -> Option<&CodeTable> {
@@ -225,7 +225,7 @@ const COMMON_CODE_TABLE_00: &[& str] = &[
         db.load(PATH_STR_C00).unwrap();
         db.load(PATH_STR_C11).unwrap();
         assert_eq!(
-            format!("{}", db),
+            format!("{db}"),
             "\
 /// Common Code Table C-0
 const COMMON_CODE_TABLE_00: &[& str] = &[

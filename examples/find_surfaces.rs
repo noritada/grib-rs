@@ -15,7 +15,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut args = env::args().skip(1);
     if let (Some(file_path), Some(forecast_time)) = (args.next(), args.next()) {
         let forecast_time = forecast_time.parse::<u32>()?;
-        find_surfaces(&file_path, forecast_time)
+        find_surfaces(file_path, forecast_time)
     } else {
         panic!("Usage: find_surfaces <path> <forecast_time>");
     }
@@ -40,7 +40,7 @@ where
         }) = ft
         {
             if hours == forecast_time_hours {
-                println!("{}.{}: {}", index.0, index.1, hours);
+                println!("{}.{}: {hours}", index.0, index.1);
             }
         }
     }

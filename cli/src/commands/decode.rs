@@ -73,7 +73,7 @@ impl<'a> cli::PredictableNumLines for DecodeTextDisplay<'a> {
 impl<'i> fmt::Display for DecodeTextDisplay<'i> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let Self(inner) = self;
-        writeln!(f, "{:#?}", inner)?;
+        writeln!(f, "{inner:#?}")?;
         Ok(())
     }
 }

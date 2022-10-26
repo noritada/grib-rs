@@ -19,7 +19,7 @@ fn real_main() -> anyhow::Result<()> {
 fn main() {
     if let Err(ref e) = real_main() {
         let red = console::Style::new().red();
-        eprintln!("{}: {}", red.apply_to("error"), e);
+        eprintln!("{}: {e}", red.apply_to("error"));
         std::process::exit(1);
     }
 }

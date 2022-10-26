@@ -22,8 +22,8 @@ impl ForecastTime {
 
     pub fn describe(&self) -> (String, String) {
         let unit = match &self.unit {
-            Name(unit) => format!("{:#?}", unit),
-            Num(num) => format!("code {:#?}", num),
+            Name(unit) => format!("{unit:#?}"),
+            Num(num) => format!("code {num:#?}"),
         };
         let value = self.value.to_string();
         (unit, value)
@@ -37,11 +37,11 @@ impl Display for ForecastTime {
         match &self.unit {
             Name(unit) => {
                 if let Some(expr) = unit.short_expr() {
-                    write!(f, " [{}]", expr)?;
+                    write!(f, " [{expr}]")?;
                 }
             }
             Num(num) => {
-                write!(f, " [unit: {}]", num)?;
+                write!(f, " [unit: {num}]")?;
             }
         }
 

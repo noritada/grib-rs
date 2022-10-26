@@ -16,7 +16,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     if let (Some(file_path), Some(index), Some(subindex)) = (args.next(), args.next(), args.next())
     {
         let index: (usize, usize) = (index.parse()?, subindex.parse()?);
-        decode_surface(&file_path, index)
+        decode_surface(file_path, index)
     } else {
         panic!("Usage: decode_surface <path> <index>");
     }
@@ -37,7 +37,7 @@ where
     let (_index, submessage) = grib2
         .iter()
         .find(|(index, _)| *index == message_index)
-        .ok_or_else(|| "no such index")?;
+        .ok_or("no such index")?;
 
     // Prepare a decoder.
     let decoder = grib::decoders::Grib2SubmessageDecoder::from(submessage)?;
@@ -49,7 +49,7 @@ where
 
     // Iterate over decoded values.
     for value in values {
-        println!("{}", value);
+        println!("{value}");
     }
 
     Ok(())

@@ -111,9 +111,9 @@ impl CodeDB {
 
     fn get_variable_name(&self, id: (u8, u8, OptArg)) -> String {
         match id {
-            (section, number, OptArg::None) => format!("CODE_TABLE_{}_{}", section, number),
+            (section, number, OptArg::None) => format!("CODE_TABLE_{section}_{number}"),
             (section, number, OptArg::L1(discipline)) => {
-                format!("CODE_TABLE_{}_{}_{}", section, number, discipline)
+                format!("CODE_TABLE_{section}_{number}_{discipline}")
             }
             (section, number, OptArg::L2(discipline, category)) => format!(
                 "CODE_TABLE_{}_{}_{}_{}",
@@ -393,7 +393,7 @@ const CODE_TABLE_0_0: &[& str] = &[
         db.load(PATH_STR_2).unwrap();
         db.load(PATH_STR_3).unwrap();
         assert_eq!(
-            format!("{}", db),
+            format!("{db}"),
             "\
 /// Foo
 const CODE_TABLE_0_0: &[& str] = &[

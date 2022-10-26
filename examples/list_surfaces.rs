@@ -12,7 +12,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     // Take the first argument as an input file path.
     let mut args = env::args().skip(1);
     if let Some(file_path) = args.next() {
-        list_surfaces(&file_path)
+        list_surfaces(file_path)
     } else {
         panic!("Usage: list_surfaces <path>");
     }
