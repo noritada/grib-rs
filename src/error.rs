@@ -8,9 +8,7 @@ use crate::decoders::*;
 pub enum GribError {
     InternalDataError,
     ParseError(ParseError),
-    ValidationError(ValidationError),
     DecodeError(DecodeError),
-    OperationError(String),
 }
 
 impl Error for GribError {
@@ -25,12 +23,6 @@ impl From<ParseError> for GribError {
     }
 }
 
-impl From<ValidationError> for GribError {
-    fn from(e: ValidationError) -> Self {
-        Self::ValidationError(e)
-    }
-}
-
 impl From<DecodeError> for GribError {
     fn from(e: DecodeError) -> Self {
         Self::DecodeError(e)
@@ -42,9 +34,7 @@ impl Display for GribError {
         match self {
             Self::InternalDataError => write!(f, "Something unexpected happend"),
             Self::ParseError(e) => write!(f, "{e}"),
-            Self::ValidationError(e) => write!(f, "{e}"),
             Self::DecodeError(e) => write!(f, "{e:#?}"),
-            Self::OperationError(s) => write!(f, "{s}"),
         }
     }
 }
@@ -116,23 +106,6 @@ impl Display for BuildError {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         match self {
             Self::SectionSizeTooSmall(i) => write!(f, "Section size is too small: {i}"),
-        }
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub enum ValidationError {
-    GRIB2IterationSuddenlyFinished,
-    NoGridDefinition(usize),
-    GRIB2WrongIteration(usize),
-}
-
-impl Display for ValidationError {
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        match self {
-            Self::GRIB2IterationSuddenlyFinished => write!(f, "GRIB2 file suddenly finished"),
-            Self::NoGridDefinition(i) => write!(f, "Grid Definition Section not found at {i}"),
-            Self::GRIB2WrongIteration(i) => write!(f, "GRIB2 sections wrongly ordered at {i}"),
         }
     }
 }
