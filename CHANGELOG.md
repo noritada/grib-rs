@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Multi-message data support in `Grib2` using newly introduced iterator-based parsers internally.
   - New method `Grib2::len()` for submessage list length checking.
 - CLI application `gribber` built on the top of the Rust library
-  - Multi-message data support.
+  - Multi-message data support. (#21)
 
 ### Changed
 
@@ -21,14 +21,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Unnecessarily strong trait boundaries for `Grib2::iter()`, `Grib2::submessages()`, and `Grib2::sections()` are removed.
   - `Grib2::sections()` now return an iterator instead of a slice.
   - Non-API changes
-    - Development version of the library's API documentation is now available on GitHub Pages.
+    - Development version of the library's API documentation is now available on GitHub Pages. (#22)
 - CLI application `gribber` built on the top of the Rust library
   - The application now uses `anyhow` for error handling instead of a custom error type in order to reduce boilerplate code.
   - User-invisible changes
     - Duplication in test code for CLI has been eliminated so that commonalities and differences between test cases get clarified.
     - Test code for CLI has been reorganized for better accessibility.
 - Others
-  - Source code for CLI has been separated from the "grib" library package as "grib-cli" for the separation of dependencies.
+  - Source code for CLI has been separated from the "grib" library package as "grib-cli" for the separation of dependencies. (#23)
 
 ### Removed
 
@@ -45,20 +45,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Library `grib`
-  - Support for Section 6 (Bit-map Section).
+  - Support for Section 6 (Bit-map Section). (#19)
 
 ### Changed
 
 - Library `grib`
   - There is a small change in arguments of `decoders::dispatch()`.
 - CLI application `gribber` built on the top of the Rust library
-  - The "list" subcommand now displays the number of grid points and ones whose values are NaN.
+  - The "list" subcommand now displays the number of grid points and ones whose values are NaN. (#20)
   - The version of `clap` used is now 3.2 (no change in behavior).
 
 ### Contributors
 
 - Thanks for sending PRs to this release:
-  - @resistor
+  - @resistor (#18)
 
 ## [0.4.3] - 2022-01-15
 
