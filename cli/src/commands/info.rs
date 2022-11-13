@@ -65,7 +65,7 @@ Message {}
             identification.local_table_version(),
             CodeTable1_1.lookup(identification.local_table_version() as usize),
             CodeTable1_2.lookup(identification.ref_time_significance() as usize),
-            identification.ref_time(),
+            identification.ref_time().unwrap(),
             CodeTable1_3.lookup(identification.prod_status() as usize),
             CodeTable1_4.lookup(identification.data_type() as usize)
         )

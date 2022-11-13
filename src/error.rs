@@ -9,6 +9,7 @@ pub enum GribError {
     InternalDataError,
     ParseError(ParseError),
     DecodeError(DecodeError),
+    InvalidValueError(String),
 }
 
 impl Error for GribError {
@@ -35,6 +36,7 @@ impl Display for GribError {
             Self::InternalDataError => write!(f, "Something unexpected happend"),
             Self::ParseError(e) => write!(f, "{e}"),
             Self::DecodeError(e) => write!(f, "{e:#?}"),
+            Self::InvalidValueError(s) => write!(f, "invalid value ({s})"),
         }
     }
 }
