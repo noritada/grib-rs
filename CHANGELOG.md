@@ -6,11 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [0.6.0] - 2022-11-13
 ### Added
 
 - Library `grib`
   - Multi-message data support in `Grib2` using newly introduced iterator-based parsers internally.
   - New method `Grib2::len()` for submessage list length checking.
+  - New `Grib2SubmessageDecoder`, which returns an iterator of decoded values in a submessage. (#27)
+  - New experimental parser API `Grib2SubmessageStream`, which parses GRIB2 data as an iterator.
+    Currently this is experimental and users cannot use decoders with this API.
 - CLI application `gribber` built on the top of the Rust library
   - Multi-message data support. (#21)
 
@@ -20,21 +25,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `Grib2` is now re-exported at the crate root.
   - Unnecessarily strong trait boundaries for `Grib2::iter()`, `Grib2::submessages()`, and `Grib2::sections()` are removed.
   - `Grib2::sections()` now return an iterator instead of a slice.
+  - `Identification::ref_time()` now returns `Result` instead of directly returning `chrono::DateTime`.
+    So, this method will not panic even if the reference time in the GRIB file is invalid. (#28)
+  - `SubMessageIterator` is renamed as `SubmessageIterator`.
   - Non-API changes
     - Development version of the library's API documentation is now available on GitHub Pages. (#22)
 - CLI application `gribber` built on the top of the Rust library
   - The application now uses `anyhow` for error handling instead of a custom error type in order to reduce boilerplate code.
+  - The version of `clap` used is now 4.0. (#26)
   - User-invisible changes
     - Duplication in test code for CLI has been eliminated so that commonalities and differences between test cases get clarified.
     - Test code for CLI has been reorganized for better accessibility.
 - Others
   - Source code for CLI has been separated from the "grib" library package as "grib-cli" for the separation of dependencies. (#23)
+  - Cookbook has been migrated from mdBook to rustdoc so that the code in the documentation is now always tested against the library's API. (#25)
+  - `aarch64-apple-darwin` is added to the target architecture list in nightly building.
+  - Enabled link time optimization and symbol stripping in release builds to improve runtime performance and reduce the size of builds.
 
 ### Removed
 
 - Library `grib`
   - `Grib2::scan()` has been removed in favor of newly introduced iterator-based parsers.
   - `Grib2::info()` has been removed since it does not make sense for multi-message data.
+  - `Grib2::get_values()` has been removed in favor of newly introduced `Grib2SubmessageDecoder`. (#24)
+  - An enum variant `GribError::ValidationError` has been removed since its functionality is now included in `GribError::ParseError`.
 
 ### Fixed
 
@@ -164,7 +178,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - inspect: display of information mainly for development purpose such as template numbers
     - list: display of a list of sections (the style is still tentative)
 
-[unreleased]: https://github.com/noritada/grib-rs/compare/v0.5.0...HEAD
+[unreleased]: https://github.com/noritada/grib-rs/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/noritada/grib-rs/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/noritada/grib-rs/compare/v0.4.3...v0.5.0
 [0.4.3]: https://github.com/noritada/grib-rs/compare/v0.4.2...v0.4.3
 [0.4.2]: https://github.com/noritada/grib-rs/compare/v0.4.1...v0.4.2
