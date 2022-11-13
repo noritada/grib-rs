@@ -15,7 +15,7 @@ keywords.workspace = true
 members = ["gen", "cli"]
 
 [workspace.package]
-version = "0.5.0"
+version = "0.6.0"
 authors = ["Noritada Kobayashi <noritada.kobayashi@gmail.com>"]
 edition = "2021"
 license = "MIT OR Apache-2.0"
@@ -32,7 +32,7 @@ num_enum = "0.5"
 openjpeg-sys = "1.0.5" # avoiding 1.0.2/1.0.4
 
 [build-dependencies]
-grib-build = { path = "gen", version = "0.3.0" }
+grib-build = { path = "gen", version = "0.4.0" }
 
 [profile.release]
 strip = true
