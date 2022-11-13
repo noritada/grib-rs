@@ -1,3 +1,4 @@
+use chrono::{DateTime, Utc};
 use clap::{arg, ArgMatches, Command};
 use std::fmt::{self, Display, Formatter};
 use std::path::PathBuf;
@@ -27,17 +28,25 @@ pub fn exec(args: &ArgMatches) -> anyhow::Result<()> {
         if let (Some(SectionBody::Section0(sect0_body)), Some(SectionBody::Section1(sect1_body))) =
             (&submessage.0.body.body, &submessage.1.body.body)
         {
-            print!("{}", InfoView(message_index.0, sect0_body, sect1_body));
+            print!(
+                "{}",
+                InfoView(
+                    message_index.0,
+                    sect0_body,
+                    sect1_body,
+                    sect1_body.ref_time()?
+                )
+            );
         }
     }
     Ok(())
 }
 
-struct InfoView<'i>(usize, &'i Indicator, &'i Identification);
+struct InfoView<'i>(usize, &'i Indicator, &'i Identification, DateTime<Utc>);
 
 impl<'i> Display for InfoView<'i> {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        let Self(index, indicator, identification) = self;
+        let Self(index, indicator, identification, ref_time) = self;
         write!(
             f,
             "\
@@ -65,7 +74,7 @@ Message {}
             identification.local_table_version(),
             CodeTable1_1.lookup(identification.local_table_version() as usize),
             CodeTable1_2.lookup(identification.ref_time_significance() as usize),
-            identification.ref_time(),
+            ref_time,
             CodeTable1_3.lookup(identification.prod_status() as usize),
             CodeTable1_4.lookup(identification.data_type() as usize)
         )
