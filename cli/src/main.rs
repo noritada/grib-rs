@@ -3,7 +3,7 @@ use clap::{crate_name, crate_version, Command};
 mod cli;
 mod commands;
 
-fn app() -> Command {
+pub(crate) fn app() -> Command {
     Command::new(crate_name!())
         .version(crate_version!())
         .arg_required_else_help(true)
