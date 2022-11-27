@@ -20,7 +20,7 @@ path = "src/main.rs"
 [dependencies]
 anyhow = "1"
 chrono = "0.4.23"
-clap = { version = "4", features = ["cargo"] }
+clap = "4"
 clap_complete = "4"
 console = "0.15"
 grib = { path = "..", version = "=0.6.0" }
