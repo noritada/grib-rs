@@ -69,7 +69,7 @@ fn rleunpack(
     };
 
     let rlbase = maxv + 1;
-    let lngu: usize = (2u16.pow(nbit.into()) - rlbase).into();
+    let lngu: usize = ((1u16 << nbit) - rlbase).into();
     let mut cached = None;
     let mut exp: usize = 1;
     let iter = NBitwiseIterator::new(input, usize::from(nbit));
