@@ -115,10 +115,9 @@ impl CodeDB {
             (section, number, OptArg::L1(discipline)) => {
                 format!("CODE_TABLE_{section}_{number}_{discipline}")
             }
-            (section, number, OptArg::L2(discipline, category)) => format!(
-                "CODE_TABLE_{}_{}_{}_{}",
-                section, number, discipline, category
-            ),
+            (section, number, OptArg::L2(discipline, category)) => {
+                format!("CODE_TABLE_{section}_{number}_{discipline}_{category}")
+            }
         }
     }
 
