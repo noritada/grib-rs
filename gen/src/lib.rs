@@ -27,7 +27,7 @@ impl FromStr for CodeRange {
             mut pos: usize,
         ) -> Result<(usize, usize), CodeRangeParseError> {
             let start = pos;
-            while pos < input.len() && (b'0'..=b'9').contains(&input[pos]) {
+            while pos < input.len() && input[pos].is_ascii_digit() {
                 pos += 1;
             }
             let number = from_utf8(&input[start..pos])
