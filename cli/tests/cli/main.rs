@@ -47,7 +47,7 @@ fn no_such_subcommand() -> Result<(), Box<dyn std::error::Error>> {
         .failure()
         .stdout(predicate::str::is_empty())
         .stderr(
-            predicate::str::starts_with("error: The subcommand 'foo' wasn't recognized")
+            predicate::str::starts_with("error: unrecognized subcommand 'foo'")
                 .and(predicate::str::contains("Usage:"))
                 .and(predicate::str::contains("Commands:").not()),
         );

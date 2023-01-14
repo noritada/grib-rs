@@ -15,7 +15,7 @@ macro_rules! test_subcommands_without_args {
                 .stdout(predicate::str::is_empty())
                 .stderr(
                     predicate::str::starts_with(
-                        "error: The following required arguments were not provided:",
+                        "error: the following required arguments were not provided:",
                     )
                         .and(predicate::str::contains("Usage:"))
                         .and(predicate::str::contains("Commands:").not()),
