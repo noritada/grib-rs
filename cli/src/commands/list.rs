@@ -64,7 +64,7 @@ impl<'i, R> Display for ListView<'i, R> {
         match self.mode {
             ListViewMode::OneLine => {
                 let header = format!(
-                    "{:>8} │ {:<31} {:<18} {:>14} {:>17} {:>17} | {:>21}\n",
+                    "{:>8} │ {:<31} {:<18} {:>14} {:>17} {:>17} │ {:>21}\n",
                     "id",
                     "Parameter",
                     "Generating process",
@@ -106,7 +106,7 @@ impl<'i, R> Display for ListView<'i, R> {
                     let num_points_represented = submessage.repr_def().num_points();
                     writeln!(
                         f,
-                        "{:>8} │ {:<31} {:<18} {:>14} {:>17} {:>17} | {:>10}/{:>10}",
+                        "{:>8} │ {:<31} {:<18} {:>14} {:>17} {:>17} │ {:>10}/{:>10}",
                         id,
                         category,
                         generating_process,
