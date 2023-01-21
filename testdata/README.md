@@ -22,6 +22,15 @@ Source: Deutscher Wetterdienst
 
 - `icon_global_icosahedral_single-level_2021112018_000_TOT_PREC.grib2`
 
+## Data files from NOAA
+
+Following data files are downloaded from [NOAA Operational Model Archive and Distribution System (NOMADS)](https://nomads.ncep.noaa.gov/).
+The disclaimer is [available online](https://www.weather.gov/disclaimer).
+
+- `gdas.t12z.pgrb2.0p25.f000.0-10.xz`
+   (Only the first 10 messages of 696 messages in a data file downloaded from
+   https://nomads.ncep.noaa.gov/pub/data/nccf/com/gfs/prod/gdas.20230111/12/atmos/gdas.t12z.pgrb2.0p25.f000 )
+
 ## Data files from JMA
 
 Following data files are downloaded from [JMA's GPV sample data
@@ -62,4 +71,8 @@ $ wgrib2 -d 1.3 -order raw -no_header -bin meps-wgrib2-le.bin Z__C_RJTD_20190605
 $ wgrib2 -d 1.1 -order raw -no_header -bin msmguid-wgrib2-le.bin Z__C_RJTD_20190304000000_MSM_GUID_Rjp_P-all_FH03-39_Toorg_grib2.bin
 
 $ wgrib2 -d 1 -order raw -no_header -bin cmc-glb-wgrib2-le.bin CMC_glb_TMP_ISBL_1_latlon.24x.24_2021051800_P000.grib2
+
+$ wgrib2 -d 1 -order raw -no_header -bin gdas-0-wgrib2-le.bin gdas.t12z.pgrb2.0p25.f000.0-10
+
+$ wgrib2 -d 3 -order raw -no_header -bin gdas-2-wgrib2-le.bin gdas.t12z.pgrb2.0p25.f000.0-10
 ```
