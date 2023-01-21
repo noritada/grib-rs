@@ -93,6 +93,13 @@ test_operation_with_data_without_nan_values_and_byte_order_options! {
         "-l",
         utils::testdata::flat_binary::jma_meps_le()?
     ),
+    (
+        issue_29_on_complex_packing_decoding,
+        utils::testdata::grib2::noaa_gdas()?,
+        "2.0",
+        "-l",
+        utils::testdata::flat_binary::noaa_gdas_2_le()?
+    ),
 }
 
 #[test]
