@@ -91,10 +91,9 @@ pub(crate) fn decode(
     }
 
     let spdiff_packed_iter = unpacked_data.flatten();
-    assert_eq!(
-        spdiff_packed_iter.clone().take(2).collect::<Vec<_>>(),
-        [i32::from(z1), i32::from(z2)]
-    );
+    let spdiff_packed_iter = [i32::from(z1), i32::from(z2)]
+        .into_iter()
+        .chain(spdiff_packed_iter.skip(2));
 
     let spdiff_unpacked = SpatialDiff2ndOrderDecodeIterator::new(spdiff_packed_iter);
     let decoder = SimplePackingDecodeIterator::new(spdiff_unpacked, ref_val, exp, dig);
