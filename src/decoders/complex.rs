@@ -146,6 +146,12 @@ where
             self.width_iter.next(),
             self.length_iter.next(),
         ) {
+            (Some(_ref), Some(width), Some(length)) if width.to_usize().unwrap() == 0 => {
+                // The specification states as follows: "For groups with a constant value,
+                // associated field width is 0, and no incremental data are physically present."
+                let length = length.to_usize().unwrap();
+                Some(vec![0; length])
+            }
             (Some(_ref), Some(width), Some(length)) => {
                 let (_ref, width, length) = (
                     _ref.to_i32().unwrap(),
