@@ -158,7 +158,7 @@ where
                     width.to_usize().unwrap(),
                     length.to_usize().unwrap(),
                 );
-                let bits = width * length;
+                let bits = self.start_offset_bits + width * length;
                 let (pos_end, offset_bit) = (self.pos + bits / 8, bits % 8);
                 let offset_byte = usize::from(offset_bit > 0);
                 let group_values =
@@ -168,7 +168,7 @@ where
                         .map(|v| v.as_grib_int() + _ref + self.z_min)
                         .collect::<Vec<i32>>();
                 self.pos = pos_end;
-                self.start_offset_bits = offset_byte;
+                self.start_offset_bits = offset_bit;
                 Some(group_values)
             }
             _ => None,
