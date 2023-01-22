@@ -38,8 +38,8 @@ pub(crate) fn decode(
 
     fn get_octet_length(nbit: u8, ngroup: u32) -> usize {
         let total_bit: u32 = ngroup * u32::from(nbit);
-        let total_octet: f32 = total_bit as f32 / 8_f32;
-        total_octet.ceil() as usize
+        let total_octet = (total_bit + 0b111) >> 3;
+        total_octet as usize
     }
 
     let params_end_octet = 6;
