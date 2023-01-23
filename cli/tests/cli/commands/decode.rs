@@ -242,7 +242,7 @@ test_operation_with_data_without_nan_values_compared_using_simple_packing! {
         utils::testdata::flat_binary::cmc_glb_le()?
     ),
     (
-        decoding_complex_packing_with_zero_group_length_as_little_endian,
+        decoding_complex_packing_with_zero_width_groups_as_little_endian,
         utils::testdata::grib2::noaa_gdas()?,
         "2.0",
         "-l",
