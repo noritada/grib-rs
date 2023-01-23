@@ -184,38 +184,73 @@ test_operation_with_data_with_nan_values_as_little_endian! {
     ),
 }
 
-#[test]
-fn decoding_jpeg2001_code_stream_as_little_endian() -> Result<(), Box<dyn std::error::Error>> {
-    let tempfile = utils::testdata::grib2::cmc_glb()?;
-    let arg_path = tempfile.path();
+// Compares integer values encoded using simple packing since there are some
+// differences between float values from gribber and wgrib2.
+macro_rules! test_operation_with_data_without_nan_values_compared_using_simple_packing {
+    ($((
+        $name:ident,
+        $input:expr,
+        $message_index:expr,
+        $byte_order_flag:expr,
+        $ref_val:expr,
+        $exp:expr,
+        $dig:expr,
+        $expected:expr
+    ),)*) => ($(
+        #[test]
+        fn $name() -> Result<(), Box<dyn std::error::Error>> {
+            let input = $input;
 
-    let dir = TempDir::new()?;
-    let out_path = dir.path().join("out.bin");
-    let out_path = format!("{}", out_path.display());
+            let dir = TempDir::new()?;
+            let out_path = dir.path().join("out.bin");
+            let out_path = format!("{}", out_path.display());
 
-    let mut cmd = Command::cargo_bin(CMD_NAME)?;
-    cmd.arg("decode")
-        .arg(arg_path)
-        .arg("0.0")
-        .arg("-l")
-        .arg(&out_path);
-    cmd.assert()
-        .success()
-        .stdout(predicate::str::is_empty())
-        .stderr(predicate::str::is_empty());
+            let mut cmd = Command::cargo_bin(CMD_NAME)?;
+            cmd.arg("decode")
+                .arg(input.path())
+                .arg($message_index)
+                .arg($byte_order_flag)
+                .arg(&out_path);
+            cmd.assert()
+                .success()
+                .stdout(predicate::str::is_empty())
+                .stderr(predicate::str::is_empty());
 
-    // Compares integer values encoded using simple packing since there are some
-    // differences between float values from gribber and wgrib2.
-    let ref_val = f32::from_be_bytes([0x45, 0x0e, 0xcc, 0x05]);
-    let exp: i16 = -2;
-    let dig: i16 = 1;
-    let expected = utils::testdata::flat_binary::cmc_glb_le()?;
-    let expected = utils::encode_le_bytes_using_simple_packing(expected, ref_val, exp, dig);
-    let actual = utils::cat_as_bytes(&out_path)?;
-    let actual = utils::encode_le_bytes_using_simple_packing(actual, ref_val, exp, dig);
-    assert_eq!(actual, expected);
+            let ref_val = $ref_val;
+            let exp: i16 = $exp;
+            let dig: i16 = $dig;
+            let expected = $expected;
+            let expected = utils::encode_le_bytes_using_simple_packing(expected, ref_val, exp, dig);
+            let actual = utils::cat_as_bytes(&out_path)?;
+            let actual = utils::encode_le_bytes_using_simple_packing(actual, ref_val, exp, dig);
+            assert_eq!(actual, expected);
 
-    Ok(())
+            Ok(())
+        }
+    )*);
+}
+
+test_operation_with_data_without_nan_values_compared_using_simple_packing! {
+    (
+        decoding_jpeg2001_code_stream_as_little_endian,
+        utils::testdata::grib2::cmc_glb()?,
+        "0.0",
+        "-l",
+        f32::from_be_bytes([0x45, 0x0e, 0xcc, 0x05]),
+        -2,
+        1,
+        utils::testdata::flat_binary::cmc_glb_le()?
+    ),
+    (
+        decoding_complex_packing_with_zero_group_length_as_little_endian,
+        utils::testdata::grib2::noaa_gdas()?,
+        "2.0",
+        "-l",
+        f32::from_be_bytes([0x00, 0x00, 0x00, 0x00]),
+        3,
+        9,
+        utils::testdata::flat_binary::noaa_gdas_2_le()?
+    ),
 }
 
 macro_rules! test_trial_to_decode_nonexisting_submessage {

@@ -91,10 +91,9 @@ pub(crate) fn decode(
     }
 
     let spdiff_packed_iter = unpacked_data.flatten();
-    assert_eq!(
-        spdiff_packed_iter.clone().take(2).collect::<Vec<_>>(),
-        [i32::from(z1), i32::from(z2)]
-    );
+    let spdiff_packed_iter = [i32::from(z1), i32::from(z2)]
+        .into_iter()
+        .chain(spdiff_packed_iter.skip(2));
 
     let spdiff_unpacked = SpatialDiff2ndOrderDecodeIterator::new(spdiff_packed_iter);
     let decoder = SimplePackingDecodeIterator::new(spdiff_unpacked, ref_val, exp, dig);
@@ -147,13 +146,20 @@ where
             self.width_iter.next(),
             self.length_iter.next(),
         ) {
+            (Some(_ref), Some(width), Some(length)) if width.to_usize().unwrap() == 0 => {
+                // The specification states as follows: "For groups with a constant value,
+                // associated field width is 0, and no incremental data are physically present."
+                let _ref = _ref.to_i32().unwrap();
+                let length = length.to_usize().unwrap();
+                Some(vec![_ref + self.z_min; length])
+            }
             (Some(_ref), Some(width), Some(length)) => {
                 let (_ref, width, length) = (
                     _ref.to_i32().unwrap(),
                     width.to_usize().unwrap(),
                     length.to_usize().unwrap(),
                 );
-                let bits = width * length;
+                let bits = self.start_offset_bits + width * length;
                 let (pos_end, offset_bit) = (self.pos + bits / 8, bits % 8);
                 let offset_byte = usize::from(offset_bit > 0);
                 let group_values =
@@ -163,7 +169,7 @@ where
                         .map(|v| v.as_grib_int() + _ref + self.z_min)
                         .collect::<Vec<i32>>();
                 self.pos = pos_end;
-                self.start_offset_bits = offset_byte;
+                self.start_offset_bits = offset_bit;
                 Some(group_values)
             }
             _ => None,

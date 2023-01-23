@@ -70,6 +70,10 @@ pub(crate) mod grib2 {
         )
     }
 
+    pub(crate) fn noaa_gdas() -> Result<NamedTempFile, io::Error> {
+        unxz_to_tempfile(testdata_dir().join("gdas.t12z.pgrb2.0p25.f000.0-10.xz"))
+    }
+
     pub(crate) fn multi_message_data(n: usize) -> Result<NamedTempFile, io::Error> {
         let mut buf = Vec::new();
         let mut out = NamedTempFile::new()?;
@@ -114,5 +118,9 @@ pub(crate) mod flat_binary {
 
     pub(crate) fn jma_tornado_nowcast_le() -> Result<Vec<u8>, io::Error> {
         unxz_as_bytes(testdata_dir().join("gen").join("tornado-wgrib2-le.bin.xz"))
+    }
+
+    pub(crate) fn noaa_gdas_2_le() -> Result<Vec<u8>, io::Error> {
+        unxz_as_bytes(testdata_dir().join("gen").join("gdas-2-wgrib2-le.bin.xz"))
     }
 }
