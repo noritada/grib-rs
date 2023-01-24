@@ -28,8 +28,12 @@ Following data files are downloaded from [NOAA Operational Model Archive and Dis
 The disclaimer is [available online](https://www.weather.gov/disclaimer).
 
 - `gdas.t12z.pgrb2.0p25.f000.0-10.xz`
-   (Only the first 10 messages of 696 messages in a data file downloaded from
-   https://nomads.ncep.noaa.gov/pub/data/nccf/com/gfs/prod/gdas.20230111/12/atmos/gdas.t12z.pgrb2.0p25.f000 )
+  (Only the first 10 messages of 696 messages in a data file downloaded from
+  https://nomads.ncep.noaa.gov/pub/data/nccf/com/gfs/prod/gdas.20230111/12/atmos/gdas.t12z.pgrb2.0p25.f000 )
+- `gdas.t12z.pgrb2.0p25.f000.12.xz`
+  (Only the 13th message of 696 messages in a data file downloaded from the same URL)
+- `gdas.t12z.pgrb2.0p25.f000.46.xz`
+  (Only the 47th message of 696 messages in a data file downloaded from the same URL)
 
 ## Data files from JMA
 
@@ -75,4 +79,8 @@ $ wgrib2 -d 1 -order raw -no_header -bin cmc-glb-wgrib2-le.bin CMC_glb_TMP_ISBL_
 $ wgrib2 -d 1 -order raw -no_header -bin gdas-0-wgrib2-le.bin gdas.t12z.pgrb2.0p25.f000.0-10
 
 $ wgrib2 -d 3 -order raw -no_header -bin gdas-2-wgrib2-le.bin gdas.t12z.pgrb2.0p25.f000.0-10
+
+$ wgrib2 -d 1 -order raw -no_header -bin gdas-12-wgrib2-le.bin gdas.t12z.pgrb2.0p25.f000.12
+
+$ wgrib2 -d 1 -order raw -no_header -bin gdas-46-wgrib2-le.bin gdas.t12z.pgrb2.0p25.f000.46
 ```

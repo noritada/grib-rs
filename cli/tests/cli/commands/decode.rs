@@ -87,11 +87,32 @@ test_operation_with_data_without_nan_values_and_byte_order_options! {
         utils::testdata::flat_binary::jma_kousa_le()?
     ),
     (
-        decoding_complex_packing_as_little_endian,
+        decoding_complex_packing_with_num_descriptor_octet_being_1_as_little_endian,
+        utils::testdata::grib2::noaa_gdas_12()?,
+        "0.0",
+        "-l",
+        utils::testdata::flat_binary::noaa_gdas_12_le()?
+    ),
+    (
+        decoding_complex_packing_with_num_descriptor_octet_being_2_as_little_endian,
         utils::testdata::grib2::jma_meps()?,
         "0.2",
         "-l",
         utils::testdata::flat_binary::jma_meps_le()?
+    ),
+    (
+        decoding_complex_packing_with_num_descriptor_octet_being_3_as_little_endian,
+        utils::testdata::grib2::noaa_gdas_0_10()?,
+        "0.0",
+        "-l",
+        utils::testdata::flat_binary::noaa_gdas_0_le()?
+    ),
+    (
+        decoding_complex_packing_with_all_values_being_0_as_little_endian,
+        utils::testdata::grib2::noaa_gdas_46()?,
+        "0.0",
+        "-l",
+        utils::testdata::flat_binary::noaa_gdas_46_le()?
     ),
 }
 
@@ -243,7 +264,7 @@ test_operation_with_data_without_nan_values_compared_using_simple_packing! {
     ),
     (
         decoding_complex_packing_with_zero_width_groups_as_little_endian,
-        utils::testdata::grib2::noaa_gdas()?,
+        utils::testdata::grib2::noaa_gdas_0_10()?,
         "2.0",
         "-l",
         f32::from_be_bytes([0x00, 0x00, 0x00, 0x00]),
