@@ -33,10 +33,10 @@ pub(crate) fn decode(
             "WARNING: nbit = 0 for JPEG 2000 code stream format decoder is not tested.
             Please report your data and help us develop the library."
         );
-        // Based on the implementation of wgrib2, if nbits equals 0, return a constant
-        // field where the data value at each grid point is the reference value.
-        let decoded = vec![ref_val; target.num_points_encoded];
-        let decoder = SimplePackingDecodeIteratorWrapper::FixedValue(decoded.into_iter());
+        let decoder = SimplePackingDecodeIteratorWrapper::FixedValue(FixedValueIterator::new(
+            ref_val,
+            target.num_points_encoded,
+        ));
         return Ok(decoder);
     };
 

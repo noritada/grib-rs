@@ -32,10 +32,10 @@ pub(crate) fn decode(
     let spdiff_param_octet = read_as!(u8, sect5_data, 43);
 
     if nbit == 0 {
-        // Based on the implementation of wgrib2, if nbits equals 0, return a constant
-        // field where the data value at each grid point is the reference value.
-        let decoded = vec![ref_val; target.num_points_encoded];
-        let decoder = SimplePackingDecodeIteratorWrapper::FixedValue(decoded.into_iter());
+        let decoder = SimplePackingDecodeIteratorWrapper::FixedValue(FixedValueIterator::new(
+            ref_val,
+            target.num_points_encoded,
+        ));
         return Ok(decoder);
     };
 
