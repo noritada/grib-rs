@@ -20,13 +20,25 @@ pub enum Jpeg2000CodeStreamDecodeError {
 
 pub(crate) fn decode(
     target: &Grib2SubmessageDecoder,
-) -> Result<SimplePackingDecodeIterator<impl Iterator<Item = i32>>, GribError> {
+) -> Result<SimplePackingDecodeIteratorWrapper<impl Iterator<Item = i32>>, GribError> {
     let sect5_data = &target.sect5_payload;
     let ref_val = read_as!(f32, sect5_data, 6);
     let exp = read_as!(u16, sect5_data, 10).as_grib_int();
     let dig = read_as!(u16, sect5_data, 12).as_grib_int();
-    //let nbit = read_as!(u8, sect5_data, 14);
+    let nbit = read_as!(u8, sect5_data, 14);
     let value_type = read_as!(u8, sect5_data, 15);
+
+    if nbit == 0 {
+        eprintln!(
+            "WARNING: nbit = 0 for JPEG 2000 code stream format decoder is not tested.
+            Please report your data and help us develop the library."
+        );
+        let decoder = SimplePackingDecodeIteratorWrapper::FixedValue(FixedValueIterator::new(
+            ref_val,
+            target.num_points_encoded,
+        ));
+        return Ok(decoder);
+    };
 
     if value_type != 0 {
         return Err(GribError::DecodeError(
@@ -41,6 +53,7 @@ pub(crate) fn decode(
     let jp2_unpacked = decode_jp2(stream)
         .map_err(|e| GribError::DecodeError(DecodeError::Jpeg2000CodeStreamDecodeError(e)))?;
     let decoder = SimplePackingDecodeIterator::new(jp2_unpacked, ref_val, exp, dig);
+    let decoder = SimplePackingDecodeIteratorWrapper::SimplePacking(decoder);
     Ok(decoder)
 }
 

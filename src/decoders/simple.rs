@@ -6,7 +6,7 @@ use crate::error::*;
 use crate::utils::{read_as, GribInt, NBitwiseIterator};
 
 pub(crate) enum SimplePackingDecodeIteratorWrapper<I> {
-    FixedValue(std::vec::IntoIter<f32>),
+    FixedValue(FixedValueIterator),
     SimplePacking(SimplePackingDecodeIterator<I>),
 }
 
@@ -58,10 +58,10 @@ pub(crate) fn decode(
     }
 
     let decoder = if nbit == 0 {
-        // Based on the implementation of wgrib2, if nbits equals 0, return a constant
-        // field where the data value at each grid point is the reference value.
-        let decoded = vec![ref_val; target.num_points_encoded];
-        SimplePackingDecodeIteratorWrapper::FixedValue(decoded.into_iter())
+        SimplePackingDecodeIteratorWrapper::FixedValue(FixedValueIterator::new(
+            ref_val,
+            target.num_points_encoded,
+        ))
     } else {
         let iter = NBitwiseIterator::new(&target.sect7_payload, usize::from(nbit));
         let iter = SimplePackingDecodeIterator::new(iter, ref_val, exp, dig);
@@ -102,6 +102,42 @@ impl<I: Iterator<Item = N>, N: ToPrimitive> Iterator for SimplePackingDecodeIter
             }
             _ => None,
         }
+    }
+}
+
+// Based on the implementation of wgrib2, if nbits equals 0, return a constant
+// field where the data value at each grid point is the reference value.
+pub(crate) struct FixedValueIterator {
+    ref_val: f32,
+    length: usize,
+    pos: usize,
+}
+
+impl FixedValueIterator {
+    pub(crate) fn new(ref_val: f32, length: usize) -> Self {
+        Self {
+            ref_val,
+            length,
+            pos: 0,
+        }
+    }
+}
+
+impl Iterator for FixedValueIterator {
+    type Item = f32;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let val = if self.pos < self.length {
+            Some(self.ref_val)
+        } else {
+            None
+        };
+        self.pos += 1;
+        val
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        (self.length, Some(self.length))
     }
 }
 

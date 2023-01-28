@@ -107,13 +107,13 @@ test_operation_with_data_without_nan_values_and_byte_order_options! {
     //     "-l",
     //     utils::testdata::flat_binary::noaa_gdas_0_le()?
     // ),
-    // (
-    //     decoding_complex_packing_with_all_values_being_0_as_little_endian,
-    //     utils::testdata::grib2::noaa_gdas_46()?,
-    //     "0.0",
-    //     "-l",
-    //     utils::testdata::flat_binary::noaa_gdas_46_le()?
-    // ),
+    (
+        decoding_complex_packing_where_nbit_is_zero,
+        utils::testdata::grib2::noaa_gdas_46()?,
+        "0.0",
+        "-l",
+        utils::testdata::flat_binary::noaa_gdas_46_le()?
+    ),
 }
 
 #[test]
