@@ -78,6 +78,8 @@ $ wgrib2 -d 1 -order raw -no_header -bin cmc-glb-wgrib2-le.bin CMC_glb_TMP_ISBL_
 
 $ wgrib2 -d 1 -order raw -no_header -bin gdas-0-wgrib2-le.bin gdas.t12z.pgrb2.0p25.f000.0-10
 
+$ wgrib2 -d 2 -order raw -no_header -bin gdas-1-wgrib2-le.bin gdas.t12z.pgrb2.0p25.f000.0-10
+
 $ wgrib2 -d 3 -order raw -no_header -bin gdas-2-wgrib2-le.bin gdas.t12z.pgrb2.0p25.f000.0-10
 
 $ wgrib2 -d 1 -order raw -no_header -bin gdas-12-wgrib2-le.bin gdas.t12z.pgrb2.0p25.f000.12
