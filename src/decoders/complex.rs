@@ -32,9 +32,11 @@ pub(crate) fn decode(
     let spdiff_param_octet = read_as!(u8, sect5_data, 43);
 
     let sect7_data = &target.sect7_payload;
-    let z1 = read_as!(u16, sect7_data, 0).as_grib_int();
-    let z2 = read_as!(u16, sect7_data, 2).as_grib_int();
-    let z_min = read_as!(u16, sect7_data, 4).as_grib_int();
+    let sect7_params = section7::SpatialDifferencingExtraDescriptors::new(
+        sect7_data,
+        spdiff_level,
+        spdiff_param_octet,
+    )?;
 
     fn get_octet_length(nbit: u8, ngroup: u32) -> usize {
         let total_bit: u32 = ngroup * u32::from(nbit);
@@ -42,7 +44,7 @@ pub(crate) fn decode(
         total_octet as usize
     }
 
-    let params_end_octet = 6;
+    let params_end_octet = sect7_params.len();
     let group_refs_end_octet = params_end_octet + get_octet_length(nbit, ngroup);
     let group_widths_end_octet = group_refs_end_octet + get_octet_length(group_width_nbit, ngroup);
     let group_lens_end_octet = group_widths_end_octet + get_octet_length(group_len_nbit, ngroup);
@@ -74,26 +76,16 @@ pub(crate) fn decode(
         group_refs_iter,
         group_widths_iter,
         group_lens_iter,
-        z_min,
+        sect7_params.minimum(),
         sect7_data[group_lens_end_octet..].to_vec(),
     );
 
-    if spdiff_level != 2 {
-        return Err(GribError::DecodeError(
-            DecodeError::ComplexPackingDecodeError(ComplexPackingDecodeError::NotSupported),
-        ));
-    }
-
-    if spdiff_param_octet != 2 {
-        return Err(GribError::DecodeError(
-            DecodeError::ComplexPackingDecodeError(ComplexPackingDecodeError::NotSupported),
-        ));
-    }
-
     let spdiff_packed_iter = unpacked_data.flatten();
-    let spdiff_packed_iter = [i32::from(z1), i32::from(z2)]
+    let first_values = sect7_params.first_values().collect::<Vec<_>>();
+    let num_first_values = first_values.len();
+    let spdiff_packed_iter = first_values
         .into_iter()
-        .chain(spdiff_packed_iter.skip(2));
+        .chain(spdiff_packed_iter.skip(num_first_values));
 
     let spdiff_unpacked = SpatialDiff2ndOrderDecodeIterator::new(spdiff_packed_iter);
     let decoder = SimplePackingDecodeIterator::new(spdiff_unpacked, ref_val, exp, dig);
@@ -116,14 +108,14 @@ impl<I, J, K> ComplexPackingValueDecodeIterator<I, J, K> {
         ref_iter: I,
         width_iter: J,
         length_iter: K,
-        z_min: i16,
+        z_min: i32,
         data: Vec<u8>,
     ) -> Self {
         Self {
             ref_iter,
             width_iter,
             length_iter,
-            z_min: i32::from(z_min),
+            z_min,
             data,
             pos: 0,
             start_offset_bits: 0,
@@ -220,3 +212,5 @@ impl<I: Iterator<Item = i32>> Iterator for SpatialDiff2ndOrderDecodeIterator<I> 
         }
     }
 }
+
+mod section7;

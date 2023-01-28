@@ -32,6 +32,27 @@ macro_rules! read_as {
 }
 pub(crate) use read_as;
 
+pub(crate) fn grib_int_from_bytes(bytes: &[u8]) -> i32 {
+    let len = bytes.len();
+    // Although there is logic that can be used to generalize, not so many patterns
+    // exist that generalization is necessary.
+    match len {
+        1 => i32::from(read_as!(u8, bytes, 0).as_grib_int()),
+        2 => i32::from(read_as!(u16, bytes, 0).as_grib_int()),
+        3 => {
+            let first = i32::from(read_as!(u8, bytes, 0).as_grib_int());
+            let rest = i32::from(read_as!(u16, bytes, 1));
+            if first >= 0 {
+                first * 0x10000 + rest
+            } else {
+                first * 0x10000 - rest
+            }
+        }
+        4 => i32::from(read_as!(u32, bytes, 0).as_grib_int()),
+        _ => unimplemented!(),
+    }
+}
+
 #[derive(Clone)]
 pub(crate) struct NBitwiseIterator<'a> {
     slice: &'a [u8],
@@ -136,6 +157,61 @@ mod tests {
         }
 
         assert_eq!(actual, output);
+    }
+
+    macro_rules! test_conversion_from_bytes_to_grib_int {
+        ($(($name:ident, $input:expr, $expected:expr),)*) => ($(
+            #[test]
+            fn $name() {
+                let bytes = $input;
+                let actual = grib_int_from_bytes(&bytes);
+                let expected = $expected;
+                assert_eq!(actual, expected)
+            }
+        )*);
+    }
+
+    test_conversion_from_bytes_to_grib_int! {
+        (
+            conversion_from_bytes_to_grib_int_for_1_byte_positive,
+            vec![0b01010101],
+            0b01010101
+        ),
+        (
+            conversion_from_bytes_to_grib_int_for_1_byte_negative,
+            vec![0b11010101],
+            -0b01010101
+        ),
+        (
+            conversion_from_bytes_to_grib_int_for_2_bytes_positive,
+            vec![0b01010101, 0b10101010],
+            0b01010101_10101010
+        ),
+        (
+            conversion_from_bytes_to_grib_int_for_2_bytes_negative,
+            vec![0b11010101, 0b10101010],
+            -0b01010101_10101010
+        ),
+        (
+            conversion_from_bytes_to_grib_int_for_3_bytes_positive,
+            vec![0b01010101, 0b10101010, 0b10101010],
+            0b01010101_10101010_10101010
+        ),
+        (
+            conversion_from_bytes_to_grib_int_for_3_bytes_negative,
+            vec![0b11010101, 0b10101010, 0b10101010],
+            -0b01010101_10101010_10101010
+        ),
+        (
+            conversion_from_bytes_to_grib_int_for_4_bytes_positive,
+            vec![0b01010101, 0b10101010, 0b10101010, 0b10101010],
+            0b01010101_10101010_10101010_10101010
+        ),
+        (
+            conversion_from_bytes_to_grib_int_for_4_bytes_negative,
+            vec![0b11010101, 0b10101010, 0b10101010, 0b10101010],
+            -0b01010101_10101010_10101010_10101010
+        ),
     }
 
     #[test]
