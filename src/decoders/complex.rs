@@ -15,7 +15,7 @@ pub enum ComplexPackingDecodeError {
 
 pub(crate) fn decode(
     target: &Grib2SubmessageDecoder,
-) -> Result<SimplePackingDecodeIterator<impl Iterator<Item = i32> + '_>, GribError> {
+) -> Result<SimplePackingDecodeIteratorWrapper<impl Iterator<Item = i32> + '_>, GribError> {
     let sect5_data = &target.sect5_payload;
     let ref_val = read_as!(f32, sect5_data, 6);
     let exp = read_as!(u16, sect5_data, 10).as_grib_int();
@@ -30,6 +30,14 @@ pub(crate) fn decode(
     let group_len_nbit = read_as!(u8, sect5_data, 41);
     let spdiff_level = read_as!(u8, sect5_data, 42);
     let spdiff_param_octet = read_as!(u8, sect5_data, 43);
+
+    if nbit == 0 {
+        // Based on the implementation of wgrib2, if nbits equals 0, return a constant
+        // field where the data value at each grid point is the reference value.
+        let decoded = vec![ref_val; target.num_points_encoded];
+        let decoder = SimplePackingDecodeIteratorWrapper::FixedValue(decoded.into_iter());
+        return Ok(decoder);
+    };
 
     let sect7_data = &target.sect7_payload;
     let sect7_params = section7::SpatialDifferencingExtraDescriptors::new(
@@ -89,6 +97,7 @@ pub(crate) fn decode(
 
     let spdiff_unpacked = SpatialDiff2ndOrderDecodeIterator::new(spdiff_packed_iter);
     let decoder = SimplePackingDecodeIterator::new(spdiff_unpacked, ref_val, exp, dig);
+    let decoder = SimplePackingDecodeIteratorWrapper::SimplePacking(decoder);
     Ok(decoder)
 }
 

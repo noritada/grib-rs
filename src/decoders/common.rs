@@ -3,9 +3,7 @@ use crate::decoders::bitmap::{create_bitmap_for_nonnullable_data, BitmapDecodeIt
 use crate::decoders::complex::{self, ComplexPackingDecodeError};
 use crate::decoders::jpeg2000::{self, Jpeg2000CodeStreamDecodeError};
 use crate::decoders::run_length::{self, RunLengthEncodingDecodeError};
-use crate::decoders::simple::{
-    self, SimplePackingDecodeError, SimplePackingDecodeIterator, SimplePackingDecodeIteratorWrapper,
-};
+use crate::decoders::simple::{self, SimplePackingDecodeError, SimplePackingDecodeIteratorWrapper};
 use crate::error::*;
 use crate::reader::Grib2Read;
 use num::ToPrimitive;
@@ -154,8 +152,8 @@ where
 
 enum Grib2SubmessageDecoderIteratorWrapper<I, J, K> {
     Template0(SimplePackingDecodeIteratorWrapper<I>),
-    Template3(SimplePackingDecodeIterator<J>),
-    Template40(SimplePackingDecodeIterator<K>),
+    Template3(SimplePackingDecodeIteratorWrapper<J>),
+    Template40(SimplePackingDecodeIteratorWrapper<K>),
     Template200(std::vec::IntoIter<f32>),
 }
 
