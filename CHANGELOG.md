@@ -7,6 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.1] - 2023-01-29
+### Added
+
+- Library `grib`
+  - Support for zero width groups in Template 5.3/7.3 decoder. (#31)
+  - Support for the number of spatial differencing extra descriptors other than 2 in Template 5.3/7.3 decoder. (#33, #36)
+  - Support for cases where nbit is 0 in following decoders (#35):
+    - Template 5.3/7.3 (complex packing and spatial differencing)
+    - Template 5.40/7.40 (JPEG 2000 code stream format)
+- CLI application `gribber` built on the top of the Rust library
+  - New subcommand "completions" to generate shell completions.
+
+### Changed
+
+- Library `grib`
+  - Verify that encoding parameter values are supported before decoding the data encoded with complex packing.
+- CLI application `gribber` built on the top of the Rust library
+  - The version of `clap` used is now 4.1 (no change in behavior except for messages).
+
+### Fixed
+
+- Library `grib`
+  - Fixed a panic with an assertion failure (with a message "assertion failed" in Template 5.3/7.3 decoder. (#29, #31)
+    - Correctly use spatial differencing extra descriptors in Template 7.3.
+    - Correct offset bit calculation in handling non-zero width groups.
+  - Fixed a panic with an index out-of-bounds error (with a message "range end index 4 out of range for slice of length 3") in Template 5.3/7.3 decoder. (#32, #35)
+
+### Contributors
+
+- Thanks for reporting issues concerning this release:
+  - @LafeWessel (#29, #32)
+
 ## [0.6.0] - 2022-11-13
 ### Added
 
@@ -178,7 +210,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - inspect: display of information mainly for development purpose such as template numbers
     - list: display of a list of sections (the style is still tentative)
 
-[unreleased]: https://github.com/noritada/grib-rs/compare/v0.6.0...HEAD
+[unreleased]: https://github.com/noritada/grib-rs/compare/v0.6.1...HEAD
+[0.6.1]: https://github.com/noritada/grib-rs/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/noritada/grib-rs/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/noritada/grib-rs/compare/v0.4.3...v0.5.0
 [0.4.3]: https://github.com/noritada/grib-rs/compare/v0.4.2...v0.4.3
