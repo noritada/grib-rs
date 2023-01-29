@@ -101,13 +101,6 @@ test_operation_with_data_without_nan_values_and_byte_order_options! {
         utils::testdata::flat_binary::jma_meps_le()?
     ),
     (
-        decoding_complex_packing_with_3_byte_spatial_differencing_extra_descriptors_starting_from_0x80,
-        utils::testdata::grib2::noaa_gdas_0_10()?,
-        "0.0",
-        "-l",
-        utils::testdata::flat_binary::noaa_gdas_0_le()?
-    ),
-    (
         decoding_complex_packing_where_nbit_is_zero,
         utils::testdata::grib2::noaa_gdas_46()?,
         "0.0",
@@ -270,6 +263,16 @@ test_operation_with_data_without_nan_values_compared_using_simple_packing! {
         1,
         8,
         utils::testdata::flat_binary::noaa_gdas_1_le()?
+    ),
+    (
+        decoding_complex_packing_with_3_byte_spatial_differencing_extra_descriptors_starting_from_0x80,
+        utils::testdata::grib2::noaa_gdas_0_10()?,
+        "0.0",
+        "-l",
+        f32::from_be_bytes([0x49, 0x67, 0xe7, 0xdf]),
+        1,
+        1,
+        utils::testdata::flat_binary::noaa_gdas_0_le()?
     ),
     (
         decoding_complex_packing_with_zero_width_groups_as_little_endian,
