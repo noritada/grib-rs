@@ -48,7 +48,7 @@ pub(crate) fn grib_int_from_bytes(bytes: &[u8]) -> i32 {
                 first * 0x10000 - rest
             }
         }
-        4 => i32::from(read_as!(u32, bytes, 0).as_grib_int()),
+        4 => read_as!(u32, bytes, 0).as_grib_int(),
         _ => unimplemented!(),
     }
 }
@@ -185,32 +185,32 @@ mod tests {
         (
             conversion_from_bytes_to_grib_int_for_2_bytes_positive,
             vec![0b01010101, 0b10101010],
-            0b01010101_10101010
+            0b0101_0101_1010_1010
         ),
         (
             conversion_from_bytes_to_grib_int_for_2_bytes_negative,
             vec![0b11010101, 0b10101010],
-            -0b01010101_10101010
+            -0b0101_0101_1010_1010
         ),
         (
             conversion_from_bytes_to_grib_int_for_3_bytes_positive,
             vec![0b01010101, 0b10101010, 0b10101010],
-            0b01010101_10101010_10101010
+            0b0101_0101_1010_1010_1010_1010
         ),
         (
             conversion_from_bytes_to_grib_int_for_3_bytes_negative,
             vec![0b11010101, 0b10101010, 0b10101010],
-            -0b01010101_10101010_10101010
+            -0b0101_0101_1010_1010_1010_1010
         ),
         (
             conversion_from_bytes_to_grib_int_for_4_bytes_positive,
             vec![0b01010101, 0b10101010, 0b10101010, 0b10101010],
-            0b01010101_10101010_10101010_10101010
+            0b0101_0101_1010_1010_1010_1010_1010_1010
         ),
         (
             conversion_from_bytes_to_grib_int_for_4_bytes_negative,
             vec![0b11010101, 0b10101010, 0b10101010, 0b10101010],
-            -0b01010101_10101010_10101010_10101010
+            -0b0101_0101_1010_1010_1010_1010_1010_1010
         ),
     }
 

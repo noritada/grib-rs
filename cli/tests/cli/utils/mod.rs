@@ -77,7 +77,6 @@ pub(crate) fn encode_le_bytes_using_simple_packing(
 
     input
         .chunks(4)
-        .into_iter()
         .map(|quad| f32::from_le_bytes(quad.try_into().unwrap())) // should be safely unwrapped
         .map(encode)
         .collect::<Vec<_>>()

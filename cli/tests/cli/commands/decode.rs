@@ -139,7 +139,6 @@ fn decoding_run_length_packing_as_big_endian() -> Result<(), Box<dyn std::error:
     let expected = utils::testdata::flat_binary::jma_tornado_nowcast_be()?;
     let expected: Vec<_> = expected
         .chunks(4)
-        .into_iter()
         .flat_map(|b| match b {
             [0x62, 0x58, 0xd1, 0x9a] => vec![0x7f, 0xc0, 0x00, 0x00],
             b => b.to_vec(),

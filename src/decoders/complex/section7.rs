@@ -44,7 +44,7 @@ impl<'a> SpatialDifferencingExtraDescriptors<'a> {
     }
 
     pub(crate) fn first_values(&self) -> FirstValues<'_, 'a> {
-        FirstValues::new(&self)
+        FirstValues::new(self)
     }
 
     fn first_value_end_pos(&self) -> usize {
