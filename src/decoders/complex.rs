@@ -21,6 +21,8 @@ pub(crate) fn decode(
     let exp = read_as!(u16, sect5_data, 10).as_grib_int();
     let dig = read_as!(u16, sect5_data, 12).as_grib_int();
     let nbit = read_as!(u8, sect5_data, 14);
+    let group_splitting_method_used = read_as!(u8, sect5_data, 16);
+    let missing_value_management_used = read_as!(u8, sect5_data, 17);
     let ngroup = read_as!(u32, sect5_data, 26);
     let group_width_ref = read_as!(u8, sect5_data, 30);
     let group_width_nbit = read_as!(u8, sect5_data, 31);
@@ -38,6 +40,12 @@ pub(crate) fn decode(
         ));
         return Ok(decoder);
     };
+
+    if group_splitting_method_used != 1 || missing_value_management_used != 0 {
+        return Err(GribError::DecodeError(
+            DecodeError::ComplexPackingDecodeError(ComplexPackingDecodeError::NotSupported),
+        ));
+    }
 
     let sect7_data = &target.sect7_payload;
     let sect7_params = section7::SpatialDifferencingExtraDescriptors::new(
