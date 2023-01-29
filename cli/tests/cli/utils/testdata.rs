@@ -128,9 +128,9 @@ pub(crate) mod flat_binary {
         unxz_as_bytes(testdata_dir().join("gen").join("tornado-wgrib2-le.bin.xz"))
     }
 
-    // pub(crate) fn noaa_gdas_0_le() -> Result<Vec<u8>, io::Error> {
-    //     unxz_as_bytes(testdata_dir().join("gen").join("gdas-0-wgrib2-le.bin.xz"))
-    // }
+    pub(crate) fn noaa_gdas_0_le() -> Result<Vec<u8>, io::Error> {
+        unxz_as_bytes(testdata_dir().join("gen").join("gdas-0-wgrib2-le.bin.xz"))
+    }
 
     pub(crate) fn noaa_gdas_1_le() -> Result<Vec<u8>, io::Error> {
         unxz_as_bytes(testdata_dir().join("gen").join("gdas-1-wgrib2-le.bin.xz"))

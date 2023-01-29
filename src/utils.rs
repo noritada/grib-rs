@@ -40,12 +40,14 @@ pub(crate) fn grib_int_from_bytes(bytes: &[u8]) -> i32 {
         1 => i32::from(read_as!(u8, bytes, 0).as_grib_int()),
         2 => i32::from(read_as!(u16, bytes, 0).as_grib_int()),
         3 => {
-            let first = i32::from(read_as!(u8, bytes, 0).as_grib_int());
+            let first = read_as!(u8, bytes, 0);
+            let positive = first.leading_zeros() != 0;
             let rest = i32::from(read_as!(u16, bytes, 1));
-            if first >= 0 {
-                first * 0x10000 + rest
+            let abs = i32::from(first << 1 >> 1) * 0x10000 + rest;
+            if positive {
+                abs
             } else {
-                first * 0x10000 - rest
+                -abs
             }
         }
         4 => read_as!(u32, bytes, 0).as_grib_int(),
@@ -201,6 +203,11 @@ mod tests {
             conversion_from_bytes_to_grib_int_for_3_bytes_negative,
             vec![0b11010101, 0b10101010, 0b10101010],
             -0b0101_0101_1010_1010_1010_1010
+        ),
+        (
+            conversion_from_bytes_to_grib_int_for_3_bytes_negative_starting_from_0x80,
+            vec![0b10000000, 0b10101010, 0b10101010],
+            -0b0000_0000_1010_1010_1010_1010
         ),
         (
             conversion_from_bytes_to_grib_int_for_4_bytes_positive,
