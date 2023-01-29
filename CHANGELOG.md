@@ -151,7 +151,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Library `grib`
   - Support for Common Code Table C-11.
-  - Support for Template 5.3/7.3 (complex packing).
+  - Support for Template 5.3/7.3 (complex packing and spatial differencing).
   - Support for non-16-bits values in the Template 5.0/7.0 (simple packing) decoder
   - Support for non-8-bits values in the Template 5.200/7.200 (run-length encoding) decoder
 
@@ -172,7 +172,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Decoding feature supporting Templates 5.0/7.0 (simple packing) and
     5.200/7.200 (run-length encoding)
 - CLI application `gribber` built on the top of the Rust library
-  - 4 subcommends:
+  - 4 subcommands:
     - decode: data export as text and flat binary files
     - info: display of identification information
     - inspect: display of information mainly for development purpose such as template numbers
