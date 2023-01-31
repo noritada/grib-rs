@@ -2,8 +2,9 @@ use num::ToPrimitive;
 use std::convert::TryInto;
 
 use crate::decoders::common::*;
+use crate::decoders::param::SimplePackingParam;
 use crate::error::*;
-use crate::utils::{read_as, GribInt, NBitwiseIterator};
+use crate::utils::{read_as, NBitwiseIterator};
 
 pub(crate) enum SimplePackingDecodeIteratorWrapper<I> {
     FixedValue(FixedValueIterator),
@@ -43,10 +44,7 @@ pub(crate) fn decode(
     target: &Grib2SubmessageDecoder,
 ) -> Result<SimplePackingDecodeIteratorWrapper<impl Iterator<Item = u32> + '_>, GribError> {
     let sect5_data = &target.sect5_payload;
-    let ref_val = read_as!(f32, sect5_data, 6);
-    let exp = read_as!(u16, sect5_data, 10).as_grib_int();
-    let dig = read_as!(u16, sect5_data, 12).as_grib_int();
-    let nbit = read_as!(u8, sect5_data, 14);
+    let param = SimplePackingParam::from_buf(&sect5_data[6..15]);
     let value_type = read_as!(u8, sect5_data, 15);
 
     if value_type != 0 {
@@ -57,14 +55,14 @@ pub(crate) fn decode(
         ));
     }
 
-    let decoder = if nbit == 0 {
+    let decoder = if param.nbit == 0 {
         SimplePackingDecodeIteratorWrapper::FixedValue(FixedValueIterator::new(
-            ref_val,
+            param.ref_val,
             target.num_points_encoded,
         ))
     } else {
-        let iter = NBitwiseIterator::new(&target.sect7_payload, usize::from(nbit));
-        let iter = SimplePackingDecodeIterator::new(iter, ref_val, exp, dig);
+        let iter = NBitwiseIterator::new(&target.sect7_payload, usize::from(param.nbit));
+        let iter = SimplePackingDecodeIterator::new(iter, &param);
         SimplePackingDecodeIteratorWrapper::SimplePacking(iter)
     };
     Ok(decoder)
@@ -78,12 +76,12 @@ pub(crate) struct SimplePackingDecodeIterator<I> {
 }
 
 impl<I> SimplePackingDecodeIterator<I> {
-    pub(crate) fn new(iter: I, ref_val: f32, exp: i16, dig: i16) -> Self {
+    pub(crate) fn new(iter: I, param: &SimplePackingParam) -> Self {
         Self {
             iter,
-            ref_val,
-            exp: exp.into(),
-            dig: dig.into(),
+            ref_val: param.ref_val,
+            exp: param.exp.into(),
+            dig: param.dig.into(),
         }
     }
 }
@@ -152,17 +150,13 @@ mod tests {
 
     #[test]
     fn decode_simple_packing() {
-        let ref_val_bytes = vec![0x35, 0x3e, 0x6b, 0xf6];
-        let exp = 0x801a;
-        let dig = 0x0000;
+        let buf = vec![0x35, 0x3e, 0x6b, 0xf6, 0x80, 0x1a, 0x00, 0x00, 0x10];
+        let param = SimplePackingParam::from_buf(&buf);
         let input: Vec<u8> = vec![0x00, 0x06, 0x00, 0x0d];
         let expected: Vec<f32> = vec![7.987_831_6e-7, 9.030_913e-7];
 
-        let ref_val = f32::from_be_bytes(ref_val_bytes[..].try_into().unwrap());
-        let iter = NBitwiseIterator::new(&input, 16);
-        let actual =
-            SimplePackingDecodeIterator::new(iter, ref_val, exp.as_grib_int(), dig.as_grib_int())
-                .collect::<Vec<_>>();
+        let iter = NBitwiseIterator::new(&input, usize::from(param.nbit));
+        let actual = SimplePackingDecodeIterator::new(iter, &param).collect::<Vec<_>>();
 
         assert_eq!(actual.len(), expected.len());
         let mut i = 0;

@@ -2,9 +2,10 @@ use openjpeg_sys as opj;
 use std::convert::TryInto;
 
 use crate::decoders::common::*;
+use crate::decoders::param::SimplePackingParam;
 use crate::decoders::simple::*;
 use crate::error::*;
-use crate::utils::{read_as, GribInt};
+use crate::utils::read_as;
 
 mod ext;
 use ext::*;
@@ -22,19 +23,16 @@ pub(crate) fn decode(
     target: &Grib2SubmessageDecoder,
 ) -> Result<SimplePackingDecodeIteratorWrapper<impl Iterator<Item = i32>>, GribError> {
     let sect5_data = &target.sect5_payload;
-    let ref_val = read_as!(f32, sect5_data, 6);
-    let exp = read_as!(u16, sect5_data, 10).as_grib_int();
-    let dig = read_as!(u16, sect5_data, 12).as_grib_int();
-    let nbit = read_as!(u8, sect5_data, 14);
+    let simple_param = SimplePackingParam::from_buf(&sect5_data[6..15]);
     let value_type = read_as!(u8, sect5_data, 15);
 
-    if nbit == 0 {
+    if simple_param.nbit == 0 {
         eprintln!(
             "WARNING: nbit = 0 for JPEG 2000 code stream format decoder is not tested.
             Please report your data and help us develop the library."
         );
         let decoder = SimplePackingDecodeIteratorWrapper::FixedValue(FixedValueIterator::new(
-            ref_val,
+            simple_param.ref_val,
             target.num_points_encoded,
         ));
         return Ok(decoder);
@@ -52,7 +50,7 @@ pub(crate) fn decode(
         .map_err(|e| GribError::DecodeError(DecodeError::Jpeg2000CodeStreamDecodeError(e)))?;
     let jp2_unpacked = decode_jp2(stream)
         .map_err(|e| GribError::DecodeError(DecodeError::Jpeg2000CodeStreamDecodeError(e)))?;
-    let decoder = SimplePackingDecodeIterator::new(jp2_unpacked, ref_val, exp, dig);
+    let decoder = SimplePackingDecodeIterator::new(jp2_unpacked, &simple_param);
     let decoder = SimplePackingDecodeIteratorWrapper::SimplePacking(decoder);
     Ok(decoder)
 }

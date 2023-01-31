@@ -3,6 +3,7 @@ use std::convert::TryInto;
 use std::iter;
 
 use crate::decoders::common::*;
+use crate::decoders::param::SimplePackingParam;
 use crate::decoders::simple::*;
 use crate::error::*;
 use crate::utils::{read_as, GribInt, NBitwiseIterator};
@@ -17,10 +18,7 @@ pub(crate) fn decode(
     target: &Grib2SubmessageDecoder,
 ) -> Result<SimplePackingDecodeIteratorWrapper<impl Iterator<Item = i32> + '_>, GribError> {
     let sect5_data = &target.sect5_payload;
-    let ref_val = read_as!(f32, sect5_data, 6);
-    let exp = read_as!(u16, sect5_data, 10).as_grib_int();
-    let dig = read_as!(u16, sect5_data, 12).as_grib_int();
-    let nbit = read_as!(u8, sect5_data, 14);
+    let simple_param = SimplePackingParam::from_buf(&sect5_data[6..15]);
     let group_splitting_method_used = read_as!(u8, sect5_data, 16);
     let missing_value_management_used = read_as!(u8, sect5_data, 17);
     let ngroup = read_as!(u32, sect5_data, 26);
@@ -33,9 +31,9 @@ pub(crate) fn decode(
     let spdiff_level = read_as!(u8, sect5_data, 42);
     let spdiff_param_octet = read_as!(u8, sect5_data, 43);
 
-    if nbit == 0 {
+    if simple_param.nbit == 0 {
         let decoder = SimplePackingDecodeIteratorWrapper::FixedValue(FixedValueIterator::new(
-            ref_val,
+            simple_param.ref_val,
             target.num_points_encoded,
         ));
         return Ok(decoder);
@@ -61,13 +59,13 @@ pub(crate) fn decode(
     }
 
     let params_end_octet = sect7_params.len();
-    let group_refs_end_octet = params_end_octet + get_octet_length(nbit, ngroup);
+    let group_refs_end_octet = params_end_octet + get_octet_length(simple_param.nbit, ngroup);
     let group_widths_end_octet = group_refs_end_octet + get_octet_length(group_width_nbit, ngroup);
     let group_lens_end_octet = group_widths_end_octet + get_octet_length(group_len_nbit, ngroup);
 
     let group_refs_iter = NBitwiseIterator::new(
         &sect7_data[params_end_octet..group_refs_end_octet],
-        usize::from(nbit),
+        usize::from(simple_param.nbit),
     );
     let group_refs_iter = group_refs_iter.take(ngroup as usize);
 
@@ -104,7 +102,7 @@ pub(crate) fn decode(
         .chain(spdiff_packed_iter.skip(num_first_values));
 
     let spdiff_unpacked = SpatialDiff2ndOrderDecodeIterator::new(spdiff_packed_iter);
-    let decoder = SimplePackingDecodeIterator::new(spdiff_unpacked, ref_val, exp, dig);
+    let decoder = SimplePackingDecodeIterator::new(spdiff_unpacked, &simple_param);
     let decoder = SimplePackingDecodeIteratorWrapper::SimplePacking(decoder);
     Ok(decoder)
 }
