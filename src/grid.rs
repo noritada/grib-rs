@@ -8,7 +8,13 @@ pub(crate) struct LatLonGridIterator {
 }
 
 impl LatLonGridIterator {
-    pub(crate) fn new(major: Vec<f32>, minor: Vec<f32>, scanning_mode: ScanningMode) -> Self {
+    pub(crate) fn new(lat: Vec<f32>, lon: Vec<f32>, scanning_mode: ScanningMode) -> Self {
+        let (major, minor) = if scanning_mode.is_consecutive_for_i() {
+            (lat, lon)
+        } else {
+            (lon, lat)
+        };
+
         Self {
             major,
             minor,
@@ -90,10 +96,10 @@ mod tests {
         ($(($name:ident, $scanning_mode:expr, $expected:expr),)*) => ($(
             #[test]
             fn $name() {
-                let major = (0..3).into_iter().map(|i| i as f32).collect();
-                let minor = (10..12).into_iter().map(|i| i as f32).collect();
+                let lat = (0..3).into_iter().map(|i| i as f32).collect();
+                let lon = (10..12).into_iter().map(|i| i as f32).collect();
                 let scanning_mode = ScanningMode($scanning_mode);
-                let actual = LatLonGridIterator::new(major, minor, scanning_mode).collect::<Vec<_>>();
+                let actual = LatLonGridIterator::new(lat, lon, scanning_mode).collect::<Vec<_>>();
                 assert_eq!(actual, $expected);
             }
         )*);
@@ -116,12 +122,12 @@ mod tests {
             lat_lon_grid_iter_with_scanning_mode_0b00100000,
             0b00100000,
             vec![
-                (10., 0.),
-                (11., 0.),
-                (10., 1.),
-                (11., 1.),
-                (10., 2.),
-                (11., 2.),
+                (0., 10.),
+                (1., 10.),
+                (2., 10.),
+                (0., 11.),
+                (1., 11.),
+                (2., 11.),
             ]
         ),
         (
@@ -140,12 +146,12 @@ mod tests {
             lat_lon_grid_iter_with_scanning_mode_0b00110000,
             0b00110000,
             vec![
-                (10., 0.),
-                (11., 0.),
-                (11., 1.),
-                (10., 1.),
-                (10., 2.),
-                (11., 2.),
+                (0., 10.),
+                (1., 10.),
+                (2., 10.),
+                (2., 11.),
+                (1., 11.),
+                (0., 11.),
             ]
         ),
     }
