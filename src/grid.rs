@@ -1,13 +1,17 @@
-use crate::error::GribError;
+use crate::{
+    error::GribError,
+    utils::{read_as, GribInt},
+};
 
-pub(crate) struct LatLonGridDefinition {
-    ni: u32,
-    nj: u32,
-    first_point_lat: i32,
-    first_point_lon: i32,
-    last_point_lat: i32,
-    last_point_lon: i32,
-    scanning_mode: ScanningMode,
+#[derive(Debug, PartialEq, Eq)]
+pub struct LatLonGridDefinition {
+    pub ni: u32,
+    pub nj: u32,
+    pub first_point_lat: i32,
+    pub first_point_lon: i32,
+    pub last_point_lat: i32,
+    pub last_point_lon: i32,
+    pub scanning_mode: ScanningMode,
 }
 
 impl LatLonGridDefinition {
@@ -59,6 +63,25 @@ impl LatLonGridDefinition {
         let lon_diff = self.last_point_lon - self.first_point_lon;
         !(((lat_diff > 0) ^ self.scanning_mode.scans_positively_for_j())
             || ((lon_diff > 0) ^ self.scanning_mode.scans_positively_for_i()))
+    }
+
+    pub(crate) fn from_buf(buf: &[u8]) -> Self {
+        let ni = read_as!(u32, buf, 0);
+        let nj = read_as!(u32, buf, 4);
+        let first_point_lat = read_as!(u32, buf, 16).as_grib_int();
+        let first_point_lon = read_as!(u32, buf, 20).as_grib_int();
+        let last_point_lat = read_as!(u32, buf, 25).as_grib_int();
+        let last_point_lon = read_as!(u32, buf, 29).as_grib_int();
+        let scanning_mode = read_as!(u8, buf, 41);
+        Self::new(
+            ni,
+            nj,
+            first_point_lat,
+            first_point_lon,
+            last_point_lat,
+            last_point_lon,
+            ScanningMode(scanning_mode),
+        )
     }
 }
 
@@ -128,8 +151,8 @@ impl Iterator for LatLonGridIterator {
     }
 }
 
-#[derive(Clone, Copy)]
-pub(crate) struct ScanningMode(u8);
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+pub struct ScanningMode(pub u8);
 
 impl ScanningMode {
     pub(crate) fn scans_positively_for_i(&self) -> bool {
