@@ -10,6 +10,7 @@ pub enum GribError {
     ParseError(ParseError),
     DecodeError(DecodeError),
     InvalidValueError(String),
+    NotSupported(String),
 }
 
 impl Error for GribError {
@@ -37,6 +38,7 @@ impl Display for GribError {
             Self::ParseError(e) => write!(f, "{e}"),
             Self::DecodeError(e) => write!(f, "{e:#?}"),
             Self::InvalidValueError(s) => write!(f, "invalid value ({s})"),
+            Self::NotSupported(s) => write!(f, "not supported ({s})"),
         }
     }
 }

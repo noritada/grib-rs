@@ -4,6 +4,7 @@ pub mod cookbook;
 pub mod datatypes;
 pub mod decoders;
 pub mod error;
+mod grid;
 pub mod parser;
 pub mod reader;
 mod utils;

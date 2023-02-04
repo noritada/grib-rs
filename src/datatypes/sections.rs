@@ -5,6 +5,7 @@ use std::slice::Iter;
 use crate::codetables::SUPPORTED_PROD_DEF_TEMPLATE_NUMBERS;
 use crate::datatypes::*;
 use crate::error::*;
+use crate::grid::{GridPointIterator, LatLonGridDefinition};
 use crate::utils::{read_as, GribInt};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -158,6 +159,39 @@ impl GridDefinition {
     pub fn grid_tmpl_num(&self) -> u16 {
         let payload = &self.payload;
         read_as!(u16, payload, 7)
+    }
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub enum GridDefinitionTemplateValues {
+    Template0(LatLonGridDefinition),
+}
+
+impl GridDefinitionTemplateValues {
+    pub fn latlons(&self) -> Result<GridPointIterator, GribError> {
+        let iter = match self {
+            Self::Template0(def) => GridPointIterator::LatLon(def.latlons()?),
+        };
+        // note that consistency between `iter.size_hint()` and
+        // `GridDefinition::num_points()` is not checked
+        Ok(iter)
+    }
+}
+
+impl TryFrom<&GridDefinition> for GridDefinitionTemplateValues {
+    type Error = GribError;
+
+    fn try_from(value: &GridDefinition) -> Result<Self, Self::Error> {
+        let num = value.grid_tmpl_num();
+        match num {
+            0 => {
+                let buf = &value.payload;
+                Ok(GridDefinitionTemplateValues::Template0(
+                    LatLonGridDefinition::from_buf(&buf[25..]),
+                ))
+            }
+            _ => Err(GribError::NotSupported(format!("template {num}"))),
+        }
     }
 }
 
@@ -428,6 +462,36 @@ mod tests {
                 "invalid date time: 2022-11-31 00:00:00".to_owned()
             ))
         );
+    }
+
+    #[test]
+    fn grid_definition_template_0() {
+        // data taken from submessage #0.0 of
+        // `Z__C_RJTD_20160822020000_NOWC_GPV_Ggis10km_Pphw10_FH0000-0100_grib2.bin.xz`
+        // in `testdata`
+        let data = GridDefinition::from_payload(
+            vec![
+                0x00, 0x00, 0x01, 0x50, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0xff, 0xff, 0xff, 0xff,
+                0xff, 0x01, 0x03, 0xcd, 0x39, 0xfa, 0x01, 0x03, 0xc9, 0xf6, 0xa3, 0x00, 0x00, 0x01,
+                0x00, 0x00, 0x00, 0x01, 0x50, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x02,
+                0xdb, 0xc9, 0x3d, 0x07, 0x09, 0x7d, 0xa4, 0x30, 0x01, 0x31, 0xcf, 0xc3, 0x08, 0xef,
+                0xdd, 0x5c, 0x00, 0x01, 0xe8, 0x48, 0x00, 0x01, 0x45, 0x85, 0x00,
+            ]
+            .into_boxed_slice(),
+        )
+        .unwrap();
+
+        let actual = GridDefinitionTemplateValues::try_from(&data).unwrap();
+        let expected = GridDefinitionTemplateValues::Template0(LatLonGridDefinition::new(
+            256,
+            336,
+            47958333,
+            118062500,
+            20041667,
+            149937500,
+            crate::grid::ScanningMode(0b00000000),
+        ));
+        assert_eq!(actual, expected);
     }
 
     #[test]

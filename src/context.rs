@@ -9,6 +9,7 @@ use crate::codetables::{
 };
 use crate::datatypes::*;
 use crate::error::*;
+use crate::grid::GridPointIterator;
 use crate::parser::Grib2SubmessageIndexStream;
 use crate::reader::{Grib2Read, Grib2SectionStream, SeekableGrib2Reader, SECT8_ES_SIZE};
 
@@ -405,6 +406,20 @@ Data Representation:                    {}
             self.5.describe().unwrap_or_default(),
             self.repr_def().num_points(),
         )
+    }
+
+    pub fn latlons(&self) -> Result<GridPointIterator, GribError> {
+        let grid_def = self.grid_def();
+        let num_defined = grid_def.num_points() as usize;
+        let latlons = GridDefinitionTemplateValues::try_from(grid_def)?.latlons()?;
+        let (num_decoded, _) = latlons.size_hint();
+        if num_defined == num_decoded {
+            Ok(latlons)
+        } else {
+            Err(GribError::InvalidValueError(format!(
+                "number of grid points does not match: {num_defined} (defined) vs {num_decoded} (decoded)"
+            )))
+        }
     }
 }
 
