@@ -5,7 +5,7 @@ use std::slice::Iter;
 use crate::codetables::SUPPORTED_PROD_DEF_TEMPLATE_NUMBERS;
 use crate::datatypes::*;
 use crate::error::*;
-use crate::grid::LatLonGridDefinition;
+use crate::grid::{GridPointIterator, LatLonGridDefinition};
 use crate::utils::{read_as, GribInt};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -165,6 +165,17 @@ impl GridDefinition {
 #[derive(Debug, PartialEq, Eq)]
 pub enum GridDefinitionTemplateValues {
     Template0(LatLonGridDefinition),
+}
+
+impl GridDefinitionTemplateValues {
+    pub fn latlons(&self) -> Result<GridPointIterator, GribError> {
+        let iter = match self {
+            Self::Template0(def) => GridPointIterator::LatLon(def.latlons()?),
+        };
+        // note that consistency between `iter.size_hint()` and
+        // `GridDefinition::num_points()` is not checked
+        Ok(iter)
+    }
 }
 
 impl TryFrom<&GridDefinition> for GridDefinitionTemplateValues {

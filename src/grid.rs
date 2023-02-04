@@ -3,6 +3,26 @@ use crate::{
     utils::{read_as, GribInt},
 };
 
+pub enum GridPointIterator {
+    LatLon(LatLonGridIterator),
+}
+
+impl Iterator for GridPointIterator {
+    type Item = (f32, f32);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        match self {
+            Self::LatLon(iter) => iter.next(),
+        }
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        match self {
+            Self::LatLon(iter) => iter.size_hint(),
+        }
+    }
+}
+
 #[derive(Debug, PartialEq, Eq)]
 pub struct LatLonGridDefinition {
     pub ni: u32,
@@ -35,7 +55,11 @@ impl LatLonGridDefinition {
         }
     }
 
-    pub(crate) fn iter(&self) -> Result<LatLonGridIterator, GribError> {
+    pub(crate) fn latlons(&self) -> Result<LatLonGridIterator, GribError> {
+        if self.scanning_mode.has_unsupported_flags() {
+            let ScanningMode(mode) = self.scanning_mode;
+            return Err(GribError::NotSupported(format!("scanning mode {mode}")));
+        }
         if !self.is_consistent() {
             return Err(GribError::InvalidValueError("Latitude and longitude for first/last grid points are not consistent with scanning mode".to_owned()));
         }
@@ -85,7 +109,7 @@ impl LatLonGridDefinition {
     }
 }
 
-pub(crate) struct LatLonGridIterator {
+pub struct LatLonGridIterator {
     major: Vec<f32>,
     minor: Vec<f32>,
     scanning_mode: ScanningMode,
@@ -191,7 +215,7 @@ mod tests {
             137_000_000,
             ScanningMode(0b00000000),
         );
-        let actual = grid.iter().unwrap().collect::<Vec<_>>();
+        let actual = grid.latlons().unwrap().collect::<Vec<_>>();
         let expected = vec![
             (36., 135.),
             (36., 136.),
