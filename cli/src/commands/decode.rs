@@ -9,16 +9,16 @@ use crate::cli;
 
 pub fn cli() -> Command {
     Command::new("decode")
-        .about("Export decoded data")
+        .about("Export decoded data with latitudes and longitudes")
         .arg(arg!(<FILE> "Target file").value_parser(clap::value_parser!(PathBuf)))
         .arg(arg!(<INDEX> "Submessage index"))
         .arg(
-            arg!(-b --"big-endian" <OUT_FILE> "Export as a big-endian flat binary file")
+            arg!(-b --"big-endian" <OUT_FILE> "Export (without lat/lon) as a big-endian flat binary file")
                 .required(false) // There is no syntax yet for optional options.
                 .value_parser(clap::value_parser!(PathBuf)),
         )
         .arg(
-            arg!(-l --"little-endian" <OUT_FILE> "Export as a little-endian flat binary file")
+            arg!(-l --"little-endian" <OUT_FILE> "Export (without lat/lon) as a little-endian flat binary file")
                 .required(false) // There is no syntax yet for optional options.
                 .value_parser(clap::value_parser!(PathBuf))
                 .conflicts_with("big-endian"),
@@ -46,6 +46,7 @@ pub fn exec(args: &ArgMatches) -> Result<()> {
         .iter()
         .find(|(index, _)| *index == message_index)
         .ok_or_else(|| anyhow::anyhow!("no such index: {}.{}", message_index.0, message_index.1))?;
+    let latlons = submessage.latlons();
     let decoder = grib::decoders::Grib2SubmessageDecoder::from(submessage)?;
     let values = decoder.dispatch()?;
 
@@ -56,17 +57,18 @@ pub fn exec(args: &ArgMatches) -> Result<()> {
         let out_path = args.get_one::<PathBuf>("little-endian").unwrap();
         write_output(out_path, values, |f| f.to_le_bytes())
     } else {
+        let values = latlons?.zip(values);
         cli::display_in_pager(DecodeTextDisplay(&values.collect::<Vec<_>>()));
         Ok(())
     }
 }
 
-struct DecodeTextDisplay<'a>(&'a [f32]);
+struct DecodeTextDisplay<'a>(&'a [((f32, f32), f32)]);
 
 impl<'a> cli::PredictableNumLines for DecodeTextDisplay<'a> {
     fn num_lines(&self) -> usize {
         let Self(inner) = self;
-        inner.len()
+        inner.len() * 7 + 2
     }
 }
 
