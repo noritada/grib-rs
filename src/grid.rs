@@ -69,13 +69,11 @@ impl LatLonGridDefinition {
         let (num_div_lat, num_div_lon) = ((self.nj - 1) as i32, (self.ni - 1) as i32);
         let lat_delta = lat_diff as f32 / num_div_lat as f32;
         let lat = (0..=num_div_lat)
-            .into_iter()
-            .map(|x| (self.first_point_lat as f32 + x as f32 * lat_delta) / 1_000_000 as f32)
+            .map(|x| (self.first_point_lat as f32 + x as f32 * lat_delta) / 1_000_000_f32)
             .collect();
         let lon_delta = lon_diff as f32 / num_div_lon as f32;
         let lon = (0..=num_div_lon)
-            .into_iter()
-            .map(|x| (self.first_point_lon as f32 + x as f32 * lon_delta) / 1_000_000 as f32)
+            .map(|x| (self.first_point_lon as f32 + x as f32 * lon_delta) / 1_000_000_f32)
             .collect();
 
         let iter = LatLonGridIterator::new(lat, lon, self.scanning_mode);
