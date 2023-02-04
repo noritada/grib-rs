@@ -160,12 +160,21 @@ impl GridDefinition {
         let payload = &self.payload;
         read_as!(u16, payload, 7)
     }
+}
 
-    pub fn deserialize_template(&self) -> Result<GridDefinitionTemplateValues, GribError> {
-        let num = self.grid_tmpl_num();
+#[derive(Debug, PartialEq, Eq)]
+pub enum GridDefinitionTemplateValues {
+    Template0(LatLonGridDefinition),
+}
+
+impl TryFrom<&GridDefinition> for GridDefinitionTemplateValues {
+    type Error = GribError;
+
+    fn try_from(value: &GridDefinition) -> Result<Self, Self::Error> {
+        let num = value.grid_tmpl_num();
         match num {
             0 => {
-                let buf = &self.payload;
+                let buf = &value.payload;
                 Ok(GridDefinitionTemplateValues::Template0(
                     LatLonGridDefinition::from_buf(&buf[25..]),
                 ))
@@ -173,11 +182,6 @@ impl GridDefinition {
             _ => Err(GribError::NotSupported(format!("template {num}"))),
         }
     }
-}
-
-#[derive(Debug, PartialEq, Eq)]
-pub enum GridDefinitionTemplateValues {
-    Template0(LatLonGridDefinition),
 }
 
 const START_OF_PROD_TEMPLATE: usize = 4;
@@ -466,7 +470,7 @@ mod tests {
         )
         .unwrap();
 
-        let actual = data.deserialize_template().unwrap();
+        let actual = GridDefinitionTemplateValues::try_from(&data).unwrap();
         let expected = GridDefinitionTemplateValues::Template0(LatLonGridDefinition::new(
             256,
             336,
