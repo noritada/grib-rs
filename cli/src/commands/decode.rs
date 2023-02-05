@@ -1,6 +1,7 @@
 use anyhow::Result;
 use clap::{arg, ArgMatches, Command};
 use console::Style;
+use grib::error::GribError;
 use std::fmt;
 use std::fs::File;
 use std::io::{BufWriter, Write};
@@ -59,9 +60,45 @@ pub fn exec(args: &ArgMatches) -> Result<()> {
         write_output(out_path, values, |f| f.to_le_bytes())
     } else {
         let values = values.collect::<Vec<_>>().into_iter(); // workaround for mutability
-        let values = latlons?.zip(values);
+        let latlons = match latlons {
+            Ok(iter) => LatLonIteratorWrapper::LatLon(iter),
+            Err(GribError::NotSupported(_)) => {
+                let nan_iter = vec![(f32::NAN, f32::NAN); values.len()].into_iter();
+                LatLonIteratorWrapper::NaN(nan_iter)
+            }
+            Err(e) => anyhow::bail!("something unexpected happened:: {e}"),
+        };
+        let values = latlons.zip(values);
         cli::display_in_pager(DecodeTextDisplay(values));
         Ok(())
+    }
+}
+
+#[derive(Clone)]
+enum LatLonIteratorWrapper<L, N> {
+    LatLon(L),
+    NaN(N),
+}
+
+impl<L, N> Iterator for LatLonIteratorWrapper<L, N>
+where
+    L: Iterator<Item = (f32, f32)>,
+    N: Iterator<Item = (f32, f32)>,
+{
+    type Item = (f32, f32);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        match self {
+            Self::LatLon(value) => value.next(),
+            Self::NaN(value) => value.next(),
+        }
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        match self {
+            Self::LatLon(value) => value.size_hint(),
+            Self::NaN(value) => value.size_hint(),
+        }
     }
 }
 

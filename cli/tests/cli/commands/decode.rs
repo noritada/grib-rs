@@ -40,6 +40,11 @@ test_operation_with_no_options! {
     ),
     (
         decoding_multi_message_data,
+        utils::testdata::grib2::noaa_gdas_0_10()?,
+        "2.0"
+    ),
+    (
+        decoding_data_whose_grid_points_cannot_be_exported_as_latlons,
         utils::testdata::grib2::multi_message_data(3)?,
         "2.0"
     ),
