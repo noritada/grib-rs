@@ -6,9 +6,8 @@ use std::path::Path;
 
 fn main() -> Result<(), Box<dyn Error>> {
     // This example shows how to decode values inside a surface in a GRIB2 message.
-    // Note that this script simply decodes all the values inside a surface.
-    // For now, there is no functionality to get which grid point each value is
-    // associated with.
+    // The example also shows how to obtain the latitude-longitude locations of grid
+    // points, which are usually used in conjunction with the grid point values.
 
     // Take the first argument as an input file path and the second argument as a
     // surface index.
@@ -39,6 +38,9 @@ where
         .find(|(index, _)| *index == message_index)
         .ok_or("no such index")?;
 
+    // Obtain latitude-longitude locations as an iterator.
+    let latlons = submessage.latlons()?;
+
     // Prepare a decoder.
     let decoder = grib::decoders::Grib2SubmessageDecoder::from(submessage)?;
 
@@ -47,9 +49,9 @@ where
     // not yet supported by this library and may return errors.
     let values = decoder.dispatch()?;
 
-    // Iterate over decoded values.
-    for value in values {
-        println!("{value}");
+    // Iterate over decoded values along with locations.
+    for ((lat, lon), value) in latlons.zip(values) {
+        println!("{lat} {lon} {value}");
     }
 
     Ok(())
