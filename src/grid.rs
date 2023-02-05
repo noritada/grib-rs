@@ -3,6 +3,7 @@ use crate::{
     utils::{read_as, GribInt},
 };
 
+#[derive(Clone)]
 pub enum GridPointIterator {
     LatLon(LatLonGridIterator),
 }
@@ -107,6 +108,7 @@ impl LatLonGridDefinition {
     }
 }
 
+#[derive(Clone)]
 pub struct LatLonGridIterator {
     major: Vec<f32>,
     minor: Vec<f32>,
