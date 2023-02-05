@@ -12,7 +12,10 @@ macro_rules! test_operation_with_no_options {
 
             let mut cmd = Command::cargo_bin(CMD_NAME)?;
             cmd.arg("decode").arg(input.path()).arg($message_index);
-            cmd.assert().success().stderr(predicate::str::is_empty());
+            cmd.assert()
+                .success()
+                .stdout(predicate::str::starts_with(" Latitude Longitude     Value\n"))
+                .stderr(predicate::str::is_empty());
 
             Ok(())
         }

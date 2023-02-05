@@ -1,5 +1,6 @@
 use anyhow::Result;
 use clap::{arg, ArgMatches, Command};
+use console::Style;
 use std::fmt;
 use std::fs::File;
 use std::io::{BufWriter, Write};
@@ -57,25 +58,40 @@ pub fn exec(args: &ArgMatches) -> Result<()> {
         let out_path = args.get_one::<PathBuf>("little-endian").unwrap();
         write_output(out_path, values, |f| f.to_le_bytes())
     } else {
+        let values = values.collect::<Vec<_>>().into_iter(); // workaround for mutability
         let values = latlons?.zip(values);
-        cli::display_in_pager(DecodeTextDisplay(&values.collect::<Vec<_>>()));
+        cli::display_in_pager(DecodeTextDisplay(values));
         Ok(())
     }
 }
 
-struct DecodeTextDisplay<'a>(&'a [((f32, f32), f32)]);
+struct DecodeTextDisplay<I>(I);
 
-impl<'a> cli::PredictableNumLines for DecodeTextDisplay<'a> {
+impl<I> cli::PredictableNumLines for DecodeTextDisplay<I>
+where
+    I: Iterator<Item = ((f32, f32), f32)>,
+{
     fn num_lines(&self) -> usize {
         let Self(inner) = self;
-        inner.len() * 7 + 2
+        let (len, _) = inner.size_hint();
+        len + 1
     }
 }
 
-impl<'i> fmt::Display for DecodeTextDisplay<'i> {
+impl<I> fmt::Display for DecodeTextDisplay<I>
+where
+    I: Iterator<Item = ((f32, f32), f32)> + Clone,
+{
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let header = format!("{:>9} {:>9} {:>9}", "Latitude", "Longitude", "Value",);
+        let style = Style::new().bold();
+        writeln!(f, "{}", style.apply_to(header.trim_end()))?;
+
         let Self(inner) = self;
-        writeln!(f, "{inner:#?}")?;
+        // cloning just to work around a mutability issue
+        for ((lat, lon), value) in inner.clone() {
+            writeln!(f, "{lat:>9} {lon:>9} {value:>9}")?;
+        }
         Ok(())
     }
 }
