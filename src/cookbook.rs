@@ -5,10 +5,12 @@
 //! 1. [Comparison of various GRIB2 data library/tool operations][cmp]
 //!     * [Listing all submessages inside][cmp-listing]
 //!     * [Finding submessages inside that match some condition][cmp-finding]
+//!     * [Extracting values with location info from a submessage][cmp-decoding]
 //!
 //! [cmp]: #comparison-of-various-grib2-data-librarytool-operations
 //! [cmp-listing]: #listing-all-submessages-inside
 //! [cmp-finding]: #finding-submessages-inside-that-match-some-condition
+//! [cmp-decoding]: #extracting-values-with-location-info-from-a-submessage
 //!
 //! # Comparison of various GRIB2 data library/tool operations
 //!
@@ -151,3 +153,85 @@
 //!
 //! (gribber's API for finding submessages is still in the conceptual stage and
 //! is not yet available.)
+//!
+//! ## Extracting values with location info from a submessage
+//!
+//! wgrib2 (creating a flat binary file of values):
+//!
+//! ```shell
+//! $ wgrib2 -d 1.1 -order we:ns -no_header -bin output.bin datafile.grib
+//! ```
+//!
+//! pygrib:
+//!
+//! ```python
+//! import pygrib
+//!
+//! path = "datafile.grib"
+//! grib = pygrib.open(path)
+//! submessage = grib.message(1)
+//! lats, lons = submessage.latlons()
+//! values = submessage.values
+//! print((lats, lons, values))
+//! ```
+//!
+//! grib-rs:
+//!
+//! ```rust
+//! use grib::codetables::grib2::*;
+//! use grib::codetables::*;
+//! use grib::datatypes::*;
+//! use std::fs::File;
+//! use std::io::{BufReader, Read, Write};
+//! use std::path::Path;
+//!
+//! fn decode_surface<P>(path: P, message_index: (usize, usize))
+//! where
+//!     P: AsRef<Path>,
+//! {
+//!     let f = File::open(path).unwrap();
+//!     let f = BufReader::new(f);
+//!
+//!     let grib2 = grib::from_reader(f).unwrap();
+//!     let (_index, submessage) = grib2
+//!         .iter()
+//!         .find(|(index, _)| *index == message_index)
+//!         .ok_or("no such index")
+//!         .unwrap();
+//!
+//!     let latlons = submessage.latlons().unwrap();
+//!     let decoder = grib::decoders::Grib2SubmessageDecoder::from(submessage).unwrap();
+//!     let values = decoder.dispatch().unwrap();
+//!
+//!     for ((lat, lon), value) in latlons.zip(values) {
+//!         println!("{lat} {lon} {value}");
+//!     }
+//! }
+//!
+//! fn main() {
+//!     let path = "testdata/gdas.t12z.pgrb2.0p25.f000.0-10.xz";
+//!
+//!     let mut buf = Vec::new();
+//!     let mut out = tempfile::NamedTempFile::new().unwrap();
+//!
+//!     let f = File::open(path).unwrap();
+//!     let f = BufReader::new(f);
+//!     let mut f = xz2::bufread::XzDecoder::new(f);
+//!     f.read_to_end(&mut buf).unwrap();
+//!     out.write_all(&buf).unwrap();
+//!
+//!     decode_surface(&out.path(), (0, 0));
+//! }
+//! ```
+//!
+//! gribber (showing values along with lat/lon info):
+//!
+//! ```shell
+//! $ gribber decode datafile.grib 0.0
+//! ```
+//!
+//! gribber (creating a flat binary file of values):
+//!
+//! ```shell
+//! $ gribber decode -b output.bin datafile.grib 0.0
+//! ```
