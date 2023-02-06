@@ -408,6 +408,43 @@ Data Representation:                    {}
         )
     }
 
+    /// Computes and returns an iterator over latitudes and longitudes of grid
+    /// points.
+    ///
+    /// The order of lat/lon data of grid points is the same as the order of the
+    /// grid point values, defined by the scanning mode in the data.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use std::{
+    ///     fs::File,
+    ///     io::{BufReader, Read, Write},
+    /// };
+    ///
+    /// fn main() -> Result<(), Box<dyn std::error::Error>> {
+    ///     let mut buf = Vec::new();
+    ///     let mut out = tempfile::NamedTempFile::new().unwrap();
+    ///
+    ///     let f = File::open("testdata/gdas.t12z.pgrb2.0p25.f000.0-10.xz")?;
+    ///     let f = BufReader::new(f);
+    ///     let mut f = xz2::bufread::XzDecoder::new(f);
+    ///     f.read_to_end(&mut buf)?;
+    ///     out.write_all(&buf)?;
+    ///
+    ///     let f = File::open(&out.path())?;
+    ///     let f = BufReader::new(f);
+    ///     let grib2 = grib::from_reader(f)?;
+    ///
+    ///     let mut iter = grib2.iter();
+    ///     let (_, message) = iter.next().ok_or_else(|| "first message is not found")?;
+    ///
+    ///     let mut latlons = message.latlons()?;
+    ///     assert_eq!(latlons.next(), Some((90.0, 0.0)));
+    ///     assert_eq!(latlons.next(), Some((90.0, 0.25000003)));
+    ///     Ok(())
+    /// }
+    /// ```
     pub fn latlons(&self) -> Result<GridPointIterator, GribError> {
         let grid_def = self.grid_def();
         let num_defined = grid_def.num_points() as usize;
