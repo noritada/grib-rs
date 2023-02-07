@@ -168,12 +168,15 @@ pub enum GridDefinitionTemplateValues {
 }
 
 impl GridDefinitionTemplateValues {
+    /// Returns an iterator over latitudes and longitudes of grid points.
+    ///
+    /// Note that this is a low-level API and it is not checked that the number
+    /// of iterator iterations is consistent with the number of grid points
+    /// defined in the data.
     pub fn latlons(&self) -> Result<GridPointIterator, GribError> {
         let iter = match self {
             Self::Template0(def) => GridPointIterator::LatLon(def.latlons()?),
         };
-        // note that consistency between `iter.size_hint()` and
-        // `GridDefinition::num_points()` is not checked
         Ok(iter)
     }
 }
