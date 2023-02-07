@@ -110,7 +110,7 @@ where
     }
 
     fn reset_pos(&mut self) -> Result<(), io::Error> {
-        let pos = self.reader.seek(SeekFrom::Current(0))?;
+        let pos = self.reader.stream_position()?;
         self.whole_size = pos as usize;
         Ok(())
     }
