@@ -1,7 +1,7 @@
 use anyhow::Result;
 use clap::{arg, ArgMatches, Command};
 use console::Style;
-use grib::error::GribError;
+use grib::GribError;
 use std::fmt;
 use std::fs::File;
 use std::io::{BufWriter, Write};
@@ -49,7 +49,7 @@ pub fn exec(args: &ArgMatches) -> Result<()> {
         .find(|(index, _)| *index == message_index)
         .ok_or_else(|| anyhow::anyhow!("no such index: {}.{}", message_index.0, message_index.1))?;
     let latlons = submessage.latlons();
-    let decoder = grib::decoders::Grib2SubmessageDecoder::from(submessage)?;
+    let decoder = grib::Grib2SubmessageDecoder::from(submessage)?;
     let values = decoder.dispatch()?;
 
     if args.contains_id("big-endian") {

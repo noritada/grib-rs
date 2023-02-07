@@ -109,7 +109,7 @@
 //! ```rust
 //! use grib::codetables::grib2::*;
 //! use grib::codetables::*;
-//! use grib::datatypes::*;
+//! use grib::*;
 //! use std::fs::File;
 //! use std::io::BufReader;
 //! use std::path::Path;
@@ -180,7 +180,7 @@
 //! ```rust
 //! use grib::codetables::grib2::*;
 //! use grib::codetables::*;
-//! use grib::datatypes::*;
+//! use grib::*;
 //! use std::fs::File;
 //! use std::io::{BufReader, Read, Write};
 //! use std::path::Path;
@@ -200,7 +200,7 @@
 //!         .unwrap();
 //!
 //!     let latlons = submessage.latlons().unwrap();
-//!     let decoder = grib::decoders::Grib2SubmessageDecoder::from(submessage).unwrap();
+//!     let decoder = grib::Grib2SubmessageDecoder::from(submessage).unwrap();
 //!     let values = decoder.dispatch().unwrap();
 //!
 //!     for ((lat, lon), value) in latlons.zip(values) {

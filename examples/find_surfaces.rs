@@ -1,6 +1,6 @@
 use grib::codetables::grib2::*;
 use grib::codetables::*;
-use grib::datatypes::*;
+use grib::*;
 use std::env;
 use std::error::Error;
 use std::fs::File;

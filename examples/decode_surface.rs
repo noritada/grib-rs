@@ -42,7 +42,7 @@ where
     let latlons = submessage.latlons()?;
 
     // Prepare a decoder.
-    let decoder = grib::decoders::Grib2SubmessageDecoder::from(submessage)?;
+    let decoder = grib::Grib2SubmessageDecoder::from(submessage)?;
 
     // Actually dispatch a decoding process and get an iterator of decoded values.
     // There are various methods available for compressing GRIB2 data, but some are

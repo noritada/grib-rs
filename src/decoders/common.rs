@@ -12,7 +12,7 @@ use num::ToPrimitive;
 ///
 /// # Examples
 /// ```
-/// use grib::decoders::Grib2SubmessageDecoder;
+/// use grib::Grib2SubmessageDecoder;
 ///
 /// fn main() -> Result<(), Box<dyn std::error::Error>> {
 ///     let f =
