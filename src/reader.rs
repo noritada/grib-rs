@@ -83,6 +83,16 @@ where
 {
     #[inline]
     fn next_sect0(&mut self) -> Option<Result<SectionInfo, ParseError>> {
+        if self.whole_size == 0 {
+            // if the offset value is left at the initial value, reset it to the current
+            // position
+            let result = self.reset_pos();
+            if let Err(e) = result {
+                return Some(Err(ParseError::ReadError(format!(
+                    "resetting the initial position failed: {e}"
+                ))));
+            }
+        }
         let offset = self.whole_size;
         let result = self.reader.read_sect0().transpose()?.map(|indicator| {
             let message_size = indicator.total_length as usize;
@@ -97,6 +107,12 @@ where
             sect_info
         });
         Some(result)
+    }
+
+    fn reset_pos(&mut self) -> Result<(), io::Error> {
+        let pos = self.reader.seek(SeekFrom::Current(0))?;
+        self.whole_size = pos as usize;
+        Ok(())
     }
 
     #[inline]
@@ -331,7 +347,7 @@ type SectHeader = (usize, u8);
 mod tests {
     use super::*;
 
-    use std::io::Cursor;
+    use std::io::{Cursor, Write};
 
     #[test]
     fn read_one_grib2_message() -> Result<(), Box<dyn std::error::Error>> {
@@ -526,6 +542,46 @@ mod tests {
                 Err(ParseError::ReadError(
                     "failed to fill whole buffer".to_owned()
                 ))
+            ]
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn read_grib2_message_starting_from_non_zero_position() -> Result<(), Box<dyn std::error::Error>>
+    {
+        let mut buf = Vec::new();
+
+        let header_bytes_skipped = b"HEADER TO BE SKIPPED\n";
+        buf.write_all(header_bytes_skipped)?;
+
+        let f = std::fs::File::open(
+            "testdata/icon_global_icosahedral_single-level_2021112018_000_TOT_PREC.grib2",
+        )?;
+        let mut f = std::io::BufReader::new(f);
+        f.read_to_end(&mut buf)?;
+
+        let mut f = Cursor::new(buf);
+        f.seek(SeekFrom::Current(header_bytes_skipped.len() as i64))?;
+
+        let grib2_reader = SeekableGrib2Reader::new(f);
+        let sect_stream = Grib2SectionStream::new(grib2_reader);
+        assert_eq!(
+            sect_stream
+                .take(10)
+                .map(|result| result.map(|sect| (sect.num, sect.offset, sect.size)))
+                .collect::<Vec<_>>(),
+            vec![
+                Ok((0, 21, 16)),
+                Ok((1, 37, 21)),
+                Ok((2, 58, 27)),
+                Ok((3, 85, 35)),
+                Ok((4, 120, 58)),
+                Ok((5, 178, 21)),
+                Ok((6, 199, 6)),
+                Ok((7, 205, 5)),
+                Ok((8, 210, 4)),
             ]
         );
 
