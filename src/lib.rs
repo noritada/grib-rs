@@ -9,4 +9,7 @@ pub mod parser;
 pub mod reader;
 mod utils;
 
-pub use context::{from_reader, from_slice, Grib2};
+pub use crate::{
+    context::{from_reader, from_slice, Grib2},
+    grid::*,
+};
