@@ -56,7 +56,12 @@ impl LatLonGridDefinition {
         }
     }
 
-    pub(crate) fn latlons(&self) -> Result<LatLonGridIterator, GribError> {
+    /// Returns an iterator over latitudes and longitudes of grid points.
+    ///
+    /// Note that this is a low-level API and it is not checked that the number
+    /// of iterator iterations is consistent with the number of grid points
+    /// defined in the data.
+    pub fn latlons(&self) -> Result<LatLonGridIterator, GribError> {
         if self.scanning_mode.has_unsupported_flags() {
             let ScanningMode(mode) = self.scanning_mode;
             return Err(GribError::NotSupported(format!("scanning mode {mode}")));
@@ -179,19 +184,62 @@ impl Iterator for LatLonGridIterator {
 pub struct ScanningMode(pub u8);
 
 impl ScanningMode {
-    pub(crate) fn scans_positively_for_i(&self) -> bool {
+    /// Returns `true` if points of the first row or column scan in the `+i`
+    /// (`+x`) direction.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use grib::ScanningMode;
+    ///
+    /// let scanning_mode = ScanningMode(0b00000000);
+    /// assert_eq!(scanning_mode.scans_positively_for_i(), true);
+    /// ```
+    pub fn scans_positively_for_i(&self) -> bool {
         self.0 & 0b10000000 == 0
     }
 
-    pub(crate) fn scans_positively_for_j(&self) -> bool {
+    /// Returns `true` if points of the first row or column scan in the `+j`
+    /// (`+y`) direction.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use grib::ScanningMode;
+    ///
+    /// let scanning_mode = ScanningMode(0b00000000);
+    /// assert_eq!(scanning_mode.scans_positively_for_j(), false);
+    /// ```
+    pub fn scans_positively_for_j(&self) -> bool {
         self.0 & 0b01000000 != 0
     }
 
-    pub(crate) fn is_consecutive_for_i(&self) -> bool {
+    /// Returns `true` if adjacent points in `i` (`x`) direction are
+    /// consecutive.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use grib::ScanningMode;
+    ///
+    /// let scanning_mode = ScanningMode(0b00000000);
+    /// assert_eq!(scanning_mode.is_consecutive_for_i(), true);
+    /// ```
+    pub fn is_consecutive_for_i(&self) -> bool {
         self.0 & 0b00100000 == 0
     }
 
-    pub(crate) fn scans_alternating_rows(&self) -> bool {
+    /// Returns `true` if adjacent rows scans in the opposite direction.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use grib::ScanningMode;
+    ///
+    /// let scanning_mode = ScanningMode(0b00000000);
+    /// assert_eq!(scanning_mode.scans_alternating_rows(), false);
+    /// ```
+    pub fn scans_alternating_rows(&self) -> bool {
         self.0 & 0b00010000 != 0
     }
 

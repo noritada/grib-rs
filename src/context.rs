@@ -412,7 +412,8 @@ Data Representation:                    {}
     /// points.
     ///
     /// The order of lat/lon data of grid points is the same as the order of the
-    /// grid point values, defined by the scanning mode in the data.
+    /// grid point values, defined by the scanning mode
+    /// ([`ScanningMode`](`crate::ScanningMode`)) in the data.
     ///
     /// # Examples
     ///
