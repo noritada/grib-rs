@@ -424,21 +424,18 @@ Data Representation:                    {}
     /// ```
     /// use std::{
     ///     fs::File,
-    ///     io::{BufReader, Read, Write},
+    ///     io::{BufReader, Read},
     /// };
     ///
     /// fn main() -> Result<(), Box<dyn std::error::Error>> {
     ///     let mut buf = Vec::new();
-    ///     let mut out = tempfile::NamedTempFile::new().unwrap();
     ///
     ///     let f = File::open("testdata/gdas.t12z.pgrb2.0p25.f000.0-10.xz")?;
     ///     let f = BufReader::new(f);
     ///     let mut f = xz2::bufread::XzDecoder::new(f);
     ///     f.read_to_end(&mut buf)?;
-    ///     out.write_all(&buf)?;
     ///
-    ///     let f = File::open(&out.path())?;
-    ///     let f = BufReader::new(f);
+    ///     let f = std::io::Cursor::new(buf);
     ///     let grib2 = grib::from_reader(f)?;
     ///
     ///     let mut iter = grib2.iter();
