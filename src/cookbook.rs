@@ -110,7 +110,7 @@
 //!
 //! use grib::{
 //!     codetables::{grib2::*, *},
-//!     *,
+//!     ForecastTime,
 //! };
 //!
 //! fn find_submessages<P>(path: P, forecast_time_hours: u32)
@@ -183,10 +183,7 @@
 //!     path::Path,
 //! };
 //!
-//! use grib::{
-//!     codetables::{grib2::*, *},
-//!     *,
-//! };
+//! use grib::codetables::{grib2::*, *};
 //!
 //! fn decode_surface<P>(path: P, message_index: (usize, usize))
 //! where

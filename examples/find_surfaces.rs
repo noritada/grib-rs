@@ -2,7 +2,7 @@ use std::{env, error::Error, fs::File, io::BufReader, path::Path};
 
 use grib::{
     codetables::{grib2::*, *},
-    *,
+    ForecastTime,
 };
 
 fn main() -> Result<(), Box<dyn Error>> {
