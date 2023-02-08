@@ -255,8 +255,8 @@ impl<'a, R> Iterator for SubmessageIterator<'a, R> {
         Some((
             submessage_index.message_index(),
             SubMessage(
-                self.new_submessage_section(0)?,
-                self.new_submessage_section(1)?,
+                self.new_submessage_section(submessage_index.0)?,
+                self.new_submessage_section(submessage_index.1)?,
                 submessage_index
                     .2
                     .and_then(|i| self.new_submessage_section(i)),
@@ -265,7 +265,7 @@ impl<'a, R> Iterator for SubmessageIterator<'a, R> {
                 self.new_submessage_section(submessage_index.5)?,
                 self.new_submessage_section(submessage_index.6)?,
                 self.new_submessage_section(submessage_index.7)?,
-                self.new_submessage_section(self.context.sections.len() - 1)?,
+                self.new_submessage_section(submessage_index.8)?,
                 self.context.reader.borrow_mut(),
             ),
         ))
@@ -612,5 +612,93 @@ mod tests {
                 TemplateInfo(5, 0),
             ]
         );
+    }
+
+    macro_rules! test_submessage_iterator {
+        ($((
+            $name:ident,
+            $xz_compressed_input:expr,
+            $nth:expr,
+            $expected_index:expr,
+            $expected_section_indices:expr,
+        ),)*) => ($(
+            #[test]
+            fn $name() -> Result<(), Box<dyn std::error::Error>> {
+                let mut buf = Vec::new();
+
+                let f = File::open($xz_compressed_input)?;
+                let f = BufReader::new(f);
+                let mut f = xz2::bufread::XzDecoder::new(f);
+                f.read_to_end(&mut buf)?;
+
+                let f = Cursor::new(buf);
+                let grib2 = crate::from_reader(f)?;
+                let mut iter = grib2.iter();
+
+                let (actual_index, message) = iter.nth($nth).ok_or_else(|| "item not available")?;
+                assert_eq!(actual_index, $expected_index);
+                let actual_section_indices = get_section_indices(message);
+                assert_eq!(actual_section_indices, $expected_section_indices);
+
+                Ok(())
+            }
+        )*);
+    }
+
+    test_submessage_iterator! {
+        (
+            item_0_from_submessage_iterator_for_single_message_data_with_multiple_submessages,
+            "testdata/Z__C_RJTD_20160822020000_NOWC_GPV_Ggis10km_Pphw10_FH0000-0100_grib2.bin.xz",
+            0,
+            (0, 0),
+            (0, 1, None, 2, 3, 4, 5, 6, 0),
+        ),
+        (
+            item_1_from_submessage_iterator_for_single_message_data_with_multiple_submessages,
+            "testdata/Z__C_RJTD_20160822020000_NOWC_GPV_Ggis10km_Pphw10_FH0000-0100_grib2.bin.xz",
+            1,
+            (0, 1),
+            (0, 1, None, 2, 7, 8, 9, 10, 0),
+        ),
+        (
+            item_0_from_submessage_iterator_for_multi_message_data,
+            "testdata/gdas.t12z.pgrb2.0p25.f000.0-10.xz",
+            0,
+            (0, 0),
+            (0, 1, None, 2, 3, 4, 5, 6, 7),
+        ),
+        (
+            item_1_from_submessage_iterator_for_multi_message_data,
+            "testdata/gdas.t12z.pgrb2.0p25.f000.0-10.xz",
+            1,
+            (1, 0),
+            (8, 9, None, 10, 11, 12, 13, 14, 15),
+        ),
+    }
+
+    fn get_section_indices<R>(
+        submessage: SubMessage<'_, R>,
+    ) -> (
+        usize,
+        usize,
+        Option<usize>,
+        usize,
+        usize,
+        usize,
+        usize,
+        usize,
+        usize,
+    ) {
+        (
+            submessage.0.index,
+            submessage.1.index,
+            submessage.2.map(|s| s.index),
+            submessage.3.index,
+            submessage.4.index,
+            submessage.5.index,
+            submessage.6.index,
+            submessage.7.index,
+            submessage.8.index,
+        )
     }
 }
