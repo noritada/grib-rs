@@ -1,8 +1,10 @@
-use crate::{utils, CMD_NAME};
+use std::process::Command;
+
 use assert_cmd::prelude::*;
 use predicates::prelude::*;
-use std::process::Command;
 use tempfile::TempDir;
+
+use crate::{utils, CMD_NAME};
 
 macro_rules! test_subcommands_without_args {
     ($(($name:ident, $str:expr),)*) => ($(

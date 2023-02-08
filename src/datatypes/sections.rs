@@ -1,12 +1,14 @@
-use chrono::{DateTime, LocalResult, TimeZone, Utc};
-use std::convert::TryInto;
-use std::slice::Iter;
+use std::{convert::TryInto, slice::Iter};
 
-use crate::codetables::SUPPORTED_PROD_DEF_TEMPLATE_NUMBERS;
-use crate::datatypes::*;
-use crate::error::*;
-use crate::grid::{GridPointIterator, LatLonGridDefinition};
-use crate::utils::{read_as, GribInt};
+use chrono::{DateTime, LocalResult, TimeZone, Utc};
+
+use crate::{
+    codetables::SUPPORTED_PROD_DEF_TEMPLATE_NUMBERS,
+    datatypes::*,
+    error::*,
+    grid::{GridPointIterator, LatLonGridDefinition},
+    utils::{read_as, GribInt},
+};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Indicator {

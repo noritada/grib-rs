@@ -1,9 +1,6 @@
+use std::{collections::BTreeMap, error::Error, fmt, fs::File, path::Path};
+
 use serde::Deserialize;
-use std::collections::BTreeMap;
-use std::error::Error;
-use std::fmt;
-use std::fs::File;
-use std::path::Path;
 
 use crate::*;
 

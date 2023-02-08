@@ -1,11 +1,10 @@
-use std::convert::TryInto;
-use std::io::{self, Read, Seek, SeekFrom};
-use std::result::Result;
+use std::{
+    convert::TryInto,
+    io::{self, Read, Seek, SeekFrom},
+    result::Result,
+};
 
-use crate::error::*;
-use crate::utils::read_as;
-use crate::*;
-use crate::{SectionBody, SectionInfo};
+use crate::{error::*, utils::read_as, SectionBody, SectionInfo, *};
 
 const SECT0_IS_MAGIC: &[u8] = b"GRIB";
 const SECT0_IS_MAGIC_SIZE: usize = SECT0_IS_MAGIC.len();
@@ -16,9 +15,7 @@ pub(crate) const SECT8_ES_SIZE: usize = SECT8_ES_MAGIC.len();
 
 /// # Example
 /// ```
-/// use grib::Indicator;
-/// use grib::{Grib2SectionStream, SeekableGrib2Reader};
-/// use grib::{SectionBody, SectionInfo};
+/// use grib::{Grib2SectionStream, Indicator, SectionBody, SectionInfo, SeekableGrib2Reader};
 ///
 /// fn main() -> Result<(), Box<dyn std::error::Error>> {
 ///     let f = std::fs::File::open(
@@ -345,9 +342,9 @@ type SectHeader = (usize, u8);
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-
     use std::io::{Cursor, Write};
+
+    use super::*;
 
     #[test]
     fn read_one_grib2_message() -> Result<(), Box<dyn std::error::Error>> {

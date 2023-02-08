@@ -1,8 +1,12 @@
-use crate::utils::{cat_to_tempfile, unxz_as_bytes, unxz_to_tempfile};
-use std::fs::File;
-use std::io::{self, BufReader, Read, Write};
-use std::path::{Path, PathBuf};
+use std::{
+    fs::File,
+    io::{self, BufReader, Read, Write},
+    path::{Path, PathBuf},
+};
+
 use tempfile::NamedTempFile;
+
+use crate::utils::{cat_to_tempfile, unxz_as_bytes, unxz_to_tempfile};
 
 fn testdata_dir() -> PathBuf {
     Path::new(concat!(env!("CARGO_MANIFEST_DIR"), "/..")).join("testdata")

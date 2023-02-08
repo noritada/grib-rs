@@ -1,10 +1,14 @@
+use std::{
+    fmt::{self, Display, Formatter},
+    path::PathBuf,
+};
+
 use clap::{arg, ArgAction, ArgMatches, Command};
 use console::Style;
-use std::fmt::{self, Display, Formatter};
-use std::path::PathBuf;
-
-use grib::codetables::{CodeTable4_2, CodeTable4_3, Lookup};
-use grib::SubmessageIterator;
+use grib::{
+    codetables::{CodeTable4_2, CodeTable4_3, Lookup},
+    SubmessageIterator,
+};
 
 use crate::cli;
 

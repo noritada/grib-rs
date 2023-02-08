@@ -40,11 +40,11 @@ impl Table4_4 {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-
-    use num_enum::TryFromPrimitiveError;
     use std::convert::TryFrom;
 
+    use num_enum::TryFromPrimitiveError;
+
+    use super::*;
     use crate::codetables::*;
 
     #[test]

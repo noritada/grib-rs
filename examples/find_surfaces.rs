@@ -1,11 +1,9 @@
-use grib::codetables::grib2::*;
-use grib::codetables::*;
-use grib::*;
-use std::env;
-use std::error::Error;
-use std::fs::File;
-use std::io::BufReader;
-use std::path::Path;
+use std::{env, error::Error, fs::File, io::BufReader, path::Path};
+
+use grib::{
+    codetables::{grib2::*, *},
+    *,
+};
 
 fn main() -> Result<(), Box<dyn Error>> {
     // This example shows how to find surfaces in a GRIB2 message.

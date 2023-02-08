@@ -1,17 +1,21 @@
-use std::cell::{RefCell, RefMut};
-use std::collections::HashSet;
-use std::fmt::{self, Display, Formatter};
-use std::io::{Cursor, Read, Seek};
-use std::result::Result;
-
-use crate::codetables::{
-    CodeTable3_1, CodeTable4_0, CodeTable4_1, CodeTable4_2, CodeTable4_3, CodeTable5_0, Lookup,
+use std::{
+    cell::{RefCell, RefMut},
+    collections::HashSet,
+    fmt::{self, Display, Formatter},
+    io::{Cursor, Read, Seek},
+    result::Result,
 };
-use crate::datatypes::*;
-use crate::error::*;
-use crate::grid::GridPointIterator;
-use crate::parser::Grib2SubmessageIndexStream;
-use crate::reader::{Grib2Read, Grib2SectionStream, SeekableGrib2Reader, SECT8_ES_SIZE};
+
+use crate::{
+    codetables::{
+        CodeTable3_1, CodeTable4_0, CodeTable4_1, CodeTable4_2, CodeTable4_3, CodeTable5_0, Lookup,
+    },
+    datatypes::*,
+    error::*,
+    grid::GridPointIterator,
+    parser::Grib2SubmessageIndexStream,
+    reader::{Grib2Read, Grib2SectionStream, SeekableGrib2Reader, SECT8_ES_SIZE},
+};
 
 #[derive(Default, Debug, Clone, PartialEq, Eq)]
 pub struct SectionInfo {
@@ -482,10 +486,9 @@ impl<'a> SubMessageSection<'a> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use std::{fs::File, io::BufReader};
 
-    use std::fs::File;
-    use std::io::BufReader;
+    use super::*;
 
     macro_rules! sect_placeholder {
         ($num:expr) => {{
