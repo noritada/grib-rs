@@ -1,6 +1,6 @@
-use crate::context::SectionInfo;
-use crate::datatypes::Grib2SubmessageIndex;
-use crate::error::*;
+use crate::Grib2SubmessageIndex;
+use crate::SectionInfo;
+use crate::*;
 use std::iter::{Enumerate, Peekable};
 
 pub struct Submessage(
@@ -22,10 +22,10 @@ pub struct Submessage(
 /// beginning of the file.
 ///
 /// ```
-/// use grib::context::{SectionBody, SectionInfo};
-/// use grib::datatypes::Indicator;
-/// use grib::parser::Grib2SubmessageStream;
-/// use grib::reader::{Grib2SectionStream, SeekableGrib2Reader};
+/// use grib::Grib2SubmessageStream;
+/// use grib::Indicator;
+/// use grib::{Grib2SectionStream, SeekableGrib2Reader};
+/// use grib::{SectionBody, SectionInfo};
 ///
 /// fn main() -> Result<(), Box<dyn std::error::Error>> {
 ///     let f = std::fs::File::open(
@@ -84,8 +84,8 @@ where
 {
     /// # Example
     /// ```
-    /// use grib::parser::Grib2SubmessageStream;
-    /// use grib::reader::{Grib2SectionStream, SeekableGrib2Reader};
+    /// use grib::Grib2SubmessageStream;
+    /// use grib::{Grib2SectionStream, SeekableGrib2Reader};
     ///
     /// fn main() -> Result<(), Box<dyn std::error::Error>> {
     ///     let f = std::fs::File::open(

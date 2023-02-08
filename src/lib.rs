@@ -1,15 +1,12 @@
 pub mod codetables;
-pub mod context;
+mod context;
 pub mod cookbook;
-pub mod datatypes;
-pub mod decoders;
-pub mod error;
+mod datatypes;
+mod decoders;
+mod error;
 mod grid;
-pub mod parser;
-pub mod reader;
+mod parser;
+mod reader;
 mod utils;
 
-pub use crate::{
-    context::{from_reader, from_slice, Grib2},
-    grid::*,
-};
+pub use crate::{context::*, datatypes::*, decoders::*, error::*, grid::*, parser::*, reader::*};

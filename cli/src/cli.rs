@@ -8,8 +8,8 @@ use std::path::Path;
 #[cfg(unix)]
 use which::which;
 
-use grib::reader::SeekableGrib2Reader;
 use grib::Grib2;
+use grib::SeekableGrib2Reader;
 
 pub fn grib<P>(path: P) -> anyhow::Result<Grib2<SeekableGrib2Reader<BufReader<File>>>>
 where
@@ -60,7 +60,7 @@ fn start_pager() {
 fn start_pager() {}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) struct CliMessageIndex(pub(crate) grib::datatypes::MessageIndex);
+pub(crate) struct CliMessageIndex(pub(crate) grib::MessageIndex);
 
 impl std::str::FromStr for CliMessageIndex {
     type Err = anyhow::Error;

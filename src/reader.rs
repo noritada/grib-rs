@@ -2,10 +2,10 @@ use std::convert::TryInto;
 use std::io::{self, Read, Seek, SeekFrom};
 use std::result::Result;
 
-use crate::context::{SectionBody, SectionInfo};
-use crate::datatypes::*;
 use crate::error::*;
 use crate::utils::read_as;
+use crate::*;
+use crate::{SectionBody, SectionInfo};
 
 const SECT0_IS_MAGIC: &[u8] = b"GRIB";
 const SECT0_IS_MAGIC_SIZE: usize = SECT0_IS_MAGIC.len();
@@ -16,9 +16,9 @@ pub(crate) const SECT8_ES_SIZE: usize = SECT8_ES_MAGIC.len();
 
 /// # Example
 /// ```
-/// use grib::context::{SectionBody, SectionInfo};
-/// use grib::datatypes::Indicator;
-/// use grib::reader::{Grib2SectionStream, SeekableGrib2Reader};
+/// use grib::Indicator;
+/// use grib::{Grib2SectionStream, SeekableGrib2Reader};
+/// use grib::{SectionBody, SectionInfo};
 ///
 /// fn main() -> Result<(), Box<dyn std::error::Error>> {
 ///     let f = std::fs::File::open(
@@ -52,7 +52,7 @@ pub struct Grib2SectionStream<R> {
 impl<R> Grib2SectionStream<R> {
     /// # Example
     /// ```
-    /// use grib::reader::{Grib2SectionStream, SeekableGrib2Reader};
+    /// use grib::{Grib2SectionStream, SeekableGrib2Reader};
     ///
     /// fn main() -> Result<(), Box<dyn std::error::Error>> {
     ///     let f = std::fs::File::open(

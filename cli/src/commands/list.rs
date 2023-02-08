@@ -4,7 +4,7 @@ use std::fmt::{self, Display, Formatter};
 use std::path::PathBuf;
 
 use grib::codetables::{CodeTable4_2, CodeTable4_3, Lookup};
-use grib::context::SubmessageIterator;
+use grib::SubmessageIterator;
 
 use crate::cli;
 

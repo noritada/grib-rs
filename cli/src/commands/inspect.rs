@@ -4,7 +4,7 @@ use std::fmt::{self, Display, Formatter};
 use std::path::PathBuf;
 use std::slice::Iter;
 
-use grib::context::{SectionInfo, SubMessageSection, SubmessageIterator, TemplateInfo};
+use grib::{SectionInfo, SubMessageSection, SubmessageIterator, TemplateInfo};
 
 use crate::cli;
 
