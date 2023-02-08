@@ -190,10 +190,10 @@ impl ScanningMode {
     /// # Examples
     ///
     /// ```
-    /// use grib::ScanningMode;
-    ///
-    /// let scanning_mode = ScanningMode(0b00000000);
-    /// assert_eq!(scanning_mode.scans_positively_for_i(), true);
+    /// assert_eq!(
+    ///     grib::ScanningMode(0b00000000).scans_positively_for_i(),
+    ///     true
+    /// );
     /// ```
     pub fn scans_positively_for_i(&self) -> bool {
         self.0 & 0b10000000 == 0
@@ -205,10 +205,10 @@ impl ScanningMode {
     /// # Examples
     ///
     /// ```
-    /// use grib::ScanningMode;
-    ///
-    /// let scanning_mode = ScanningMode(0b00000000);
-    /// assert_eq!(scanning_mode.scans_positively_for_j(), false);
+    /// assert_eq!(
+    ///     grib::ScanningMode(0b00000000).scans_positively_for_j(),
+    ///     false
+    /// );
     /// ```
     pub fn scans_positively_for_j(&self) -> bool {
         self.0 & 0b01000000 != 0
@@ -220,10 +220,7 @@ impl ScanningMode {
     /// # Examples
     ///
     /// ```
-    /// use grib::ScanningMode;
-    ///
-    /// let scanning_mode = ScanningMode(0b00000000);
-    /// assert_eq!(scanning_mode.is_consecutive_for_i(), true);
+    /// assert_eq!(grib::ScanningMode(0b00000000).is_consecutive_for_i(), true);
     /// ```
     pub fn is_consecutive_for_i(&self) -> bool {
         self.0 & 0b00100000 == 0
@@ -234,10 +231,10 @@ impl ScanningMode {
     /// # Examples
     ///
     /// ```
-    /// use grib::ScanningMode;
-    ///
-    /// let scanning_mode = ScanningMode(0b00000000);
-    /// assert_eq!(scanning_mode.scans_alternating_rows(), false);
+    /// assert_eq!(
+    ///     grib::ScanningMode(0b00000000).scans_alternating_rows(),
+    ///     false
+    /// );
     /// ```
     pub fn scans_alternating_rows(&self) -> bool {
         self.0 & 0b00010000 != 0
