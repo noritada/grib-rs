@@ -1,15 +1,12 @@
+use std::{fs::File, io::BufReader, path::Path};
+
+use grib::{Grib2, SeekableGrib2Reader};
 use once_cell::sync::Lazy;
 #[cfg(unix)]
 use pager::Pager;
 use regex::Regex;
-use std::fs::File;
-use std::io::BufReader;
-use std::path::Path;
 #[cfg(unix)]
 use which::which;
-
-use grib::Grib2;
-use grib::SeekableGrib2Reader;
 
 pub fn grib<P>(path: P) -> anyhow::Result<Grib2<SeekableGrib2Reader<BufReader<File>>>>
 where

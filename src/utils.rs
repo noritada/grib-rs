@@ -120,9 +120,9 @@ impl<'a> Iterator for NBitwiseIterator<'a> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-
     use std::convert::TryInto;
+
+    use super::*;
 
     #[test]
     fn into_grib_i8() {

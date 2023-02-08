@@ -1,12 +1,17 @@
-use crate::context::{SectionBody, SubMessage};
-use crate::decoders::bitmap::{create_bitmap_for_nonnullable_data, BitmapDecodeIterator};
-use crate::decoders::complex::{self, ComplexPackingDecodeError};
-use crate::decoders::jpeg2000::{self, Jpeg2000CodeStreamDecodeError};
-use crate::decoders::run_length::{self, RunLengthEncodingDecodeError};
-use crate::decoders::simple::{self, SimplePackingDecodeError, SimplePackingDecodeIteratorWrapper};
-use crate::error::*;
-use crate::reader::Grib2Read;
 use num::ToPrimitive;
+
+use crate::{
+    context::{SectionBody, SubMessage},
+    decoders::{
+        bitmap::{create_bitmap_for_nonnullable_data, BitmapDecodeIterator},
+        complex::{self, ComplexPackingDecodeError},
+        jpeg2000::{self, Jpeg2000CodeStreamDecodeError},
+        run_length::{self, RunLengthEncodingDecodeError},
+        simple::{self, SimplePackingDecodeError, SimplePackingDecodeIteratorWrapper},
+    },
+    error::*,
+    reader::Grib2Read,
+};
 
 /// Decoder for grid point values of GRIB2 submessages.
 ///

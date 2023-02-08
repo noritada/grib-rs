@@ -1,7 +1,9 @@
-use crate::{utils, CMD_NAME};
+use std::process::Command;
+
 use assert_cmd::prelude::*;
 use predicates::prelude::*;
-use std::process::Command;
+
+use crate::{utils, CMD_NAME};
 
 crate::commands::test_simple_display! {
     (

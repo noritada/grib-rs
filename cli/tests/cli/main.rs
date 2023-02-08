@@ -1,6 +1,7 @@
+use std::process::Command;
+
 use assert_cmd::prelude::*;
 use predicates::prelude::*;
-use std::process::Command;
 
 mod commands;
 mod utils;

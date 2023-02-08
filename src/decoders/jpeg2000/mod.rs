@@ -1,11 +1,12 @@
-use openjpeg_sys as opj;
 use std::convert::TryInto;
 
-use crate::decoders::common::*;
-use crate::decoders::param::SimplePackingParam;
-use crate::decoders::simple::*;
-use crate::error::*;
-use crate::utils::read_as;
+use openjpeg_sys as opj;
+
+use crate::{
+    decoders::{common::*, param::SimplePackingParam, simple::*},
+    error::*,
+    utils::read_as,
+};
 
 mod ext;
 use ext::*;

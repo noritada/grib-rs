@@ -1,8 +1,10 @@
 use std::convert::TryInto;
 
-use crate::decoders::common::*;
-use crate::error::*;
-use crate::utils::{read_as, NBitwiseIterator};
+use crate::{
+    decoders::common::*,
+    error::*,
+    utils::{read_as, NBitwiseIterator},
+};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum RunLengthEncodingDecodeError {

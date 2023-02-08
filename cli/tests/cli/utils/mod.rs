@@ -1,7 +1,10 @@
-use std::convert::TryInto;
-use std::fs::File;
-use std::io::{self, BufReader, Read, Write};
-use std::path::Path;
+use std::{
+    convert::TryInto,
+    fs::File,
+    io::{self, BufReader, Read, Write},
+    path::Path,
+};
+
 use tempfile::NamedTempFile;
 use xz2::bufread::XzDecoder;
 

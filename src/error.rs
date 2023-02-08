@@ -1,6 +1,8 @@
-use std::error::Error;
-use std::fmt::{self, Display, Formatter};
-use std::io;
+use std::{
+    error::Error,
+    fmt::{self, Display, Formatter},
+    io,
+};
 
 use crate::decoders::*;
 

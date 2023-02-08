@@ -39,10 +39,9 @@
 //! grib-rs:
 //!
 //! ```rust
+//! use std::{fs::File, io::BufReader, path::Path};
+//!
 //! use grib::codetables::{CodeTable4_2, Lookup};
-//! use std::fs::File;
-//! use std::io::BufReader;
-//! use std::path::Path;
 //!
 //! fn list_submessages<P>(path: P)
 //! where
@@ -107,12 +106,12 @@
 //! grib-rs:
 //!
 //! ```rust
-//! use grib::codetables::grib2::*;
-//! use grib::codetables::*;
-//! use grib::*;
-//! use std::fs::File;
-//! use std::io::BufReader;
-//! use std::path::Path;
+//! use std::{fs::File, io::BufReader, path::Path};
+//!
+//! use grib::{
+//!     codetables::{grib2::*, *},
+//!     ForecastTime,
+//! };
 //!
 //! fn find_submessages<P>(path: P, forecast_time_hours: u32)
 //! where
@@ -178,12 +177,13 @@
 //! grib-rs:
 //!
 //! ```rust
-//! use grib::codetables::grib2::*;
-//! use grib::codetables::*;
-//! use grib::*;
-//! use std::fs::File;
-//! use std::io::{BufReader, Read, Write};
-//! use std::path::Path;
+//! use std::{
+//!     fs::File,
+//!     io::{BufReader, Read, Write},
+//!     path::Path,
+//! };
+//!
+//! use grib::codetables::{grib2::*, *};
 //!
 //! fn decode_surface<P>(path: P, message_index: (usize, usize))
 //! where

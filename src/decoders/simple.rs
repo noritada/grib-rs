@@ -1,10 +1,12 @@
-use num::ToPrimitive;
 use std::convert::TryInto;
 
-use crate::decoders::common::*;
-use crate::decoders::param::SimplePackingParam;
-use crate::error::*;
-use crate::utils::{read_as, NBitwiseIterator};
+use num::ToPrimitive;
+
+use crate::{
+    decoders::{common::*, param::SimplePackingParam},
+    error::*,
+    utils::{read_as, NBitwiseIterator},
+};
 
 pub(crate) enum SimplePackingDecodeIteratorWrapper<I> {
     FixedValue(FixedValueIterator),
@@ -141,11 +143,12 @@ impl Iterator for FixedValueIterator {
 
 #[cfg(test)]
 mod tests {
+    use std::{
+        fs::File,
+        io::{BufReader, Cursor, Read},
+    };
+
     use super::*;
-
-    use std::fs::File;
-    use std::io::{BufReader, Cursor, Read};
-
     use crate::context::from_reader;
 
     #[test]

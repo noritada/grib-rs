@@ -1,12 +1,12 @@
-use num::ToPrimitive;
-use std::convert::TryInto;
-use std::iter;
+use std::{convert::TryInto, iter};
 
-use crate::decoders::common::*;
-use crate::decoders::param::SimplePackingParam;
-use crate::decoders::simple::*;
-use crate::error::*;
-use crate::utils::{read_as, GribInt, NBitwiseIterator};
+use num::ToPrimitive;
+
+use crate::{
+    decoders::{common::*, param::SimplePackingParam, simple::*},
+    error::*,
+    utils::{read_as, GribInt, NBitwiseIterator},
+};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum ComplexPackingDecodeError {

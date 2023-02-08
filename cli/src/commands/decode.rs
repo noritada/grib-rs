@@ -1,11 +1,14 @@
+use std::{
+    fmt,
+    fs::File,
+    io::{BufWriter, Write},
+    path::PathBuf,
+};
+
 use anyhow::Result;
 use clap::{arg, ArgMatches, Command};
 use console::Style;
 use grib::GribError;
-use std::fmt;
-use std::fs::File;
-use std::io::{BufWriter, Write};
-use std::path::PathBuf;
 
 use crate::cli;
 

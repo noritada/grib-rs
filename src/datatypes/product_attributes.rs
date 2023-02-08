@@ -1,8 +1,9 @@
-use std::convert::TryFrom;
-use std::fmt::{self, Display, Formatter};
+use std::{
+    convert::TryFrom,
+    fmt::{self, Display, Formatter},
+};
 
-use crate::codetables::grib2::*;
-use crate::codetables::*;
+use crate::codetables::{grib2::*, *};
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct ForecastTime {

@@ -1,8 +1,4 @@
-use std::env;
-use std::error::Error;
-use std::fs::File;
-use std::io::BufReader;
-use std::path::Path;
+use std::{env, error::Error, fs::File, io::BufReader, path::Path};
 
 fn main() -> Result<(), Box<dyn Error>> {
     // This example shows how to decode values inside a surface in a GRIB2 message.

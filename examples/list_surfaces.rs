@@ -1,9 +1,6 @@
+use std::{env, error::Error, fs::File, io::BufReader, path::Path};
+
 use grib::codetables::{CodeTable4_2, Lookup};
-use std::env;
-use std::error::Error;
-use std::fs::File;
-use std::io::BufReader;
-use std::path::Path;
 
 fn main() -> Result<(), Box<dyn Error>> {
     // This example shows how to get information of element names, forecast time and

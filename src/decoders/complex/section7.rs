@@ -1,6 +1,5 @@
-use crate::{decoders::DecodeError, error::GribError, utils::grib_int_from_bytes};
-
 use super::ComplexPackingDecodeError;
+use crate::{decoders::DecodeError, error::GribError, utils::grib_int_from_bytes};
 
 pub(crate) struct SpatialDifferencingExtraDescriptors<'a> {
     slice: &'a [u8],

@@ -1,9 +1,11 @@
+use std::{
+    fmt::{self, Display, Formatter},
+    path::PathBuf,
+    slice::Iter,
+};
+
 use clap::{arg, ArgAction, ArgMatches, Command};
 use console::Style;
-use std::fmt::{self, Display, Formatter};
-use std::path::PathBuf;
-use std::slice::Iter;
-
 use grib::{SectionInfo, SubMessageSection, SubmessageIterator, TemplateInfo};
 
 use crate::cli;
