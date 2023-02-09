@@ -71,8 +71,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 submessage.prod_def().forecast_time(),
                 Some(ForecastTime {
                     unit: Name(Table4_4::Minute),
-                    value: hours,
-                }) if hours == 30
+                    value: minutes,
+                }) if minutes == 30
             )
         })
         .ok_or("message with FT being 30 minutes not found")?;
