@@ -29,14 +29,14 @@ where
 
     for (index, submessage) in grib2.iter() {
         let ft = submessage.prod_def().forecast_time();
-        if let Some(ForecastTime {
-            unit: Name(Table4_4::Hour),
-            value: hours,
-        }) = ft
-        {
-            if hours == forecast_time_hours {
-                println!("{}.{}: {hours}", index.0, index.1);
-            }
+        if matches!(
+            ft,
+            Some(ForecastTime {
+                unit: Name(Table4_4::Hour),
+                value: hours,
+            }) if hours == forecast_time_hours
+        ) {
+            println!("{}.{}\n{}", index.0, index.1, submessage.describe());
         }
     }
 
