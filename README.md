@@ -48,7 +48,45 @@ Please check the [ROADMAP](ROADMAP.md) to see planned features.
 
 API Documentation of the released version of the library crate is [available on Docs.rs](https://docs.rs/grib/latest/grib/) although it is not extensive. The development version is [available on GitHub Pages](https://noritada.github.io/grib-rs/grib/index.html).
 
-The [examples](examples) may help you understand the API. The functionality is still inadequate, and we are working on expanding the basic functionality as our top priority in this project, so we would be happy to receive any requests.
+If you feel a feature is missing, please send us your suggestions through the [GitHub Issues](https://github.com/noritada/grib-rs/issues/new/choose). We are working on expanding the basic functionality as our top priority in this project, so we would be happy to receive any requests.
+
+### Usage example
+
+```rust
+use grib::{self, codetables::grib2::*, ForecastTime, Grib2SubmessageDecoder, Name};
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let fname = "Z__C_RJTD_20160822020000_NOWC_GPV_Ggis10km_Pphw10_FH0000-0100_grib2.bin";
+    let f = std::fs::File::open(fname)?;
+    let f = std::io::BufReader::new(f);
+    let grib2 = grib::from_reader(f)?;
+
+    let (_index, submessage) = grib2
+        .iter()
+        .find(|(_index, submessage)| {
+            matches!(
+                submessage.prod_def().forecast_time(),
+                Some(ForecastTime {
+                    unit: Name(Table4_4::Minute),
+                    value: hours,
+                }) if hours == 30
+            )
+        })
+        .ok_or("message with FT being 30 minutes not found")?;
+
+    let latlons = submessage.latlons()?;
+    let decoder = Grib2SubmessageDecoder::from(submessage)?;
+    let values = decoder.dispatch()?;
+
+    for ((lat, lon), value) in latlons.zip(values) {
+        println!("{lat} {lon} {value}");
+    }
+
+    Ok(())
+}
+```
+
+The [examples directory](examples) may help you understand the API.
 
 ## CLI application `gribber`
 
