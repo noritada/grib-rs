@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] - 2023-02-09
+### Added
+
+- Library `grib`
+  - Support for computation of latitudes and longitudes of grid points (for the lat/lon grid (Template 3.0)). (#39, #41, #43)
+
+### Changed
+
+- Library `grib`
+  - Now most module hierarchies in the crate have been removed from API and all types except code tables are available directly under the crate root.
+    This makes it easier to import types and get a full picture of the types in the crate via API references.
+    Note that type names are not changed in this release. (#44, #47)
+  - Non-API changes:
+    - Cleaned up superfluous use statements. (#45)
+- CLI application `gribber` built on the top of the Rust library
+  - The "decode" subcommand now prints grid points' lat/lon values as well as data. (#40)
+- Others
+  - Now README.md includes example code to show the usage of the API. (#48)
+  - The word "surface" used in README.md and elsewhere to describe a submessage is now replaced with "layers". (#49)
+
+### Fixed
+
+- Library `grib`
+  - Fixed an issue that wrong offset values are stored in reading a message starting from a non-zero position, which may result in incorrect value output, panics, etc. (#38, #42)
+  - Fixed an issue that wrong Section 0 and 1 information is linked with submessages returned from iterators for multi-message data. (#37, #46)
+
+### Contributors
+
+- Thanks for reporting issues fixed in this release:
+  - @LafeWessel (#37, #38)
+
 ## [0.6.1] - 2023-01-29
 ### Added
 
@@ -210,7 +241,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - inspect: display of information mainly for development purpose such as template numbers
     - list: display of a list of sections (the style is still tentative)
 
-[unreleased]: https://github.com/noritada/grib-rs/compare/v0.6.1...HEAD
+[unreleased]: https://github.com/noritada/grib-rs/compare/v0.7.0...HEAD
+[0.7.0]: https://github.com/noritada/grib-rs/compare/v0.6.1...v0.7.0
 [0.6.1]: https://github.com/noritada/grib-rs/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/noritada/grib-rs/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/noritada/grib-rs/compare/v0.4.3...v0.5.0
