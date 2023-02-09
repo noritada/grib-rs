@@ -33,8 +33,11 @@ A world where everyone can read weather data easily although its interpretation 
     * Template 5.3/7.3 (complex packing and spatial differencing)
     * Template 5.40/7.40 (JPEG 2000 code stream format)
     * Template 5.200/7.200 (run-length encoding)
+  * Support for computation of latitudes and longitudes of grid points for following templates:
+    * Template 3.0 (latitude/longitude (or equidistant cylindrical, or Plate Carree))
 * CLI application `gribber` built on the top of the Rust library
-  * 4 subcommends:
+  * 5 subcommends:
+    * completions: generation of shell completions for your shell
     * decode: data export as text and flat binary files
     * info: display of identification information
     * inspect: display of information mainly for development purpose such as template numbers
