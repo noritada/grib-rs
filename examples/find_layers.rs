@@ -3,20 +3,20 @@ use std::{env, error::Error, fs::File, io::BufReader, path::Path};
 use grib::{codetables::grib2::*, ForecastTime, Name};
 
 fn main() -> Result<(), Box<dyn Error>> {
-    // This example shows how to find surfaces in a GRIB2 message.
+    // This example shows how to find layers in a GRIB2 message.
 
     // Take the first argument as an input file path and the second argument as
     // forecast time in hours.
     let mut args = env::args().skip(1);
     if let (Some(file_path), Some(forecast_time)) = (args.next(), args.next()) {
         let forecast_time = forecast_time.parse::<u32>()?;
-        find_surfaces(file_path, forecast_time)
+        find_layers(file_path, forecast_time)
     } else {
-        panic!("Usage: find_surfaces <path> <forecast_time>");
+        panic!("Usage: find_layers <path> <forecast_time>");
     }
 }
 
-fn find_surfaces<P>(path: P, forecast_time_hours: u32) -> Result<(), Box<dyn Error>>
+fn find_layers<P>(path: P, forecast_time_hours: u32) -> Result<(), Box<dyn Error>>
 where
     P: AsRef<Path>,
 {

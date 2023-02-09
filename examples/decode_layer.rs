@@ -1,23 +1,23 @@
 use std::{env, error::Error, fs::File, io::BufReader, path::Path};
 
 fn main() -> Result<(), Box<dyn Error>> {
-    // This example shows how to decode values inside a surface in a GRIB2 message.
+    // This example shows how to decode values inside a layer in a GRIB2 message.
     // The example also shows how to obtain the latitude-longitude locations of grid
     // points, which are usually used in conjunction with the grid point values.
 
     // Take the first argument as an input file path and the second argument as a
-    // surface index.
+    // layer index.
     let mut args = env::args().skip(1);
     if let (Some(file_path), Some(index), Some(subindex)) = (args.next(), args.next(), args.next())
     {
         let index: (usize, usize) = (index.parse()?, subindex.parse()?);
-        decode_surface(file_path, index)
+        decode_layer(file_path, index)
     } else {
-        panic!("Usage: decode_surface <path> <index>");
+        panic!("Usage: decode_layer <path> <index>");
     }
 }
 
-fn decode_surface<P>(path: P, message_index: (usize, usize)) -> Result<(), Box<dyn Error>>
+fn decode_layer<P>(path: P, message_index: (usize, usize)) -> Result<(), Box<dyn Error>>
 where
     P: AsRef<Path>,
 {
