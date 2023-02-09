@@ -1,9 +1,6 @@
 use std::{env, error::Error, fs::File, io::BufReader, path::Path};
 
-use grib::{
-    codetables::{grib2::*, *},
-    ForecastTime,
-};
+use grib::{codetables::grib2::*, ForecastTime, Name};
 
 fn main() -> Result<(), Box<dyn Error>> {
     // This example shows how to find surfaces in a GRIB2 message.

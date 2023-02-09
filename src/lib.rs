@@ -9,4 +9,13 @@ mod parser;
 mod reader;
 mod utils;
 
-pub use crate::{context::*, datatypes::*, decoders::*, error::*, grid::*, parser::*, reader::*};
+pub use crate::{
+    codetables::Code::{self, Name, Num},
+    context::*,
+    datatypes::*,
+    decoders::*,
+    error::*,
+    grid::*,
+    parser::*,
+    reader::*,
+};
