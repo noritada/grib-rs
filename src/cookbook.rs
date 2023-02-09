@@ -108,10 +108,7 @@
 //! ```rust
 //! use std::{fs::File, io::BufReader, path::Path};
 //!
-//! use grib::{
-//!     codetables::{grib2::*, *},
-//!     ForecastTime,
-//! };
+//! use grib::{codetables::grib2::*, ForecastTime, Name};
 //!
 //! fn find_submessages<P>(path: P, forecast_time_hours: u32)
 //! where
