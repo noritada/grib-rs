@@ -182,7 +182,7 @@
 //!
 //! use grib::codetables::{grib2::*, *};
 //!
-//! fn decode_surface<P>(path: P, message_index: (usize, usize))
+//! fn decode_layer<P>(path: P, message_index: (usize, usize))
 //! where
 //!     P: AsRef<Path>,
 //! {
@@ -217,7 +217,7 @@
 //!     f.read_to_end(&mut buf).unwrap();
 //!     out.write_all(&buf).unwrap();
 //!
-//!     decode_surface(&out.path(), (0, 0));
+//!     decode_layer(&out.path(), (0, 0));
 //! }
 //! ```
 //!

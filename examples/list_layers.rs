@@ -4,18 +4,18 @@ use grib::codetables::{CodeTable4_2, Lookup};
 
 fn main() -> Result<(), Box<dyn Error>> {
     // This example shows how to get information of element names, forecast time and
-    // elevation levels for all surfaces in a GRIB2 message.
+    // elevation levels for all layers in a GRIB2 message.
 
     // Take the first argument as an input file path.
     let mut args = env::args().skip(1);
     if let Some(file_path) = args.next() {
-        list_surfaces(file_path)
+        list_layers(file_path)
     } else {
-        panic!("Usage: list_surfaces <path>");
+        panic!("Usage: list_layers <path>");
     }
 }
 
-fn list_surfaces<P>(path: P) -> Result<(), Box<dyn Error>>
+fn list_layers<P>(path: P) -> Result<(), Box<dyn Error>>
 where
     P: AsRef<Path>,
 {
@@ -26,7 +26,7 @@ where
     // Read with the reader.
     let grib2 = grib::from_reader(f)?;
 
-    // Iterate over surfaces.
+    // Iterate over layers.
     for (_index, submessage) in grib2.iter() {
         // In GRIB data, attribute information such as elements are represented as
         // numeric values. To convert those numeric values to strings, we use
@@ -65,7 +65,7 @@ where
         // `forecast_time()` returns `ForecastTime` wrapped by `Option`.
         let forecast_time = submessage.prod_def().forecast_time().unwrap();
 
-        // `fixed_surfaces()` returns a tuple of two surfaces wrapped by `Option`.
+        // `fixed_layers()` returns a tuple of two layers wrapped by `Option`.
         let (first, _second) = submessage.prod_def().fixed_surfaces().unwrap();
         let elevation_level = first.value();
 
