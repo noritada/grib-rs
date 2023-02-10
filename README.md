@@ -93,6 +93,8 @@ The [examples directory](examples) may help you understand the API.
 
 ## CLI application `gribber`
 
+CLI application `gribber` built on the top of the `grib` library is available. It is in the `grib-cli` package and can be installed via `cargo install grib-cli`.
+
 ```
 Usage: gribber [COMMAND]
 
