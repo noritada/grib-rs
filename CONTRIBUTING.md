@@ -35,18 +35,18 @@ rustup toolchain install nightly --component rustfmt clippy
 To reformat and lint the code, you just need to run these simple commands:
 
 ```
-cargo +nightly fmt
-cargo +nightly clippy
+cargo +nightly fmt --all
+cargo +nightly clippy --workspace
 ```
 
 ### Testing
 
-Testing is very important.  Please test before committing.
+Testing is very important. Please run tests before committing.
 
-You can run tests using this simple command:
+You can test all packages in the workspace using this simple command:
 
 ```
-cargo test
+cargo test --workspace
 ```
 
 Since passing tests needs successful building, the prerequisites for committing are now all fulfilled.
