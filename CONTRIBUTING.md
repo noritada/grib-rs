@@ -20,20 +20,23 @@ See the [Cargo documentation](https://doc.rust-lang.org/cargo/reference/specifyi
 
 ## Before committing
 
-### Formatting
+### Formatting and linting
 
-Rust has a formal coding style as described in [Rust Style Guide](https://github.com/rust-dev-tools/fmt-rfcs/blob/master/guide/guide.md).  Please use [`rustfmt`](https://github.com/rust-lang/rustfmt) for formatting code in that style.
+Rust has a formal coding style as described in [Rust Style Guide](https://github.com/rust-dev-tools/fmt-rfcs/blob/master/guide/guide.md). We are using the nightly version of [`rustfmt`](https://github.com/rust-lang/rustfmt) for formatting code in that style.
 
-To install `rustfmt`, you can simply run as follows:
+Also, Rust has an official linting tool [`rust-clippy`](https://github.com/rust-lang/rust-clippy). We are using the nightly version of `rust-clippy`.
 
-```
-rustup component add rustfmt
-```
-
-To reformat the code, you just need to run this simple command:
+To install those tools [using `rustup`](https://rust-lang.github.io/rustup/concepts/components.html), you can simply run as follows:
 
 ```
-cargo fmt
+rustup toolchain install nightly --component rustfmt clippy
+```
+
+To reformat and lint the code, you just need to run these simple commands:
+
+```
+cargo +nightly fmt
+cargo +nightly clippy
 ```
 
 ### Testing
