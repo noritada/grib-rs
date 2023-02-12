@@ -19,6 +19,12 @@
 //!
 //! ## Listing all submessages inside
 //!
+//! GRIB tools from ecCodes:
+//!
+//! ```shell
+//! $ grib_ls datafile.grib
+//! ```
+//!
 //! wgrib2:
 //!
 //! ```shell
@@ -86,6 +92,12 @@
 //!
 //! ## Finding submessages inside that match some condition
 //!
+//! GRIB tools from ecCodes:
+//!
+//! ```shell
+//! $ grib_ls -w forecastTime=0,level=850,shortName=u datafile.grib
+//! ```
+//!
 //! wgrib2:
 //!
 //! ```shell
@@ -151,6 +163,12 @@
 //! is not yet available.)
 //!
 //! ## Extracting values with location info from a submessage
+//!
+//! GRIB tools from ecCodes:
+//!
+//! ```shell
+//! $ grib_get_data -w forecastTime=0,count=1 datafile.grib
+//! ```
 //!
 //! wgrib2 (creating a flat binary file of values):
 //!
