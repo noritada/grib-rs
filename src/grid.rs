@@ -3,6 +3,13 @@ use crate::{
     utils::{read_as, GribInt},
 };
 
+/// An iterator over latitudes and longitudes of grid points in a submessage.
+///
+/// This `enum` is created by the [`latlons`] method on [`SubMessage`]. See its
+/// documentation for more.
+///
+/// [`latlons`]: crate::context::SubMessage::latlons
+/// [`SubMessage`]: crate::context::SubMessage
 #[derive(Clone)]
 pub enum GridPointIterator {
     LatLon(LatLonGridIterator),
@@ -61,6 +68,27 @@ impl LatLonGridDefinition {
     /// Note that this is a low-level API and it is not checked that the number
     /// of iterator iterations is consistent with the number of grid points
     /// defined in the data.
+    ///
+    /// Examples
+    ///
+    /// ```
+    /// let def = grib::LatLonGridDefinition {
+    ///     ni: 2,
+    ///     nj: 3,
+    ///     first_point_lat: 0,
+    ///     first_point_lon: 0,
+    ///     last_point_lat: 2_000_000,
+    ///     last_point_lon: 1_000_000,
+    ///     scanning_mode: grib::ScanningMode(0b01000000),
+    /// };
+    /// let latlons = def.latlons();
+    /// assert!(latlons.is_ok());
+    ///
+    /// let mut latlons = latlons.unwrap();
+    /// assert_eq!(latlons.next(), Some((0.0, 0.0)));
+    /// assert_eq!(latlons.next(), Some((0.0, 1.0)));
+    /// assert_eq!(latlons.next(), Some((1.0, 0.0)));
+    /// ```
     pub fn latlons(&self) -> Result<LatLonGridIterator, GribError> {
         if self.scanning_mode.has_unsupported_flags() {
             let ScanningMode(mode) = self.scanning_mode;
@@ -113,6 +141,12 @@ impl LatLonGridDefinition {
     }
 }
 
+/// An iterator over latitudes and longitudes of grid points of a lat/lon grid.
+///
+/// This `struct` is created by the [`latlons`] method on
+/// [`LatLonGridDefinition`]. See its documentation for more.
+///
+/// [`latlons`]: LatLonGridDefinition::latlons
 #[derive(Clone)]
 pub struct LatLonGridIterator {
     major: Vec<f32>,
