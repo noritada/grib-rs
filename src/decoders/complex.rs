@@ -147,7 +147,7 @@ where
 {
     type Item = Vec<i32>;
 
-    fn next(&mut self) -> Option<Vec<i32>> {
+    fn next(&mut self) -> Option<Self::Item> {
         match (
             self.ref_iter.next(),
             self.width_iter.next(),
@@ -205,7 +205,7 @@ impl<I> SpatialDiff2ndOrderDecodeIterator<I> {
 impl<I: Iterator<Item = i32>> Iterator for SpatialDiff2ndOrderDecodeIterator<I> {
     type Item = i32;
 
-    fn next(&mut self) -> Option<i32> {
+    fn next(&mut self) -> Option<Self::Item> {
         let count = self.count;
         self.count += 1;
         match (count, self.iter.next()) {

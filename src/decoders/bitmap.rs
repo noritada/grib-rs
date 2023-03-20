@@ -34,7 +34,7 @@ where
 {
     type Item = f32;
 
-    fn next(&mut self) -> Option<f32> {
+    fn next(&mut self) -> Option<Self::Item> {
         let offset = self.offset;
         if offset >= self.len {
             return None;

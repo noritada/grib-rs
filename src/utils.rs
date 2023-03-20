@@ -84,7 +84,7 @@ impl<'a> NBitwiseIterator<'a> {
 impl<'a> Iterator for NBitwiseIterator<'a> {
     type Item = u32;
 
-    fn next(&mut self) -> Option<u32> {
+    fn next(&mut self) -> Option<Self::Item> {
         let new_offset = self.offset + self.size;
         let (new_pos, new_offset) = (self.pos + new_offset / 8, new_offset % 8);
 

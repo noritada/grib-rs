@@ -159,7 +159,7 @@ where
 {
     type Item = Result<SectionInfo, ParseError>;
 
-    fn next(&mut self) -> Option<Result<SectionInfo, ParseError>> {
+    fn next(&mut self) -> Option<Self::Item> {
         match self.rest_size {
             0 => self.next_sect0(),
             SECT8_ES_SIZE => self.next_sect8(),
