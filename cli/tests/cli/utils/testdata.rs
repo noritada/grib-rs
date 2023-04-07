@@ -6,7 +6,7 @@ use std::{
 
 use tempfile::NamedTempFile;
 
-use crate::utils::{cat_to_tempfile, unxz_as_bytes, unxz_to_tempfile};
+use crate::utils::{cat_to_tempfile, unxz_as_bytes, xzcat_to_tempfile};
 
 fn testdata_dir() -> PathBuf {
     Path::new(concat!(env!("CARGO_MANIFEST_DIR"), "/..")).join("testdata")
@@ -47,43 +47,43 @@ pub(crate) mod grib2 {
     }
 
     pub(crate) fn jma_kousa() -> Result<NamedTempFile, io::Error> {
-        unxz_to_tempfile(
+        xzcat_to_tempfile(
             testdata_dir()
                 .join("Z__C_RJTD_20170221120000_MSG_GPV_Gll0p5deg_Pys_B20170221120000_F2017022115-2017022212_grib2.bin.xz"),
         )
     }
 
     pub(crate) fn jma_meps() -> Result<NamedTempFile, io::Error> {
-        unxz_to_tempfile(
+        xzcat_to_tempfile(
             testdata_dir()
                 .join("Z__C_RJTD_20190605000000_MEPS_GPV_Rjp_L-pall_FH00-15_grib2.bin.0-20.xz"),
         )
     }
 
     pub(crate) fn jma_msmguid() -> Result<NamedTempFile, io::Error> {
-        unxz_to_tempfile(
+        xzcat_to_tempfile(
             testdata_dir()
                 .join("Z__C_RJTD_20190304000000_MSM_GUID_Rjp_P-all_FH03-39_Toorg_grib2.bin.xz"),
         )
     }
 
     pub(crate) fn jma_tornado_nowcast() -> Result<NamedTempFile, io::Error> {
-        unxz_to_tempfile(
+        xzcat_to_tempfile(
             testdata_dir()
                 .join("Z__C_RJTD_20160822020000_NOWC_GPV_Ggis10km_Pphw10_FH0000-0100_grib2.bin.xz"),
         )
     }
 
     pub(crate) fn noaa_gdas_0_10() -> Result<NamedTempFile, io::Error> {
-        unxz_to_tempfile(testdata_dir().join("gdas.t12z.pgrb2.0p25.f000.0-10.xz"))
+        xzcat_to_tempfile(testdata_dir().join("gdas.t12z.pgrb2.0p25.f000.0-10.xz"))
     }
 
     pub(crate) fn noaa_gdas_12() -> Result<NamedTempFile, io::Error> {
-        unxz_to_tempfile(testdata_dir().join("gdas.t12z.pgrb2.0p25.f000.12.xz"))
+        xzcat_to_tempfile(testdata_dir().join("gdas.t12z.pgrb2.0p25.f000.12.xz"))
     }
 
     pub(crate) fn noaa_gdas_46() -> Result<NamedTempFile, io::Error> {
-        unxz_to_tempfile(testdata_dir().join("gdas.t12z.pgrb2.0p25.f000.46.xz"))
+        xzcat_to_tempfile(testdata_dir().join("gdas.t12z.pgrb2.0p25.f000.46.xz"))
     }
 
     pub(crate) fn multi_message_data(n: usize) -> Result<NamedTempFile, io::Error> {

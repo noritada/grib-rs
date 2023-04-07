@@ -25,7 +25,7 @@ where
     Ok(out)
 }
 
-fn unxz_to_tempfile<P>(file_path: P) -> Result<NamedTempFile, io::Error>
+fn xzcat_to_tempfile<P>(file_path: P) -> Result<NamedTempFile, io::Error>
 where
     P: AsRef<Path>,
 {
