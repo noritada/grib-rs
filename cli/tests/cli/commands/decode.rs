@@ -255,7 +255,7 @@ macro_rules! test_operation_with_data_without_nan_values_compared_using_simple_p
 
 test_operation_with_data_without_nan_values_compared_using_simple_packing! {
     (
-        decoding_jpeg2001_code_stream_as_little_endian,
+        decoding_jpeg2000_code_stream_as_little_endian,
         utils::testdata::grib2::cmc_glb()?,
         "0.0",
         "-l",
