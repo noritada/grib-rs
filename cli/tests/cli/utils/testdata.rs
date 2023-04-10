@@ -6,7 +6,7 @@ use std::{
 
 use tempfile::NamedTempFile;
 
-use crate::utils::{cat_to_tempfile, unxz_as_bytes, xzcat_to_tempfile};
+use crate::utils::{cat_to_tempfile, gzcat_to_tempfile, unxz_as_bytes, xzcat_to_tempfile};
 
 fn testdata_dir() -> PathBuf {
     Path::new(concat!(env!("CARGO_MANIFEST_DIR"), "/..")).join("testdata")
@@ -86,6 +86,12 @@ pub(crate) mod grib2 {
         xzcat_to_tempfile(testdata_dir().join("gdas.t12z.pgrb2.0p25.f000.46.xz"))
     }
 
+    pub(crate) fn noaa_mrms() -> Result<NamedTempFile, io::Error> {
+        gzcat_to_tempfile(
+            testdata_dir().join("MRMS_ReflectivityAtLowestAltitude_00.50_20230406-120039.grib2.gz"),
+        )
+    }
+
     pub(crate) fn multi_message_data(n: usize) -> Result<NamedTempFile, io::Error> {
         let mut buf = Vec::new();
         let mut out = NamedTempFile::new()?;
@@ -150,5 +156,9 @@ pub(crate) mod flat_binary {
 
     pub(crate) fn noaa_gdas_46_le() -> Result<Vec<u8>, io::Error> {
         unxz_as_bytes(testdata_dir().join("gen").join("gdas-46-wgrib2-le.bin.xz"))
+    }
+
+    pub(crate) fn noaa_mrms_le() -> Result<Vec<u8>, io::Error> {
+        unxz_as_bytes(testdata_dir().join("gen").join("mrms-wgrib2-le.bin.xz"))
     }
 }

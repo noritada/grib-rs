@@ -25,6 +25,22 @@ where
     Ok(out)
 }
 
+fn gzcat_to_tempfile<P>(file_path: P) -> Result<NamedTempFile, io::Error>
+where
+    P: AsRef<Path>,
+{
+    let mut buf = Vec::new();
+    let mut out = NamedTempFile::new()?;
+
+    let f = File::open(file_path)?;
+    let f = BufReader::new(f);
+    let mut f = flate2::read::GzDecoder::new(f);
+    f.read_to_end(&mut buf)?;
+    out.write_all(&buf)?;
+
+    Ok(out)
+}
+
 fn xzcat_to_tempfile<P>(file_path: P) -> Result<NamedTempFile, io::Error>
 where
     P: AsRef<Path>,

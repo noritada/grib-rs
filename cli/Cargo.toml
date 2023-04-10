@@ -33,6 +33,7 @@ which = "4"
 
 [dev-dependencies]
 assert_cmd = "2"
+flate2 = "1.0"
 predicates = "3"
 tempfile = "3"
 xz2 = "0.1"
