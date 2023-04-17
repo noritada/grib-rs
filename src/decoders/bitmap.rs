@@ -55,7 +55,8 @@ where
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
-        (self.len, Some(self.len))
+        let size = self.len - self.offset;
+        (size, Some(size))
     }
 }
 
@@ -118,5 +119,18 @@ mod test {
             .iter()
             .zip(expected.iter())
             .all(|(a, b)| (a.is_nan() && b.is_nan()) || (a == b));
+    }
+
+    #[test]
+    fn bitmap_iterator_size_hint() {
+        let bitmap = vec![0b01001100u8, 0b01110000, 0b11110000];
+        let values = (0..10).map(|n| n as f32).collect::<Vec<_>>();
+        let values = values.into_iter();
+
+        let mut iter = BitmapDecodeIterator::new(bitmap.iter(), values, 24).unwrap();
+
+        assert_eq!(iter.size_hint(), (24, Some(24)));
+        let _ = iter.next();
+        assert_eq!(iter.size_hint(), (23, Some(23)));
     }
 }

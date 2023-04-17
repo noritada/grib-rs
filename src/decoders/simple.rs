@@ -137,7 +137,8 @@ impl Iterator for FixedValueIterator {
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
-        (self.length, Some(self.length))
+        let size = self.length - self.pos;
+        (size, Some(size))
     }
 }
 
