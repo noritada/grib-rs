@@ -56,17 +56,17 @@ pub(crate) fn grib_int_from_bytes(bytes: &[u8]) -> i32 {
 }
 
 #[derive(Clone)]
-pub(crate) struct NBitwiseIterator<'a> {
-    slice: &'a [u8],
+pub(crate) struct NBitwiseIterator<T> {
+    data: T,
     size: usize,
     pos: usize,
     offset: usize,
 }
 
-impl<'a> NBitwiseIterator<'a> {
-    pub(crate) fn new(slice: &'a [u8], size: usize) -> Self {
+impl<T> NBitwiseIterator<T> {
+    pub(crate) fn new(data: T, size: usize) -> Self {
         Self {
-            slice,
+            data,
             size,
             pos: 0,
             offset: 0,
@@ -81,33 +81,37 @@ impl<'a> NBitwiseIterator<'a> {
     }
 }
 
-impl<'a> Iterator for NBitwiseIterator<'a> {
+impl<T> Iterator for NBitwiseIterator<T>
+where
+    T: AsRef<[u8]>,
+{
     type Item = u32;
 
     fn next(&mut self) -> Option<Self::Item> {
         let new_offset = self.offset + self.size;
         let (new_pos, new_offset) = (self.pos + new_offset / 8, new_offset % 8);
+        let slice = self.data.as_ref();
 
-        if self.pos >= self.slice.len()
-            || new_pos > self.slice.len()
-            || (new_pos == self.slice.len() && new_offset > 0)
+        if self.pos >= slice.len()
+            || new_pos > slice.len()
+            || (new_pos == slice.len() && new_offset > 0)
         {
             return None;
         }
 
-        let val = self.slice[self.pos] << self.offset >> self.offset;
+        let val = slice[self.pos] << self.offset >> self.offset;
         let mut val: u32 = u32::from(val);
         if new_pos == self.pos {
             val >>= 8 - new_offset;
         } else {
             let mut pos = self.pos + 1;
             while pos < new_pos {
-                val = (val << 8) | u32::from(self.slice[pos]);
+                val = (val << 8) | u32::from(slice[pos]);
                 pos += 1;
             }
             if new_offset > 0 {
                 let shift = 8 - new_offset;
-                let last_val = u32::from(self.slice[pos]) >> shift;
+                let last_val = u32::from(slice[pos]) >> shift;
                 val = (val << new_offset) | last_val;
             }
         }
