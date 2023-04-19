@@ -6,8 +6,12 @@ use crate::{
         bitmap::{create_bitmap_for_nonnullable_data, BitmapDecodeIterator},
         complex::{self, ComplexPackingDecodeError},
         jpeg2000::{self, Jpeg2000CodeStreamDecodeError},
+        png::{self, PngDecodeError},
         run_length::{self, RunLengthEncodingDecodeError},
-        simple::{self, SimplePackingDecodeError, SimplePackingDecodeIteratorWrapper},
+        simple::{
+            self, SimplePackingDecodeError, SimplePackingDecodeIterator,
+            SimplePackingDecodeIteratorWrapper,
+        },
     },
     error::*,
     reader::Grib2Read,
@@ -123,6 +127,7 @@ impl Grib2SubmessageDecoder {
             0 => Grib2SubmessageDecoderIteratorWrapper::Template0(simple::decode(self)?),
             3 => Grib2SubmessageDecoderIteratorWrapper::Template3(complex::decode(self)?),
             40 => Grib2SubmessageDecoderIteratorWrapper::Template40(jpeg2000::decode(self)?),
+            41 => Grib2SubmessageDecoderIteratorWrapper::Template41(png::decode(self)?),
             200 => Grib2SubmessageDecoderIteratorWrapper::Template200(run_length::decode(self)?),
             _ => {
                 return Err(GribError::DecodeError(
@@ -155,14 +160,15 @@ where
     }
 }
 
-enum Grib2SubmessageDecoderIteratorWrapper<I, J, K> {
+enum Grib2SubmessageDecoderIteratorWrapper<I, J, K, L> {
     Template0(SimplePackingDecodeIteratorWrapper<I>),
     Template3(SimplePackingDecodeIteratorWrapper<J>),
     Template40(SimplePackingDecodeIteratorWrapper<K>),
+    Template41(SimplePackingDecodeIterator<L>),
     Template200(std::vec::IntoIter<f32>),
 }
 
-impl<I, J, K> Iterator for Grib2SubmessageDecoderIteratorWrapper<I, J, K>
+impl<I, J, K, L> Iterator for Grib2SubmessageDecoderIteratorWrapper<I, J, K, L>
 where
     I: Iterator,
     <I as Iterator>::Item: ToPrimitive,
@@ -170,6 +176,8 @@ where
     <J as Iterator>::Item: ToPrimitive,
     K: Iterator,
     <K as Iterator>::Item: ToPrimitive,
+    L: Iterator,
+    <L as Iterator>::Item: ToPrimitive,
 {
     type Item = f32;
 
@@ -178,6 +186,7 @@ where
             Self::Template0(inner) => inner.next(),
             Self::Template3(inner) => inner.next(),
             Self::Template40(inner) => inner.next(),
+            Self::Template41(inner) => inner.next(),
             Self::Template200(inner) => inner.next(),
         }
     }
@@ -187,6 +196,7 @@ where
             Self::Template0(inner) => inner.size_hint(),
             Self::Template3(inner) => inner.size_hint(),
             Self::Template40(inner) => inner.size_hint(),
+            Self::Template41(inner) => inner.size_hint(),
             Self::Template200(inner) => inner.size_hint(),
         }
     }
@@ -199,6 +209,7 @@ pub enum DecodeError {
     SimplePackingDecodeError(SimplePackingDecodeError),
     ComplexPackingDecodeError(ComplexPackingDecodeError),
     Jpeg2000CodeStreamDecodeError(Jpeg2000CodeStreamDecodeError),
+    PngDecodeError(PngDecodeError),
     RunLengthEncodingDecodeError(RunLengthEncodingDecodeError),
     LengthMismatch,
 }

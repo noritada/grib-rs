@@ -32,6 +32,7 @@ A world where everyone can read weather data easily although its interpretation 
     * Template 5.0/7.0 (simple packing)
     * Template 5.3/7.3 (complex packing and spatial differencing)
     * Template 5.40/7.40 (JPEG 2000 code stream format)
+    * Template 5.41/7.41 (Portable Network Graphics (PNG))
     * Template 5.200/7.200 (run length packing with level values)
   * Support for computation of latitudes and longitudes of grid points for following templates:
     * Template 3.0 (latitude/longitude (or equidistant cylindrical, or Plate Carree))
