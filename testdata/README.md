@@ -35,6 +35,10 @@ The disclaimer is [available online](https://www.weather.gov/disclaimer).
 - `gdas.t12z.pgrb2.0p25.f000.46.xz`
   (Only the 47th message of 696 messages in a data file downloaded from the same URL)
 
+Following data files are downloaded from [MRMS (multi-radar multi-sensor) products page](https://mrms.ncep.noaa.gov/data/).
+
+- `MRMS_ReflectivityAtLowestAltitude_00.50_20230406-120039.grib2.gz`
+
 ## Data files from JMA
 
 Following data files are downloaded from [JMA's GPV sample data
@@ -85,4 +89,6 @@ $ wgrib2 -d 3 -order raw -no_header -bin gdas-2-wgrib2-le.bin gdas.t12z.pgrb2.0p
 $ wgrib2 -d 1 -order raw -no_header -bin gdas-12-wgrib2-le.bin gdas.t12z.pgrb2.0p25.f000.12
 
 $ wgrib2 -d 1 -order raw -no_header -bin gdas-46-wgrib2-le.bin gdas.t12z.pgrb2.0p25.f000.46
+
+$ wgrib2 -d 1 -order raw -no_header -bin mrms-wgrib2-le.bin MRMS_ReflectivityAtLowestAltitude_00.50_20230406-120039.grib2
 ```

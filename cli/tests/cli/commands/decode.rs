@@ -117,6 +117,13 @@ test_operation_with_data_without_nan_values_and_byte_order_options! {
         "-l",
         utils::testdata::flat_binary::noaa_gdas_46_le()?
     ),
+    (
+        decoding_png_packing_as_little_endian,
+        utils::testdata::grib2::noaa_mrms()?,
+        "0.0",
+        "-l",
+        utils::testdata::flat_binary::noaa_mrms_le()?
+    ),
 }
 
 #[test]
