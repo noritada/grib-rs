@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.1] - 2023-04-20
+### Added
+
+- Library `grib`
+  - Support for Template 5.41/7.41 (PNG format). (#53, #55)
+- Others
+  - GRIB tools from ecCodes are now mentioned in a section on comparison of GRIB processors in the cookbook. (#52)
+
+### Fixed
+
+- Library `grib`
+  - Fixed an issue that `size_hint()` results do not change after consuming iterator items. (#50, #54)
+
 ## [0.7.0] - 2023-02-09
 ### Added
 
@@ -241,7 +254,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - inspect: display of information mainly for development purpose such as template numbers
     - list: display of a list of sections (the style is still tentative)
 
-[unreleased]: https://github.com/noritada/grib-rs/compare/v0.7.0...HEAD
+[unreleased]: https://github.com/noritada/grib-rs/compare/v0.7.1...HEAD
+[0.7.1]: https://github.com/noritada/grib-rs/compare/v0.7.0...v0.7.1
 [0.7.0]: https://github.com/noritada/grib-rs/compare/v0.6.1...v0.7.0
 [0.6.1]: https://github.com/noritada/grib-rs/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/noritada/grib-rs/compare/v0.5.0...v0.6.0
