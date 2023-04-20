@@ -120,7 +120,7 @@ where
 {
     type Item = Result<(usize, usize, Submessage), ParseError>;
 
-    fn next(&mut self) -> Option<Result<(usize, usize, Submessage), ParseError>> {
+    fn next(&mut self) -> Option<Self::Item> {
         let mut sect4 = Default::default();
         let mut sect5 = Default::default();
         let mut sect6 = Default::default();
@@ -235,7 +235,7 @@ where
 {
     type Item = Result<Grib2SubmessageIndex, ParseError>;
 
-    fn next(&mut self) -> Option<Result<Grib2SubmessageIndex, ParseError>> {
+    fn next(&mut self) -> Option<Self::Item> {
         let mut sect4 = Default::default();
         let mut sect5 = Default::default();
         let mut sect6 = Default::default();
@@ -493,7 +493,7 @@ where
 {
     type Item = Result<(usize, usize, usize, SectionInfo), ParseError>;
 
-    fn next(&mut self) -> Option<Result<(usize, usize, usize, SectionInfo), ParseError>> {
+    fn next(&mut self) -> Option<Self::Item> {
         match self.state {
             Grib2SubmessageValidatorState::EndOfStream => None,
             Grib2SubmessageValidatorState::StartOfMessage => self.ensure_next_is_sect0(),

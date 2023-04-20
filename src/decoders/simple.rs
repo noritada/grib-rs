@@ -91,7 +91,7 @@ impl<I> SimplePackingDecodeIterator<I> {
 impl<I: Iterator<Item = N>, N: ToPrimitive> Iterator for SimplePackingDecodeIterator<I> {
     type Item = f32;
 
-    fn next(&mut self) -> Option<f32> {
+    fn next(&mut self) -> Option<Self::Item> {
         match self.iter.next() {
             Some(encoded) => {
                 let encoded = encoded.to_f32().unwrap();
@@ -137,7 +137,8 @@ impl Iterator for FixedValueIterator {
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
-        (self.length, Some(self.length))
+        let size = self.length - self.pos;
+        (size, Some(size))
     }
 }
 

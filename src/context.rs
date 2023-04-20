@@ -278,7 +278,7 @@ impl<'a, R> Iterator for SubmessageIterator<'a, R> {
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
-        let size = self.context.submessages.len();
+        let size = self.context.submessages.len() - self.pos;
         (size, Some(size))
     }
 

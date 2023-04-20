@@ -209,7 +209,7 @@ impl Iterator for LatLonGridIterator {
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
-        let len = self.major.len() * self.minor.len();
+        let len = (self.major.len() - self.major_pos) * self.minor.len() - self.minor_pos;
         (len, Some(len))
     }
 }
@@ -469,5 +469,17 @@ mod tests {
                 (0., 11.),
             ]
         ),
+    }
+
+    #[test]
+    fn lat_lon_grid_iterator_size_hint() {
+        let lat = (0..3).into_iter().map(|i| i as f32).collect();
+        let lon = (10..12).into_iter().map(|i| i as f32).collect();
+        let scanning_mode = ScanningMode(0b00000000);
+        let mut iter = LatLonGridIterator::new(lat, lon, scanning_mode);
+
+        assert_eq!(iter.size_hint(), (6, Some(6)));
+        let _ = iter.next();
+        assert_eq!(iter.size_hint(), (5, Some(5)));
     }
 }
