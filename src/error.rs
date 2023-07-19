@@ -4,12 +4,14 @@ use std::{
     io,
 };
 
+#[cfg(not(target_arch = "wasm32"))]
 use crate::decoders::*;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum GribError {
     InternalDataError,
     ParseError(ParseError),
+    #[cfg(not(target_arch = "wasm32"))]
     DecodeError(DecodeError),
     InvalidValueError(String),
     NotSupported(String),
@@ -27,6 +29,7 @@ impl From<ParseError> for GribError {
     }
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 impl From<DecodeError> for GribError {
     fn from(e: DecodeError) -> Self {
         Self::DecodeError(e)
@@ -38,6 +41,7 @@ impl Display for GribError {
         match self {
             Self::InternalDataError => write!(f, "Something unexpected happend"),
             Self::ParseError(e) => write!(f, "{e}"),
+            #[cfg(not(target_arch = "wasm32"))]
             Self::DecodeError(e) => write!(f, "{e:#?}"),
             Self::InvalidValueError(s) => write!(f, "invalid value ({s})"),
             Self::NotSupported(s) => write!(f, "not supported ({s})"),
