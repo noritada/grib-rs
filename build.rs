@@ -1,7 +1,16 @@
-use std::{env, fs, path::Path};
+use std::{
+    env, fs,
+    path::{Path, PathBuf},
+};
 
 fn main() {
     let out_dir = env::var_os("OUT_DIR").unwrap();
+
+    if let Err(e) = check_nonemptiness(&PathBuf::from("def/CCT"))
+        .and(check_nonemptiness(&PathBuf::from("def/GRIB2")))
+    {
+        panic!("error: {e}; run `git submodule update --init`")
+    }
 
     let input_file_names = ["def/CCT/C00.csv", "def/CCT/C11.csv"];
     let mut db = grib_build::cct_csv::CodeDB::new();
@@ -36,4 +45,14 @@ fn main() {
     fs::write(output_path, format!("{db}")).unwrap();
 
     println!("cargo:rerun-if-changed=build.rs");
+}
+
+fn check_nonemptiness(dir: &PathBuf) -> Result<(), String> {
+    dir.read_dir()
+        .map_err(|_| format!("{} is not a directory", dir.to_string_lossy()))
+        .and_then(|mut iter| {
+            iter.next()
+                .ok_or_else(|| format!("{} is empty", dir.to_string_lossy()))
+                .map(|_| ())
+        })
 }
