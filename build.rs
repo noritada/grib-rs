@@ -1,13 +1,10 @@
-use std::{
-    env, fs,
-    path::{Path, PathBuf},
-};
+use std::{env, fs, path::Path};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let out_dir = env::var_os("OUT_DIR").unwrap();
 
-    if let Err(e) = check_nonemptiness(&PathBuf::from("def/CCT"))
-        .and(check_nonemptiness(&PathBuf::from("def/GRIB2")))
+    if let Err(e) =
+        check_nonemptiness(Path::new("def/CCT")).and(check_nonemptiness(Path::new("def/GRIB2")))
     {
         return Err(format!("{}; run `git submodule update --init`", e).into());
     }
@@ -48,7 +45,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-fn check_nonemptiness(dir: &PathBuf) -> Result<(), String> {
+fn check_nonemptiness(dir: &Path) -> Result<(), String> {
     dir.read_dir()
         .map_err(|_| format!("{} is not a directory", dir.to_string_lossy()))
         .and_then(|mut iter| {
