@@ -9,7 +9,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     if let Err(e) = check_nonemptiness(&PathBuf::from("def/CCT"))
         .and(check_nonemptiness(&PathBuf::from("def/GRIB2")))
     {
-        return Err(format!("error: {}; run `git submodule update --init`", e).into());
+        return Err(format!("{}; run `git submodule update --init`", e).into());
     }
 
     let input_file_names = ["def/CCT/C00.csv", "def/CCT/C11.csv"];
