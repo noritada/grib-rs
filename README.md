@@ -129,6 +129,10 @@ Then you can build it in the usual way in the Rust world.
 cargo build
 ```
 
+## Forum
+
+If you have questions or want to have discussions, feel free to use [GitHub Discussions](https://github.com/noritada/grib-rs/discussions) as a forum.
+
 ## Contributing
 
 Contribution is always welcome.  Please check [CONTRIBUTING.md](CONTRIBUTING.md) if you are interested.
