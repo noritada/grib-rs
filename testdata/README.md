@@ -39,6 +39,10 @@ Following data files are downloaded from [MRMS (multi-radar multi-sensor) produc
 
 - `MRMS_ReflectivityAtLowestAltitude_00.50_20230406-120039.grib2.gz`
 
+Following data files are downloaded from [NDFD (National Digital Forecast Database) page](https://www.ncei.noaa.gov/products/weather-climate-models/national-digital-forecast-database).
+
+- `ds.minrh.bin.xz`
+
 ## Data files from JMA
 
 Following data files are downloaded from [JMA's GPV sample data
