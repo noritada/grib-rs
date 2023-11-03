@@ -18,6 +18,81 @@ pub enum ComplexPackingDecodeError {
     LengthMismatch,
 }
 
+pub(crate) fn decode_without_spdiff(
+    target: &Grib2SubmessageDecoder,
+) -> Result<SimplePackingDecodeIteratorWrapper<impl Iterator<Item = i32> + '_>, GribError> {
+    let sect5_data = &target.sect5_payload;
+    let simple_param = SimplePackingParam::from_buf(&sect5_data[6..15]);
+    let complex_param = ComplexPackingParam::from_buf(&sect5_data[16..42]);
+
+    if simple_param.nbit == 0 {
+        let decoder = SimplePackingDecodeIteratorWrapper::FixedValue(FixedValueIterator::new(
+            simple_param.ref_val,
+            target.num_points_encoded,
+        ));
+        return Ok(decoder);
+    };
+
+    if complex_param.group_splitting_method_used != 1
+        || complex_param.missing_value_management_used != 0
+    {
+        return Err(GribError::DecodeError(
+            DecodeError::ComplexPackingDecodeError(ComplexPackingDecodeError::NotSupported),
+        ));
+    }
+
+    let sect7_data = &target.sect7_payload;
+
+    fn get_octet_length(nbit: u8, ngroup: u32) -> usize {
+        let total_bit: u32 = ngroup * u32::from(nbit);
+        let total_octet = (total_bit + 0b111) >> 3;
+        total_octet as usize
+    }
+
+    let params_end_octet = 0; //sect7_params.len();
+    let group_refs_end_octet =
+        params_end_octet + get_octet_length(simple_param.nbit, complex_param.ngroup);
+    let group_widths_end_octet = group_refs_end_octet
+        + get_octet_length(complex_param.group_width_nbit, complex_param.ngroup);
+    let group_lens_end_octet = group_widths_end_octet
+        + get_octet_length(complex_param.group_len_nbit, complex_param.ngroup);
+
+    let group_refs_iter = NBitwiseIterator::new(
+        &sect7_data[params_end_octet..group_refs_end_octet],
+        usize::from(simple_param.nbit),
+    );
+    let group_refs_iter = group_refs_iter.take(complex_param.ngroup as usize);
+
+    let group_widths_iter = NBitwiseIterator::new(
+        &sect7_data[group_refs_end_octet..group_widths_end_octet],
+        usize::from(complex_param.group_width_nbit),
+    );
+    let group_widths_iter = group_widths_iter
+        .take(complex_param.ngroup as usize)
+        .map(move |v| u32::from(complex_param.group_width_ref) + v);
+
+    let group_lens_iter = NBitwiseIterator::new(
+        &sect7_data[group_widths_end_octet..group_lens_end_octet],
+        usize::from(complex_param.group_len_nbit),
+    );
+    let group_lens_iter = group_lens_iter
+        .take((complex_param.ngroup - 1) as usize)
+        .map(move |v| complex_param.group_len_ref + u32::from(complex_param.group_len_inc) * v)
+        .chain(iter::once(complex_param.group_len_last));
+
+    let unpacked_data = ComplexPackingValueDecodeIterator::new(
+        group_refs_iter,
+        group_widths_iter,
+        group_lens_iter,
+        0,
+        sect7_data[group_lens_end_octet..].to_vec(),
+    );
+
+    let decoder = SimplePackingDecodeIterator::new(unpacked_data.flatten(), &simple_param);
+    let decoder = SimplePackingDecodeIteratorWrapper::SimplePacking(decoder);
+    Ok(decoder)
+}
+
 pub(crate) fn decode(
     target: &Grib2SubmessageDecoder,
 ) -> Result<SimplePackingDecodeIteratorWrapper<impl Iterator<Item = i32> + '_>, GribError> {
