@@ -212,6 +212,20 @@ test_operation_with_data_with_nan_values_as_little_endian! {
         "-l",
         utils::testdata::flat_binary::jma_msmguid_le()?
     ),
+    (
+        decoding_complex_packing_without_spatial_differencing_as_little_endian,
+        utils::testdata::grib2::noaa_ndfd_critfireo_0()?,
+        "0.0",
+        "-l",
+        utils::testdata::flat_binary::noaa_ndfd_critfireo_0_le()?
+    ),
+    (
+        decoding_complex_packing_without_spatial_differencing_as_little_endian_when_nbit_is_zero,
+        utils::testdata::grib2::noaa_ndfd_critfireo_1()?,
+        "0.0",
+        "-l",
+        utils::testdata::flat_binary::noaa_ndfd_critfireo_1_le()?
+    ),
 }
 
 // Compares integer values encoded using simple packing since there are some
