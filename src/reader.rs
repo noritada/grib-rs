@@ -235,18 +235,8 @@ impl<R: Read + Seek> Grib2Read for SeekableGrib2Reader<R> {
         if &buf[0..SECT0_IS_MAGIC_SIZE] != SECT0_IS_MAGIC {
             return Err(ParseError::NotGRIB);
         }
-        let discipline = buf[6];
-        let version = buf[7];
-        if version != 2 {
-            return Err(ParseError::GRIBVersionMismatch(version));
-        }
-
-        let fsize = read_as!(u64, buf, 8);
-
-        Ok(Some(Indicator {
-            discipline,
-            total_length: fsize,
-        }))
+        let indicator = Indicator::from_slice(&buf)?;
+        Ok(Some(indicator))
     }
 
     fn read_sect8(&mut self) -> Result<Option<()>, ParseError> {
