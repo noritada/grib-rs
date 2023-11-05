@@ -102,14 +102,11 @@ pub(crate) fn decode(
     );
 
     let spdiff_packed_iter = unpacked_data.flatten();
-    let first_values = sect7_params.first_values().collect::<Vec<_>>();
-    let num_first_values = first_values.len();
-    let spdiff_packed_iter = first_values
-        .into_iter()
-        .map(Normal)
-        .chain(spdiff_packed_iter.skip(num_first_values));
-
-    let spdiff_unpacked = SpatialDiff2ndOrderDecodeIterator::new(spdiff_packed_iter);
+    let first_values = sect7_params.first_values();
+    let spdiff_unpacked = SpatialDiff2ndOrderDecodeIterator::new(
+        spdiff_packed_iter,
+        first_values.collect::<Vec<_>>().into_iter(),
+    );
     let decoder = SimplePackingDecodeIterator::new(spdiff_unpacked, &simple_param);
     let decoder = SimplePackingDecodeIteratorWrapper::SimplePacking(decoder);
     Ok(decoder)
@@ -217,17 +214,19 @@ where
     }
 }
 
-struct SpatialDiff2ndOrderDecodeIterator<I> {
+struct SpatialDiff2ndOrderDecodeIterator<I, J> {
     iter: I,
+    first_values: J,
     count: u32,
     prev1: i32,
     prev2: i32,
 }
 
-impl<I> SpatialDiff2ndOrderDecodeIterator<I> {
-    fn new(iter: I) -> Self {
+impl<I, J> SpatialDiff2ndOrderDecodeIterator<I, J> {
+    fn new(iter: I, first_values: J) -> Self {
         Self {
             iter,
+            first_values,
             count: 0,
             prev1: 0,
             prev2: 0,
@@ -235,30 +234,33 @@ impl<I> SpatialDiff2ndOrderDecodeIterator<I> {
     }
 }
 
-impl<I: Iterator<Item = DecodedValue<i32>>> Iterator for SpatialDiff2ndOrderDecodeIterator<I> {
+impl<I: Iterator<Item = DecodedValue<i32>>, J: Iterator<Item = i32>> Iterator
+    for SpatialDiff2ndOrderDecodeIterator<I, J>
+{
     type Item = DecodedValue<i32>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let count = self.count;
-        match (count, self.iter.next()) {
-            (_, None) => None,
-            (0, Some(Normal(v))) => {
-                self.prev2 = v;
-                self.count += 1;
-                Some(Normal(v))
-            }
-            (1, Some(Normal(v))) => {
-                self.prev1 = v;
-                self.count += 1;
-                Some(Normal(v))
-            }
-            (_, Some(Normal(v))) => {
-                let v = v + 2 * self.prev1 - self.prev2;
-                self.prev2 = self.prev1;
-                self.prev1 = v;
-                Some(Normal(v))
-            }
-            (_, Some(missing)) => Some(missing),
+        match self.iter.next() {
+            None => None,
+            Some(Normal(v)) => match self.count {
+                0 => {
+                    self.prev2 = self.first_values.next().unwrap();
+                    self.count += 1;
+                    Some(Normal(self.prev2))
+                }
+                1 => {
+                    self.prev1 = self.first_values.next().unwrap();
+                    self.count += 1;
+                    Some(Normal(self.prev1))
+                }
+                _ => {
+                    let v = v + 2 * self.prev1 - self.prev2;
+                    self.prev2 = self.prev1;
+                    self.prev1 = v;
+                    Some(Normal(v))
+                }
+            },
+            Some(missing) => Some(missing),
         }
     }
 }
