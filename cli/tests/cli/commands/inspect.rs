@@ -110,6 +110,41 @@ Templates:
 "
     ),
     (
+        display_multiple_messages_with_non_grib_byte_sequences_in_between,
+        "inspect",
+        utils::testdata::grib2::noaa_ndfd_minrh()?,
+        Vec::<&str>::new(),
+        "\
+Sections:
+    0 │ 0000000000000050 - 0000000000000060 │ Section 0
+    1 │ 0000000000000060 - 0000000000000075 │ Section 1
+    2 │ 0000000000000075 - 00000000000000c6 │ Section 3
+    3 │ 00000000000000c6 - 0000000000000100 │ Section 4
+    4 │ 0000000000000100 - 0000000000000131 │ Section 5
+    5 │ 0000000000000131 - 0000000000000137 │ Section 6
+    6 │ 0000000000000137 - 00000000000bab37 │ Section 7
+    7 │ 00000000000bab37 - 00000000000bab3b │ Section 8
+    8 │ 00000000000bab63 - 00000000000bab73 │ Section 0
+    9 │ 00000000000bab73 - 00000000000bab88 │ Section 1
+   10 │ 00000000000bab88 - 00000000000babd9 │ Section 3
+   11 │ 00000000000babd9 - 00000000000bac13 │ Section 4
+   12 │ 00000000000bac13 - 00000000000bac44 │ Section 5
+   13 │ 00000000000bac44 - 00000000000bac4a │ Section 6
+   14 │ 00000000000bac4a - 000000000017aeb3 │ Section 7
+   15 │ 000000000017aeb3 - 000000000017aeb7 │ Section 8
+
+SubMessages:
+      id │    S2    S3    S4    S5    S6    S7 │ Tmpl3   Tmpl4   Tmpl5
+     0.0 │     -     2     3     4     5     6 │ 3.30    4.8     5.3    
+     1.0 │     -    10    11    12    13    14 │ 3.30    4.8     5.3    
+
+Templates:
+3.30     - Lambert conformal
+4.8      - Average, accumulation, extreme values or other statistically processed values at a horizontal level or in a horizontal layer in a continuous or non-continuous time interval
+5.3      - Grid point data - complex packing and spatial differencing
+"
+    ),
+    (
         display_with_opt_s,
         "inspect",
         utils::testdata::grib2::jma_tornado_nowcast()?,
