@@ -212,6 +212,13 @@ test_operation_with_data_with_nan_values_as_little_endian! {
         "-l",
         utils::testdata::flat_binary::jma_msmguid_le()?
     ),
+    (
+        decoding_complex_packing_with_missing_value_management_as_little_endian,
+        utils::testdata::grib2::noaa_ndfd_minrh()?,
+        "0.0",
+        "-l",
+        utils::testdata::flat_binary::noaa_ndfd_minrh_0_le()?
+    ),
 }
 
 // Compares integer values encoded using simple packing since there are some

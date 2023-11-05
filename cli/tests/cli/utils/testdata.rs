@@ -165,4 +165,8 @@ pub(crate) mod flat_binary {
     pub(crate) fn noaa_mrms_le() -> Result<Vec<u8>, io::Error> {
         unxz_as_bytes(testdata_dir().join("gen").join("mrms-wgrib2-le.bin.xz"))
     }
+
+    pub(crate) fn noaa_ndfd_minrh_0_le() -> Result<Vec<u8>, io::Error> {
+        unxz_as_bytes(testdata_dir().join("gen").join("ds.minrh.bin.0.xz"))
+    }
 }
