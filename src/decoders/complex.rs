@@ -2,7 +2,7 @@ use std::{convert::TryInto, iter};
 
 use num::ToPrimitive;
 
-use self::missing::DecodedValue::{self, Normal};
+use self::missing::DecodedValue::{self, Missing1, Missing2, Normal};
 use crate::{
     decoders::{
         common::*,
@@ -40,7 +40,7 @@ pub(crate) fn decode(
     };
 
     if complex_param.group_splitting_method_used != 1
-        || complex_param.missing_value_management_used != 0
+        || complex_param.missing_value_management_used > 2
     {
         return Err(GribError::DecodeError(
             DecodeError::ComplexPackingDecodeError(ComplexPackingDecodeError::NotSupported),
@@ -95,6 +95,8 @@ pub(crate) fn decode(
         group_refs_iter,
         group_widths_iter,
         group_lens_iter,
+        complex_param.missing_value_management_used,
+        simple_param.nbit,
         sect7_params.minimum(),
         sect7_data[group_lens_end_octet..].to_vec(),
     );
@@ -118,6 +120,8 @@ struct ComplexPackingValueDecodeIterator<I, J, K> {
     ref_iter: I,
     width_iter: J,
     length_iter: K,
+    missing_value_management: u8,
+    nbit: u8,
     z_min: i32,
     data: Vec<u8>,
     pos: usize,
@@ -129,6 +133,8 @@ impl<I, J, K> ComplexPackingValueDecodeIterator<I, J, K> {
         ref_iter: I,
         width_iter: J,
         length_iter: K,
+        missing_value_management: u8,
+        nbit: u8,
         z_min: i32,
         data: Vec<u8>,
     ) -> Self {
@@ -136,6 +142,8 @@ impl<I, J, K> ComplexPackingValueDecodeIterator<I, J, K> {
             ref_iter,
             width_iter,
             length_iter,
+            missing_value_management,
+            nbit,
             z_min,
             data,
             pos: 0,
@@ -164,7 +172,16 @@ where
                 // associated field width is 0, and no incremental data are physically present."
                 let _ref = _ref.to_i32().unwrap();
                 let length = length.to_usize().unwrap();
-                Some(vec![Normal(_ref + self.z_min); length])
+                let missing1 = (1 << self.nbit) - 1;
+                let missing2 = missing1 - 1;
+
+                if self.missing_value_management > 0 && _ref == missing1 {
+                    Some(vec![Missing1; length])
+                } else if self.missing_value_management == 2 && _ref == missing2 {
+                    Some(vec![Missing2; length])
+                } else {
+                    Some(vec![Normal(_ref + self.z_min); length])
+                }
             }
             (Some(_ref), Some(width), Some(length)) => {
                 let (_ref, width, length) = (
@@ -175,11 +192,21 @@ where
                 let bits = self.start_offset_bits + width * length;
                 let (pos_end, offset_bits) = (self.pos + bits / 8, bits % 8);
                 let offset_byte = usize::from(offset_bits > 0);
+                let missing1 = (1 << width) - 1;
+                let missing2 = missing1 - 1;
                 let group_values =
                     NBitwiseIterator::new(&self.data[self.pos..pos_end + offset_byte], width)
                         .with_offset(self.start_offset_bits)
                         .take(length)
-                        .map(|v| Normal(v.as_grib_int() + _ref + self.z_min))
+                        .map(|v| {
+                            if self.missing_value_management > 0 && v == missing1 {
+                                Missing1
+                            } else if self.missing_value_management == 2 && v == missing2 {
+                                Missing2
+                            } else {
+                                Normal(v.as_grib_int() + _ref + self.z_min)
+                            }
+                        })
                         .collect::<Vec<_>>();
                 self.pos = pos_end;
                 self.start_offset_bits = offset_bits;
