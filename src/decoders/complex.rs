@@ -2,6 +2,7 @@ use std::{convert::TryInto, iter};
 
 use num::ToPrimitive;
 
+use self::missing::DecodedValue::{self, Normal};
 use crate::{
     decoders::{
         common::*,
@@ -20,7 +21,10 @@ pub enum ComplexPackingDecodeError {
 
 pub(crate) fn decode(
     target: &Grib2SubmessageDecoder,
-) -> Result<SimplePackingDecodeIteratorWrapper<impl Iterator<Item = i32> + '_>, GribError> {
+) -> Result<
+    SimplePackingDecodeIteratorWrapper<impl Iterator<Item = DecodedValue<i32>> + '_>,
+    GribError,
+> {
     let sect5_data = &target.sect5_payload;
     let simple_param = SimplePackingParam::from_buf(&sect5_data[6..15]);
     let complex_param = ComplexPackingParam::from_buf(&sect5_data[16..42]);
@@ -100,6 +104,7 @@ pub(crate) fn decode(
     let num_first_values = first_values.len();
     let spdiff_packed_iter = first_values
         .into_iter()
+        .map(Normal)
         .chain(spdiff_packed_iter.skip(num_first_values));
 
     let spdiff_unpacked = SpatialDiff2ndOrderDecodeIterator::new(spdiff_packed_iter);
@@ -146,7 +151,7 @@ where
     O: ToPrimitive,
     P: ToPrimitive,
 {
-    type Item = Vec<i32>;
+    type Item = Vec<DecodedValue<i32>>;
 
     fn next(&mut self) -> Option<Self::Item> {
         match (
@@ -159,7 +164,7 @@ where
                 // associated field width is 0, and no incremental data are physically present."
                 let _ref = _ref.to_i32().unwrap();
                 let length = length.to_usize().unwrap();
-                Some(vec![_ref + self.z_min; length])
+                Some(vec![Normal(_ref + self.z_min); length])
             }
             (Some(_ref), Some(width), Some(length)) => {
                 let (_ref, width, length) = (
@@ -174,8 +179,8 @@ where
                     NBitwiseIterator::new(&self.data[self.pos..pos_end + offset_byte], width)
                         .with_offset(self.start_offset_bits)
                         .take(length)
-                        .map(|v| v.as_grib_int() + _ref + self.z_min)
-                        .collect::<Vec<i32>>();
+                        .map(|v| Normal(v.as_grib_int() + _ref + self.z_min))
+                        .collect::<Vec<_>>();
                 self.pos = pos_end;
                 self.start_offset_bits = offset_bits;
                 Some(group_values)
@@ -203,30 +208,33 @@ impl<I> SpatialDiff2ndOrderDecodeIterator<I> {
     }
 }
 
-impl<I: Iterator<Item = i32>> Iterator for SpatialDiff2ndOrderDecodeIterator<I> {
-    type Item = i32;
+impl<I: Iterator<Item = DecodedValue<i32>>> Iterator for SpatialDiff2ndOrderDecodeIterator<I> {
+    type Item = DecodedValue<i32>;
 
     fn next(&mut self) -> Option<Self::Item> {
         let count = self.count;
-        self.count += 1;
         match (count, self.iter.next()) {
             (_, None) => None,
-            (0, Some(v)) => {
+            (0, Some(Normal(v))) => {
                 self.prev2 = v;
-                Some(v)
+                self.count += 1;
+                Some(Normal(v))
             }
-            (1, Some(v)) => {
+            (1, Some(Normal(v))) => {
                 self.prev1 = v;
-                Some(v)
+                self.count += 1;
+                Some(Normal(v))
             }
-            (_, Some(v)) => {
+            (_, Some(Normal(v))) => {
                 let v = v + 2 * self.prev1 - self.prev2;
                 self.prev2 = self.prev1;
                 self.prev1 = v;
-                Some(v)
+                Some(Normal(v))
             }
+            (_, Some(missing)) => Some(missing),
         }
     }
 }
 
+mod missing;
 mod section7;
