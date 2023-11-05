@@ -95,4 +95,6 @@ $ wgrib2 -d 1 -order raw -no_header -bin gdas-12-wgrib2-le.bin gdas.t12z.pgrb2.0
 $ wgrib2 -d 1 -order raw -no_header -bin gdas-46-wgrib2-le.bin gdas.t12z.pgrb2.0p25.f000.46
 
 $ wgrib2 -d 1 -order raw -no_header -bin mrms-wgrib2-le.bin MRMS_ReflectivityAtLowestAltitude_00.50_20230406-120039.grib2
+
+$ wgrib2 -d 1 -order raw -no_header -bin ds.minrh.bin.0 ds.minrh.bin
 ```
