@@ -90,19 +90,24 @@ where
                 ))));
             }
         }
-        let offset = self.whole_size;
-        let result = self.reader.read_sect0().transpose()?.map(|indicator| {
-            let message_size = indicator.total_length as usize;
-            self.whole_size += message_size;
-            let sect_info = SectionInfo {
-                num: 0,
-                offset,
-                size: SECT0_IS_SIZE,
-                body: Some(SectionBody::Section0(indicator)),
-            };
-            self.rest_size = message_size - SECT0_IS_SIZE;
-            sect_info
-        });
+        let result = self
+            .reader
+            .read_sect0()
+            .transpose()?
+            .map(|(offset, indicator)| {
+                self.whole_size += offset;
+                let offset = self.whole_size;
+                let message_size = indicator.total_length as usize;
+                self.whole_size += message_size;
+                let sect_info = SectionInfo {
+                    num: 0,
+                    offset,
+                    size: SECT0_IS_SIZE,
+                    body: Some(SectionBody::Section0(indicator)),
+                };
+                self.rest_size = message_size - SECT0_IS_SIZE;
+                sect_info
+            });
         Some(result)
     }
 
@@ -170,7 +175,7 @@ where
 
 pub trait Grib2Read: Read + Seek {
     /// Reads Section 0.
-    fn read_sect0(&mut self) -> Result<Option<Indicator>, ParseError>;
+    fn read_sect0(&mut self) -> Result<Option<(usize, Indicator)>, ParseError>;
 
     /// Reads Section 8.
     fn read_sect8(&mut self) -> Result<Option<()>, ParseError>;
@@ -227,16 +232,30 @@ macro_rules! check_size {
 }
 
 impl<R: Read + Seek> Grib2Read for SeekableGrib2Reader<R> {
-    fn read_sect0(&mut self) -> Result<Option<Indicator>, ParseError> {
-        let mut buf = [0; SECT0_IS_SIZE];
-        let size = self.read(&mut buf[..])?;
-        check_size!(size, buf.len());
+    fn read_sect0(&mut self) -> Result<Option<(usize, Indicator)>, ParseError> {
+        let mut buf = [0; 4096];
+        let mut offset = 0;
 
-        if &buf[0..SECT0_IS_MAGIC_SIZE] != SECT0_IS_MAGIC {
-            return Err(ParseError::NotGRIB);
+        loop {
+            let size = self.read(&mut buf[..])?;
+            if size < SECT0_IS_SIZE {
+                return Ok(None);
+            }
+            let next_offset = size - SECT0_IS_SIZE + 1;
+            for pos in 0..next_offset {
+                if &buf[pos..pos + SECT0_IS_MAGIC_SIZE] == SECT0_IS_MAGIC {
+                    offset += pos;
+                    self.seek(SeekFrom::Current(
+                        (pos + SECT0_IS_SIZE) as i64 - size as i64,
+                    ))?;
+
+                    let indicator = Indicator::from_slice(&buf[pos..pos + SECT0_IS_SIZE])?;
+                    return Ok(Some((offset, indicator)));
+                }
+            }
+            self.seek(SeekFrom::Current(next_offset as i64 - size as i64))?;
+            offset += next_offset;
         }
-        let indicator = Indicator::from_slice(&buf)?;
-        Ok(Some(indicator))
     }
 
     fn read_sect8(&mut self) -> Result<Option<()>, ParseError> {

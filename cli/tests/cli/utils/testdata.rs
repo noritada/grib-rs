@@ -92,6 +92,10 @@ pub(crate) mod grib2 {
         )
     }
 
+    pub(crate) fn noaa_ndfd_minrh() -> Result<NamedTempFile, io::Error> {
+        xzcat_to_tempfile(testdata_dir().join("ds.minrh.bin.xz"))
+    }
+
     pub(crate) fn multi_message_data(n: usize) -> Result<NamedTempFile, io::Error> {
         let mut buf = Vec::new();
         let mut out = NamedTempFile::new()?;
