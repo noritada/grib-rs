@@ -551,19 +551,26 @@ mod tests {
         Ok(())
     }
 
-    #[test]
-    fn read_grib2_message_starting_from_non_zero_position() -> Result<(), Box<dyn std::error::Error>>
-    {
+    fn create_grib2_message_starting_from_non_zero_position(
+        header: &[u8],
+    ) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
         let mut buf = Vec::new();
-
-        let header_bytes_skipped = b"HEADER TO BE SKIPPED\n";
-        buf.write_all(header_bytes_skipped)?;
+        buf.write_all(header)?;
 
         let f = std::fs::File::open(
             "testdata/icon_global_icosahedral_single-level_2021112018_000_TOT_PREC.grib2",
         )?;
         let mut f = std::io::BufReader::new(f);
         f.read_to_end(&mut buf)?;
+
+        Ok(buf)
+    }
+
+    #[test]
+    fn read_grib2_message_starting_from_non_zero_position_after_seeking(
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let header_bytes_skipped = b"HEADER TO BE SKIPPED\n";
+        let buf = create_grib2_message_starting_from_non_zero_position(header_bytes_skipped)?;
 
         let mut f = Cursor::new(buf);
         f.seek(SeekFrom::Current(header_bytes_skipped.len() as i64))?;
@@ -589,5 +596,45 @@ mod tests {
         );
 
         Ok(())
+    }
+
+    macro_rules! test_reading_message_starting_from_non_zero_position {
+        ($(($name:ident, $header:expr, $base_offset:expr),)*) => ($(
+            #[test]
+            fn $name() -> Result<(), Box<dyn std::error::Error>> {
+            let header_bytes_skipped = $header;
+            let buf = create_grib2_message_starting_from_non_zero_position(&header_bytes_skipped)?;
+
+            let f = Cursor::new(buf);
+            let grib2_reader = SeekableGrib2Reader::new(f);
+            let sect_stream = Grib2SectionStream::new(grib2_reader);
+            assert_eq!(
+                sect_stream
+                    .take(10)
+                    .map(|result| result.map(|sect| (sect.num, sect.offset, sect.size)))
+                    .collect::<Vec<_>>(),
+                vec![
+                    Ok((0, $base_offset + 0, 16)),
+                    Ok((1, $base_offset + 16, 21)),
+                    Ok((2, $base_offset + 37, 27)),
+                    Ok((3, $base_offset + 64, 35)),
+                    Ok((4, $base_offset + 99, 58)),
+                    Ok((5, $base_offset + 157, 21)),
+                    Ok((6, $base_offset + 178, 6)),
+                    Ok((7, $base_offset + 184, 5)),
+                    Ok((8, $base_offset + 189, 4)),
+                ]
+            );
+
+            Ok(())
+            }
+        )*);
+    }
+
+    test_reading_message_starting_from_non_zero_position! {
+        (reading_message_using_read_sect0_0th_iteration, [0; 16], 16),
+        (reading_message_using_end_of_read_sect0_0th_iteration, [0; 4096 - 16], 4096 - 16),
+        (reading_message_using_read_sect0_0th_and_1st_iterations, [0; 4096 - 15], 4096 - 15),
+        (reading_message_using_read_sect0_1st_iteration, [0; 4096], 4096),
     }
 }
