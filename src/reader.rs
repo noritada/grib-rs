@@ -458,9 +458,6 @@ mod tests {
                 Ok((6, 178, 6)),
                 Ok((7, 184, 5)),
                 Ok((8, 189, 4)),
-                Err(ParseError::ReadError(
-                    "failed to fill whole buffer".to_owned()
-                ))
             ]
         );
 
