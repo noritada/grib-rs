@@ -92,50 +92,8 @@ pub(crate) mod grib2 {
         )
     }
 
-    pub(crate) fn noaa_ndfd_critfireo_0() -> Result<NamedTempFile, io::Error> {
-        // starting and ending positions for 0th message
-        const START_POS: usize = 0x00050;
-        const END_POS: usize = 0x2d3fe;
-
-        let mut buf = [0; END_POS - START_POS];
-        let mut out = NamedTempFile::new()?;
-
-        let file_path = testdata_dir().join("ds.critfireo.bin.xz");
-        let f = File::open(file_path)?;
-        let f = BufReader::new(f);
-        let mut f = xz2::bufread::XzDecoder::new(f);
-
-        // XzDecoder currently does not support seek.
-        let mut seek_buf = [0; START_POS];
-        f.read_exact(&mut seek_buf)?;
-
-        f.read_exact(&mut buf)?;
-        out.write_all(&buf)?;
-
-        Ok(out)
-    }
-
-    pub(crate) fn noaa_ndfd_critfireo_1() -> Result<NamedTempFile, io::Error> {
-        // starting and ending positions for 1st message
-        const START_POS: usize = 0x2d426;
-        const END_POS: usize = 0x5bd80;
-
-        let mut buf = [0; END_POS - START_POS];
-        let mut out = NamedTempFile::new()?;
-
-        let file_path = testdata_dir().join("ds.critfireo.bin.xz");
-        let f = File::open(file_path)?;
-        let f = BufReader::new(f);
-        let mut f = xz2::bufread::XzDecoder::new(f);
-
-        // XzDecoder currently does not support seek.
-        let mut seek_buf = [0; START_POS];
-        f.read_exact(&mut seek_buf)?;
-
-        f.read_exact(&mut buf)?;
-        out.write_all(&buf)?;
-
-        Ok(out)
+    pub(crate) fn noaa_ndfd_critfireo() -> Result<NamedTempFile, io::Error> {
+        xzcat_to_tempfile(testdata_dir().join("ds.critfireo.bin.xz"))
     }
 
     pub(crate) fn noaa_ndfd_minrh() -> Result<NamedTempFile, io::Error> {

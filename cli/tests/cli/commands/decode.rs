@@ -214,15 +214,15 @@ test_operation_with_data_with_nan_values_as_little_endian! {
     ),
     (
         decoding_complex_packing_without_spatial_differencing_as_little_endian,
-        utils::testdata::grib2::noaa_ndfd_critfireo_0()?,
+        utils::testdata::grib2::noaa_ndfd_critfireo()?,
         "0.0",
         "-l",
         utils::testdata::flat_binary::noaa_ndfd_critfireo_0_le()?
     ),
     (
         decoding_complex_packing_without_spatial_differencing_as_little_endian_when_nbit_is_zero,
-        utils::testdata::grib2::noaa_ndfd_critfireo_1()?,
-        "0.0",
+        utils::testdata::grib2::noaa_ndfd_critfireo()?,
+        "1.0",
         "-l",
         utils::testdata::flat_binary::noaa_ndfd_critfireo_1_le()?
     ),
