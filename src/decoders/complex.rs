@@ -21,7 +21,10 @@ pub enum ComplexPackingDecodeError {
 
 pub(crate) fn decode_without_spdiff(
     target: &Grib2SubmessageDecoder,
-) -> Result<SimplePackingDecodeIteratorWrapper<impl Iterator<Item = i32> + '_>, GribError> {
+) -> Result<
+    SimplePackingDecodeIteratorWrapper<impl Iterator<Item = DecodedValue<i32>> + '_>,
+    GribError,
+> {
     let sect5_data = &target.sect5_payload;
     let simple_param = SimplePackingParam::from_buf(&sect5_data[6..15]);
     let complex_param = ComplexPackingParam::from_buf(&sect5_data[16..42]);
@@ -35,7 +38,7 @@ pub(crate) fn decode_without_spdiff(
     };
 
     if complex_param.group_splitting_method_used != 1
-        || complex_param.missing_value_management_used != 0
+        || complex_param.missing_value_management_used > 2
     {
         return Err(GribError::DecodeError(
             DecodeError::ComplexPackingDecodeError(ComplexPackingDecodeError::NotSupported),
@@ -85,6 +88,8 @@ pub(crate) fn decode_without_spdiff(
         group_refs_iter,
         group_widths_iter,
         group_lens_iter,
+        complex_param.missing_value_management_used,
+        simple_param.nbit,
         0,
         sect7_data[group_lens_end_octet..].to_vec(),
     );
