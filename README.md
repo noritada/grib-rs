@@ -30,6 +30,7 @@ A world where everyone can read weather data easily although its interpretation 
   * Support for some code tables defined by WMO
   * Decoding feature supporting following templates:
     * Template 5.0/7.0 (simple packing)
+    * Template 5.2/7.2 (complex packing)
     * Template 5.3/7.3 (complex packing and spatial differencing)
     * Template 5.40/7.40 (JPEG 2000 code stream format)
     * Template 5.41/7.41 (Portable Network Graphics (PNG))
