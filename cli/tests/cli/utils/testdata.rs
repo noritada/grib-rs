@@ -138,6 +138,10 @@ pub(crate) mod grib2 {
         Ok(out)
     }
 
+    pub(crate) fn noaa_ndfd_minrh() -> Result<NamedTempFile, io::Error> {
+        xzcat_to_tempfile(testdata_dir().join("ds.minrh.bin.xz"))
+    }
+
     pub(crate) fn multi_message_data(n: usize) -> Result<NamedTempFile, io::Error> {
         let mut buf = Vec::new();
         let mut out = NamedTempFile::new()?;
@@ -214,5 +218,9 @@ pub(crate) mod flat_binary {
 
     pub(crate) fn noaa_ndfd_critfireo_1_le() -> Result<Vec<u8>, io::Error> {
         unxz_as_bytes(testdata_dir().join("gen").join("ds.critfireo.bin.1.xz"))
+    }
+
+    pub(crate) fn noaa_ndfd_minrh_0_le() -> Result<Vec<u8>, io::Error> {
+        unxz_as_bytes(testdata_dir().join("gen").join("ds.minrh.bin.0.xz"))
     }
 }

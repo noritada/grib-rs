@@ -2,6 +2,7 @@ use std::{convert::TryInto, iter};
 
 use num::ToPrimitive;
 
+use self::missing::DecodedValue::{self, Missing1, Missing2, Normal};
 use crate::{
     decoders::{
         common::*,
@@ -95,7 +96,10 @@ pub(crate) fn decode_without_spdiff(
 
 pub(crate) fn decode(
     target: &Grib2SubmessageDecoder,
-) -> Result<SimplePackingDecodeIteratorWrapper<impl Iterator<Item = i32> + '_>, GribError> {
+) -> Result<
+    SimplePackingDecodeIteratorWrapper<impl Iterator<Item = DecodedValue<i32>> + '_>,
+    GribError,
+> {
     let sect5_data = &target.sect5_payload;
     let simple_param = SimplePackingParam::from_buf(&sect5_data[6..15]);
     let complex_param = ComplexPackingParam::from_buf(&sect5_data[16..42]);
@@ -111,7 +115,7 @@ pub(crate) fn decode(
     };
 
     if complex_param.group_splitting_method_used != 1
-        || complex_param.missing_value_management_used != 0
+        || complex_param.missing_value_management_used > 2
     {
         return Err(GribError::DecodeError(
             DecodeError::ComplexPackingDecodeError(ComplexPackingDecodeError::NotSupported),
@@ -166,18 +170,18 @@ pub(crate) fn decode(
         group_refs_iter,
         group_widths_iter,
         group_lens_iter,
+        complex_param.missing_value_management_used,
+        simple_param.nbit,
         sect7_params.minimum(),
         sect7_data[group_lens_end_octet..].to_vec(),
     );
 
     let spdiff_packed_iter = unpacked_data.flatten();
-    let first_values = sect7_params.first_values().collect::<Vec<_>>();
-    let num_first_values = first_values.len();
-    let spdiff_packed_iter = first_values
-        .into_iter()
-        .chain(spdiff_packed_iter.skip(num_first_values));
-
-    let spdiff_unpacked = SpatialDiff2ndOrderDecodeIterator::new(spdiff_packed_iter);
+    let first_values = sect7_params.first_values();
+    let spdiff_unpacked = SpatialDiff2ndOrderDecodeIterator::new(
+        spdiff_packed_iter,
+        first_values.collect::<Vec<_>>().into_iter(),
+    );
     let decoder = SimplePackingDecodeIterator::new(spdiff_unpacked, &simple_param);
     let decoder = SimplePackingDecodeIteratorWrapper::SimplePacking(decoder);
     Ok(decoder)
@@ -188,6 +192,8 @@ struct ComplexPackingValueDecodeIterator<I, J, K> {
     ref_iter: I,
     width_iter: J,
     length_iter: K,
+    missing_value_management: u8,
+    nbit: u8,
     z_min: i32,
     data: Vec<u8>,
     pos: usize,
@@ -199,6 +205,8 @@ impl<I, J, K> ComplexPackingValueDecodeIterator<I, J, K> {
         ref_iter: I,
         width_iter: J,
         length_iter: K,
+        missing_value_management: u8,
+        nbit: u8,
         z_min: i32,
         data: Vec<u8>,
     ) -> Self {
@@ -206,6 +214,8 @@ impl<I, J, K> ComplexPackingValueDecodeIterator<I, J, K> {
             ref_iter,
             width_iter,
             length_iter,
+            missing_value_management,
+            nbit,
             z_min,
             data,
             pos: 0,
@@ -221,7 +231,7 @@ where
     O: ToPrimitive,
     P: ToPrimitive,
 {
-    type Item = Vec<i32>;
+    type Item = Vec<DecodedValue<i32>>;
 
     fn next(&mut self) -> Option<Self::Item> {
         match (
@@ -234,7 +244,16 @@ where
                 // associated field width is 0, and no incremental data are physically present."
                 let _ref = _ref.to_i32().unwrap();
                 let length = length.to_usize().unwrap();
-                Some(vec![_ref + self.z_min; length])
+                let missing1 = (1 << self.nbit) - 1;
+                let missing2 = missing1 - 1;
+
+                if self.missing_value_management > 0 && _ref == missing1 {
+                    Some(vec![Missing1; length])
+                } else if self.missing_value_management == 2 && _ref == missing2 {
+                    Some(vec![Missing2; length])
+                } else {
+                    Some(vec![Normal(_ref + self.z_min); length])
+                }
             }
             (Some(_ref), Some(width), Some(length)) => {
                 let (_ref, width, length) = (
@@ -245,12 +264,22 @@ where
                 let bits = self.start_offset_bits + width * length;
                 let (pos_end, offset_bits) = (self.pos + bits / 8, bits % 8);
                 let offset_byte = usize::from(offset_bits > 0);
+                let missing1 = (1 << width) - 1;
+                let missing2 = missing1 - 1;
                 let group_values =
                     NBitwiseIterator::new(&self.data[self.pos..pos_end + offset_byte], width)
                         .with_offset(self.start_offset_bits)
                         .take(length)
-                        .map(|v| v.as_grib_int() + _ref + self.z_min)
-                        .collect::<Vec<i32>>();
+                        .map(|v| {
+                            if self.missing_value_management > 0 && v == missing1 {
+                                Missing1
+                            } else if self.missing_value_management == 2 && v == missing2 {
+                                Missing2
+                            } else {
+                                Normal(v.as_grib_int() + _ref + self.z_min)
+                            }
+                        })
+                        .collect::<Vec<_>>();
                 self.pos = pos_end;
                 self.start_offset_bits = offset_bits;
                 Some(group_values)
@@ -260,17 +289,19 @@ where
     }
 }
 
-struct SpatialDiff2ndOrderDecodeIterator<I> {
+struct SpatialDiff2ndOrderDecodeIterator<I, J> {
     iter: I,
+    first_values: J,
     count: u32,
     prev1: i32,
     prev2: i32,
 }
 
-impl<I> SpatialDiff2ndOrderDecodeIterator<I> {
-    fn new(iter: I) -> Self {
+impl<I, J> SpatialDiff2ndOrderDecodeIterator<I, J> {
+    fn new(iter: I, first_values: J) -> Self {
         Self {
             iter,
+            first_values,
             count: 0,
             prev1: 0,
             prev2: 0,
@@ -278,30 +309,36 @@ impl<I> SpatialDiff2ndOrderDecodeIterator<I> {
     }
 }
 
-impl<I: Iterator<Item = i32>> Iterator for SpatialDiff2ndOrderDecodeIterator<I> {
-    type Item = i32;
+impl<I: Iterator<Item = DecodedValue<i32>>, J: Iterator<Item = i32>> Iterator
+    for SpatialDiff2ndOrderDecodeIterator<I, J>
+{
+    type Item = DecodedValue<i32>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let count = self.count;
-        self.count += 1;
-        match (count, self.iter.next()) {
-            (_, None) => None,
-            (0, Some(v)) => {
-                self.prev2 = v;
-                Some(v)
-            }
-            (1, Some(v)) => {
-                self.prev1 = v;
-                Some(v)
-            }
-            (_, Some(v)) => {
-                let v = v + 2 * self.prev1 - self.prev2;
-                self.prev2 = self.prev1;
-                self.prev1 = v;
-                Some(v)
-            }
+        match self.iter.next() {
+            None => None,
+            Some(Normal(v)) => match self.count {
+                0 => {
+                    self.prev2 = self.first_values.next().unwrap();
+                    self.count += 1;
+                    Some(Normal(self.prev2))
+                }
+                1 => {
+                    self.prev1 = self.first_values.next().unwrap();
+                    self.count += 1;
+                    Some(Normal(self.prev1))
+                }
+                _ => {
+                    let v = v + 2 * self.prev1 - self.prev2;
+                    self.prev2 = self.prev1;
+                    self.prev1 = v;
+                    Some(Normal(v))
+                }
+            },
+            Some(missing) => Some(missing),
         }
     }
 }
 
+mod missing;
 mod section7;

@@ -42,6 +42,7 @@ Following data files are downloaded from [MRMS (multi-radar multi-sensor) produc
 Following data files are downloaded from [NDFD (National Digital Forecast Database) page](https://www.ncei.noaa.gov/products/weather-climate-models/national-digital-forecast-database).
 
 - `ds.critfireo.bin.xz`
+- `ds.minrh.bin.xz`
 
 ## Data files from JMA
 
@@ -99,4 +100,6 @@ $ wgrib2 -d 1 -order raw -no_header -bin mrms-wgrib2-le.bin MRMS_ReflectivityAtL
 $ wgrib2 -d 1 -order raw -no_header -bin ds.critfireo.bin.0 ds.critfireo.bin
 
 $ wgrib2 -d 2 -order raw -no_header -bin ds.critfireo.bin.1 ds.critfireo.bin
+
+$ wgrib2 -d 1 -order raw -no_header -bin ds.minrh.bin.0 ds.minrh.bin
 ```
