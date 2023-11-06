@@ -30,11 +30,9 @@ pub(crate) fn decode_without_spdiff(
     let complex_param = ComplexPackingParam::from_buf(&sect5_data[16..42]);
 
     if simple_param.nbit == 0 {
-        let decoder = SimplePackingDecodeIteratorWrapper::FixedValue(FixedValueIterator::new(
-            simple_param.ref_val,
-            target.num_points_encoded,
+        return Err(GribError::DecodeError(
+            DecodeError::ComplexPackingDecodeError(ComplexPackingDecodeError::NotSupported),
         ));
-        return Ok(decoder);
     };
 
     if complex_param.group_splitting_method_used != 1
