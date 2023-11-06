@@ -125,6 +125,9 @@ impl Grib2SubmessageDecoder {
     ) -> Result<Grib2DecodedValues<impl Iterator<Item = f32> + '_>, GribError> {
         let decoder = match self.template_num {
             0 => Grib2SubmessageDecoderIteratorWrapper::Template0(simple::decode(self)?),
+            2 => Grib2SubmessageDecoderIteratorWrapper::Template2(complex::decode_without_spdiff(
+                self,
+            )?),
             3 => Grib2SubmessageDecoderIteratorWrapper::Template3(complex::decode(self)?),
             40 => Grib2SubmessageDecoderIteratorWrapper::Template40(jpeg2000::decode(self)?),
             41 => Grib2SubmessageDecoderIteratorWrapper::Template41(png::decode(self)?),
@@ -160,15 +163,16 @@ where
     }
 }
 
-enum Grib2SubmessageDecoderIteratorWrapper<I, J, K, L> {
+enum Grib2SubmessageDecoderIteratorWrapper<I, J, K, L, M> {
     Template0(SimplePackingDecodeIteratorWrapper<I>),
-    Template3(SimplePackingDecodeIteratorWrapper<J>),
-    Template40(SimplePackingDecodeIteratorWrapper<K>),
-    Template41(SimplePackingDecodeIterator<L>),
+    Template2(SimplePackingDecodeIteratorWrapper<J>),
+    Template3(SimplePackingDecodeIteratorWrapper<K>),
+    Template40(SimplePackingDecodeIteratorWrapper<L>),
+    Template41(SimplePackingDecodeIterator<M>),
     Template200(std::vec::IntoIter<f32>),
 }
 
-impl<I, J, K, L> Iterator for Grib2SubmessageDecoderIteratorWrapper<I, J, K, L>
+impl<I, J, K, L, M> Iterator for Grib2SubmessageDecoderIteratorWrapper<I, J, K, L, M>
 where
     I: Iterator,
     <I as Iterator>::Item: ToPrimitive,
@@ -178,12 +182,15 @@ where
     <K as Iterator>::Item: ToPrimitive,
     L: Iterator,
     <L as Iterator>::Item: ToPrimitive,
+    M: Iterator,
+    <M as Iterator>::Item: ToPrimitive,
 {
     type Item = f32;
 
     fn next(&mut self) -> Option<Self::Item> {
         match self {
             Self::Template0(inner) => inner.next(),
+            Self::Template2(inner) => inner.next(),
             Self::Template3(inner) => inner.next(),
             Self::Template40(inner) => inner.next(),
             Self::Template41(inner) => inner.next(),
@@ -194,6 +201,7 @@ where
     fn size_hint(&self) -> (usize, Option<usize>) {
         match self {
             Self::Template0(inner) => inner.size_hint(),
+            Self::Template2(inner) => inner.size_hint(),
             Self::Template3(inner) => inner.size_hint(),
             Self::Template40(inner) => inner.size_hint(),
             Self::Template41(inner) => inner.size_hint(),
