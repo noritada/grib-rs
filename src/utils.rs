@@ -55,6 +55,37 @@ pub(crate) fn grib_int_from_bytes(bytes: &[u8]) -> i32 {
     }
 }
 
+pub(crate) enum BitStream<T> {
+    ZeroSized(std::vec::IntoIter<u32>),
+    NonZeroSized(NBitwiseIterator<T>),
+}
+
+impl<T> BitStream<T> {
+    pub(crate) fn new(data: T, unit_size: usize, length: usize) -> Self {
+        if unit_size == 0 {
+            let iter = vec![0; length].into_iter();
+            Self::ZeroSized(iter)
+        } else {
+            let iter = NBitwiseIterator::new(data, unit_size);
+            Self::NonZeroSized(iter)
+        }
+    }
+}
+
+impl<T> Iterator for BitStream<T>
+where
+    T: AsRef<[u8]>,
+{
+    type Item = u32;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        match self {
+            Self::ZeroSized(z) => z.next(),
+            Self::NonZeroSized(n) => n.next(),
+        }
+    }
+}
+
 #[derive(Clone)]
 pub(crate) struct NBitwiseIterator<T> {
     data: T,

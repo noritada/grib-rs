@@ -174,7 +174,6 @@ pub(crate) mod flat_binary {
         unxz_as_bytes(testdata_dir().join("gen").join("ds.critfireo.bin.0.xz"))
     }
 
-    #[allow(dead_code)]
     pub(crate) fn noaa_ndfd_critfireo_1_le() -> Result<Vec<u8>, io::Error> {
         unxz_as_bytes(testdata_dir().join("gen").join("ds.critfireo.bin.1.xz"))
     }

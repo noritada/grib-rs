@@ -10,7 +10,7 @@ use crate::{
         simple::*,
     },
     error::*,
-    utils::{read_as, GribInt, NBitwiseIterator},
+    utils::{read_as, BitStream, GribInt, NBitwiseIterator},
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -28,12 +28,6 @@ pub(crate) fn decode_without_spdiff(
     let sect5_data = &target.sect5_payload;
     let simple_param = SimplePackingParam::from_buf(&sect5_data[6..15]);
     let complex_param = ComplexPackingParam::from_buf(&sect5_data[16..42]);
-
-    if simple_param.nbit == 0 {
-        return Err(GribError::DecodeError(
-            DecodeError::ComplexPackingDecodeError(ComplexPackingDecodeError::NotSupported),
-        ));
-    };
 
     if complex_param.group_splitting_method_used != 1
         || complex_param.missing_value_management_used > 2
@@ -59,23 +53,26 @@ pub(crate) fn decode_without_spdiff(
     let group_lens_end_octet = group_widths_end_octet
         + get_octet_length(complex_param.group_len_nbit, complex_param.ngroup);
 
-    let group_refs_iter = NBitwiseIterator::new(
+    let group_refs_iter = BitStream::new(
         &sect7_data[params_end_octet..group_refs_end_octet],
         usize::from(simple_param.nbit),
+        complex_param.ngroup as usize,
     );
     let group_refs_iter = group_refs_iter.take(complex_param.ngroup as usize);
 
-    let group_widths_iter = NBitwiseIterator::new(
+    let group_widths_iter = BitStream::new(
         &sect7_data[group_refs_end_octet..group_widths_end_octet],
         usize::from(complex_param.group_width_nbit),
+        complex_param.ngroup as usize,
     );
     let group_widths_iter = group_widths_iter
         .take(complex_param.ngroup as usize)
         .map(move |v| u32::from(complex_param.group_width_ref) + v);
 
-    let group_lens_iter = NBitwiseIterator::new(
+    let group_lens_iter = BitStream::new(
         &sect7_data[group_widths_end_octet..group_lens_end_octet],
         usize::from(complex_param.group_len_nbit),
+        (complex_param.ngroup - 1) as usize,
     );
     let group_lens_iter = group_lens_iter
         .take((complex_param.ngroup - 1) as usize)
@@ -109,14 +106,6 @@ pub(crate) fn decode(
     let spdiff_level = read_as!(u8, sect5_data, 42);
     let spdiff_param_octet = read_as!(u8, sect5_data, 43);
 
-    if simple_param.nbit == 0 {
-        let decoder = SimplePackingDecodeIteratorWrapper::FixedValue(FixedValueIterator::new(
-            simple_param.ref_val,
-            target.num_points_encoded,
-        ));
-        return Ok(decoder);
-    };
-
     if complex_param.group_splitting_method_used != 1
         || complex_param.missing_value_management_used > 2
     {
@@ -146,23 +135,26 @@ pub(crate) fn decode(
     let group_lens_end_octet = group_widths_end_octet
         + get_octet_length(complex_param.group_len_nbit, complex_param.ngroup);
 
-    let group_refs_iter = NBitwiseIterator::new(
+    let group_refs_iter = BitStream::new(
         &sect7_data[params_end_octet..group_refs_end_octet],
         usize::from(simple_param.nbit),
+        complex_param.ngroup as usize,
     );
     let group_refs_iter = group_refs_iter.take(complex_param.ngroup as usize);
 
-    let group_widths_iter = NBitwiseIterator::new(
+    let group_widths_iter = BitStream::new(
         &sect7_data[group_refs_end_octet..group_widths_end_octet],
         usize::from(complex_param.group_width_nbit),
+        complex_param.ngroup as usize,
     );
     let group_widths_iter = group_widths_iter
         .take(complex_param.ngroup as usize)
         .map(move |v| u32::from(complex_param.group_width_ref) + v);
 
-    let group_lens_iter = NBitwiseIterator::new(
+    let group_lens_iter = BitStream::new(
         &sect7_data[group_widths_end_octet..group_lens_end_octet],
         usize::from(complex_param.group_len_nbit),
+        (complex_param.ngroup - 1) as usize,
     );
     let group_lens_iter = group_lens_iter
         .take((complex_param.ngroup - 1) as usize)
