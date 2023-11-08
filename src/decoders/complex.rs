@@ -184,9 +184,11 @@ impl<I, J, K> ComplexPackingValueDecodeIterator<I, J, K> {
     }
 }
 
-impl<I: Iterator<Item = N>, J: Iterator<Item = O>, K: Iterator<Item = P>, N, O, P> Iterator
-    for ComplexPackingValueDecodeIterator<I, J, K>
+impl<I, J, K, N, O, P> Iterator for ComplexPackingValueDecodeIterator<I, J, K>
 where
+    I: Iterator<Item = N>,
+    J: Iterator<Item = O>,
+    K: Iterator<Item = P>,
     N: ToPrimitive,
     O: ToPrimitive,
     P: ToPrimitive,
@@ -269,8 +271,10 @@ impl<I, J> SpatialDiff2ndOrderDecodeIterator<I, J> {
     }
 }
 
-impl<I: Iterator<Item = DecodedValue<i32>>, J: Iterator<Item = i32>> Iterator
-    for SpatialDiff2ndOrderDecodeIterator<I, J>
+impl<I, J> Iterator for SpatialDiff2ndOrderDecodeIterator<I, J>
+where
+    I: Iterator<Item = DecodedValue<i32>>,
+    J: Iterator<Item = i32>,
 {
     type Item = DecodedValue<i32>;
 
