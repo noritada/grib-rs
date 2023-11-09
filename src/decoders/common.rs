@@ -125,10 +125,8 @@ impl Grib2SubmessageDecoder {
     ) -> Result<Grib2DecodedValues<impl Iterator<Item = f32> + '_>, GribError> {
         let decoder = match self.template_num {
             0 => Grib2SubmessageDecoderIteratorWrapper::Template0(simple::decode(self)?),
-            2 => Grib2SubmessageDecoderIteratorWrapper::Template2(complex::decode_without_spdiff(
-                self,
-            )?),
-            3 => Grib2SubmessageDecoderIteratorWrapper::Template3(complex::decode(self)?),
+            2 => Grib2SubmessageDecoderIteratorWrapper::Template2(complex::decode_7_2(self)?),
+            3 => Grib2SubmessageDecoderIteratorWrapper::Template3(complex::decode_7_3(self)?),
             40 => Grib2SubmessageDecoderIteratorWrapper::Template40(jpeg2000::decode(self)?),
             41 => Grib2SubmessageDecoderIteratorWrapper::Template41(png::decode(self)?),
             200 => Grib2SubmessageDecoderIteratorWrapper::Template200(run_length::decode(self)?),

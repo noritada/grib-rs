@@ -20,7 +20,7 @@ pub enum ComplexPackingDecodeError {
     LengthMismatch,
 }
 
-pub(crate) fn decode_without_spdiff(
+pub(crate) fn decode_7_2(
     target: &Grib2SubmessageDecoder,
 ) -> Result<
     SimplePackingDecodeIteratorWrapper<impl Iterator<Item = DecodedValue<i32>> + '_>,
@@ -46,7 +46,7 @@ pub(crate) fn decode_without_spdiff(
     Ok(decoder)
 }
 
-pub(crate) fn decode(
+pub(crate) fn decode_7_3(
     target: &Grib2SubmessageDecoder,
 ) -> Result<
     SimplePackingDecodeIteratorWrapper<impl Iterator<Item = DecodedValue<i32>> + '_>,
@@ -67,7 +67,7 @@ pub(crate) fn decode(
     }
 
     let sect7_data = &target.sect7_payload;
-    let sect7_params = section7::SpatialDifferencingExtraDescriptors::new(
+    let sect7_params = diff::SpatialDifferencingExtraDescriptors::new(
         sect7_data,
         spdiff_level,
         spdiff_param_octet,
@@ -305,5 +305,5 @@ where
     }
 }
 
+mod diff;
 mod missing;
-mod section7;
