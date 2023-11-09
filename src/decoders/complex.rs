@@ -8,9 +8,10 @@ use crate::{
         common::*,
         param::{ComplexPackingParam, SimplePackingParam},
         simple::*,
+        stream::{BitStream, NBitwiseIterator},
     },
     error::*,
-    utils::{read_as, BitStream, GribInt, NBitwiseIterator},
+    utils::{read_as, GribInt},
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]

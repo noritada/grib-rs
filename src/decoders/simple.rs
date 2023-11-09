@@ -3,9 +3,9 @@ use std::convert::TryInto;
 use num::ToPrimitive;
 
 use crate::{
-    decoders::{common::*, param::SimplePackingParam},
+    decoders::{common::*, param::SimplePackingParam, stream::NBitwiseIterator},
     error::*,
-    utils::{read_as, NBitwiseIterator},
+    utils::read_as,
 };
 
 pub(crate) enum SimplePackingDecodeIteratorWrapper<I> {
