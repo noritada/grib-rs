@@ -8,9 +8,10 @@ use crate::{
         common::*,
         param::{ComplexPackingParam, SimplePackingParam},
         simple::*,
+        stream::{BitStream, NBitwiseIterator},
     },
     error::*,
-    utils::{read_as, BitStream, GribInt, NBitwiseIterator},
+    utils::{read_as, GribInt},
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -19,7 +20,7 @@ pub enum ComplexPackingDecodeError {
     LengthMismatch,
 }
 
-pub(crate) fn decode_without_spdiff(
+pub(crate) fn decode_7_2(
     target: &Grib2SubmessageDecoder,
 ) -> Result<
     SimplePackingDecodeIteratorWrapper<impl Iterator<Item = DecodedValue<i32>> + '_>,
@@ -39,62 +40,13 @@ pub(crate) fn decode_without_spdiff(
 
     let sect7_data = &target.sect7_payload;
 
-    fn get_octet_length(nbit: u8, ngroup: u32) -> usize {
-        let total_bit: u32 = ngroup * u32::from(nbit);
-        let total_octet = (total_bit + 0b111) >> 3;
-        total_octet as usize
-    }
-
-    let params_end_octet = 0; //sect7_params.len();
-    let group_refs_end_octet =
-        params_end_octet + get_octet_length(simple_param.nbit, complex_param.ngroup);
-    let group_widths_end_octet = group_refs_end_octet
-        + get_octet_length(complex_param.group_width_nbit, complex_param.ngroup);
-    let group_lens_end_octet = group_widths_end_octet
-        + get_octet_length(complex_param.group_len_nbit, complex_param.ngroup);
-
-    let group_refs_iter = BitStream::new(
-        &sect7_data[params_end_octet..group_refs_end_octet],
-        usize::from(simple_param.nbit),
-        complex_param.ngroup as usize,
-    );
-    let group_refs_iter = group_refs_iter.take(complex_param.ngroup as usize);
-
-    let group_widths_iter = BitStream::new(
-        &sect7_data[group_refs_end_octet..group_widths_end_octet],
-        usize::from(complex_param.group_width_nbit),
-        complex_param.ngroup as usize,
-    );
-    let group_widths_iter = group_widths_iter
-        .take(complex_param.ngroup as usize)
-        .map(move |v| u32::from(complex_param.group_width_ref) + v);
-
-    let group_lens_iter = BitStream::new(
-        &sect7_data[group_widths_end_octet..group_lens_end_octet],
-        usize::from(complex_param.group_len_nbit),
-        (complex_param.ngroup - 1) as usize,
-    );
-    let group_lens_iter = group_lens_iter
-        .take((complex_param.ngroup - 1) as usize)
-        .map(move |v| complex_param.group_len_ref + u32::from(complex_param.group_len_inc) * v)
-        .chain(iter::once(complex_param.group_len_last));
-
-    let unpacked_data = ComplexPackingValueDecodeIterator::new(
-        group_refs_iter,
-        group_widths_iter,
-        group_lens_iter,
-        complex_param.missing_value_management_used,
-        simple_param.nbit,
-        0,
-        sect7_data[group_lens_end_octet..].to_vec(),
-    );
-
-    let decoder = SimplePackingDecodeIterator::new(unpacked_data.flatten(), &simple_param);
+    let unpacked_data = decode_complex_packing(complex_param, sect7_data, 0, simple_param.nbit, 0);
+    let decoder = SimplePackingDecodeIterator::new(unpacked_data, &simple_param);
     let decoder = SimplePackingDecodeIteratorWrapper::SimplePacking(decoder);
     Ok(decoder)
 }
 
-pub(crate) fn decode(
+pub(crate) fn decode_7_3(
     target: &Grib2SubmessageDecoder,
 ) -> Result<
     SimplePackingDecodeIteratorWrapper<impl Iterator<Item = DecodedValue<i32>> + '_>,
@@ -115,21 +67,44 @@ pub(crate) fn decode(
     }
 
     let sect7_data = &target.sect7_payload;
-    let sect7_params = section7::SpatialDifferencingExtraDescriptors::new(
+    let sect7_params = diff::SpatialDifferencingExtraDescriptors::new(
         sect7_data,
         spdiff_level,
         spdiff_param_octet,
     )?;
 
+    let unpacked_data = decode_complex_packing(
+        complex_param,
+        sect7_data,
+        sect7_params.len(),
+        simple_param.nbit,
+        sect7_params.minimum(),
+    );
+    let first_values = sect7_params.first_values();
+    let spdiff_unpacked = SpatialDiff2ndOrderDecodeIterator::new(
+        unpacked_data,
+        first_values.collect::<Vec<_>>().into_iter(),
+    );
+    let decoder = SimplePackingDecodeIterator::new(spdiff_unpacked, &simple_param);
+    let decoder = SimplePackingDecodeIteratorWrapper::SimplePacking(decoder);
+    Ok(decoder)
+}
+
+fn decode_complex_packing(
+    complex_param: ComplexPackingParam,
+    sect7_data: &[u8],
+    sect7_offset: usize,
+    nbit: u8,
+    z_min: i32,
+) -> impl Iterator<Item = DecodedValue<i32>> + '_ {
     fn get_octet_length(nbit: u8, ngroup: u32) -> usize {
         let total_bit: u32 = ngroup * u32::from(nbit);
         let total_octet = (total_bit + 0b111) >> 3;
         total_octet as usize
     }
 
-    let params_end_octet = sect7_params.len();
-    let group_refs_end_octet =
-        params_end_octet + get_octet_length(simple_param.nbit, complex_param.ngroup);
+    let params_end_octet = sect7_offset;
+    let group_refs_end_octet = params_end_octet + get_octet_length(nbit, complex_param.ngroup);
     let group_widths_end_octet = group_refs_end_octet
         + get_octet_length(complex_param.group_width_nbit, complex_param.ngroup);
     let group_lens_end_octet = group_widths_end_octet
@@ -137,7 +112,7 @@ pub(crate) fn decode(
 
     let group_refs_iter = BitStream::new(
         &sect7_data[params_end_octet..group_refs_end_octet],
-        usize::from(simple_param.nbit),
+        usize::from(nbit),
         complex_param.ngroup as usize,
     );
     let group_refs_iter = group_refs_iter.take(complex_param.ngroup as usize);
@@ -161,25 +136,16 @@ pub(crate) fn decode(
         .map(move |v| complex_param.group_len_ref + u32::from(complex_param.group_len_inc) * v)
         .chain(iter::once(complex_param.group_len_last));
 
-    let unpacked_data = ComplexPackingValueDecodeIterator::new(
+    ComplexPackingValueDecodeIterator::new(
         group_refs_iter,
         group_widths_iter,
         group_lens_iter,
         complex_param.missing_value_management_used,
-        simple_param.nbit,
-        sect7_params.minimum(),
+        nbit,
+        z_min,
         sect7_data[group_lens_end_octet..].to_vec(),
-    );
-
-    let spdiff_packed_iter = unpacked_data.flatten();
-    let first_values = sect7_params.first_values();
-    let spdiff_unpacked = SpatialDiff2ndOrderDecodeIterator::new(
-        spdiff_packed_iter,
-        first_values.collect::<Vec<_>>().into_iter(),
-    );
-    let decoder = SimplePackingDecodeIterator::new(spdiff_unpacked, &simple_param);
-    let decoder = SimplePackingDecodeIteratorWrapper::SimplePacking(decoder);
-    Ok(decoder)
+    )
+    .flatten()
 }
 
 #[derive(Clone)]
@@ -219,9 +185,11 @@ impl<I, J, K> ComplexPackingValueDecodeIterator<I, J, K> {
     }
 }
 
-impl<I: Iterator<Item = N>, J: Iterator<Item = O>, K: Iterator<Item = P>, N, O, P> Iterator
-    for ComplexPackingValueDecodeIterator<I, J, K>
+impl<I, J, K, N, O, P> Iterator for ComplexPackingValueDecodeIterator<I, J, K>
 where
+    I: Iterator<Item = N>,
+    J: Iterator<Item = O>,
+    K: Iterator<Item = P>,
     N: ToPrimitive,
     O: ToPrimitive,
     P: ToPrimitive,
@@ -304,8 +272,10 @@ impl<I, J> SpatialDiff2ndOrderDecodeIterator<I, J> {
     }
 }
 
-impl<I: Iterator<Item = DecodedValue<i32>>, J: Iterator<Item = i32>> Iterator
-    for SpatialDiff2ndOrderDecodeIterator<I, J>
+impl<I, J> Iterator for SpatialDiff2ndOrderDecodeIterator<I, J>
+where
+    I: Iterator<Item = DecodedValue<i32>>,
+    J: Iterator<Item = i32>,
 {
     type Item = DecodedValue<i32>;
 
@@ -335,5 +305,5 @@ impl<I: Iterator<Item = DecodedValue<i32>>, J: Iterator<Item = i32>> Iterator
     }
 }
 
+mod diff;
 mod missing;
-mod section7;

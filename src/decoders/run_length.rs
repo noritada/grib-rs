@@ -1,9 +1,9 @@
 use std::convert::TryInto;
 
 use crate::{
-    decoders::common::*,
+    decoders::{common::*, stream::NBitwiseIterator},
     error::*,
-    utils::{read_as, NBitwiseIterator},
+    utils::read_as,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
