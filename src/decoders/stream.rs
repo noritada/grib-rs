@@ -1,12 +1,12 @@
 pub(crate) enum BitStream<T> {
-    ZeroSized(std::vec::IntoIter<u32>),
+    ZeroSized(FixedValueIterator<u32>),
     NonZeroSized(NBitwiseIterator<T>),
 }
 
 impl<T> BitStream<T> {
     pub(crate) fn new(data: T, unit_size: usize, length: usize) -> Self {
         if unit_size == 0 {
-            let iter = vec![0; length].into_iter();
+            let iter = FixedValueIterator::new(0, length);
             Self::ZeroSized(iter)
         } else {
             let iter = NBitwiseIterator::new(data, unit_size);
@@ -26,6 +26,44 @@ where
             Self::ZeroSized(z) => z.next(),
             Self::NonZeroSized(n) => n.next(),
         }
+    }
+}
+
+pub(crate) struct FixedValueIterator<T> {
+    val: T,
+    length: usize,
+    pos: usize,
+}
+
+impl<T> FixedValueIterator<T> {
+    pub(crate) fn new(val: T, length: usize) -> Self {
+        Self {
+            val,
+            length,
+            pos: 0,
+        }
+    }
+}
+
+impl<T> Iterator for FixedValueIterator<T>
+where
+    T: Copy,
+{
+    type Item = T;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let val = if self.pos < self.length {
+            Some(self.val)
+        } else {
+            None
+        };
+        self.pos += 1;
+        val
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        let size = self.length - self.pos;
+        (size, Some(size))
     }
 }
 

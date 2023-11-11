@@ -3,7 +3,11 @@ use std::convert::TryInto;
 use num::ToPrimitive;
 
 use crate::{
-    decoders::{common::*, param::SimplePackingParam, stream::NBitwiseIterator},
+    decoders::{
+        common::*,
+        param::SimplePackingParam,
+        stream::{FixedValueIterator, NBitwiseIterator},
+    },
     error::*,
     utils::read_as,
 };
@@ -104,44 +108,6 @@ impl<I: Iterator<Item = N>, N: ToPrimitive> Iterator for SimplePackingDecodeIter
             }
             _ => None,
         }
-    }
-}
-
-pub(crate) struct FixedValueIterator<T> {
-    val: T,
-    length: usize,
-    pos: usize,
-}
-
-impl<T> FixedValueIterator<T> {
-    pub(crate) fn new(val: T, length: usize) -> Self {
-        Self {
-            val,
-            length,
-            pos: 0,
-        }
-    }
-}
-
-impl<T> Iterator for FixedValueIterator<T>
-where
-    T: Copy,
-{
-    type Item = T;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        let val = if self.pos < self.length {
-            Some(self.val)
-        } else {
-            None
-        };
-        self.pos += 1;
-        val
-    }
-
-    fn size_hint(&self) -> (usize, Option<usize>) {
-        let size = self.length - self.pos;
-        (size, Some(size))
     }
 }
 
