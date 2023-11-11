@@ -32,16 +32,11 @@ where
 pub(crate) struct FixedValueIterator<T> {
     val: T,
     length: usize,
-    pos: usize,
 }
 
 impl<T> FixedValueIterator<T> {
     pub(crate) fn new(val: T, length: usize) -> Self {
-        Self {
-            val,
-            length,
-            pos: 0,
-        }
+        Self { val, length }
     }
 }
 
@@ -52,18 +47,17 @@ where
     type Item = T;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let val = if self.pos < self.length {
+        let val = if self.length > 0 {
             Some(self.val)
         } else {
             None
         };
-        self.pos += 1;
+        self.length -= 1;
         val
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
-        let size = self.length - self.pos;
-        (size, Some(size))
+        (self.length, Some(self.length))
     }
 }
 
