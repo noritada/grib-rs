@@ -9,7 +9,9 @@ use crate::{
 };
 
 pub(crate) enum SimplePackingDecodeIteratorWrapper<I> {
-    FixedValue(FixedValueIterator),
+    // Based on the implementation of wgrib2, if nbits equals 0, return a constant
+    // field where the data value at each grid point is the reference value.
+    FixedValue(FixedValueIterator<f32>),
     SimplePacking(SimplePackingDecodeIterator<I>),
 }
 
@@ -105,30 +107,31 @@ impl<I: Iterator<Item = N>, N: ToPrimitive> Iterator for SimplePackingDecodeIter
     }
 }
 
-// Based on the implementation of wgrib2, if nbits equals 0, return a constant
-// field where the data value at each grid point is the reference value.
-pub(crate) struct FixedValueIterator {
-    ref_val: f32,
+pub(crate) struct FixedValueIterator<T> {
+    val: T,
     length: usize,
     pos: usize,
 }
 
-impl FixedValueIterator {
-    pub(crate) fn new(ref_val: f32, length: usize) -> Self {
+impl<T> FixedValueIterator<T> {
+    pub(crate) fn new(val: T, length: usize) -> Self {
         Self {
-            ref_val,
+            val,
             length,
             pos: 0,
         }
     }
 }
 
-impl Iterator for FixedValueIterator {
-    type Item = f32;
+impl<T> Iterator for FixedValueIterator<T>
+where
+    T: Copy,
+{
+    type Item = T;
 
     fn next(&mut self) -> Option<Self::Item> {
         let val = if self.pos < self.length {
-            Some(self.ref_val)
+            Some(self.val)
         } else {
             None
         };
