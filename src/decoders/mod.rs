@@ -8,3 +8,4 @@ mod jpeg2000;
 mod png;
 mod run_length;
 mod simple;
+mod stream;

@@ -2,8 +2,9 @@ use crate::{
     decoders::{
         param::SimplePackingParam,
         simple::{SimplePackingDecodeError, SimplePackingDecodeIterator},
+        stream::NBitwiseIterator,
     },
-    utils::{read_as, NBitwiseIterator},
+    utils::read_as,
     DecodeError, Grib2SubmessageDecoder, GribError,
 };
 

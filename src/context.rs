@@ -84,12 +84,52 @@ impl Display for TemplateInfo {
     }
 }
 
+/// Reads a `Grib2` instance from an I/O stream of GRIB2.
+///
+/// # Examples
+///
+/// ```
+/// fn main() -> Result<(), Box<dyn std::error::Error>> {
+///     let f = std::fs::File::open(
+///         "testdata/icon_global_icosahedral_single-level_2021112018_000_TOT_PREC.grib2",
+///     )?;
+///     let f = std::io::BufReader::new(f);
+///     let result = grib::from_reader(f);
+///
+///     assert!(result.is_ok());
+///     let grib2 = result?;
+///     assert_eq!(grib2.len(), 1);
+///     Ok(())
+/// }
+/// ```
 pub fn from_reader<SR: Read + Seek>(
     reader: SR,
 ) -> Result<Grib2<SeekableGrib2Reader<SR>>, GribError> {
     Grib2::<SeekableGrib2Reader<SR>>::read_with_seekable(reader)
 }
 
+/// Reads a `Grib2` instance from bytes of GRIB2.
+///
+/// # Examples
+///
+/// ```
+/// use std::io::Read;
+///
+/// fn main() -> Result<(), Box<dyn std::error::Error>> {
+///     let f = std::fs::File::open(
+///         "testdata/icon_global_icosahedral_single-level_2021112018_000_TOT_PREC.grib2",
+///     )?;
+///     let mut f = std::io::BufReader::new(f);
+///     let mut buf = Vec::new();
+///     f.read_to_end(&mut buf).unwrap();
+///     let result = grib::from_slice(&buf);
+///
+///     assert!(result.is_ok());
+///     let grib2 = result?;
+///     assert_eq!(grib2.len(), 1);
+///     Ok(())
+/// }
+/// ```
 pub fn from_slice(bytes: &[u8]) -> Result<Grib2<SeekableGrib2Reader<Cursor<&[u8]>>>, GribError> {
     let reader = Cursor::new(bytes);
     Grib2::<SeekableGrib2Reader<Cursor<&[u8]>>>::read_with_seekable(reader)

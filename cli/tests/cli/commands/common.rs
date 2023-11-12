@@ -85,28 +85,28 @@ test_subcommands_with_wrong_input_files! {
         "decode",
         utils::testdata::non_grib_file()?,
         vec!["1.1"],
-        predicate::str::diff("error: Not GRIB data\n")
+        predicate::str::diff("error: empty GRIB2 data\n")
     ),
     (
         info_with_non_grib,
         "info",
         utils::testdata::non_grib_file()?,
         Vec::<&str>::new(),
-        predicate::str::diff("error: Not GRIB data\n")
+        predicate::str::diff("error: empty GRIB2 data\n")
     ),
     (
         inspect_with_non_grib,
         "inspect",
         utils::testdata::non_grib_file()?,
         Vec::<&str>::new(),
-        predicate::str::diff("error: Not GRIB data\n")
+        predicate::str::diff("error: empty GRIB2 data\n")
     ),
     (
         list_with_non_grib,
         "list",
         utils::testdata::non_grib_file()?,
         Vec::<&str>::new(),
-        predicate::str::diff("error: Not GRIB data\n")
+        predicate::str::diff("error: empty GRIB2 data\n")
     ),
     (
         decode_with_empty_file,
@@ -141,35 +141,27 @@ test_subcommands_with_wrong_input_files! {
         "decode",
         utils::testdata::too_small_file()?,
         vec!["1.1"],
-        predicate::str::diff(
-            "error: Read error: failed to fill whole buffer\n",
-        )
+        predicate::str::diff("error: empty GRIB2 data\n")
     ),
     (
         info_with_too_small_file,
         "info",
         utils::testdata::too_small_file()?,
         Vec::<&str>::new(),
-        predicate::str::diff(
-            "error: Read error: failed to fill whole buffer\n",
-        )
+        predicate::str::diff("error: empty GRIB2 data\n")
     ),
     (
         inspect_with_too_small_file,
         "inspect",
         utils::testdata::too_small_file()?,
         Vec::<&str>::new(),
-        predicate::str::diff(
-            "error: Read error: failed to fill whole buffer\n",
-        )
+        predicate::str::diff("error: empty GRIB2 data\n")
     ),
     (
         list_with_too_small_file,
         "list",
         utils::testdata::too_small_file()?,
         Vec::<&str>::new(),
-        predicate::str::diff(
-            "error: Read error: failed to fill whole buffer\n",
-        )
+        predicate::str::diff("error: empty GRIB2 data\n")
     ),
 }

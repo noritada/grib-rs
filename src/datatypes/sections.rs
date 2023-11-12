@@ -18,6 +18,23 @@ pub struct Indicator {
     pub total_length: u64,
 }
 
+impl Indicator {
+    pub(crate) fn from_slice(slice: &[u8]) -> Result<Self, ParseError> {
+        let discipline = slice[6];
+        let version = slice[7];
+        if version != 2 {
+            return Err(ParseError::GRIBVersionMismatch(version));
+        }
+
+        let total_length = read_as!(u64, slice, 8);
+
+        Ok(Self {
+            discipline,
+            total_length,
+        })
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Identification {
     payload: Box<[u8]>,

@@ -3,7 +3,7 @@ use std::convert::TryInto;
 use openjpeg_sys as opj;
 
 use crate::{
-    decoders::{common::*, param::SimplePackingParam, simple::*},
+    decoders::{common::*, param::SimplePackingParam, simple::*, stream::FixedValueIterator},
     error::*,
     utils::read_as,
 };

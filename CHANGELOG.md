@@ -7,6 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.0] - 2023-11-11
+### Added
+
+- Library `grib`
+  - Support for GRIB files with non-GRIB byte sequences between messages. (#60)
+  - Support for Code Table 5.5 (missing value management for complex packing). (#61)
+  - Support for Template 5.2/7.2 (PNG format). (#62)
+  - New example scripts:
+    - examples/check_decoding_of_files.rs
+- Others
+  - The project has begun using GitHub Discussions as a forum. (#58)
+
+### Changed
+
+- Library `grib`
+  - Due to support for the input with non-GRIB byte sequences between messages, the reader now behaves differently (#60):
+    - If non-GRIB byte sequences are included in the input, the reader used to return an error, but now it skips those sequences and try to find the next GRIB message in the input.
+    - If there is no GRIB data in the input byte sequence, the reader used to return an error, but now it successfully reads empty data.
+  - Non-API changes:
+    - Users are now suggested to run `git submodule update --init` in build failure. (#57)
+
+### Fixed
+
+- Library `grib`
+  - Fixed an issue that the decoder returned wrong values when nbit is 0 in Template 5.3/7.3 (complex packing and spatial differencing). (#63)
+
+### Contributors
+
+- Thanks for letting us know about the need for the forum.
+  - Tom Clark
+- Thanks for sharing the data that cannot be processed.
+  - @sapiennervosa (#59)
+
 ## [0.7.1] - 2023-04-20
 ### Added
 
@@ -254,7 +287,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - inspect: display of information mainly for development purpose such as template numbers
     - list: display of a list of sections (the style is still tentative)
 
-[unreleased]: https://github.com/noritada/grib-rs/compare/v0.7.1...HEAD
+[unreleased]: https://github.com/noritada/grib-rs/compare/v0.8.0...HEAD
+[0.8.0]: https://github.com/noritada/grib-rs/compare/v0.7.1...v0.8.0
 [0.7.1]: https://github.com/noritada/grib-rs/compare/v0.7.0...v0.7.1
 [0.7.0]: https://github.com/noritada/grib-rs/compare/v0.6.1...v0.7.0
 [0.6.1]: https://github.com/noritada/grib-rs/compare/v0.6.0...v0.6.1

@@ -129,8 +129,8 @@ impl Grib2SubmessageDecoder {
     ) -> Result<Grib2DecodedValues<impl Iterator<Item = f32> + '_>, GribError> {
         let decoder = match self.template_num {
             0 => Grib2ValueIterator::Template0(simple::decode(self)?),
-            2 => Grib2ValueIterator::Template2(complex::decode(self)?), // incorrect
-            3 => Grib2ValueIterator::Template3(complex::decode(self)?),
+            2 => Grib2ValueIterator::Template2(complex::decode_7_2(self)?),
+            3 => Grib2ValueIterator::Template3(complex::decode_7_3(self)?),
             #[cfg(not(target_arch = "wasm32"))]
             40 => Grib2ValueIterator::Template40(jpeg2000::decode(self)?),
             41 => Grib2ValueIterator::Template41(png::decode(self)?),
