@@ -129,6 +129,7 @@ impl Grib2SubmessageDecoder {
     ) -> Result<Grib2DecodedValues<impl Iterator<Item = f32> + '_>, GribError> {
         let decoder = match self.template_num {
             0 => Grib2ValueIterator::Template0(simple::decode(self)?),
+            2 => Grib2ValueIterator::Template2(complex::decode(self)?), // incorrect
             3 => Grib2ValueIterator::Template3(complex::decode(self)?),
             #[cfg(not(target_arch = "wasm32"))]
             40 => Grib2ValueIterator::Template40(jpeg2000::decode(self)?),
@@ -170,24 +171,25 @@ where
 // even when JPEG 2000 code stream format support is not available (there may be
 // a better way).
 #[cfg(target_arch = "wasm32")]
-type Grib2ValueIterator<I, J, L> =
-    Grib2SubmessageDecoderIteratorWrapper<I, J, std::vec::IntoIter<f32>, L>;
+type Grib2ValueIterator<I, J, K, M> =
+    Grib2SubmessageDecoderIteratorWrapper<I, J, K, std::vec::IntoIter<f32>, M>;
 #[cfg(not(target_arch = "wasm32"))]
-type Grib2ValueIterator<I, J, K, L> = Grib2SubmessageDecoderIteratorWrapper<I, J, K, L>;
+type Grib2ValueIterator<I, J, K, L, M> = Grib2SubmessageDecoderIteratorWrapper<I, J, K, L, M>;
 
-enum Grib2SubmessageDecoderIteratorWrapper<I, J, K, L> {
+enum Grib2SubmessageDecoderIteratorWrapper<I, J, K, L, M> {
     Template0(SimplePackingDecodeIteratorWrapper<I>),
-    Template3(SimplePackingDecodeIteratorWrapper<J>),
+    Template2(SimplePackingDecodeIteratorWrapper<J>),
+    Template3(SimplePackingDecodeIteratorWrapper<K>),
     #[allow(dead_code)]
     #[cfg(target_arch = "wasm32")]
-    Template40(PhantomData<K>),
+    Template40(PhantomData<L>),
     #[cfg(not(target_arch = "wasm32"))]
-    Template40(SimplePackingDecodeIteratorWrapper<K>),
-    Template41(SimplePackingDecodeIterator<L>),
+    Template40(SimplePackingDecodeIteratorWrapper<L>),
+    Template41(SimplePackingDecodeIterator<M>),
     Template200(std::vec::IntoIter<f32>),
 }
 
-impl<I, J, K, L> Iterator for Grib2SubmessageDecoderIteratorWrapper<I, J, K, L>
+impl<I, J, K, L, M> Iterator for Grib2SubmessageDecoderIteratorWrapper<I, J, K, L, M>
 where
     I: Iterator,
     <I as Iterator>::Item: ToPrimitive,
@@ -197,12 +199,15 @@ where
     <K as Iterator>::Item: ToPrimitive,
     L: Iterator,
     <L as Iterator>::Item: ToPrimitive,
+    M: Iterator,
+    <M as Iterator>::Item: ToPrimitive,
 {
     type Item = f32;
 
     fn next(&mut self) -> Option<Self::Item> {
         match self {
             Self::Template0(inner) => inner.next(),
+            Self::Template2(inner) => inner.next(),
             Self::Template3(inner) => inner.next(),
             #[cfg(not(target_arch = "wasm32"))]
             Self::Template40(inner) => inner.next(),
@@ -216,6 +221,7 @@ where
     fn size_hint(&self) -> (usize, Option<usize>) {
         match self {
             Self::Template0(inner) => inner.size_hint(),
+            Self::Template2(inner) => inner.size_hint(),
             Self::Template3(inner) => inner.size_hint(),
             #[cfg(not(target_arch = "wasm32"))]
             Self::Template40(inner) => inner.size_hint(),
