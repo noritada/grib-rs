@@ -1,11 +1,15 @@
+#[cfg(target_arch = "wasm32")]
+use std::marker::PhantomData;
+
 use num::ToPrimitive;
 
+#[cfg(not(target_arch = "wasm32"))]
+use crate::decoders::jpeg2000::{self, Jpeg2000CodeStreamDecodeError};
 use crate::{
     context::{SectionBody, SubMessage},
     decoders::{
         bitmap::{create_bitmap_for_nonnullable_data, BitmapDecodeIterator},
         complex::{self, ComplexPackingDecodeError},
-        jpeg2000::{self, Jpeg2000CodeStreamDecodeError},
         png::{self, PngDecodeError},
         run_length::{self, RunLengthEncodingDecodeError},
         simple::{
@@ -124,12 +128,13 @@ impl Grib2SubmessageDecoder {
         &self,
     ) -> Result<Grib2DecodedValues<impl Iterator<Item = f32> + '_>, GribError> {
         let decoder = match self.template_num {
-            0 => Grib2SubmessageDecoderIteratorWrapper::Template0(simple::decode(self)?),
-            2 => Grib2SubmessageDecoderIteratorWrapper::Template2(complex::decode_7_2(self)?),
-            3 => Grib2SubmessageDecoderIteratorWrapper::Template3(complex::decode_7_3(self)?),
-            40 => Grib2SubmessageDecoderIteratorWrapper::Template40(jpeg2000::decode(self)?),
-            41 => Grib2SubmessageDecoderIteratorWrapper::Template41(png::decode(self)?),
-            200 => Grib2SubmessageDecoderIteratorWrapper::Template200(run_length::decode(self)?),
+            0 => Grib2ValueIterator::Template0(simple::decode(self)?),
+            2 => Grib2ValueIterator::Template2(complex::decode_7_2(self)?),
+            3 => Grib2ValueIterator::Template3(complex::decode_7_3(self)?),
+            #[cfg(not(target_arch = "wasm32"))]
+            40 => Grib2ValueIterator::Template40(jpeg2000::decode(self)?),
+            41 => Grib2ValueIterator::Template41(png::decode(self)?),
+            200 => Grib2ValueIterator::Template200(run_length::decode(self)?),
             _ => {
                 return Err(GribError::DecodeError(
                     DecodeError::TemplateNumberUnsupported,
@@ -161,10 +166,24 @@ where
     }
 }
 
+// Rust does not allow modification of generics type parameters or where clauses
+// in conditonal compilation at this time. This is a trick to allow compilation
+// even when JPEG 2000 code stream format support is not available (there may be
+// a better way).
+#[cfg(target_arch = "wasm32")]
+type Grib2ValueIterator<I, J, K, M> =
+    Grib2SubmessageDecoderIteratorWrapper<I, J, K, std::vec::IntoIter<f32>, M>;
+#[cfg(not(target_arch = "wasm32"))]
+type Grib2ValueIterator<I, J, K, L, M> = Grib2SubmessageDecoderIteratorWrapper<I, J, K, L, M>;
+
 enum Grib2SubmessageDecoderIteratorWrapper<I, J, K, L, M> {
     Template0(SimplePackingDecodeIteratorWrapper<I>),
     Template2(SimplePackingDecodeIteratorWrapper<J>),
     Template3(SimplePackingDecodeIteratorWrapper<K>),
+    #[allow(dead_code)]
+    #[cfg(target_arch = "wasm32")]
+    Template40(PhantomData<L>),
+    #[cfg(not(target_arch = "wasm32"))]
     Template40(SimplePackingDecodeIteratorWrapper<L>),
     Template41(SimplePackingDecodeIterator<M>),
     Template200(std::vec::IntoIter<f32>),
@@ -190,7 +209,10 @@ where
             Self::Template0(inner) => inner.next(),
             Self::Template2(inner) => inner.next(),
             Self::Template3(inner) => inner.next(),
+            #[cfg(not(target_arch = "wasm32"))]
             Self::Template40(inner) => inner.next(),
+            #[cfg(target_arch = "wasm32")]
+            Self::Template40(_) => unreachable!(),
             Self::Template41(inner) => inner.next(),
             Self::Template200(inner) => inner.next(),
         }
@@ -201,7 +223,10 @@ where
             Self::Template0(inner) => inner.size_hint(),
             Self::Template2(inner) => inner.size_hint(),
             Self::Template3(inner) => inner.size_hint(),
+            #[cfg(not(target_arch = "wasm32"))]
             Self::Template40(inner) => inner.size_hint(),
+            #[cfg(target_arch = "wasm32")]
+            Self::Template40(_) => unreachable!(),
             Self::Template41(inner) => inner.size_hint(),
             Self::Template200(inner) => inner.size_hint(),
         }
@@ -214,6 +239,7 @@ pub enum DecodeError {
     BitMapIndicatorUnsupported,
     SimplePackingDecodeError(SimplePackingDecodeError),
     ComplexPackingDecodeError(ComplexPackingDecodeError),
+    #[cfg(not(target_arch = "wasm32"))]
     Jpeg2000CodeStreamDecodeError(Jpeg2000CodeStreamDecodeError),
     PngDecodeError(PngDecodeError),
     RunLengthEncodingDecodeError(RunLengthEncodingDecodeError),
@@ -232,6 +258,7 @@ impl From<ComplexPackingDecodeError> for DecodeError {
     }
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 impl From<Jpeg2000CodeStreamDecodeError> for DecodeError {
     fn from(e: Jpeg2000CodeStreamDecodeError) -> Self {
         Self::Jpeg2000CodeStreamDecodeError(e)

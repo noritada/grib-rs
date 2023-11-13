@@ -46,6 +46,22 @@ jobs:
     - name: Run tests
       run: cargo test --verbose --workspace
 
+  build_wasm:
+    name: Building library for wasm
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+      with:
+        submodules: recursive
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        targets: wasm32-unknown-unknown
+    - name: Build
+      run: cargo build --target wasm32-unknown-unknown --verbose
+
   address_sanitizer:
     name: Address sanitizer
     runs-on: ubuntu-latest
