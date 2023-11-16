@@ -4,7 +4,7 @@ use num::ToPrimitive;
 
 use self::missing::DecodedValue::{self, Missing1, Missing2, Normal};
 use crate::{
-    decoders::{
+    decoder::{
         common::*,
         param::{ComplexPackingParam, SimplePackingParam},
         simple::*,

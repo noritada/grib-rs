@@ -1,7 +1,7 @@
 use std::convert::TryInto;
 
 use crate::{
-    decoders::{common::*, stream::NBitwiseIterator},
+    decoder::{common::*, stream::NBitwiseIterator},
     error::*,
     utils::read_as,
 };

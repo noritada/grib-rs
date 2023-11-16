@@ -4,10 +4,10 @@ use std::marker::PhantomData;
 use num::ToPrimitive;
 
 #[cfg(not(target_arch = "wasm32"))]
-use crate::decoders::jpeg2000::{self, Jpeg2000CodeStreamDecodeError};
+use crate::decoder::jpeg2000::{self, Jpeg2000CodeStreamDecodeError};
 use crate::{
     context::{SectionBody, SubMessage},
-    decoders::{
+    decoder::{
         bitmap::{create_bitmap_for_nonnullable_data, BitmapDecodeIterator},
         complex::{self, ComplexPackingDecodeError},
         png::{self, PngDecodeError},

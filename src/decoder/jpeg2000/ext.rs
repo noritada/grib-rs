@@ -21,7 +21,7 @@ use std::{
 use openjpeg_sys as opj;
 use opj::OPJ_CODEC_FORMAT;
 
-use crate::decoders::jpeg2000::Jpeg2000CodeStreamDecodeError;
+use crate::decoder::jpeg2000::Jpeg2000CodeStreamDecodeError;
 
 pub(crate) struct Stream(pub(crate) *mut opj::opj_stream_t);
 

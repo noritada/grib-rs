@@ -3,7 +3,7 @@ use std::convert::TryInto;
 use num::ToPrimitive;
 
 use crate::{
-    decoders::{
+    decoder::{
         common::*,
         param::SimplePackingParam,
         stream::{FixedValueIterator, NBitwiseIterator},

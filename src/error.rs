@@ -4,7 +4,7 @@ use std::{
     io,
 };
 
-use crate::decoders::*;
+use crate::decoder::*;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum GribError {
