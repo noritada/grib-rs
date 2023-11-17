@@ -4,9 +4,9 @@ use num::ToPrimitive;
 
 use crate::{
     decoder::{
-        common::*,
         param::SimplePackingParam,
         stream::{FixedValueIterator, NBitwiseIterator},
+        DecodeError, Grib2SubmessageDecoder,
     },
     error::*,
     utils::read_as,
