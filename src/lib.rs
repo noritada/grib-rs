@@ -2,7 +2,7 @@ pub mod codetables;
 mod context;
 pub mod cookbook;
 mod datatypes;
-mod decoders;
+mod decoder;
 mod error;
 mod grid;
 mod parser;
@@ -13,7 +13,7 @@ pub use crate::{
     codetables::Code::{self, Name, Num},
     context::*,
     datatypes::*,
-    decoders::*,
+    decoder::*,
     error::*,
     grid::*,
     parser::*,

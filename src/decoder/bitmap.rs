@@ -1,6 +1,6 @@
 use std::iter::Peekable;
 
-use crate::{decoders::common::DecodeError, error::GribError};
+use crate::{decoder::DecodeError, error::GribError};
 
 pub(crate) struct BitmapDecodeIterator<B: Iterator, I> {
     bitmap: Peekable<B>,

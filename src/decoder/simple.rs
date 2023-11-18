@@ -3,10 +3,10 @@ use std::convert::TryInto;
 use num::ToPrimitive;
 
 use crate::{
-    decoders::{
-        common::*,
+    decoder::{
         param::SimplePackingParam,
         stream::{FixedValueIterator, NBitwiseIterator},
+        DecodeError, Grib2SubmessageDecoder,
     },
     error::*,
     utils::read_as,

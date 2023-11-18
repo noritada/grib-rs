@@ -4,16 +4,16 @@ use std::marker::PhantomData;
 use num::ToPrimitive;
 
 #[cfg(not(target_arch = "wasm32"))]
-use crate::decoders::jpeg2000::{self, Jpeg2000CodeStreamDecodeError};
+use crate::decoder::jpeg2000::Jpeg2000CodeStreamDecodeError;
 use crate::{
     context::{SectionBody, SubMessage},
-    decoders::{
+    decoder::{
         bitmap::{create_bitmap_for_nonnullable_data, BitmapDecodeIterator},
-        complex::{self, ComplexPackingDecodeError},
-        png::{self, PngDecodeError},
-        run_length::{self, RunLengthEncodingDecodeError},
+        complex::ComplexPackingDecodeError,
+        png::PngDecodeError,
+        run_length::RunLengthEncodingDecodeError,
         simple::{
-            self, SimplePackingDecodeError, SimplePackingDecodeIterator,
+            SimplePackingDecodeError, SimplePackingDecodeIterator,
             SimplePackingDecodeIteratorWrapper,
         },
     },
@@ -270,3 +270,13 @@ impl From<RunLengthEncodingDecodeError> for DecodeError {
         Self::RunLengthEncodingDecodeError(e)
     }
 }
+
+mod bitmap;
+mod complex;
+#[cfg(not(target_arch = "wasm32"))]
+mod jpeg2000;
+mod param;
+mod png;
+mod run_length;
+mod simple;
+mod stream;

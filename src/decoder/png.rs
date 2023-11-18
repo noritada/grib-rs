@@ -1,5 +1,5 @@
 use crate::{
-    decoders::{
+    decoder::{
         param::SimplePackingParam,
         simple::{SimplePackingDecodeError, SimplePackingDecodeIterator},
         stream::NBitwiseIterator,
