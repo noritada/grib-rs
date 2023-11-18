@@ -63,6 +63,43 @@ impl LatLonGridDefinition {
         }
     }
 
+    /// Returns an iterator over `(i, j)` of grid points.
+    ///
+    /// Note that this is a low-level API and it is not checked that the number
+    /// of iterator iterations is consistent with the number of grid points
+    /// defined in the data.
+    ///
+    /// Examples
+    ///
+    /// ```
+    /// let def = grib::LatLonGridDefinition {
+    ///     ni: 2,
+    ///     nj: 3,
+    ///     first_point_lat: 0,
+    ///     first_point_lon: 0,
+    ///     last_point_lat: 2_000_000,
+    ///     last_point_lon: 1_000_000,
+    ///     scanning_mode: grib::ScanningMode(0b01000000),
+    /// };
+    /// let ij = def.ij();
+    /// assert!(ij.is_ok());
+    ///
+    /// let mut ij = ij.unwrap();
+    /// assert_eq!(ij.next(), Some((0, 0)));
+    /// assert_eq!(ij.next(), Some((1, 0)));
+    /// assert_eq!(ij.next(), Some((0, 1)));
+    /// ```
+    pub fn ij(&self) -> Result<GridPointIndexIterator, GribError> {
+        if self.scanning_mode.has_unsupported_flags() {
+            let ScanningMode(mode) = self.scanning_mode;
+            return Err(GribError::NotSupported(format!("scanning mode {mode}")));
+        }
+
+        let iter =
+            GridPointIndexIterator::new(self.ni as usize, self.nj as usize, self.scanning_mode);
+        Ok(iter)
+    }
+
     /// Returns an iterator over latitudes and longitudes of grid points.
     ///
     /// Note that this is a low-level API and it is not checked that the number
@@ -90,13 +127,11 @@ impl LatLonGridDefinition {
     /// assert_eq!(latlons.next(), Some((1.0, 0.0)));
     /// ```
     pub fn latlons(&self) -> Result<LatLonGridIterator, GribError> {
-        if self.scanning_mode.has_unsupported_flags() {
-            let ScanningMode(mode) = self.scanning_mode;
-            return Err(GribError::NotSupported(format!("scanning mode {mode}")));
-        }
         if !self.is_consistent() {
             return Err(GribError::InvalidValueError("Latitude and longitude for first/last grid points are not consistent with scanning mode".to_owned()));
         }
+
+        let ij = self.ij()?;
 
         let lat_diff = self.last_point_lat - self.first_point_lat;
         let lon_diff = self.last_point_lon - self.first_point_lon;
@@ -110,7 +145,7 @@ impl LatLonGridDefinition {
             .map(|x| (self.first_point_lon as f32 + x as f32 * lon_delta) / 1_000_000_f32)
             .collect();
 
-        let iter = LatLonGridIterator::new(lat, lon, self.scanning_mode);
+        let iter = LatLonGridIterator::new(lat, lon, ij);
         Ok(iter)
     }
 
@@ -141,33 +176,33 @@ impl LatLonGridDefinition {
     }
 }
 
-/// An iterator over latitudes and longitudes of grid points of a lat/lon grid.
+/// An iterator over `(i, j)` of grid points.
 ///
-/// This `struct` is created by the [`latlons`] method on
-/// [`LatLonGridDefinition`]. See its documentation for more.
+/// This `struct` is created by the [`ij`] method. See its documentation for
+/// more.
 ///
-/// [`latlons`]: LatLonGridDefinition::latlons
+/// [`ij`]: LatLonGridDefinition::ij
 #[derive(Clone)]
-pub struct LatLonGridIterator {
-    major: Vec<f32>,
-    minor: Vec<f32>,
+pub struct GridPointIndexIterator {
+    major_len: usize,
+    minor_len: usize,
     scanning_mode: ScanningMode,
     major_pos: usize,
     minor_pos: usize,
     increments: bool,
 }
 
-impl LatLonGridIterator {
-    pub(crate) fn new(lat: Vec<f32>, lon: Vec<f32>, scanning_mode: ScanningMode) -> Self {
-        let (major, minor) = if scanning_mode.is_consecutive_for_i() {
-            (lat, lon)
+impl GridPointIndexIterator {
+    pub(crate) fn new(i_len: usize, j_len: usize, scanning_mode: ScanningMode) -> Self {
+        let (major_len, minor_len) = if scanning_mode.is_consecutive_for_i() {
+            (j_len, i_len)
         } else {
-            (lon, lat)
+            (i_len, j_len)
         };
 
         Self {
-            major,
-            minor,
+            major_len,
+            minor_len,
             scanning_mode,
             minor_pos: 0,
             major_pos: 0,
@@ -176,24 +211,23 @@ impl LatLonGridIterator {
     }
 }
 
-impl Iterator for LatLonGridIterator {
-    type Item = (f32, f32);
+impl Iterator for GridPointIndexIterator {
+    type Item = (usize, usize);
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.major_pos == self.major.len() {
+        if self.major_pos == self.major_len {
             return None;
         }
 
-        let minor_pos = if self.increments {
+        let minor = if self.increments {
             self.minor_pos
         } else {
-            self.minor.len() - self.minor_pos - 1
+            self.minor_len - self.minor_pos - 1
         };
-        let minor = self.minor[minor_pos];
-        let major = self.major[self.major_pos];
+        let major = self.major_pos;
 
         self.minor_pos += 1;
-        if self.minor_pos == self.minor.len() {
+        if self.minor_pos == self.minor_len {
             self.major_pos += 1;
             self.minor_pos = 0;
             if self.scanning_mode.scans_alternating_rows() {
@@ -202,15 +236,47 @@ impl Iterator for LatLonGridIterator {
         }
 
         if self.scanning_mode.is_consecutive_for_i() {
-            Some((major, minor))
-        } else {
             Some((minor, major))
+        } else {
+            Some((major, minor))
         }
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
-        let len = (self.major.len() - self.major_pos) * self.minor.len() - self.minor_pos;
+        let len = (self.major_len - self.major_pos) * self.minor_len - self.minor_pos;
         (len, Some(len))
+    }
+}
+
+/// An iterator over latitudes and longitudes of grid points of a lat/lon grid.
+///
+/// This `struct` is created by the [`latlons`] method on
+/// [`LatLonGridDefinition`]. See its documentation for more.
+///
+/// [`latlons`]: LatLonGridDefinition::latlons
+#[derive(Clone)]
+pub struct LatLonGridIterator {
+    lat: Vec<f32>,
+    lon: Vec<f32>,
+    ij: GridPointIndexIterator,
+}
+
+impl LatLonGridIterator {
+    pub(crate) fn new(lat: Vec<f32>, lon: Vec<f32>, ij: GridPointIndexIterator) -> Self {
+        Self { lat, lon, ij }
+    }
+}
+
+impl Iterator for LatLonGridIterator {
+    type Item = (f32, f32);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let (i, j) = self.ij.next()?;
+        Some((self.lat[j], self.lon[i]))
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.ij.size_hint()
     }
 }
 
@@ -411,10 +477,11 @@ mod tests {
         ($(($name:ident, $scanning_mode:expr, $expected:expr),)*) => ($(
             #[test]
             fn $name() {
-                let lat = (0..3).into_iter().map(|i| i as f32).collect();
-                let lon = (10..12).into_iter().map(|i| i as f32).collect();
+                let lat = (0..3).into_iter().map(|i| i as f32).collect::<Vec<_>>();
+                let lon = (10..12).into_iter().map(|i| i as f32).collect::<Vec<_>>();
                 let scanning_mode = ScanningMode($scanning_mode);
-                let actual = LatLonGridIterator::new(lat, lon, scanning_mode).collect::<Vec<_>>();
+                let ij= GridPointIndexIterator::new(lon.len(), lat.len(), scanning_mode);
+                let actual = LatLonGridIterator::new(lat, lon, ij).collect::<Vec<_>>();
                 assert_eq!(actual, $expected);
             }
         )*);
@@ -473,10 +540,11 @@ mod tests {
 
     #[test]
     fn lat_lon_grid_iterator_size_hint() {
-        let lat = (0..3).into_iter().map(|i| i as f32).collect();
-        let lon = (10..12).into_iter().map(|i| i as f32).collect();
+        let lat = (0..3).into_iter().map(|i| i as f32).collect::<Vec<_>>();
+        let lon = (10..12).into_iter().map(|i| i as f32).collect::<Vec<_>>();
         let scanning_mode = ScanningMode(0b00000000);
-        let mut iter = LatLonGridIterator::new(lat, lon, scanning_mode);
+        let ij = GridPointIndexIterator::new(lon.len(), lat.len(), scanning_mode);
+        let mut iter = LatLonGridIterator::new(lat, lon, ij);
 
         assert_eq!(iter.size_hint(), (6, Some(6)));
         let _ = iter.next();
