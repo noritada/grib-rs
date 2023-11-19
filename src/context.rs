@@ -85,7 +85,7 @@ impl Display for TemplateInfo {
     }
 }
 
-/// Reads a `Grib2` instance from an I/O stream of GRIB2.
+/// Reads a [`Grib2`] instance from an I/O stream of GRIB2.
 ///
 /// # Examples
 ///
@@ -109,7 +109,7 @@ pub fn from_reader<SR: Read + Seek>(
     Grib2::<SeekableGrib2Reader<SR>>::read_with_seekable(reader)
 }
 
-/// Reads a `Grib2` instance from bytes of GRIB2.
+/// Reads a [`Grib2`] instance from bytes of GRIB2.
 ///
 /// # Examples
 ///
