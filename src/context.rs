@@ -15,6 +15,7 @@ use crate::{
     grid::GridPointIterator,
     parser::Grib2SubmessageIndexStream,
     reader::{Grib2Read, Grib2SectionStream, SeekableGrib2Reader, SECT8_ES_SIZE},
+    GridPointIndexIterator,
 };
 
 #[derive(Default, Debug, Clone, PartialEq, Eq)]
@@ -456,6 +457,57 @@ Data Representation:                    {}
             self.5.describe().unwrap_or_default(),
             self.repr_def().num_points(),
         )
+    }
+
+    /// Computes and returns an iterator over `(i, j)` of grid points.
+    ///
+    /// The order of items is the same as the order of the grid point values,
+    /// defined by the scanning mode ([`ScanningMode`](`crate::ScanningMode`))
+    /// in the data.
+    ///
+    /// This iterator allows users to perform their own coordinate calculations
+    /// for unsupported grid systems and map the results to grid point values.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use std::{
+    ///     fs::File,
+    ///     io::{BufReader, Read},
+    /// };
+    ///
+    /// fn main() -> Result<(), Box<dyn std::error::Error>> {
+    ///     let mut buf = Vec::new();
+    ///
+    ///     let f = File::open("testdata/gdas.t12z.pgrb2.0p25.f000.0-10.xz")?;
+    ///     let f = BufReader::new(f);
+    ///     let mut f = xz2::bufread::XzDecoder::new(f);
+    ///     f.read_to_end(&mut buf)?;
+    ///
+    ///     let f = std::io::Cursor::new(buf);
+    ///     let grib2 = grib::from_reader(f)?;
+    ///
+    ///     let mut iter = grib2.iter();
+    ///     let (_, message) = iter.next().ok_or_else(|| "first message is not found")?;
+    ///
+    ///     let mut latlons = message.ij()?;
+    ///     assert_eq!(latlons.next(), Some((0, 0)));
+    ///     assert_eq!(latlons.next(), Some((1, 0)));
+    ///     Ok(())
+    /// }
+    /// ```
+    pub fn ij(&self) -> Result<GridPointIndexIterator, GribError> {
+        let grid_def = self.grid_def();
+        let num_defined = grid_def.num_points() as usize;
+        let ij = GridDefinitionTemplateValues::try_from(grid_def)?.ij()?;
+        let (num_decoded, _) = ij.size_hint();
+        if num_defined == num_decoded {
+            Ok(ij)
+        } else {
+            Err(GribError::InvalidValueError(format!(
+                "number of grid points does not match: {num_defined} (defined) vs {num_decoded} (decoded)"
+            )))
+        }
     }
 
     /// Computes and returns an iterator over latitudes and longitudes of grid
