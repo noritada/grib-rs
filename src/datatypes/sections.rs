@@ -8,6 +8,7 @@ use crate::{
     error::*,
     grid::{GridPointIterator, LatLonGridDefinition},
     utils::{read_as, GribInt},
+    GridPointIndexIterator,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -187,6 +188,17 @@ pub enum GridDefinitionTemplateValues {
 }
 
 impl GridDefinitionTemplateValues {
+    /// Returns an iterator over `(i, j)` of grid points.
+    ///
+    /// Note that this is a low-level API and it is not checked that the number
+    /// of iterator iterations is consistent with the number of grid points
+    /// defined in the data.
+    pub fn ij(&self) -> Result<GridPointIndexIterator, GribError> {
+        match self {
+            Self::Template0(def) => def.ij(),
+        }
+    }
+
     /// Returns an iterator over latitudes and longitudes of grid points.
     ///
     /// Note that this is a low-level API and it is not checked that the number
