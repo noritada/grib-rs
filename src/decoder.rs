@@ -171,36 +171,37 @@ where
 // even when JPEG 2000 code stream format support is not available (there may be
 // a better way).
 #[cfg(target_arch = "wasm32")]
-type Grib2ValueIterator<I, J, K, M> =
-    Grib2SubmessageDecoderIteratorWrapper<I, J, K, std::vec::IntoIter<f32>, M>;
+type Grib2ValueIterator<T0, T2, T3, T41> =
+    Grib2SubmessageDecoderIteratorWrapper<T0, T2, T3, std::vec::IntoIter<f32>, T41>;
 #[cfg(not(target_arch = "wasm32"))]
-type Grib2ValueIterator<I, J, K, L, M> = Grib2SubmessageDecoderIteratorWrapper<I, J, K, L, M>;
+type Grib2ValueIterator<T0, T2, T3, T40, T41> =
+    Grib2SubmessageDecoderIteratorWrapper<T0, T2, T3, T40, T41>;
 
-enum Grib2SubmessageDecoderIteratorWrapper<I, J, K, L, M> {
-    Template0(SimplePackingDecodeIteratorWrapper<I>),
-    Template2(SimplePackingDecodeIteratorWrapper<J>),
-    Template3(SimplePackingDecodeIteratorWrapper<K>),
+enum Grib2SubmessageDecoderIteratorWrapper<T0, T2, T3, T40, T41> {
+    Template0(SimplePackingDecodeIteratorWrapper<T0>),
+    Template2(SimplePackingDecodeIteratorWrapper<T2>),
+    Template3(SimplePackingDecodeIteratorWrapper<T3>),
     #[allow(dead_code)]
     #[cfg(target_arch = "wasm32")]
-    Template40(PhantomData<L>),
+    Template40(PhantomData<T40>),
     #[cfg(not(target_arch = "wasm32"))]
-    Template40(SimplePackingDecodeIteratorWrapper<L>),
-    Template41(SimplePackingDecodeIterator<M>),
+    Template40(SimplePackingDecodeIteratorWrapper<T40>),
+    Template41(SimplePackingDecodeIterator<T41>),
     Template200(std::vec::IntoIter<f32>),
 }
 
-impl<I, J, K, L, M> Iterator for Grib2SubmessageDecoderIteratorWrapper<I, J, K, L, M>
+impl<T0, T2, T3, T40, T41> Iterator for Grib2SubmessageDecoderIteratorWrapper<T0, T2, T3, T40, T41>
 where
-    I: Iterator,
-    <I as Iterator>::Item: ToPrimitive,
-    J: Iterator,
-    <J as Iterator>::Item: ToPrimitive,
-    K: Iterator,
-    <K as Iterator>::Item: ToPrimitive,
-    L: Iterator,
-    <L as Iterator>::Item: ToPrimitive,
-    M: Iterator,
-    <M as Iterator>::Item: ToPrimitive,
+    T0: Iterator,
+    <T0 as Iterator>::Item: ToPrimitive,
+    T2: Iterator,
+    <T2 as Iterator>::Item: ToPrimitive,
+    T3: Iterator,
+    <T3 as Iterator>::Item: ToPrimitive,
+    T40: Iterator,
+    <T40 as Iterator>::Item: ToPrimitive,
+    T41: Iterator,
+    <T41 as Iterator>::Item: ToPrimitive,
 {
     type Item = f32;
 
