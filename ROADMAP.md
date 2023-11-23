@@ -4,13 +4,31 @@ To move this project forward, it is important to clarify the next steps so that 
 
 Note that this roadmap lists only larger topics. Smaller topics will be tackled as needed, depending on their priority.
 
-## Now
+## Current status (as of 0.8.0)
 
-Currently, as a first step, we are mainly focusing on expanding the basic functionality.
+Currently, we are mainly focusing on expanding the basic functionality.
 
-- Submessage selection and data extraction using forecast times, elements, and elevation levels, which requires adequate support for code tables 4.x and tempaltes 4.x
-- Data extraction using geographic coordinates, which requires adequate support for code tables 3.x and tempaltes 3.x
-- More supports of code tables and templates
+### Reading the overall structure
+
+The current implementation may be changed if any inconvenience arises, but since it works properly for the currently envisioned use, it is considered to be mostly stable.
+
+### Retrieving and showing the attribute values of each submessage (template 4.x)
+
+Retrieving and showing attribute values, such as weather elements, elevation level, forecast time, etc. from each submessage is currently supported, but there is much room for improvement and enhancement, both in terms of functionality and source code.
+
+Since manually adding support would result in a mass of boilerplate code, we are considering creating a proc macro to achieve the functionality with a smaller amount of source code.
+
+### Decoding (templates 5.x and 7.x)
+
+Decoding (unpacking) of 6 packing types are supported. The code is the most well structured and best written in this library crate.
+
+Although support for some packing types and some parameter values is lacking, it is relatively easy to add support if we have data that can be used to validate the decoding.
+
+### Referencing geographic coordinates (templates 3.x)
+
+Currently, only latitude/longitude (or equidistant cylindrical, or plate carree) grid is supported.
+
+A good deal of work needs to be done to add support for conversion from various grid systems to geographic coordinates.
 
 ## Next
 
