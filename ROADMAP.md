@@ -34,8 +34,12 @@ A good deal of work needs to be done to add support for conversion from various 
 
 Next step, it is important to do following things:
 
-- API stabilization for the 1.0 release
-- Documentation for the 1.0 release
+- Providing access to all parameters in the data
+- Brush up on error messages to clarify missing support
+- Core enhancements to facilitate new support for code tables and templates
+- API stabilization toward 1.0 release
+- Documentation enhancement toward 1.0 release
+- Support mechanisms for regionally defined code tables and templates
 
 ## Future
 
