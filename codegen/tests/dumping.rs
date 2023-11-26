@@ -2,9 +2,9 @@ use grib_shared::Dump;
 
 #[derive(grib_codegen::Dump)]
 pub struct Params {
-    // #[doc = "Field 1"]
+    /// Field 1
     field1: u8,
-    // #[doc = "Field 2"]
+    /// Field 2
     field2: u16,
     /// Field 3
     field3: i16,
@@ -24,6 +24,6 @@ fn main() {
     params.dump(&mut buf).unwrap();
     assert_eq!(
         String::from_utf8_lossy(buf.get_ref()),
-        "field1: 1\nfield2: 2\nfield3: 3\nfield4: 4\n"
+        "field1 (Field 1): 1\nfield2 (Field 2): 2\nfield3 (Field 3): 3\nfield4 (Field 4): 4\n"
     )
 }
