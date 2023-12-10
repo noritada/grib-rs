@@ -176,6 +176,120 @@ impl LatLonGridDefinition {
     }
 }
 
+#[derive(Debug, PartialEq, Eq)]
+pub struct LambertGridDefinition {
+    pub ni: u32,
+    pub nj: u32,
+    pub first_point_lat: i32,
+    pub first_point_lon: i32,
+    pub lad: i32,
+    pub lov: i32,
+    pub dx: u32,
+    pub dy: u32,
+    pub scanning_mode: ScanningMode,
+    pub latin1: i32,
+    pub latin2: i32,
+}
+
+impl LambertGridDefinition {
+    #[allow(clippy::too_many_arguments)]
+    pub fn new(
+        ni: u32,
+        nj: u32,
+        first_point_lat: i32,
+        first_point_lon: i32,
+        lad: i32,
+        lov: i32,
+        dx: u32,
+        dy: u32,
+        scanning_mode: ScanningMode,
+        latin1: i32,
+        latin2: i32,
+    ) -> Self {
+        Self {
+            ni,
+            nj,
+            first_point_lat,
+            first_point_lon,
+            lad,
+            lov,
+            dx,
+            dy,
+            scanning_mode,
+            latin1,
+            latin2,
+        }
+    }
+
+    /// Returns an iterator over `(i, j)` of grid points.
+    ///
+    /// Note that this is a low-level API and it is not checked that the number
+    /// of iterator iterations is consistent with the number of grid points
+    /// defined in the data.
+    ///
+    /// Examples
+    ///
+    /// ```
+    /// let def = grib::LambertGridDefinition {
+    ///     ni: 2,
+    ///     nj: 3,
+    ///     first_point_lat: 0,
+    ///     first_point_lon: 0,
+    ///     lad: 0,
+    ///     lov: 0,
+    ///     dx: 1000,
+    ///     dy: 1000,
+    ///     scanning_mode: grib::ScanningMode(0b01000000),
+    ///     latin1: 0,
+    ///     latin2: 0,
+    /// };
+    /// let ij = def.ij();
+    /// assert!(ij.is_ok());
+    ///
+    /// let mut ij = ij.unwrap();
+    /// assert_eq!(ij.next(), Some((0, 0)));
+    /// assert_eq!(ij.next(), Some((1, 0)));
+    /// assert_eq!(ij.next(), Some((0, 1)));
+    /// ```
+    pub fn ij(&self) -> Result<GridPointIndexIterator, GribError> {
+        if self.scanning_mode.has_unsupported_flags() {
+            let ScanningMode(mode) = self.scanning_mode;
+            return Err(GribError::NotSupported(format!("scanning mode {mode}")));
+        }
+
+        let iter =
+            GridPointIndexIterator::new(self.ni as usize, self.nj as usize, self.scanning_mode);
+        Ok(iter)
+    }
+
+    pub(crate) fn from_buf(buf: &[u8]) -> Self {
+        let ni = read_as!(u32, buf, 0);
+        let nj = read_as!(u32, buf, 4);
+        let first_point_lat = read_as!(u32, buf, 8).as_grib_int();
+        let first_point_lon = read_as!(u32, buf, 12).as_grib_int();
+        let lad = read_as!(u32, buf, 17).as_grib_int();
+        let lov = read_as!(u32, buf, 21).as_grib_int();
+        let dx = read_as!(u32, buf, 25);
+        let dy = read_as!(u32, buf, 29);
+        let scanning_mode = read_as!(u8, buf, 34);
+        let latin1 = read_as!(u32, buf, 35).as_grib_int();
+        let latin2 = read_as!(u32, buf, 39).as_grib_int();
+        Self::new(
+            ni,
+            nj,
+            first_point_lat,
+            first_point_lon,
+            lad,
+            lov,
+            dx,
+            dy,
+            ScanningMode(scanning_mode),
+            latin1,
+            latin2,
+        )
+    }
+}
+
 /// An iterator over `(i, j)` of grid points.
 ///
 /// This `struct` is created by the [`ij`] method. See its documentation for
@@ -347,6 +461,8 @@ impl ScanningMode {
 
 #[cfg(test)]
 mod tests {
+    use std::io::{BufReader, Read};
+
     use super::*;
 
     #[test]
@@ -549,5 +665,33 @@ mod tests {
         assert_eq!(iter.size_hint(), (6, Some(6)));
         let _ = iter.next();
         assert_eq!(iter.size_hint(), (5, Some(5)));
+    }
+
+    #[test]
+    fn lambert_grid_definition_from_buf() -> Result<(), Box<dyn std::error::Error>> {
+        let mut buf = Vec::new();
+
+        let f = std::fs::File::open("testdata/ds.critfireo.bin.xz")?;
+        let f = BufReader::new(f);
+        let mut f = xz2::bufread::XzDecoder::new(f);
+        f.read_to_end(&mut buf)?;
+
+        let actual = LambertGridDefinition::from_buf(&buf[0x93..]);
+        let expected = LambertGridDefinition::new(
+            2145,
+            1377,
+            20190000,
+            238449996,
+            25000000,
+            265000000,
+            2539703,
+            2539703,
+            ScanningMode(0b01010000),
+            25000000,
+            25000000,
+        );
+        assert_eq!(actual, expected);
+
+        Ok(())
     }
 }
