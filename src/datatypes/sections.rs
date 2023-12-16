@@ -6,7 +6,7 @@ use crate::{
     codetables::SUPPORTED_PROD_DEF_TEMPLATE_NUMBERS,
     datatypes::*,
     error::*,
-    grid::{GridPointIterator, LatLonGridDefinition},
+    grid::{GridPointIterator, LambertGridDefinition, LatLonGridDefinition},
     utils::{read_as, GribInt},
     GridPointIndexIterator,
 };
@@ -185,6 +185,7 @@ impl GridDefinition {
 #[derive(Debug, PartialEq, Eq)]
 pub enum GridDefinitionTemplateValues {
     Template0(LatLonGridDefinition),
+    Template30(LambertGridDefinition),
 }
 
 impl GridDefinitionTemplateValues {
@@ -196,6 +197,7 @@ impl GridDefinitionTemplateValues {
     pub fn ij(&self) -> Result<GridPointIndexIterator, GribError> {
         match self {
             Self::Template0(def) => def.ij(),
+            Self::Template30(def) => def.ij(),
         }
     }
 
@@ -207,6 +209,11 @@ impl GridDefinitionTemplateValues {
     pub fn latlons(&self) -> Result<GridPointIterator, GribError> {
         let iter = match self {
             Self::Template0(def) => GridPointIterator::LatLon(def.latlons()?),
+            Self::Template30(_def) => {
+                return Err(GribError::NotSupported(format!(
+                    "lat/lon calculation is not supported for this template"
+                )))
+            }
         };
         Ok(iter)
     }
@@ -222,6 +229,12 @@ impl TryFrom<&GridDefinition> for GridDefinitionTemplateValues {
                 let buf = &value.payload;
                 Ok(GridDefinitionTemplateValues::Template0(
                     LatLonGridDefinition::from_buf(&buf[25..]),
+                ))
+            }
+            30 => {
+                let buf = &value.payload;
+                Ok(GridDefinitionTemplateValues::Template30(
+                    LambertGridDefinition::from_buf(&buf[25..]),
                 ))
             }
             _ => Err(GribError::NotSupported(format!("template {num}"))),
