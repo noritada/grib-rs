@@ -8,6 +8,8 @@ on:
   schedule:
     - cron: '0 21 * * *'
 
+  workflow_dispatch:
+
 jobs:
   lint_and_clippy:
     name: Lint and Clippy
