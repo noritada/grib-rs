@@ -28,15 +28,8 @@ A world where everyone can read weather data easily although its interpretation 
     * Some parameters of each layer, which are important for most users
     * Underlying sections which make up layers and the entire data
   * Support for some code tables defined by WMO
-  * Decoding feature supporting following templates:
-    * Template 5.0/7.0 (simple packing)
-    * Template 5.2/7.2 (complex packing)
-    * Template 5.3/7.3 (complex packing and spatial differencing)
-    * Template 5.40/7.40 (JPEG 2000 code stream format)
-    * Template 5.41/7.41 (Portable Network Graphics (PNG))
-    * Template 5.200/7.200 (run length packing with level values)
-  * Support for computation of latitudes and longitudes of grid points for following templates:
-    * Template 3.0 (latitude/longitude (or equidistant cylindrical, or Plate Carree))
+  * Decoding feature supporting templates listed in the following table
+  * Support for computation of latitudes and longitudes of grid points for templates listed in the following table
 * CLI application `gribber` built on the top of the Rust library
   * 5 subcommends:
     * completions: generation of shell completions for your shell
@@ -44,6 +37,23 @@ A world where everyone can read weather data easily although its interpretation 
     * info: display of identification information
     * inspect: display of information mainly for development purpose such as template numbers
     * list: display of parameters for each layer inside
+
+### Supported grid definition templates
+
+| Template number | Grid system |
+| --- | --- |
+| 3.0 | latitude/longitude (or equidistant cylindrical, or Plate Carree) |
+
+### Supported data representation templates
+
+| Template number | Encoding method |
+| --- | --- |
+| 5.0 | simple packing |
+| 5.2 | complex packing |
+| 5.3 | complex packing and spatial differencing |
+| 5.40 | JPEG 2000 code stream format |
+| 5.41 | Portable Network Graphics (PNG) |
+| 5.200 | run length packing with level values |
 
 ## Planned features
 
