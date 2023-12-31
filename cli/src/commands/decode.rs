@@ -123,14 +123,15 @@ where
     I: Iterator<Item = ((f32, f32), f32)> + Clone,
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let header = format!("{:>9} {:>9} {:>9}", "Latitude", "Longitude", "Value",);
+        let header = format!("{:>10} {:>11} {:>9}", "Latitude", "Longitude", "Value",);
         let style = Style::new().bold();
         writeln!(f, "{}", style.apply_to(header.trim_end()))?;
 
         let Self(inner) = self;
         // cloning just to work around a mutability issue
         for ((lat, lon), value) in inner.clone() {
-            writeln!(f, "{lat:>9} {lon:>9} {value:>9}")?;
+            // lat/lons are formatted in "-?\d{2}.\d{6} -?\d{2}.\d{6}"
+            writeln!(f, "{lat:>10.6} {lon:>11.6} {value:>9}")?;
         }
         Ok(())
     }
