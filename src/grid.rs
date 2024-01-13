@@ -43,26 +43,6 @@ pub struct LatLonGridDefinition {
 }
 
 impl LatLonGridDefinition {
-    pub(crate) fn new(
-        ni: u32,
-        nj: u32,
-        first_point_lat: i32,
-        first_point_lon: i32,
-        last_point_lat: i32,
-        last_point_lon: i32,
-        scanning_mode: ScanningMode,
-    ) -> Self {
-        Self {
-            ni,
-            nj,
-            first_point_lat,
-            first_point_lon,
-            last_point_lat,
-            last_point_lon,
-            scanning_mode,
-        }
-    }
-
     /// Returns an iterator over `(i, j)` of grid points.
     ///
     /// Note that this is a low-level API and it is not checked that the number
@@ -164,15 +144,15 @@ impl LatLonGridDefinition {
         let last_point_lat = read_as!(u32, buf, 25).as_grib_int();
         let last_point_lon = read_as!(u32, buf, 29).as_grib_int();
         let scanning_mode = read_as!(u8, buf, 41);
-        Self::new(
+        Self {
             ni,
             nj,
             first_point_lat,
             first_point_lon,
             last_point_lat,
             last_point_lon,
-            ScanningMode(scanning_mode),
-        )
+            scanning_mode: ScanningMode(scanning_mode),
+        }
     }
 }
 
@@ -192,35 +172,6 @@ pub struct LambertGridDefinition {
 }
 
 impl LambertGridDefinition {
-    #[allow(clippy::too_many_arguments)]
-    pub fn new(
-        ni: u32,
-        nj: u32,
-        first_point_lat: i32,
-        first_point_lon: i32,
-        lad: i32,
-        lov: i32,
-        dx: u32,
-        dy: u32,
-        scanning_mode: ScanningMode,
-        latin1: i32,
-        latin2: i32,
-    ) -> Self {
-        Self {
-            ni,
-            nj,
-            first_point_lat,
-            first_point_lon,
-            lad,
-            lov,
-            dx,
-            dy,
-            scanning_mode,
-            latin1,
-            latin2,
-        }
-    }
-
     /// Returns an iterator over `(i, j)` of grid points.
     ///
     /// Note that this is a low-level API and it is not checked that the number
@@ -274,7 +225,7 @@ impl LambertGridDefinition {
         let scanning_mode = read_as!(u8, buf, 34);
         let latin1 = read_as!(u32, buf, 35).as_grib_int();
         let latin2 = read_as!(u32, buf, 39).as_grib_int();
-        Self::new(
+        Self {
             ni,
             nj,
             first_point_lat,
@@ -283,10 +234,10 @@ impl LambertGridDefinition {
             lov,
             dx,
             dy,
-            ScanningMode(scanning_mode),
+            scanning_mode: ScanningMode(scanning_mode),
             latin1,
             latin2,
-        )
+        }
     }
 }
 
@@ -467,15 +418,15 @@ mod tests {
 
     #[test]
     fn test_lat_lon_grid_definition_and_iteration() {
-        let grid = LatLonGridDefinition::new(
-            3,
-            2,
-            36_000_000,
-            135_000_000,
-            35_000_000,
-            137_000_000,
-            ScanningMode(0b00000000),
-        );
+        let grid = LatLonGridDefinition {
+            ni: 3,
+            nj: 2,
+            first_point_lat: 36_000_000,
+            first_point_lon: 135_000_000,
+            last_point_lat: 35_000_000,
+            last_point_lon: 137_000_000,
+            scanning_mode: ScanningMode(0b00000000),
+        };
         let actual = grid.latlons().unwrap().collect::<Vec<_>>();
         let expected = vec![
             (36., 135.),
@@ -500,15 +451,15 @@ mod tests {
         ),)*) => ($(
             #[test]
             fn $name() {
-                let grid = LatLonGridDefinition::new(
-                    1,
-                    1,
-                    $first_point_lat,
-                    $first_point_lon,
-                    $last_point_lat,
-                    $last_point_lon,
-                    ScanningMode($scanning_mode),
-                );
+                let grid = LatLonGridDefinition {
+                    ni: 1,
+                    nj: 1,
+                    first_point_lat: $first_point_lat,
+                    first_point_lon: $first_point_lon,
+                    last_point_lat: $last_point_lat,
+                    last_point_lon: $last_point_lon,
+                    scanning_mode: ScanningMode($scanning_mode),
+                };
                 assert_eq!(grid.is_consistent(), $expected)
             }
         )*);
@@ -677,19 +628,19 @@ mod tests {
         f.read_to_end(&mut buf)?;
 
         let actual = LambertGridDefinition::from_buf(&buf[0x93..]);
-        let expected = LambertGridDefinition::new(
-            2145,
-            1377,
-            20190000,
-            238449996,
-            25000000,
-            265000000,
-            2539703,
-            2539703,
-            ScanningMode(0b01010000),
-            25000000,
-            25000000,
-        );
+        let expected = LambertGridDefinition {
+            ni: 2145,
+            nj: 1377,
+            first_point_lat: 20190000,
+            first_point_lon: 238449996,
+            lad: 25000000,
+            lov: 265000000,
+            dx: 2539703,
+            dy: 2539703,
+            scanning_mode: ScanningMode(0b01010000),
+            latin1: 25000000,
+            latin2: 25000000,
+        };
         assert_eq!(actual, expected);
 
         Ok(())

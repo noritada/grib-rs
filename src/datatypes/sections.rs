@@ -529,15 +529,15 @@ mod tests {
         .unwrap();
 
         let actual = GridDefinitionTemplateValues::try_from(&data).unwrap();
-        let expected = GridDefinitionTemplateValues::Template0(LatLonGridDefinition::new(
-            256,
-            336,
-            47958333,
-            118062500,
-            20041667,
-            149937500,
-            crate::grid::ScanningMode(0b00000000),
-        ));
+        let expected = GridDefinitionTemplateValues::Template0(LatLonGridDefinition {
+            ni: 256,
+            nj: 336,
+            first_point_lat: 47958333,
+            first_point_lon: 118062500,
+            last_point_lat: 20041667,
+            last_point_lon: 149937500,
+            scanning_mode: crate::grid::ScanningMode(0b00000000),
+        });
         assert_eq!(actual, expected);
     }
 
