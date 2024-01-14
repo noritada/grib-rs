@@ -209,11 +209,7 @@ impl GridDefinitionTemplateValues {
     pub fn latlons(&self) -> Result<GridPointIterator, GribError> {
         let iter = match self {
             Self::Template0(def) => GridPointIterator::LatLon(def.latlons()?),
-            Self::Template30(_def) => {
-                return Err(GribError::NotSupported(format!(
-                    "lat/lon calculation is not supported for this template"
-                )))
-            }
+            Self::Template30(def) => GridPointIterator::Lambert(def.latlons()?),
         };
         Ok(iter)
     }

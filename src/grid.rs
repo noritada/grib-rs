@@ -1,3 +1,5 @@
+use proj::Proj;
+
 use crate::{
     error::GribError,
     utils::{read_as, GribInt},
@@ -13,6 +15,7 @@ use crate::{
 #[derive(Clone)]
 pub enum GridPointIterator {
     LatLon(LatLonGridIterator),
+    Lambert(std::vec::IntoIter<(f32, f32)>),
 }
 
 impl Iterator for GridPointIterator {
@@ -21,12 +24,14 @@ impl Iterator for GridPointIterator {
     fn next(&mut self) -> Option<Self::Item> {
         match self {
             Self::LatLon(iter) => iter.next(),
+            Self::Lambert(iter) => iter.next(),
         }
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
         match self {
             Self::LatLon(iter) => iter.size_hint(),
+            Self::Lambert(iter) => iter.size_hint(),
         }
     }
 }
@@ -211,6 +216,63 @@ impl LambertGridDefinition {
         let iter =
             GridPointIndexIterator::new(self.ni as usize, self.nj as usize, self.scanning_mode);
         Ok(iter)
+    }
+
+    /// Returns an iterator over latitudes and longitudes of grid points.
+    ///
+    /// Note that this is a low-level API and it is not checked that the number
+    /// of iterator iterations is consistent with the number of grid points
+    /// defined in the data.
+    pub fn latlons(&self) -> Result<std::vec::IntoIter<(f32, f32)>, GribError> {
+        let lad = self.lad as f64 * 1e-6;
+        let lov = self.lov as f64 * 1e-6;
+        let latin1 = self.latin1 as f64 * 1e-6;
+        let latin2 = self.latin2 as f64 * 1e-6;
+        let proj_def =
+            format!("+proj=lcc +lat_0={lad} +lon_0={lov} +lat_1={latin1} +lat_2={latin2}");
+        let projection = Proj::new(&proj_def).map_err(|e| GribError::Unknown(e.to_string()))?;
+        let (first_corner_x, first_corner_y) = projection
+            .project(
+                (
+                    (self.first_point_lon as f64 * 1e-6).to_radians(),
+                    (self.first_point_lat as f64 * 1e-6).to_radians(),
+                ),
+                false,
+            )
+            .map_err(|e| GribError::Unknown(e.to_string()))?;
+
+        let dx = self.dx as f64 * 1e-3;
+        let dy = self.dy as f64 * 1e-3;
+        let dx = if !self.scanning_mode.scans_positively_for_i() && dx > 0. {
+            -dx
+        } else {
+            dx
+        };
+        let dy = if !self.scanning_mode.scans_positively_for_j() && dy > 0. {
+            -dy
+        } else {
+            dy
+        };
+
+        let ij = self.ij()?;
+        let mut ij = ij
+            .map(|(i, j)| {
+                (
+                    first_corner_x + dx * i as f64,
+                    first_corner_y + dy * j as f64,
+                )
+            })
+            .collect::<Vec<_>>();
+
+        let lonlat = projection
+            .project_array(&mut ij, true)
+            .map_err(|e| GribError::Unknown(e.to_string()))?;
+        let latlon = lonlat
+            .iter_mut()
+            .map(|(lon, lat)| (lat.to_degrees() as f32, lon.to_degrees() as f32))
+            .collect::<Vec<_>>();
+
+        Ok(latlon.into_iter())
     }
 
     pub(crate) fn from_buf(buf: &[u8]) -> Self {
