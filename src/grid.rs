@@ -478,6 +478,19 @@ mod tests {
 
     use super::*;
 
+    macro_rules! assert_almost_eq {
+        ($a1:expr, $a2:expr, $d:expr) => {
+            if !($a1 - $a2 < $d || $a2 - $a1 < $d) {
+                panic!();
+            }
+        };
+    }
+
+    fn assert_coord_almost_eq((x1, y1): (f32, f32), (x2, y2): (f32, f32), delta: f32) {
+        assert_almost_eq!(x1, x2, delta);
+        assert_almost_eq!(y1, y2, delta);
+    }
+
     #[test]
     fn test_lat_lon_grid_definition_and_iteration() {
         let grid = LatLonGridDefinition {
@@ -704,6 +717,39 @@ mod tests {
             latin2: 25000000,
         };
         assert_eq!(actual, expected);
+
+        Ok(())
+    }
+
+    #[test]
+    fn lambert_grid_latlon_computation() -> Result<(), Box<dyn std::error::Error>> {
+        let grid_def = LambertGridDefinition {
+            ni: 2145,
+            nj: 1377,
+            first_point_lat: 20190000,
+            first_point_lon: 238449996,
+            lad: 25000000,
+            lov: 265000000,
+            dx: 2539703,
+            dy: 2539703,
+            scanning_mode: ScanningMode(0b01010000),
+            latin1: 25000000,
+            latin2: 25000000,
+        };
+        let latlons = grid_def.latlons()?.collect::<Vec<_>>();
+        let delta = 1e-10;
+        assert_coord_almost_eq(latlons[0], (20.19, -121.550004), delta);
+        assert_coord_almost_eq(latlons[1], (20.19442682, -121.52621665), delta);
+        assert_coord_almost_eq(
+            latlons[latlons.len() - 2],
+            (50.10756403, -60.91298217),
+            delta,
+        );
+        assert_coord_almost_eq(
+            latlons[latlons.len() - 1],
+            (50.1024611, -60.88202274),
+            delta,
+        );
 
         Ok(())
     }
