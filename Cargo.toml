@@ -36,6 +36,7 @@ png = "0.17"
 openjpeg-sys = "1.0.5" # avoiding 1.0.2/1.0.4
 
 [dev-dependencies]
+flate2 = "1.0"
 tempfile = "3"
 xz2 = "0.1"
 

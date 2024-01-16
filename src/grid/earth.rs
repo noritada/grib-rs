@@ -68,12 +68,46 @@ impl EarthShapeDefinition {
 
 #[cfg(test)]
 mod tests {
+    use std::{
+        fs::File,
+        io::{BufReader, Read},
+    };
+
     use super::*;
 
+    fn ungz_as_bytes<P>(file_path: P) -> Result<Vec<u8>, std::io::Error>
+    where
+        P: AsRef<std::path::Path>,
+    {
+        let mut buf = Vec::new();
+
+        let f = File::open(file_path)?;
+        let f = BufReader::new(f);
+        let mut f = flate2::read::GzDecoder::new(f);
+        f.read_to_end(&mut buf)?;
+
+        Ok(buf)
+    }
+
+    fn unxz_as_bytes<P>(file_path: P) -> Result<Vec<u8>, std::io::Error>
+    where
+        P: AsRef<std::path::Path>,
+    {
+        let mut buf = Vec::new();
+
+        let f = File::open(file_path)?;
+        let f = BufReader::new(f);
+        let mut f = xz2::bufread::XzDecoder::new(f);
+        f.read_to_end(&mut buf)?;
+
+        Ok(buf)
+    }
+
     #[test]
-    fn radii_for_shape_1() {
-        // testdata/ds.critfireo.bin.xz
-        let earth = EarthShapeDefinition {
+    fn radii_for_shape_1() -> Result<(), Box<dyn std::error::Error>> {
+        let buf = unxz_as_bytes("testdata/ds.critfireo.bin.xz")?;
+        let earth_actual = EarthShapeDefinition::from_buf(&buf[0x83..]);
+        let earth_expected = EarthShapeDefinition {
             shape_of_the_earth: 1,
             scale_factor_of_radius_of_spherical_earth: 0,
             scaled_value_of_radius_of_spherical_earth: 6371200,
@@ -82,6 +116,70 @@ mod tests {
             scale_factor_of_earth_minor_axis: 0,
             scaled_value_of_earth_minor_axis: 0,
         };
-        assert_eq!(earth.radii(), Some((6_371_200., 6_371_200.)));
+        assert_eq!(earth_actual, earth_expected);
+        assert_eq!(earth_actual.radii(), Some((6_371_200., 6_371_200.)));
+
+        Ok(())
+    }
+
+    #[test]
+    fn radii_for_shape_2() -> Result<(), Box<dyn std::error::Error>> {
+        let buf = ungz_as_bytes(
+            "testdata/MRMS_ReflectivityAtLowestAltitude_00.50_20230406-120039.grib2.gz",
+        )?;
+        let earth_actual = EarthShapeDefinition::from_buf(&buf[0x33..]);
+        let earth_expected = EarthShapeDefinition {
+            shape_of_the_earth: 2,
+            scale_factor_of_radius_of_spherical_earth: 1,
+            scaled_value_of_radius_of_spherical_earth: 6367470,
+            scale_factor_of_earth_major_axis: 1,
+            scaled_value_of_earth_major_axis: 6378160,
+            scale_factor_of_earth_minor_axis: 1,
+            scaled_value_of_earth_minor_axis: 6356775,
+        };
+        assert_eq!(earth_actual, earth_expected);
+        assert_eq!(earth_actual.radii(), Some((6_378_160.0, 6_356_775.0)));
+
+        Ok(())
+    }
+
+    #[test]
+    fn radii_for_shape_4() -> Result<(), Box<dyn std::error::Error>> {
+        let buf = unxz_as_bytes(
+            "testdata/Z__C_RJTD_20160822020000_NOWC_GPV_Ggis10km_Pphw10_FH0000-0100_grib2.bin.xz",
+        )?;
+        let earth_actual = EarthShapeDefinition::from_buf(&buf[0x33..]);
+        let earth_expected = EarthShapeDefinition {
+            shape_of_the_earth: 4,
+            scale_factor_of_radius_of_spherical_earth: 0xff,
+            scaled_value_of_radius_of_spherical_earth: 0xffffffff,
+            scale_factor_of_earth_major_axis: 1,
+            scaled_value_of_earth_major_axis: 63781370,
+            scale_factor_of_earth_minor_axis: 1,
+            scaled_value_of_earth_minor_axis: 63567523,
+        };
+        assert_eq!(earth_actual, earth_expected);
+        assert_eq!(earth_actual.radii(), Some((6_378_137.0, 6_356_752.314)));
+
+        Ok(())
+    }
+
+    #[test]
+    fn radii_for_shape_6() -> Result<(), Box<dyn std::error::Error>> {
+        let buf = unxz_as_bytes("testdata/gdas.t12z.pgrb2.0p25.f000.0-10.xz")?;
+        let earth_actual = EarthShapeDefinition::from_buf(&buf[0x33..]);
+        let earth_expected = EarthShapeDefinition {
+            shape_of_the_earth: 6,
+            scale_factor_of_radius_of_spherical_earth: 0,
+            scaled_value_of_radius_of_spherical_earth: 0,
+            scale_factor_of_earth_major_axis: 0,
+            scaled_value_of_earth_major_axis: 0,
+            scale_factor_of_earth_minor_axis: 0,
+            scaled_value_of_earth_minor_axis: 0,
+        };
+        assert_eq!(earth_actual, earth_expected);
+        assert_eq!(earth_actual.radii(), Some((6_371_229.0, 6_371_229.0)));
+
+        Ok(())
     }
 }
