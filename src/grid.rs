@@ -1,5 +1,6 @@
 use proj::Proj;
 
+pub use self::earth::EarthShapeDefinition;
 use crate::{
     error::GribError,
     utils::{read_as, GribInt},
@@ -471,6 +472,8 @@ impl ScanningMode {
         self.0 & 0b00001111 != 0
     }
 }
+
+mod earth;
 
 #[cfg(test)]
 mod tests {
