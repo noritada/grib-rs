@@ -230,7 +230,7 @@ impl TryFrom<&GridDefinition> for GridDefinitionTemplateValues {
             30 => {
                 let buf = &value.payload;
                 Ok(GridDefinitionTemplateValues::Template30(
-                    LambertGridDefinition::from_buf(&buf[25..]),
+                    LambertGridDefinition::from_buf(&buf[9..]),
                 ))
             }
             _ => Err(GribError::NotSupported(format!("template {num}"))),

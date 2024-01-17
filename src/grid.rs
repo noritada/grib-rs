@@ -164,6 +164,7 @@ impl LatLonGridDefinition {
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct LambertGridDefinition {
+    pub earth_shape: EarthShapeDefinition,
     pub ni: u32,
     pub nj: u32,
     pub first_point_lat: i32,
@@ -188,6 +189,15 @@ impl LambertGridDefinition {
     ///
     /// ```
     /// let def = grib::LambertGridDefinition {
+    ///     earth_shape: grib::EarthShapeDefinition {
+    ///         shape_of_the_earth: 1,
+    ///         scale_factor_of_radius_of_spherical_earth: 0,
+    ///         scaled_value_of_radius_of_spherical_earth: 6371200,
+    ///         scale_factor_of_earth_major_axis: 0,
+    ///         scaled_value_of_earth_major_axis: 0,
+    ///         scale_factor_of_earth_minor_axis: 0,
+    ///         scaled_value_of_earth_minor_axis: 0,
+    ///     },
     ///     ni: 2,
     ///     nj: 3,
     ///     first_point_lat: 0,
@@ -229,8 +239,15 @@ impl LambertGridDefinition {
         let lov = self.lov as f64 * 1e-6;
         let latin1 = self.latin1 as f64 * 1e-6;
         let latin2 = self.latin2 as f64 * 1e-6;
-        let proj_def =
-            format!("+proj=lcc +lat_0={lad} +lon_0={lov} +lat_1={latin1} +lat_2={latin2}");
+        let (a, b) = self.earth_shape.radii().ok_or_else(|| {
+            GribError::NotSupported(format!(
+                "unknown value of Code Table 3.2 (shape of the Earth): {}",
+                self.earth_shape.shape_of_the_earth
+            ))
+        })?;
+        let proj_def = format!(
+            "+a={a} +b={b} +proj=lcc +lat_0={lad} +lon_0={lov} +lat_1={latin1} +lat_2={latin2}"
+        );
         let projection = Proj::new(&proj_def).map_err(|e| GribError::Unknown(e.to_string()))?;
         let (first_corner_x, first_corner_y) = projection
             .project(
@@ -277,18 +294,20 @@ impl LambertGridDefinition {
     }
 
     pub(crate) fn from_buf(buf: &[u8]) -> Self {
-        let ni = read_as!(u32, buf, 0);
-        let nj = read_as!(u32, buf, 4);
-        let first_point_lat = read_as!(u32, buf, 8).as_grib_int();
-        let first_point_lon = read_as!(u32, buf, 12).as_grib_int();
-        let lad = read_as!(u32, buf, 17).as_grib_int();
-        let lov = read_as!(u32, buf, 21).as_grib_int();
-        let dx = read_as!(u32, buf, 25);
-        let dy = read_as!(u32, buf, 29);
-        let scanning_mode = read_as!(u8, buf, 34);
-        let latin1 = read_as!(u32, buf, 35).as_grib_int();
-        let latin2 = read_as!(u32, buf, 39).as_grib_int();
+        let earth_shape = EarthShapeDefinition::from_buf(buf);
+        let ni = read_as!(u32, buf, 16);
+        let nj = read_as!(u32, buf, 20);
+        let first_point_lat = read_as!(u32, buf, 24).as_grib_int();
+        let first_point_lon = read_as!(u32, buf, 28).as_grib_int();
+        let lad = read_as!(u32, buf, 33).as_grib_int();
+        let lov = read_as!(u32, buf, 37).as_grib_int();
+        let dx = read_as!(u32, buf, 41);
+        let dy = read_as!(u32, buf, 45);
+        let scanning_mode = read_as!(u8, buf, 50);
+        let latin1 = read_as!(u32, buf, 51).as_grib_int();
+        let latin2 = read_as!(u32, buf, 55).as_grib_int();
         Self {
+            earth_shape,
             ni,
             nj,
             first_point_lat,
@@ -705,8 +724,17 @@ mod tests {
         let mut f = xz2::bufread::XzDecoder::new(f);
         f.read_to_end(&mut buf)?;
 
-        let actual = LambertGridDefinition::from_buf(&buf[0x93..]);
+        let actual = LambertGridDefinition::from_buf(&buf[0x83..]);
         let expected = LambertGridDefinition {
+            earth_shape: EarthShapeDefinition {
+                shape_of_the_earth: 1,
+                scale_factor_of_radius_of_spherical_earth: 0,
+                scaled_value_of_radius_of_spherical_earth: 6371200,
+                scale_factor_of_earth_major_axis: 0,
+                scaled_value_of_earth_major_axis: 0,
+                scale_factor_of_earth_minor_axis: 0,
+                scaled_value_of_earth_minor_axis: 0,
+            },
             ni: 2145,
             nj: 1377,
             first_point_lat: 20190000,
@@ -727,6 +755,15 @@ mod tests {
     #[test]
     fn lambert_grid_latlon_computation() -> Result<(), Box<dyn std::error::Error>> {
         let grid_def = LambertGridDefinition {
+            earth_shape: EarthShapeDefinition {
+                shape_of_the_earth: 1,
+                scale_factor_of_radius_of_spherical_earth: 0,
+                scaled_value_of_radius_of_spherical_earth: 6371200,
+                scale_factor_of_earth_major_axis: 0,
+                scaled_value_of_earth_major_axis: 0,
+                scale_factor_of_earth_minor_axis: 0,
+                scaled_value_of_earth_minor_axis: 0,
+            },
             ni: 2145,
             nj: 1377,
             first_point_lat: 20190000,
