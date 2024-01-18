@@ -9,6 +9,7 @@ GRIB format](https://weather.gc.ca/grib/index_e.html).
 This data is distributed under [Environment and Climate Change Canada Data Server End-use
 Licence](https://dd.weather.gc.ca/doc/LICENCE_GENERAL.txt).
 
+* `CMC_RDPA_APCP-024-0100cutoff_SFC_0_ps10km_2023121806_000.grib2.xz`
 * `CMC_glb_TMP_ISBL_1_latlon.24x.24_2021051800_P000.grib2`
 
 ## Data files from DWD
