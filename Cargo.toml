@@ -31,6 +31,7 @@ chrono = "0.4.23" # `TimeZone::with_ymd_and_hms` needed
 num = "0.4"
 num_enum = "0.7"
 png = "0.17"
+proj = { version = "0.27", optional = true }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 openjpeg-sys = "1.0.5" # avoiding 1.0.2/1.0.4
@@ -42,6 +43,9 @@ xz2 = "0.1"
 
 [build-dependencies]
 grib-build = { path = "gen", version = "0.4.2" }
+
+[features]
+gridpoints-proj = ["dep:proj"]
 
 [profile.release]
 strip = true

@@ -6,7 +6,7 @@ use crate::{
     codetables::SUPPORTED_PROD_DEF_TEMPLATE_NUMBERS,
     datatypes::*,
     error::*,
-    grid::{GridPointIterator, LatLonGridDefinition},
+    grid::{GridPointIterator, LambertGridDefinition, LatLonGridDefinition},
     utils::{read_as, GribInt},
     GridPointIndexIterator,
 };
@@ -185,6 +185,7 @@ impl GridDefinition {
 #[derive(Debug, PartialEq, Eq)]
 pub enum GridDefinitionTemplateValues {
     Template0(LatLonGridDefinition),
+    Template30(LambertGridDefinition),
 }
 
 impl GridDefinitionTemplateValues {
@@ -196,6 +197,7 @@ impl GridDefinitionTemplateValues {
     pub fn ij(&self) -> Result<GridPointIndexIterator, GribError> {
         match self {
             Self::Template0(def) => def.ij(),
+            Self::Template30(def) => def.ij(),
         }
     }
 
@@ -207,6 +209,15 @@ impl GridDefinitionTemplateValues {
     pub fn latlons(&self) -> Result<GridPointIterator, GribError> {
         let iter = match self {
             Self::Template0(def) => GridPointIterator::LatLon(def.latlons()?),
+            #[cfg(feature = "gridpoints-proj")]
+            Self::Template30(def) => GridPointIterator::Lambert(def.latlons()?),
+            #[cfg(not(feature = "gridpoints-proj"))]
+            Self::Template30(_) => {
+                return Err(GribError::NotSupported(
+                    "lat/lon computation support for the template is dropped in this build"
+                        .to_owned(),
+                ))
+            }
         };
         Ok(iter)
     }
@@ -222,6 +233,12 @@ impl TryFrom<&GridDefinition> for GridDefinitionTemplateValues {
                 let buf = &value.payload;
                 Ok(GridDefinitionTemplateValues::Template0(
                     LatLonGridDefinition::from_buf(&buf[25..]),
+                ))
+            }
+            30 => {
+                let buf = &value.payload;
+                Ok(GridDefinitionTemplateValues::Template30(
+                    LambertGridDefinition::from_buf(&buf[9..]),
                 ))
             }
             _ => Err(GribError::NotSupported(format!("template {num}"))),
@@ -516,15 +533,15 @@ mod tests {
         .unwrap();
 
         let actual = GridDefinitionTemplateValues::try_from(&data).unwrap();
-        let expected = GridDefinitionTemplateValues::Template0(LatLonGridDefinition::new(
-            256,
-            336,
-            47958333,
-            118062500,
-            20041667,
-            149937500,
-            crate::grid::ScanningMode(0b00000000),
-        ));
+        let expected = GridDefinitionTemplateValues::Template0(LatLonGridDefinition {
+            ni: 256,
+            nj: 336,
+            first_point_lat: 47958333,
+            first_point_lon: 118062500,
+            last_point_lat: 20041667,
+            last_point_lon: 149937500,
+            scanning_mode: crate::grid::ScanningMode(0b00000000),
+        });
         assert_eq!(actual, expected);
     }
 
