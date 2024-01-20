@@ -30,7 +30,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macOS-latest, windows-latest]
+        include:
+          - os: ubuntu-latest
+          - os: ubuntu-latest
+            features: --features gridpoints-proj
+          - os: windows-latest
+          - os: macOS-latest
+          - os: macOS-latest
+            features: --features gridpoints-proj
 
     runs-on: ${{ matrix.os }}
 
@@ -42,9 +49,9 @@ jobs:
     - name: Install Rust
       uses: dtolnay/rust-toolchain@stable
     - name: Build
-      run: cargo build --verbose --workspace
+      run: cargo build --verbose --workspace ${{ matrix.features }}
     - name: Run tests
-      run: cargo test --verbose --workspace
+      run: cargo test --verbose --workspace ${{ matrix.features }}
 
   build_wasm:
     name: Building library for wasm
