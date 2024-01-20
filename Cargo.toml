@@ -45,7 +45,7 @@ xz2 = "0.1"
 grib-build = { path = "gen", version = "0.4.2" }
 
 [features]
-proj = ["dep:proj"]
+gridpoints-proj = ["dep:proj"]
 
 [profile.release]
 strip = true

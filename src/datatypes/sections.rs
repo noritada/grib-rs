@@ -209,9 +209,9 @@ impl GridDefinitionTemplateValues {
     pub fn latlons(&self) -> Result<GridPointIterator, GribError> {
         let iter = match self {
             Self::Template0(def) => GridPointIterator::LatLon(def.latlons()?),
-            #[cfg(feature = "proj")]
+            #[cfg(feature = "gridpoints-proj")]
             Self::Template30(def) => GridPointIterator::Lambert(def.latlons()?),
-            #[cfg(not(feature = "proj"))]
+            #[cfg(not(feature = "gridpoints-proj"))]
             Self::Template30(_) => {
                 return Err(GribError::NotSupported(
                     "lat/lon computation support for the template is dropped in this build"

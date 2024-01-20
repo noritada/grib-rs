@@ -1,4 +1,4 @@
-#[cfg(feature = "proj")]
+#[cfg(feature = "gridpoints-proj")]
 use proj::Proj;
 
 pub use self::earth::EarthShapeDefinition;
@@ -235,7 +235,7 @@ impl LambertGridDefinition {
     /// Note that this is a low-level API and it is not checked that the number
     /// of iterator iterations is consistent with the number of grid points
     /// defined in the data.
-    #[cfg(feature = "proj")]
+    #[cfg(feature = "gridpoints-proj")]
     pub fn latlons(&self) -> Result<std::vec::IntoIter<(f32, f32)>, GribError> {
         let lad = self.lad as f64 * 1e-6;
         let lov = self.lov as f64 * 1e-6;
@@ -754,7 +754,7 @@ mod tests {
         Ok(())
     }
 
-    #[cfg(feature = "proj")]
+    #[cfg(feature = "gridpoints-proj")]
     #[test]
     fn lambert_grid_latlon_computation() -> Result<(), Box<dyn std::error::Error>> {
         let grid_def = LambertGridDefinition {
