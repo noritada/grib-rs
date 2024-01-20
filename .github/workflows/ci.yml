@@ -83,4 +83,4 @@ jobs:
         env:
           RUSTFLAGS: -Z sanitizer=address
           RUSTDOCFLAGS: -Z sanitizer=address
-        run: cargo test --target x86_64-unknown-linux-gnu --workspace
+        run: cargo test --target x86_64-unknown-linux-gnu --workspace --features gridpoints-proj
