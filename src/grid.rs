@@ -211,6 +211,7 @@ impl ProjectionCentreFlag {
 }
 
 mod earth;
+mod helpers;
 mod lambert;
 mod latlon;
 mod polar_stereographic;
