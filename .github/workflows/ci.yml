@@ -78,7 +78,7 @@ jobs:
     - name: Set up C++ build tools for building PROJ
       if: matrix.target == 'x86_64-unknown-linux-musl'
       run: |
-        sudo apt -qq install build-essential
+        sudo apt -qq install build-essential g++-multilib
         sudo ln -s /usr/bin/g++ /usr/bin/musl-g++
     - name: Build
       run: cargo build --target ${{ matrix.target }} --verbose --workspace ${{ matrix.features }}
