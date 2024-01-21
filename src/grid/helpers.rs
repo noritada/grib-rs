@@ -1,8 +1,10 @@
 #[cfg(feature = "gridpoints-proj")]
 use proj::Proj;
 
+#[allow(unused_imports)]
 use crate::{GribError, GridPointIndexIterator};
 
+#[cfg(feature = "gridpoints-proj")]
 pub(crate) fn latlons_from_projection_definition_and_first_point(
     proj_def: &str,
     first_point_latlon_in_degrees: (f64, f64),
@@ -96,6 +98,7 @@ pub(crate) mod test_helpers {
         (assert_almost_eq_panics_for_negative_positive, -0.01, 0.01, 0.001),
     }
 
+    #[allow(dead_code)]
     pub(crate) fn assert_coord_almost_eq((x1, y1): (f32, f32), (x2, y2): (f32, f32), delta: f32) {
         assert_almost_eq!(x1, x2, delta);
         assert_almost_eq!(y1, y2, delta);

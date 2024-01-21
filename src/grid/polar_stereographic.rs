@@ -159,7 +159,6 @@ mod tests {
     use std::io::{BufReader, Read};
 
     use super::*;
-    use crate::grid::helpers::test_helpers::assert_coord_almost_eq;
 
     #[test]
     fn polar_stereographic_grid_definition_from_buf() -> Result<(), Box<dyn std::error::Error>> {
@@ -202,6 +201,7 @@ mod tests {
     #[cfg(feature = "gridpoints-proj")]
     #[test]
     fn polar_stereographic_grid_latlon_computation() -> Result<(), Box<dyn std::error::Error>> {
+        use crate::grid::helpers::test_helpers::assert_coord_almost_eq;
         let grid_def = PolarStereographicGridDefinition {
             earth_shape: EarthShapeDefinition {
                 shape_of_the_earth: 6,
