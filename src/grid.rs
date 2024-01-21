@@ -2,6 +2,7 @@ pub use self::{
     earth::EarthShapeDefinition,
     lambert::LambertGridDefinition,
     latlon::{LatLonGridDefinition, LatLonGridIterator},
+    polar_stereographic::PolarStereographicGridDefinition,
 };
 
 /// An iterator over latitudes and longitudes of grid points in a submessage.
@@ -212,3 +213,4 @@ impl ProjectionCentreFlag {
 mod earth;
 mod lambert;
 mod latlon;
+mod polar_stereographic;

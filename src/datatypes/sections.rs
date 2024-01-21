@@ -8,7 +8,7 @@ use crate::{
     error::*,
     grid::{GridPointIterator, LambertGridDefinition, LatLonGridDefinition},
     utils::{read_as, GribInt},
-    GridPointIndexIterator,
+    GridPointIndexIterator, PolarStereographicGridDefinition,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -185,6 +185,7 @@ impl GridDefinition {
 #[derive(Debug, PartialEq, Eq)]
 pub enum GridDefinitionTemplateValues {
     Template0(LatLonGridDefinition),
+    Template20(PolarStereographicGridDefinition),
     Template30(LambertGridDefinition),
 }
 
@@ -197,6 +198,7 @@ impl GridDefinitionTemplateValues {
     pub fn ij(&self) -> Result<GridPointIndexIterator, GribError> {
         match self {
             Self::Template0(def) => def.ij(),
+            Self::Template20(def) => def.ij(),
             Self::Template30(def) => def.ij(),
         }
     }
@@ -210,9 +212,11 @@ impl GridDefinitionTemplateValues {
         let iter = match self {
             Self::Template0(def) => GridPointIterator::LatLon(def.latlons()?),
             #[cfg(feature = "gridpoints-proj")]
+            Self::Template20(def) => GridPointIterator::Lambert(def.latlons()?),
+            #[cfg(feature = "gridpoints-proj")]
             Self::Template30(def) => GridPointIterator::Lambert(def.latlons()?),
             #[cfg(not(feature = "gridpoints-proj"))]
-            Self::Template30(_) => {
+            _ => {
                 return Err(GribError::NotSupported(
                     "lat/lon computation support for the template is dropped in this build"
                         .to_owned(),
@@ -233,6 +237,12 @@ impl TryFrom<&GridDefinition> for GridDefinitionTemplateValues {
                 let buf = &value.payload;
                 Ok(GridDefinitionTemplateValues::Template0(
                     LatLonGridDefinition::from_buf(&buf[25..]),
+                ))
+            }
+            20 => {
+                let buf = &value.payload;
+                Ok(GridDefinitionTemplateValues::Template20(
+                    PolarStereographicGridDefinition::from_buf(&buf[9..]),
                 ))
             }
             30 => {
