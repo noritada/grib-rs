@@ -1,3 +1,44 @@
+#[cfg(feature = "gridpoints-proj")]
+use proj::Proj;
+
+use crate::{GribError, GridPointIndexIterator};
+
+pub(crate) fn latlons_from_projection_definition_and_first_point(
+    proj_def: &str,
+    first_point_latlon_in_degrees: (f64, f64),
+    delta_in_meters: (f64, f64),
+    indices: GridPointIndexIterator,
+) -> Result<std::vec::IntoIter<(f32, f32)>, GribError> {
+    let projection = Proj::new(proj_def).map_err(|e| GribError::Unknown(e.to_string()))?;
+    let (first_point_lat, first_point_lon) = first_point_latlon_in_degrees;
+    let (first_corner_x, first_corner_y) = projection
+        .project(
+            (first_point_lon.to_radians(), first_point_lat.to_radians()),
+            false,
+        )
+        .map_err(|e| GribError::Unknown(e.to_string()))?;
+
+    let (dx, dy) = delta_in_meters;
+    let mut xy = indices
+        .map(|(i, j)| {
+            (
+                first_corner_x + dx * i as f64,
+                first_corner_y + dy * j as f64,
+            )
+        })
+        .collect::<Vec<_>>();
+
+    let lonlat = projection
+        .project_array(&mut xy, true)
+        .map_err(|e| GribError::Unknown(e.to_string()))?;
+    let latlon = lonlat
+        .iter_mut()
+        .map(|(lon, lat)| (lat.to_degrees() as f32, lon.to_degrees() as f32))
+        .collect::<Vec<_>>();
+
+    Ok(latlon.into_iter())
+}
+
 #[cfg(test)]
 pub(crate) mod test_helpers {
     macro_rules! assert_almost_eq {

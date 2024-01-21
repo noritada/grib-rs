@@ -1,6 +1,3 @@
-#[cfg(feature = "gridpoints-proj")]
-use proj::Proj;
-
 use super::{earth::EarthShapeDefinition, GridPointIndexIterator, ScanningMode};
 use crate::{
     error::GribError,
@@ -94,16 +91,6 @@ impl LambertGridDefinition {
         let proj_def = format!(
             "+a={a} +b={b} +proj=lcc +lat_0={lad} +lon_0={lov} +lat_1={latin1} +lat_2={latin2}"
         );
-        let projection = Proj::new(&proj_def).map_err(|e| GribError::Unknown(e.to_string()))?;
-        let (first_corner_x, first_corner_y) = projection
-            .project(
-                (
-                    (self.first_point_lon as f64 * 1e-6).to_radians(),
-                    (self.first_point_lat as f64 * 1e-6).to_radians(),
-                ),
-                false,
-            )
-            .map_err(|e| GribError::Unknown(e.to_string()))?;
 
         let dx = self.dx as f64 * 1e-3;
         let dy = self.dy as f64 * 1e-3;
@@ -118,25 +105,15 @@ impl LambertGridDefinition {
             dy
         };
 
-        let ij = self.ij()?;
-        let mut ij = ij
-            .map(|(i, j)| {
-                (
-                    first_corner_x + dx * i as f64,
-                    first_corner_y + dy * j as f64,
-                )
-            })
-            .collect::<Vec<_>>();
-
-        let lonlat = projection
-            .project_array(&mut ij, true)
-            .map_err(|e| GribError::Unknown(e.to_string()))?;
-        let latlon = lonlat
-            .iter_mut()
-            .map(|(lon, lat)| (lat.to_degrees() as f32, lon.to_degrees() as f32))
-            .collect::<Vec<_>>();
-
-        Ok(latlon.into_iter())
+        super::helpers::latlons_from_projection_definition_and_first_point(
+            &proj_def,
+            (
+                self.first_point_lat as f64 * 1e-6,
+                self.first_point_lon as f64 * 1e-6,
+            ),
+            (dx, dy),
+            self.ij()?,
+        )
     }
 
     pub(crate) fn from_buf(buf: &[u8]) -> Self {
