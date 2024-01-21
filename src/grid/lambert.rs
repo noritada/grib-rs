@@ -177,7 +177,7 @@ mod tests {
 
     macro_rules! assert_almost_eq {
         ($a1:expr, $a2:expr, $d:expr) => {
-            if !($a1 - $a2 < $d || $a2 - $a1 < $d) {
+            if $a1 - $a2 > $d || $a2 - $a1 > $d {
                 panic!();
             }
         };
