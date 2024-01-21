@@ -2,10 +2,11 @@ use super::{earth::EarthShapeDefinition, GridPointIndexIterator, ScanningMode};
 use crate::{
     error::GribError,
     utils::{read_as, GribInt},
+    ProjectionCentreFlag,
 };
 
 #[derive(Debug, PartialEq, Eq)]
-pub struct LambertGridDefinition {
+pub struct PolarStereographicGridDefinition {
     pub earth_shape: EarthShapeDefinition,
     pub ni: u32,
     pub nj: u32,
@@ -15,12 +16,11 @@ pub struct LambertGridDefinition {
     pub lov: i32,
     pub dx: u32,
     pub dy: u32,
+    pub projection_centre: ProjectionCentreFlag,
     pub scanning_mode: ScanningMode,
-    pub latin1: i32,
-    pub latin2: i32,
 }
 
-impl LambertGridDefinition {
+impl PolarStereographicGridDefinition {
     /// Returns an iterator over `(i, j)` of grid points.
     ///
     /// Note that this is a low-level API and it is not checked that the number
@@ -30,15 +30,15 @@ impl LambertGridDefinition {
     /// Examples
     ///
     /// ```
-    /// let def = grib::LambertGridDefinition {
+    /// let def = grib::PolarStereographicGridDefinition {
     ///     earth_shape: grib::EarthShapeDefinition {
-    ///         shape_of_the_earth: 1,
-    ///         scale_factor_of_radius_of_spherical_earth: 0,
-    ///         scaled_value_of_radius_of_spherical_earth: 6371200,
-    ///         scale_factor_of_earth_major_axis: 0,
-    ///         scaled_value_of_earth_major_axis: 0,
-    ///         scale_factor_of_earth_minor_axis: 0,
-    ///         scaled_value_of_earth_minor_axis: 0,
+    ///         shape_of_the_earth: 6,
+    ///         scale_factor_of_radius_of_spherical_earth: 0xff,
+    ///         scaled_value_of_radius_of_spherical_earth: 0xffffffff,
+    ///         scale_factor_of_earth_major_axis: 0xff,
+    ///         scaled_value_of_earth_major_axis: 0xffffffff,
+    ///         scale_factor_of_earth_minor_axis: 0xff,
+    ///         scaled_value_of_earth_minor_axis: 0xffffffff,
     ///     },
     ///     ni: 2,
     ///     nj: 3,
@@ -48,9 +48,8 @@ impl LambertGridDefinition {
     ///     lov: 0,
     ///     dx: 1000,
     ///     dy: 1000,
+    ///     projection_centre: grib::ProjectionCentreFlag(0b00000000),
     ///     scanning_mode: grib::ScanningMode(0b01000000),
-    ///     latin1: 0,
-    ///     latin2: 0,
     /// };
     /// let ij = def.ij();
     /// assert!(ij.is_ok());
@@ -80,17 +79,28 @@ impl LambertGridDefinition {
     pub fn latlons(&self) -> Result<std::vec::IntoIter<(f32, f32)>, GribError> {
         let lad = self.lad as f64 * 1e-6;
         let lov = self.lov as f64 * 1e-6;
-        let latin1 = self.latin1 as f64 * 1e-6;
-        let latin2 = self.latin2 as f64 * 1e-6;
         let (a, b) = self.earth_shape.radii().ok_or_else(|| {
             GribError::NotSupported(format!(
                 "unknown value of Code Table 3.2 (shape of the Earth): {}",
                 self.earth_shape.shape_of_the_earth
             ))
         })?;
-        let proj_def = format!(
-            "+a={a} +b={b} +proj=lcc +lat_0={lad} +lon_0={lov} +lat_1={latin1} +lat_2={latin2}"
-        );
+
+        if self.projection_centre.has_unsupported_flags() {
+            let ProjectionCentreFlag(flag) = self.projection_centre;
+            return Err(GribError::NotSupported(format!("projection centre {flag}")));
+        }
+        let lat_origin = if self
+            .projection_centre
+            .contains_north_pole_on_projection_plane()
+        {
+            90.
+        } else {
+            -90.
+        };
+
+        let proj_def =
+            format!("+a={a} +b={b} +proj=stere +lat_ts={lad} +lat_0={lat_origin} +lon_0={lov}");
 
         let dx = self.dx as f64 * 1e-3;
         let dy = self.dy as f64 * 1e-3;
@@ -126,9 +136,8 @@ impl LambertGridDefinition {
         let lov = read_as!(u32, buf, 37).as_grib_int();
         let dx = read_as!(u32, buf, 41);
         let dy = read_as!(u32, buf, 45);
+        let projection_centre = read_as!(u8, buf, 49);
         let scanning_mode = read_as!(u8, buf, 50);
-        let latin1 = read_as!(u32, buf, 51).as_grib_int();
-        let latin2 = read_as!(u32, buf, 55).as_grib_int();
         Self {
             earth_shape,
             ni,
@@ -139,9 +148,8 @@ impl LambertGridDefinition {
             lov,
             dx,
             dy,
+            projection_centre: ProjectionCentreFlag(projection_centre),
             scanning_mode: ScanningMode(scanning_mode),
-            latin1,
-            latin2,
         }
     }
 }
@@ -153,36 +161,37 @@ mod tests {
     use super::*;
 
     #[test]
-    fn lambert_grid_definition_from_buf() -> Result<(), Box<dyn std::error::Error>> {
+    fn polar_stereographic_grid_definition_from_buf() -> Result<(), Box<dyn std::error::Error>> {
         let mut buf = Vec::new();
 
-        let f = std::fs::File::open("testdata/ds.critfireo.bin.xz")?;
+        let f = std::fs::File::open(
+            "testdata/CMC_RDPA_APCP-024-0100cutoff_SFC_0_ps10km_2023121806_000.grib2.xz",
+        )?;
         let f = BufReader::new(f);
         let mut f = xz2::bufread::XzDecoder::new(f);
         f.read_to_end(&mut buf)?;
 
-        let actual = LambertGridDefinition::from_buf(&buf[0x83..]);
-        let expected = LambertGridDefinition {
+        let actual = PolarStereographicGridDefinition::from_buf(&buf[0x33..]);
+        let expected = PolarStereographicGridDefinition {
             earth_shape: EarthShapeDefinition {
-                shape_of_the_earth: 1,
-                scale_factor_of_radius_of_spherical_earth: 0,
-                scaled_value_of_radius_of_spherical_earth: 6371200,
-                scale_factor_of_earth_major_axis: 0,
-                scaled_value_of_earth_major_axis: 0,
-                scale_factor_of_earth_minor_axis: 0,
-                scaled_value_of_earth_minor_axis: 0,
+                shape_of_the_earth: 6,
+                scale_factor_of_radius_of_spherical_earth: 0xff,
+                scaled_value_of_radius_of_spherical_earth: 0xffffffff,
+                scale_factor_of_earth_major_axis: 0xff,
+                scaled_value_of_earth_major_axis: 0xffffffff,
+                scale_factor_of_earth_minor_axis: 0xff,
+                scaled_value_of_earth_minor_axis: 0xffffffff,
             },
-            ni: 2145,
-            nj: 1377,
-            first_point_lat: 20190000,
-            first_point_lon: 238449996,
-            lad: 25000000,
-            lov: 265000000,
-            dx: 2539703,
-            dy: 2539703,
-            scanning_mode: ScanningMode(0b01010000),
-            latin1: 25000000,
-            latin2: 25000000,
+            ni: 935,
+            nj: 824,
+            first_point_lat: 18145030,
+            first_point_lon: 217107456,
+            lad: 60000000,
+            lov: 249000000,
+            dx: 10000000,
+            dy: 10000000,
+            projection_centre: ProjectionCentreFlag(0b00000000),
+            scanning_mode: ScanningMode(0b01000000),
         };
         assert_eq!(actual, expected);
 
@@ -191,44 +200,43 @@ mod tests {
 
     #[cfg(feature = "gridpoints-proj")]
     #[test]
-    fn lambert_grid_latlon_computation() -> Result<(), Box<dyn std::error::Error>> {
+    fn polar_stereographic_grid_latlon_computation() -> Result<(), Box<dyn std::error::Error>> {
         use crate::grid::helpers::test_helpers::assert_coord_almost_eq;
-        let grid_def = LambertGridDefinition {
+        let grid_def = PolarStereographicGridDefinition {
             earth_shape: EarthShapeDefinition {
-                shape_of_the_earth: 1,
-                scale_factor_of_radius_of_spherical_earth: 0,
-                scaled_value_of_radius_of_spherical_earth: 6371200,
-                scale_factor_of_earth_major_axis: 0,
-                scaled_value_of_earth_major_axis: 0,
-                scale_factor_of_earth_minor_axis: 0,
-                scaled_value_of_earth_minor_axis: 0,
+                shape_of_the_earth: 6,
+                scale_factor_of_radius_of_spherical_earth: 0xff,
+                scaled_value_of_radius_of_spherical_earth: 0xffffffff,
+                scale_factor_of_earth_major_axis: 0xff,
+                scaled_value_of_earth_major_axis: 0xffffffff,
+                scale_factor_of_earth_minor_axis: 0xff,
+                scaled_value_of_earth_minor_axis: 0xffffffff,
             },
-            ni: 2145,
-            nj: 1377,
-            first_point_lat: 20190000,
-            first_point_lon: 238449996,
-            lad: 25000000,
-            lov: 265000000,
-            dx: 2539703,
-            dy: 2539703,
-            scanning_mode: ScanningMode(0b01010000),
-            latin1: 25000000,
-            latin2: 25000000,
+            ni: 935,
+            nj: 824,
+            first_point_lat: 18145030,
+            first_point_lon: 217107456,
+            lad: 60000000,
+            lov: 249000000,
+            dx: 10000000,
+            dy: 10000000,
+            projection_centre: ProjectionCentreFlag(0b00000000),
+            scanning_mode: ScanningMode(0b01000000),
         };
         let latlons = grid_def.latlons()?.collect::<Vec<_>>();
 
         // Following lat/lon values are taken from the calculation results using pygrib.
         let delta = 1e-10;
-        assert_coord_almost_eq(latlons[0], (20.19, -121.550004), delta);
-        assert_coord_almost_eq(latlons[1], (20.19442682, -121.52621665), delta);
+        assert_coord_almost_eq(latlons[0], (18.14503, -142.892544), delta);
+        assert_coord_almost_eq(latlons[1], (18.17840149, -142.83604096), delta);
         assert_coord_almost_eq(
             latlons[latlons.len() - 2],
-            (50.10756403, -60.91298217),
+            (45.4865147, -10.15230394),
             delta,
         );
         assert_coord_almost_eq(
             latlons[latlons.len() - 1],
-            (50.1024611, -60.88202274),
+            (45.40545211, -10.17442147),
             delta,
         );
 

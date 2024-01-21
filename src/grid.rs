@@ -2,6 +2,7 @@ pub use self::{
     earth::EarthShapeDefinition,
     lambert::LambertGridDefinition,
     latlon::{LatLonGridDefinition, LatLonGridIterator},
+    polar_stereographic::PolarStereographicGridDefinition,
 };
 
 /// An iterator over latitudes and longitudes of grid points in a submessage.
@@ -172,6 +173,45 @@ impl ScanningMode {
     }
 }
 
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+pub struct ProjectionCentreFlag(pub u8);
+
+impl ProjectionCentreFlag {
+    /// Returns `true` if North Pole is on the projection plane. Otherwise (i.e.
+    /// if South Pole is on), returns `false`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// assert_eq!(
+    ///     grib::ProjectionCentreFlag(0b00000000).contains_north_pole_on_projection_plane(),
+    ///     true
+    /// );
+    /// ```
+    pub fn contains_north_pole_on_projection_plane(&self) -> bool {
+        self.0 & 0b10000000 == 0
+    }
+
+    /// Returns `true` if projection is bipolar and symmetric. Otherwise (i.e.
+    /// if only one projection centre is used), returns `false`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// assert_eq!(grib::ProjectionCentreFlag(0b00000000).is_bipolar(), false);
+    /// ```
+    pub fn is_bipolar(&self) -> bool {
+        self.0 & 0b01000000 != 0
+    }
+
+    #[allow(dead_code)]
+    pub(crate) fn has_unsupported_flags(&self) -> bool {
+        self.0 & 0b00111111 != 0
+    }
+}
+
 mod earth;
+mod helpers;
 mod lambert;
 mod latlon;
+mod polar_stereographic;
