@@ -34,12 +34,30 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            with_test: true
           - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
             features: --features gridpoints-proj
+            with_test: true
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-musl
+            features: --features gridpoints-proj
+            with_test: false
           - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            with_test: true
           - os: macOS-latest
+            target: x86_64-apple-darwin
+            with_test: true
           - os: macOS-latest
+            target: x86_64-apple-darwin
             features: --features gridpoints-proj
+            with_test: true
+          - os: macOS-latest
+            target: aarch64-apple-darwin
+            features: --features gridpoints-proj
+            with_test: false
 
     runs-on: ${{ matrix.os }}
 
@@ -50,10 +68,18 @@ jobs:
         submodules: recursive
     - name: Install Rust
       uses: dtolnay/rust-toolchain@stable
+      with:
+        targets: ${{ matrix.target }}
+    - name: Setup musl
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        rustup target add x86_64-unknown-linux-musl
+        sudo apt -qq install musl-tools
     - name: Build
-      run: cargo build --verbose --workspace ${{ matrix.features }}
+      run: cargo build --target ${{ matrix.target }} --verbose --workspace ${{ matrix.features }}
     - name: Run tests
-      run: cargo test --verbose --workspace ${{ matrix.features }}
+      if: matrix.with_test
+      run: cargo test --target ${{ matrix.target }} --verbose --workspace ${{ matrix.features }}
 
   build_wasm:
     name: Building library for wasm
