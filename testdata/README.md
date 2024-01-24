@@ -35,6 +35,9 @@ The disclaimer is [available online](https://www.weather.gov/disclaimer).
   (Only the 13th message of 696 messages in a data file downloaded from the same URL)
 - `gdas.t12z.pgrb2.0p25.f000.46.xz`
   (Only the 47th message of 696 messages in a data file downloaded from the same URL)
+- `gdas.t00z.sfluxgrbf000.grib2.0.xz`
+  (Only the first 1 message of 54 messages in a data file downloaded from
+  https://nomads.ncep.noaa.gov/pub/data/nccf/com/gfs/prod/gdas.20240120/00/atmos/gdas.t00z.sfluxgrbf000.grib2 )
 
 Following data files are downloaded from [MRMS (multi-radar multi-sensor) products page](https://mrms.ncep.noaa.gov/data/).
 
