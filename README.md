@@ -43,6 +43,8 @@ A world where everyone can read weather data easily although its interpretation 
 | Template number | Grid system |
 | --- | --- |
 | 3.0 | latitude/longitude (or equidistant cylindrical, or Plate Carree) |
+| 3.20 | Polar stereographic projection |
+| 3.30 | Lambert conformal |
 
 ### Supported data representation templates
 
