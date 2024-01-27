@@ -40,11 +40,11 @@ A world where everyone can read weather data easily although its interpretation 
 
 ### Supported grid definition templates
 
-| Template number | Grid system |
-| --- | --- |
-| 3.0 | latitude/longitude (or equidistant cylindrical, or Plate Carree) |
-| 3.20 | Polar stereographic projection |
-| 3.30 | Lambert conformal |
+| Template number | Grid system | Notes |
+| --- | --- | --- |
+| 3.0 | latitude/longitude (or equidistant cylindrical, or Plate Carree) ||
+| 3.20 | Polar stereographic projection | enabling feature `gridpoints-proj` required |
+| 3.30 | Lambert conformal | enabling feature `gridpoints-proj` required |
 
 ### Supported data representation templates
 
