@@ -40,6 +40,8 @@ A world where everyone can read weather data easily although its interpretation 
 
 ### Supported grid definition templates
 
+For data using the following grid systems, latitudes and longitudes of grid points can be computed.
+
 | Template number | Grid system | Notes |
 | --- | --- | --- |
 | 3.0 | latitude/longitude (or equidistant cylindrical, or Plate Carree) ||
@@ -47,6 +49,8 @@ A world where everyone can read weather data easily although its interpretation 
 | 3.30 | Lambert conformal | enabling feature `gridpoints-proj` required |
 
 ### Supported data representation templates
+
+For data using the following encoding methods, grid point values can be extracted.
 
 | Template number | Encoding method |
 | --- | --- |
