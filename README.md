@@ -38,7 +38,17 @@ A world where everyone can read weather data easily although its interpretation 
     * inspect: display of information mainly for development purpose such as template numbers
     * list: display of parameters for each layer inside
 
-### Supported grid definition templates
+### Template support
+
+GRIB2 can contain grid point values for various grid systems. This diversity is supported by a mechanism called "templates".
+
+Although GRIB2 contains a large number of grid point values, the coordinates and values of individual grid points are not encoded directly as numerical data. Since the grid points are regularly arranged, the coordinates can be defined by the type of projection method used for the grid system and the specific parameters for that projection method, so only a simple definition of the grid system is encoded in the data.
+
+Also, since the best encoding method for values varies from data to data, there are multiple methods that can be used to encode values, and the method used and the specific parameters needed to encode it are defined along with the data itself.
+
+These definitions of grid systems and data representation are represented by sequences of bytes called templates, which should be supported in order for the reader to read GRIB2 data. grib-rs supports the following templates. We would love to support other templates as well, so please let us know if there is any data that is not readable.
+
+#### Supported grid definition templates
 
 For data using the following grid systems, latitudes and longitudes of grid points can be computed.
 
@@ -48,7 +58,7 @@ For data using the following grid systems, latitudes and longitudes of grid poin
 | 3.20 | Polar stereographic projection | enabling feature `gridpoints-proj` required |
 | 3.30 | Lambert conformal | enabling feature `gridpoints-proj` required |
 
-### Supported data representation templates
+#### Supported data representation templates
 
 For data using the following encoding methods, grid point values can be extracted.
 
