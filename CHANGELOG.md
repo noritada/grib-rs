@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.0] - 2024-02-04
+### Added
+
+- Library `grib`
+  - New feature `gridpoints-proj` to compute coordinates of grid points using `proj` crate. (#69)
+  - Support for Code Table 3.2 (shape of the reference system). (#70)
+  - Support for Code Table 3.5 (projection centre). (#73)
+  - Support for Template 3.20 (polar stereographic). (#73)
+    - Feature `gridpoints-proj` needs to be enabled to use this support.
+  - Support for Template 3.30 (Lambert conformal). (#69, #71, #72)
+    - Feature `gridpoints-proj` needs to be enabled to use this support.
+  - Grid point index iterator API to allow users to use grid point indices. (#67)
+  - Support for building WASM. (#65)
+
+### Changed
+
+- Library `grib`
+  - Improved the module structure to make the source code a little more readable and easier to contribute. (#66)
+- Others
+  - Improved descriptions on template support in README. (#74)
+
 ## [0.8.0] - 2023-11-11
 ### Added
 
@@ -287,7 +308,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - inspect: display of information mainly for development purpose such as template numbers
     - list: display of a list of sections (the style is still tentative)
 
-[unreleased]: https://github.com/noritada/grib-rs/compare/v0.8.0...HEAD
+[unreleased]: https://github.com/noritada/grib-rs/compare/v0.9.0...HEAD
+[0.9.0]: https://github.com/noritada/grib-rs/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/noritada/grib-rs/compare/v0.7.1...v0.8.0
 [0.7.1]: https://github.com/noritada/grib-rs/compare/v0.7.0...v0.7.1
 [0.7.0]: https://github.com/noritada/grib-rs/compare/v0.6.1...v0.7.0
