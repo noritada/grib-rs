@@ -28,15 +28,8 @@ A world where everyone can read weather data easily although its interpretation 
     * Some parameters of each layer, which are important for most users
     * Underlying sections which make up layers and the entire data
   * Support for some code tables defined by WMO
-  * Decoding feature supporting following templates:
-    * Template 5.0/7.0 (simple packing)
-    * Template 5.2/7.2 (complex packing)
-    * Template 5.3/7.3 (complex packing and spatial differencing)
-    * Template 5.40/7.40 (JPEG 2000 code stream format)
-    * Template 5.41/7.41 (Portable Network Graphics (PNG))
-    * Template 5.200/7.200 (run length packing with level values)
-  * Support for computation of latitudes and longitudes of grid points for following templates:
-    * Template 3.0 (latitude/longitude (or equidistant cylindrical, or Plate Carree))
+  * Decoding feature supporting templates listed in the following table
+  * Support for computation of latitudes and longitudes of grid points for templates listed in the following table
 * CLI application `gribber` built on the top of the Rust library
   * 5 subcommends:
     * completions: generation of shell completions for your shell
@@ -44,6 +37,39 @@ A world where everyone can read weather data easily although its interpretation 
     * info: display of identification information
     * inspect: display of information mainly for development purpose such as template numbers
     * list: display of parameters for each layer inside
+
+### Template support
+
+GRIB2 can contain grid point values for various grid systems. This diversity is supported by a mechanism called "templates".
+
+Although GRIB2 contains a large number of grid point values, the coordinates and values of individual grid points are not encoded directly as numerical data. Since the grid points are regularly arranged, the coordinates can be defined by the type of projection method used for the grid system and the specific parameters for that projection method, so only a simple definition of the grid system is encoded in the data.
+
+Also, since the best encoding method for values varies from data to data, there are multiple methods that can be used to encode values, and the method used and the specific parameters needed to encode it are defined along with the data itself.
+
+These definitions of grid systems and data representation are represented by sequences of bytes called templates, which should be supported in order for the reader to read GRIB2 data. grib-rs supports the following templates. We would love to support other templates as well, so please let us know if there is any data that is not readable.
+
+#### Supported grid definition templates
+
+For data using the following grid systems, latitudes and longitudes of grid points can be computed.
+
+| Template number | Grid system | Notes |
+| --- | --- | --- |
+| 3.0 | latitude/longitude (or equidistant cylindrical, or Plate Carree) ||
+| 3.20 | Polar stereographic projection | enabling feature `gridpoints-proj` required |
+| 3.30 | Lambert conformal | enabling feature `gridpoints-proj` required |
+
+#### Supported data representation templates
+
+For data using the following encoding methods, grid point values can be extracted.
+
+| Template number | Encoding method |
+| --- | --- |
+| 5.0 | simple packing |
+| 5.2 | complex packing |
+| 5.3 | complex packing and spatial differencing |
+| 5.40 | JPEG 2000 code stream format |
+| 5.41 | Portable Network Graphics (PNG) |
+| 5.200 | run length packing with level values |
 
 ## Planned features
 
