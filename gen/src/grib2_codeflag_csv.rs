@@ -2,7 +2,7 @@ use std::{collections::BTreeMap, error::Error, fmt, fs::File, path::Path, str::F
 
 use serde::Deserialize;
 
-use crate::*;
+use crate::CodeTable;
 
 #[derive(Debug, Deserialize)]
 struct Record {
