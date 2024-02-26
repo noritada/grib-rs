@@ -1,5 +1,3 @@
-use std::convert::TryInto;
-
 use openjpeg_sys as opj;
 
 use crate::{

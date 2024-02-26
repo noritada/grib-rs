@@ -40,8 +40,6 @@ impl Table4_4 {
 
 #[cfg(test)]
 mod tests {
-    use std::convert::TryFrom;
-
     use num_enum::TryFromPrimitiveError;
 
     use super::*;

@@ -1,4 +1,4 @@
-use std::{convert::TryInto, slice::Iter};
+use std::slice::Iter;
 
 use chrono::{DateTime, LocalResult, TimeZone, Utc};
 

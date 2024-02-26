@@ -57,8 +57,6 @@ pub(crate) fn grib_int_from_bytes(bytes: &[u8]) -> i32 {
 
 #[cfg(test)]
 mod tests {
-    use std::convert::TryInto;
-
     use super::*;
 
     #[test]

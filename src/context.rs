@@ -3,7 +3,6 @@ use std::{
     collections::HashSet,
     fmt::{self, Display, Formatter},
     io::{Cursor, Read, Seek},
-    result::Result,
 };
 
 use crate::{

@@ -1,5 +1,4 @@
 use std::{
-    convert::TryInto,
     fs::File,
     io::{self, BufReader, Read, Write},
     path::Path,

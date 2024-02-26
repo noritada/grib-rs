@@ -1,6 +1,6 @@
 use std::iter::{Enumerate, Peekable};
 
-use crate::{Grib2SubmessageIndex, SectionInfo, *};
+use crate::{Grib2SubmessageIndex, ParseError, SectionInfo};
 
 pub struct Submessage(
     pub SectionInfo,

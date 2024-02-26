@@ -1,7 +1,4 @@
-use std::{
-    convert::TryFrom,
-    fmt::{self, Display, Formatter},
-};
+use std::fmt::{self, Display, Formatter};
 
 use crate::codetables::{grib2::*, *};
 

@@ -1,4 +1,4 @@
-use std::{convert::TryInto, iter};
+use std::iter;
 
 use num::ToPrimitive;
 

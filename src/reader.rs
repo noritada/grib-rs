@@ -1,8 +1,4 @@
-use std::{
-    convert::TryInto,
-    io::{self, Read, Seek, SeekFrom},
-    result::Result,
-};
+use std::io::{self, Read, Seek, SeekFrom};
 
 use crate::{datatypes::*, error::*, utils::read_as, SectionBody, SectionInfo};
 
