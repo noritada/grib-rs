@@ -82,13 +82,13 @@ mod test {
 
     #[test]
     fn bitmap_iterator_works() {
-        let bitmap = vec![0b01001100u8, 0b01110000, 0b11110000];
+        let bitmap = [0b01001100u8, 0b01110000, 0b11110000];
         let values = (0..10).map(|n| n as f32).collect::<Vec<_>>();
         let values = values.into_iter();
 
         let iter = BitmapDecodeIterator::new(bitmap.iter(), values, 24).unwrap();
         let actual = iter.collect::<Vec<_>>();
-        let expected = vec![
+        let expected = [
             f32::NAN,
             0.0,
             f32::NAN,
@@ -123,7 +123,7 @@ mod test {
 
     #[test]
     fn bitmap_iterator_size_hint() {
-        let bitmap = vec![0b01001100u8, 0b01110000, 0b11110000];
+        let bitmap = [0b01001100u8, 0b01110000, 0b11110000];
         let values = (0..10).map(|n| n as f32).collect::<Vec<_>>();
         let values = values.into_iter();
 

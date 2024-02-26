@@ -356,8 +356,8 @@ mod tests {
 
     #[test]
     fn lat_lon_grid_iterator_size_hint() {
-        let lat = (0..3).into_iter().map(|i| i as f32).collect::<Vec<_>>();
-        let lon = (10..12).into_iter().map(|i| i as f32).collect::<Vec<_>>();
+        let lat = (0..3).map(|i| i as f32).collect::<Vec<_>>();
+        let lon = (10..12).map(|i| i as f32).collect::<Vec<_>>();
         let scanning_mode = ScanningMode(0b00000000);
         let ij = GridPointIndexIterator::new(lon.len(), lat.len(), scanning_mode);
         let mut iter = LatLonGridIterator::new(lat, lon, ij);
