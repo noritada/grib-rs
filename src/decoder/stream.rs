@@ -48,11 +48,11 @@ where
 
     fn next(&mut self) -> Option<Self::Item> {
         let val = if self.length > 0 {
+            self.length -= 1;
             Some(self.val)
         } else {
             None
         };
-        self.length -= 1;
         val
     }
 
