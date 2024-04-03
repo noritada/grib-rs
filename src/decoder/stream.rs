@@ -47,13 +47,12 @@ where
     type Item = T;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let val = if self.length > 0 {
+        if self.length > 0 {
             self.length -= 1;
             Some(self.val)
         } else {
             None
-        };
-        val
+        }
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
