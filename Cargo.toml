@@ -16,7 +16,7 @@ exclude = ["/.github", "/testdata"]
 members = ["gen", "cli"]
 
 [workspace.package]
-version = "0.9.0"
+version = "0.9.1"
 authors = ["Noritada Kobayashi <noritada.kobayashi@gmail.com>"]
 edition = "2021"
 license = "MIT OR Apache-2.0"
@@ -42,7 +42,7 @@ tempfile = "3"
 xz2 = "0.1"
 
 [build-dependencies]
-grib-build = { path = "gen", version = "0.4.2" }
+grib-build = { path = "gen", version = "0.4.3" }
 
 [features]
 gridpoints-proj = ["dep:proj"]

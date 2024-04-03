@@ -7,7 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.1] - 2024-04-03
+### Fixed
+
+- Library `grib`
+  - Fix `FixedValueIterator` crash after iteration completion. (#75, #76)
+
 ## [0.9.0] - 2024-02-04
+
 ### Added
 
 - Library `grib`
@@ -308,7 +315,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - inspect: display of information mainly for development purpose such as template numbers
     - list: display of a list of sections (the style is still tentative)
 
-[unreleased]: https://github.com/noritada/grib-rs/compare/v0.9.0...HEAD
+[unreleased]: https://github.com/noritada/grib-rs/compare/v0.9.1...HEAD
+[0.9.1]: https://github.com/noritada/grib-rs/compare/v0.9.0...v0.9.1
 [0.9.0]: https://github.com/noritada/grib-rs/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/noritada/grib-rs/compare/v0.7.1...v0.8.0
 [0.7.1]: https://github.com/noritada/grib-rs/compare/v0.7.0...v0.7.1
