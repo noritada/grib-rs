@@ -133,6 +133,15 @@ mod tests {
     use super::*;
 
     #[test]
+    fn fixed_value_iterator_not_crashing_after_iteration_finished() {
+        let length = 2;
+        let mut iter = FixedValueIterator::new(1u8, length);
+        for _ in 0..length + 1 {
+            let _val = iter.next();
+        }
+    }
+
+    #[test]
     fn nbitwise_iterator_u2() {
         let slice: [u8; 5] = [0, 255, 255, 0, 0];
 
