@@ -13,6 +13,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Library `grib`
   - Fix `FixedValueIterator` crash after iteration completion. (#75, #76)
 
+### Contributors
+
+- Thanks for reporting a bug and providing its fix.
+  - @shastro (#75, #76)
+
 ## [0.9.0] - 2024-02-04
 
 ### Added
