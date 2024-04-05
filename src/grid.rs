@@ -1,5 +1,6 @@
 pub use self::{
     earth::EarthShapeDefinition,
+    gaussian::GaussianGridDefinition,
     lambert::LambertGridDefinition,
     latlon::{LatLonGridDefinition, LatLonGridIterator},
     polar_stereographic::PolarStereographicGridDefinition,
@@ -211,6 +212,7 @@ impl ProjectionCentreFlag {
 }
 
 mod earth;
+mod gaussian;
 mod helpers;
 mod lambert;
 mod latlon;
