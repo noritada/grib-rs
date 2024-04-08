@@ -1,4 +1,4 @@
-use super::{GridPointIndexIterator, ScanningMode};
+use super::{helpers::RegularGridIterator, GridPointIndexIterator, ScanningMode};
 use crate::{
     error::GribError,
     utils::{read_as, GribInt},
@@ -106,7 +106,7 @@ impl LatLonGridDefinition {
     /// assert_eq!(latlons.next(), Some((0.0, 1.0)));
     /// assert_eq!(latlons.next(), Some((1.0, 0.0)));
     /// ```
-    pub fn latlons(&self) -> Result<LatLonGridIterator, GribError> {
+    pub fn latlons(&self) -> Result<RegularGridIterator, GribError> {
         if !self.is_consistent() {
             return Err(GribError::InvalidValueError("Latitude and longitude for first/last grid points are not consistent with scanning mode".to_owned()));
         }
@@ -125,7 +125,7 @@ impl LatLonGridDefinition {
             .map(|x| (self.first_point_lon as f32 + x as f32 * lon_delta) / 1_000_000_f32)
             .collect();
 
-        let iter = LatLonGridIterator::new(lat, lon, ij);
+        let iter = RegularGridIterator::new(lat, lon, ij);
         Ok(iter)
     }
 
@@ -153,38 +153,6 @@ impl LatLonGridDefinition {
             last_point_lon,
             scanning_mode: ScanningMode(scanning_mode),
         }
-    }
-}
-
-/// An iterator over latitudes and longitudes of grid points of a lat/lon grid.
-///
-/// This `struct` is created by the [`latlons`] method on
-/// [`LatLonGridDefinition`]. See its documentation for more.
-///
-/// [`latlons`]: LatLonGridDefinition::latlons
-#[derive(Clone)]
-pub struct LatLonGridIterator {
-    lat: Vec<f32>,
-    lon: Vec<f32>,
-    ij: GridPointIndexIterator,
-}
-
-impl LatLonGridIterator {
-    pub(crate) fn new(lat: Vec<f32>, lon: Vec<f32>, ij: GridPointIndexIterator) -> Self {
-        Self { lat, lon, ij }
-    }
-}
-
-impl Iterator for LatLonGridIterator {
-    type Item = (f32, f32);
-
-    fn next(&mut self) -> Option<Self::Item> {
-        let (i, j) = self.ij.next()?;
-        Some((self.lat[j], self.lon[i]))
-    }
-
-    fn size_hint(&self) -> (usize, Option<usize>) {
-        self.ij.size_hint()
     }
 }
 
@@ -314,83 +282,5 @@ mod tests {
             0b10000000,
             true
         ),
-    }
-
-    macro_rules! test_lat_lon_grid_iter {
-        ($(($name:ident, $scanning_mode:expr, $expected:expr),)*) => ($(
-            #[test]
-            fn $name() {
-                let lat = (0..3).into_iter().map(|i| i as f32).collect::<Vec<_>>();
-                let lon = (10..12).into_iter().map(|i| i as f32).collect::<Vec<_>>();
-                let scanning_mode = ScanningMode($scanning_mode);
-                let ij= GridPointIndexIterator::new(lon.len(), lat.len(), scanning_mode);
-                let actual = LatLonGridIterator::new(lat, lon, ij).collect::<Vec<_>>();
-                assert_eq!(actual, $expected);
-            }
-        )*);
-    }
-
-    test_lat_lon_grid_iter! {
-        (
-            lat_lon_grid_iter_with_scanning_mode_0b00000000,
-            0b00000000,
-            vec![
-                (0., 10.),
-                (0., 11.),
-                (1., 10.),
-                (1., 11.),
-                (2., 10.),
-                (2., 11.),
-            ]
-        ),
-        (
-            lat_lon_grid_iter_with_scanning_mode_0b00100000,
-            0b00100000,
-            vec![
-                (0., 10.),
-                (1., 10.),
-                (2., 10.),
-                (0., 11.),
-                (1., 11.),
-                (2., 11.),
-            ]
-        ),
-        (
-            lat_lon_grid_iter_with_scanning_mode_0b00010000,
-            0b00010000,
-            vec![
-                (0., 10.),
-                (0., 11.),
-                (1., 11.),
-                (1., 10.),
-                (2., 10.),
-                (2., 11.),
-            ]
-        ),
-        (
-            lat_lon_grid_iter_with_scanning_mode_0b00110000,
-            0b00110000,
-            vec![
-                (0., 10.),
-                (1., 10.),
-                (2., 10.),
-                (2., 11.),
-                (1., 11.),
-                (0., 11.),
-            ]
-        ),
-    }
-
-    #[test]
-    fn lat_lon_grid_iterator_size_hint() {
-        let lat = (0..3).map(|i| i as f32).collect::<Vec<_>>();
-        let lon = (10..12).map(|i| i as f32).collect::<Vec<_>>();
-        let scanning_mode = ScanningMode(0b00000000);
-        let ij = GridPointIndexIterator::new(lon.len(), lat.len(), scanning_mode);
-        let mut iter = LatLonGridIterator::new(lat, lon, ij);
-
-        assert_eq!(iter.size_hint(), (6, Some(6)));
-        let _ = iter.next();
-        assert_eq!(iter.size_hint(), (5, Some(5)));
     }
 }
