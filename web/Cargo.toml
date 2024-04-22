@@ -1,0 +1,17 @@
+[package]
+name = "grib-web"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+wasm-bindgen = "0.2"
+web-sys = { version = "0.3", features = [
+    "DataTransfer",
+    "DomTokenList",
+    "Element",
+    "FileList",
+    "DragEvent",
+] }
+yew = { version = "0.20", features = ["csr"] }
