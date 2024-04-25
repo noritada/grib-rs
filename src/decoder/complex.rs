@@ -307,3 +307,98 @@ where
 
 mod diff;
 mod missing;
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    macro_rules! test_spatial_diff_2nd_order_decoding{
+        ($(($name:ident, $input:expr, $expected:expr),)*) => ($(
+            #[test]
+            fn $name() {
+                let input = $input
+                    .into_iter();
+                let first_values = vec![100, 99].into_iter();
+                let iter = SpatialDiff2ndOrderDecodeIterator::new(input, first_values);
+                assert_eq!(
+                    iter.collect::<Vec<_>>(),
+                    $expected
+                );
+            }
+        )*);
+    }
+
+    test_spatial_diff_2nd_order_decoding! {
+        (
+            spatial_diff_2nd_order_decoding_consisting_of_normal_values,
+            (0_u32..10)
+                .map(|n| DecodedValue::Normal(n as i32 * (-1_i32).pow(n))),
+            vec![
+                DecodedValue::Normal(100),
+                DecodedValue::Normal(99),
+                DecodedValue::Normal(100),
+                DecodedValue::Normal(98),
+                DecodedValue::Normal(100),
+                DecodedValue::Normal(97),
+                DecodedValue::Normal(100),
+                DecodedValue::Normal(96),
+                DecodedValue::Normal(100),
+                DecodedValue::Normal(95),
+            ]
+        ),
+        (
+            spatial_diff_2nd_order_decoding_with_missing_values_in_first_values,
+            vec![
+                DecodedValue::Missing1,
+                DecodedValue::Missing2,
+                DecodedValue::Normal(0),
+                DecodedValue::Normal(-1),
+                DecodedValue::Normal(2),
+                DecodedValue::Normal(-3),
+                DecodedValue::Normal(4),
+                DecodedValue::Normal(-5),
+                DecodedValue::Normal(6),
+                DecodedValue::Normal(-7),
+            ],
+            vec![
+                DecodedValue::Missing1,
+                DecodedValue::Missing2,
+                DecodedValue::Normal(100),
+                DecodedValue::Normal(99),
+                DecodedValue::Normal(100),
+                DecodedValue::Normal(98),
+                DecodedValue::Normal(100),
+                DecodedValue::Normal(97),
+                DecodedValue::Normal(100),
+                DecodedValue::Normal(96),
+            ]
+        ),
+        (
+            spatial_diff_2nd_order_decoding_with_missing_values_in_non_first_values,
+            vec![
+                DecodedValue::Normal(0),
+                DecodedValue::Normal(-1),
+                DecodedValue::Missing1,
+                DecodedValue::Normal(2),
+                DecodedValue::Normal(-3),
+                DecodedValue::Normal(4),
+                DecodedValue::Missing2,
+                DecodedValue::Normal(-5),
+                DecodedValue::Normal(6),
+                DecodedValue::Normal(-7),
+            ],
+            vec![
+                DecodedValue::Normal(100),
+                DecodedValue::Normal(99),
+                DecodedValue::Missing1,
+                DecodedValue::Normal(100),
+                DecodedValue::Normal(98),
+                DecodedValue::Normal(100),
+                DecodedValue::Missing2,
+                DecodedValue::Normal(97),
+                DecodedValue::Normal(100),
+                DecodedValue::Normal(96),
+            ]
+        ),
+    }
+}
