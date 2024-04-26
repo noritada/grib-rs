@@ -81,10 +81,18 @@ pub(crate) fn decode_7_3(
         sect7_params.minimum(),
     );
     let first_values = sect7_params.first_values();
-    let spdiff_unpacked = SpatialDiff2ndOrderDecodeIterator::new(
-        unpacked_data,
-        first_values.collect::<Vec<_>>().into_iter(),
-    );
+    let first_values = first_values.collect::<Vec<_>>().into_iter();
+    let spdiff_unpacked = match spdiff_level {
+        1 => SpatialDiffDecodeIterator::FirstOrder(SpatialDiff1stOrderDecodeIterator::new(
+            unpacked_data,
+            first_values,
+        )),
+        2 => SpatialDiffDecodeIterator::SecondOrder(SpatialDiff2ndOrderDecodeIterator::new(
+            unpacked_data,
+            first_values,
+        )),
+        _ => unreachable!(),
+    };
     let decoder = SimplePackingDecodeIterator::new(spdiff_unpacked, &simple_param);
     let decoder = SimplePackingDecodeIteratorWrapper::SimplePacking(decoder);
     Ok(decoder)
@@ -252,6 +260,71 @@ where
     }
 }
 
+enum SpatialDiffDecodeIterator<I, J> {
+    FirstOrder(SpatialDiff1stOrderDecodeIterator<I, J>),
+    SecondOrder(SpatialDiff2ndOrderDecodeIterator<I, J>),
+}
+
+impl<I, J> Iterator for SpatialDiffDecodeIterator<I, J>
+where
+    I: Iterator<Item = DecodedValue<i32>>,
+    J: Iterator<Item = i32>,
+{
+    type Item = DecodedValue<i32>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        match self {
+            SpatialDiffDecodeIterator::FirstOrder(iter) => iter.next(),
+            SpatialDiffDecodeIterator::SecondOrder(iter) => iter.next(),
+        }
+    }
+}
+
+struct SpatialDiff1stOrderDecodeIterator<I, J> {
+    iter: I,
+    first_values: J,
+    count: u32,
+    prev: i32,
+}
+
+impl<I, J> SpatialDiff1stOrderDecodeIterator<I, J> {
+    fn new(iter: I, first_values: J) -> Self {
+        Self {
+            iter,
+            first_values,
+            count: 0,
+            prev: 0,
+        }
+    }
+}
+
+impl<I, J> Iterator for SpatialDiff1stOrderDecodeIterator<I, J>
+where
+    I: Iterator<Item = DecodedValue<i32>>,
+    J: Iterator<Item = i32>,
+{
+    type Item = DecodedValue<i32>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        match self.iter.next() {
+            None => None,
+            Some(Normal(v)) => match self.count {
+                0 => {
+                    self.prev = self.first_values.next().unwrap();
+                    self.count += 1;
+                    Some(Normal(self.prev))
+                }
+                _ => {
+                    let v = v + self.prev;
+                    self.prev = v;
+                    Some(Normal(v))
+                }
+            },
+            Some(missing) => Some(missing),
+        }
+    }
+}
+
 struct SpatialDiff2ndOrderDecodeIterator<I, J> {
     iter: I,
     first_values: J,
@@ -311,6 +384,96 @@ mod missing;
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    macro_rules! test_spatial_diff_1st_order_decoding{
+        ($(($name:ident, $input:expr, $expected:expr),)*) => ($(
+            #[test]
+            fn $name() {
+                let input = $input
+                    .into_iter();
+                let first_values = vec![100].into_iter();
+                let iter = SpatialDiff1stOrderDecodeIterator::new(input, first_values);
+                assert_eq!(
+                    iter.collect::<Vec<_>>(),
+                    $expected
+                );
+            }
+        )*);
+    }
+
+    test_spatial_diff_1st_order_decoding! {
+        (
+            spatial_diff_1st_order_decoding_consisting_of_normal_values,
+            (0_u32..10)
+                .map(|n| DecodedValue::Normal(n as i32 * (-1_i32).pow(n))),
+            vec![
+                DecodedValue::Normal(100),
+                DecodedValue::Normal(99),
+                DecodedValue::Normal(101),
+                DecodedValue::Normal(98),
+                DecodedValue::Normal(102),
+                DecodedValue::Normal(97),
+                DecodedValue::Normal(103),
+                DecodedValue::Normal(96),
+                DecodedValue::Normal(104),
+                DecodedValue::Normal(95),
+            ]
+        ),
+        (
+            spatial_diff_1st_order_decoding_with_missing_values_in_first_values,
+            vec![
+                DecodedValue::Missing1,
+                DecodedValue::Normal(0),
+                DecodedValue::Normal(-1),
+                DecodedValue::Normal(2),
+                DecodedValue::Normal(-3),
+                DecodedValue::Normal(4),
+                DecodedValue::Normal(-5),
+                DecodedValue::Normal(6),
+                DecodedValue::Normal(-7),
+                DecodedValue::Normal(8),
+            ],
+            vec![
+                DecodedValue::Missing1,
+                DecodedValue::Normal(100),
+                DecodedValue::Normal(99),
+                DecodedValue::Normal(101),
+                DecodedValue::Normal(98),
+                DecodedValue::Normal(102),
+                DecodedValue::Normal(97),
+                DecodedValue::Normal(103),
+                DecodedValue::Normal(96),
+                DecodedValue::Normal(104),
+            ]
+        ),
+        (
+            spatial_diff_1st_order_decoding_with_missing_values_in_non_first_values,
+            vec![
+                DecodedValue::Normal(0),
+                DecodedValue::Normal(-1),
+                DecodedValue::Missing1,
+                DecodedValue::Normal(2),
+                DecodedValue::Normal(-3),
+                DecodedValue::Normal(4),
+                DecodedValue::Missing2,
+                DecodedValue::Normal(-5),
+                DecodedValue::Normal(6),
+                DecodedValue::Normal(-7),
+            ],
+            vec![
+                DecodedValue::Normal(100),
+                DecodedValue::Normal(99),
+                DecodedValue::Missing1,
+                DecodedValue::Normal(101),
+                DecodedValue::Normal(98),
+                DecodedValue::Normal(102),
+                DecodedValue::Missing2,
+                DecodedValue::Normal(97),
+                DecodedValue::Normal(103),
+                DecodedValue::Normal(96),
+            ]
+        ),
+    }
 
     macro_rules! test_spatial_diff_2nd_order_decoding{
         ($(($name:ident, $input:expr, $expected:expr),)*) => ($(

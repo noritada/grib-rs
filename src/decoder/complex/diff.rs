@@ -12,7 +12,7 @@ impl<'a> SpatialDifferencingExtraDescriptors<'a> {
         spdiff_order: u8,
         num_octets: u8,
     ) -> Result<Self, GribError> {
-        if spdiff_order != 2 {
+        if !(1..=2).contains(&spdiff_order) {
             return Err(GribError::DecodeError(
                 DecodeError::ComplexPackingDecodeError(ComplexPackingDecodeError::NotSupported),
             ));
