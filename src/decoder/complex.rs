@@ -10,6 +10,7 @@ use self::{
     missing::DecodedValue::{self, Missing1, Missing2, Normal},
 };
 use crate::{
+    codetables::grib2::Table5_6,
     decoder::{
         param::{ComplexPackingParam, SimplePackingParam},
         simple::*,
@@ -62,10 +63,15 @@ pub(crate) fn decode_7_3(
     let simple_param = SimplePackingParam::from_buf(&sect5_data[6..15]);
     let complex_param = ComplexPackingParam::from_buf(&sect5_data[16..42]);
     let spdiff_level = read_as!(u8, sect5_data, 42);
+    let spdiff_level = Table5_6::try_from(spdiff_level).map_err(|e| {
+        let number = e.number;
+        GribError::NotSupported(format!("Code Table 5.6 value '{number}' is not supported"))
+    })?;
     let spdiff_param_octet = read_as!(u8, sect5_data, 43);
 
     if complex_param.group_splitting_method_used != 1
         || complex_param.missing_value_management_used > 2
+        || matches!(spdiff_level, Table5_6::Missing)
     {
         return Err(GribError::DecodeError(
             DecodeError::ComplexPackingDecodeError(ComplexPackingDecodeError::NotSupported),
@@ -75,7 +81,7 @@ pub(crate) fn decode_7_3(
     let sect7_data = &target.sect7_payload;
     let sect7_params = diff::SpatialDifferencingExtraDescriptors::new(
         sect7_data,
-        spdiff_level,
+        u8::from(spdiff_level.clone()),
         spdiff_param_octet,
     )?;
 
@@ -89,15 +95,13 @@ pub(crate) fn decode_7_3(
     let first_values = sect7_params.first_values();
     let first_values = first_values.collect::<Vec<_>>().into_iter();
     let spdiff_unpacked = match spdiff_level {
-        1 => SpatialDiffDecodeIterator::FirstOrder(SpatialDiff1stOrderDecodeIterator::new(
-            unpacked_data,
-            first_values,
-        )),
-        2 => SpatialDiffDecodeIterator::SecondOrder(SpatialDiff2ndOrderDecodeIterator::new(
-            unpacked_data,
-            first_values,
-        )),
-        _ => unreachable!(),
+        Table5_6::FirstOrderSpatialDifferencing => SpatialDiffDecodeIterator::FirstOrder(
+            SpatialDiff1stOrderDecodeIterator::new(unpacked_data, first_values),
+        ),
+        Table5_6::SecondOrderSpatialDifferencing => SpatialDiffDecodeIterator::SecondOrder(
+            SpatialDiff2ndOrderDecodeIterator::new(unpacked_data, first_values),
+        ),
+        Table5_6::Missing => unreachable!(),
     };
     let decoder = SimplePackingDecodeIterator::new(spdiff_unpacked, &simple_param);
     let decoder = SimplePackingDecodeIteratorWrapper::SimplePacking(decoder);
