@@ -79,12 +79,12 @@ impl<'s, 'a> Iterator for FirstValues<'s, 'a> {
     }
 }
 
-pub(crate) enum SpatialDiffDecodeIterator<I, J> {
-    FirstOrder(SpatialDiff1stOrderDecodeIterator<I, J>),
-    SecondOrder(SpatialDiff2ndOrderDecodeIterator<I, J>),
+pub(crate) enum SpatialDifferencingDecodeIterator<I, J> {
+    FirstOrder(FirstOrderSpatialDifferencingDecodeIterator<I, J>),
+    SecondOrder(SecondOrderSpatialDifferencingDecodeIterator<I, J>),
 }
 
-impl<I, J> Iterator for SpatialDiffDecodeIterator<I, J>
+impl<I, J> Iterator for SpatialDifferencingDecodeIterator<I, J>
 where
     I: Iterator<Item = DecodedValue<i32>>,
     J: Iterator<Item = i32>,
@@ -93,20 +93,20 @@ where
 
     fn next(&mut self) -> Option<Self::Item> {
         match self {
-            SpatialDiffDecodeIterator::FirstOrder(iter) => iter.next(),
-            SpatialDiffDecodeIterator::SecondOrder(iter) => iter.next(),
+            SpatialDifferencingDecodeIterator::FirstOrder(iter) => iter.next(),
+            SpatialDifferencingDecodeIterator::SecondOrder(iter) => iter.next(),
         }
     }
 }
 
-pub(crate) struct SpatialDiff1stOrderDecodeIterator<I, J> {
+pub(crate) struct FirstOrderSpatialDifferencingDecodeIterator<I, J> {
     iter: I,
     first_values: J,
     count: u32,
     prev: i32,
 }
 
-impl<I, J> SpatialDiff1stOrderDecodeIterator<I, J> {
+impl<I, J> FirstOrderSpatialDifferencingDecodeIterator<I, J> {
     pub(crate) fn new(iter: I, first_values: J) -> Self {
         Self {
             iter,
@@ -117,7 +117,7 @@ impl<I, J> SpatialDiff1stOrderDecodeIterator<I, J> {
     }
 }
 
-impl<I, J> Iterator for SpatialDiff1stOrderDecodeIterator<I, J>
+impl<I, J> Iterator for FirstOrderSpatialDifferencingDecodeIterator<I, J>
 where
     I: Iterator<Item = DecodedValue<i32>>,
     J: Iterator<Item = i32>,
@@ -144,7 +144,7 @@ where
     }
 }
 
-pub(crate) struct SpatialDiff2ndOrderDecodeIterator<I, J> {
+pub(crate) struct SecondOrderSpatialDifferencingDecodeIterator<I, J> {
     iter: I,
     first_values: J,
     count: u32,
@@ -152,7 +152,7 @@ pub(crate) struct SpatialDiff2ndOrderDecodeIterator<I, J> {
     prev2: i32,
 }
 
-impl<I, J> SpatialDiff2ndOrderDecodeIterator<I, J> {
+impl<I, J> SecondOrderSpatialDifferencingDecodeIterator<I, J> {
     pub(crate) fn new(iter: I, first_values: J) -> Self {
         Self {
             iter,
@@ -164,7 +164,7 @@ impl<I, J> SpatialDiff2ndOrderDecodeIterator<I, J> {
     }
 }
 
-impl<I, J> Iterator for SpatialDiff2ndOrderDecodeIterator<I, J>
+impl<I, J> Iterator for SecondOrderSpatialDifferencingDecodeIterator<I, J>
 where
     I: Iterator<Item = DecodedValue<i32>>,
     J: Iterator<Item = i32>,
@@ -244,14 +244,14 @@ mod tests {
         (spdiff_first_values_when_num_octets_is_4, 4, vec![0x00_01_02_03, 0x04_05_06_07]),
     }
 
-    macro_rules! test_spatial_diff_1st_order_decoding{
+    macro_rules! test_first_order_spatial_differencing_decoding {
         ($(($name:ident, $input:expr, $expected:expr),)*) => ($(
             #[test]
             fn $name() {
                 let input = $input
                     .into_iter();
                 let first_values = vec![100].into_iter();
-                let iter = SpatialDiff1stOrderDecodeIterator::new(input, first_values);
+                let iter = FirstOrderSpatialDifferencingDecodeIterator::new(input, first_values);
                 assert_eq!(
                     iter.collect::<Vec<_>>(),
                     $expected
@@ -260,7 +260,7 @@ mod tests {
         )*);
     }
 
-    test_spatial_diff_1st_order_decoding! {
+    test_first_order_spatial_differencing_decoding! {
         (
             spatial_diff_1st_order_decoding_consisting_of_normal_values,
             (0_u32..10).map(|n| Normal(n as i32 * (-1_i32).pow(n))),
@@ -333,14 +333,14 @@ mod tests {
         ),
     }
 
-    macro_rules! test_spatial_diff_2nd_order_decoding{
+    macro_rules! test_second_order_spatial_differencing_decoding {
         ($(($name:ident, $input:expr, $expected:expr),)*) => ($(
             #[test]
             fn $name() {
                 let input = $input
                     .into_iter();
                 let first_values = vec![100, 99].into_iter();
-                let iter = SpatialDiff2ndOrderDecodeIterator::new(input, first_values);
+                let iter = SecondOrderSpatialDifferencingDecodeIterator::new(input, first_values);
                 assert_eq!(
                     iter.collect::<Vec<_>>(),
                     $expected
@@ -349,7 +349,7 @@ mod tests {
         )*);
     }
 
-    test_spatial_diff_2nd_order_decoding! {
+    test_second_order_spatial_differencing_decoding! {
         (
             spatial_diff_2nd_order_decoding_consisting_of_normal_values,
             (0_u32..10).map(|n| Normal(n as i32 * (-1_i32).pow(n))),

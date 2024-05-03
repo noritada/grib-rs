@@ -4,8 +4,8 @@ use num::ToPrimitive;
 
 use self::{
     diff::{
-        SpatialDiff1stOrderDecodeIterator, SpatialDiff2ndOrderDecodeIterator,
-        SpatialDiffDecodeIterator,
+        FirstOrderSpatialDifferencingDecodeIterator, SecondOrderSpatialDifferencingDecodeIterator,
+        SpatialDifferencingDecodeIterator,
     },
     missing::DecodedValue::{self, Missing1, Missing2, Normal},
 };
@@ -95,11 +95,11 @@ pub(crate) fn decode_7_3(
     let first_values = sect7_params.first_values();
     let first_values = first_values.collect::<Vec<_>>().into_iter();
     let spdiff_unpacked = match spdiff_level {
-        Table5_6::FirstOrderSpatialDifferencing => SpatialDiffDecodeIterator::FirstOrder(
-            SpatialDiff1stOrderDecodeIterator::new(unpacked_data, first_values),
+        Table5_6::FirstOrderSpatialDifferencing => SpatialDifferencingDecodeIterator::FirstOrder(
+            FirstOrderSpatialDifferencingDecodeIterator::new(unpacked_data, first_values),
         ),
-        Table5_6::SecondOrderSpatialDifferencing => SpatialDiffDecodeIterator::SecondOrder(
-            SpatialDiff2ndOrderDecodeIterator::new(unpacked_data, first_values),
+        Table5_6::SecondOrderSpatialDifferencing => SpatialDifferencingDecodeIterator::SecondOrder(
+            SecondOrderSpatialDifferencingDecodeIterator::new(unpacked_data, first_values),
         ),
         Table5_6::Missing => unreachable!(),
     };
