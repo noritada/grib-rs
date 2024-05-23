@@ -2,7 +2,7 @@ use num::ToPrimitive;
 
 use self::DecodedValue::{Missing1, Missing2, Normal};
 
-#[derive(Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub(crate) enum DecodedValue<N: ToPrimitive> {
     Normal(N),
     Missing1,

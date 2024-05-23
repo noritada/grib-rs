@@ -74,6 +74,10 @@ pub(crate) mod grib2 {
         )
     }
 
+    pub(crate) fn ncmrwf_wind_solar() -> Result<NamedTempFile, io::Error> {
+        xzcat_to_tempfile(testdata_dir().join("wind_solar_ind_0.125_20240521_12Z.grib2.0.xz"))
+    }
+
     pub(crate) fn noaa_gdas_0_10() -> Result<NamedTempFile, io::Error> {
         xzcat_to_tempfile(testdata_dir().join("gdas.t12z.pgrb2.0p25.f000.0-10.xz"))
     }
@@ -144,6 +148,14 @@ pub(crate) mod flat_binary {
 
     pub(crate) fn jma_tornado_nowcast_le() -> Result<Vec<u8>, io::Error> {
         unxz_as_bytes(testdata_dir().join("gen").join("tornado-wgrib2-le.bin.xz"))
+    }
+
+    pub(crate) fn ncmrwf_wind_solar_le() -> Result<Vec<u8>, io::Error> {
+        unxz_as_bytes(
+            testdata_dir()
+                .join("gen")
+                .join("wind_solar_ind_0.125_20240521_12Z.wgrib2-le.bin.xz"),
+        )
     }
 
     pub(crate) fn noaa_gdas_0_le() -> Result<Vec<u8>, io::Error> {
