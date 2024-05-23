@@ -262,7 +262,7 @@ mod tests {
 
     test_first_order_spatial_differencing_decoding! {
         (
-            spatial_diff_1st_order_decoding_consisting_of_normal_values,
+            first_order_spatial_differencing_decoding_consisting_of_normal_values,
             (0_u32..10).map(|n| Normal(n as i32 * (-1_i32).pow(n))),
             vec![
                 Normal(100),
@@ -278,7 +278,7 @@ mod tests {
             ]
         ),
         (
-            spatial_diff_1st_order_decoding_with_missing_values_in_first_values,
+            first_order_spatial_differencing_decoding_with_missing_values_in_first_values,
             vec![
                 Missing1,
                 Normal(0),
@@ -305,7 +305,7 @@ mod tests {
             ]
         ),
         (
-            spatial_diff_1st_order_decoding_with_missing_values_in_non_first_values,
+            first_order_spatial_differencing_decoding_with_missing_values_in_non_first_values,
             vec![
                 Normal(0),
                 Normal(-1),
@@ -351,7 +351,7 @@ mod tests {
 
     test_second_order_spatial_differencing_decoding! {
         (
-            spatial_diff_2nd_order_decoding_consisting_of_normal_values,
+            second_order_spatial_differencing_decoding_consisting_of_normal_values,
             (0_u32..10).map(|n| Normal(n as i32 * (-1_i32).pow(n))),
             vec![
                 Normal(100),
@@ -367,7 +367,7 @@ mod tests {
             ]
         ),
         (
-            spatial_diff_2nd_order_decoding_with_missing_values_in_first_values,
+            second_order_spatial_differencing_decoding_with_missing_values_in_first_values,
             vec![
                 Missing1,
                 Missing2,
@@ -394,7 +394,7 @@ mod tests {
             ]
         ),
         (
-            spatial_diff_2nd_order_decoding_with_missing_values_in_non_first_values,
+            second_order_spatial_differencing_decoding_with_missing_values_in_non_first_values,
             vec![
                 Normal(0),
                 Normal(-1),
