@@ -128,7 +128,7 @@ Usage: gribber [COMMAND]
 
 Commands:
   completions  Generate shell completions for your shell to stdout
-  decode       Export decoded data
+  decode       Export decoded data with latitudes and longitudes
   info         Show identification information
   inspect      Inspect and describes the data structure
   list         List layers contained in the data
