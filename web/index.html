@@ -19,6 +19,8 @@
                 width: 100%;
                 box-sizing: border-box;
                 padding: 12px;
+                display: flex;
+                flex-direction: column;
             }
 
             .invisible {
@@ -31,6 +33,7 @@
                 width: 100%;
                 box-sizing: border-box;
                 padding: 5%;
+                z-index: 2;
                 background-color: #fff;
             }
 
@@ -48,6 +51,31 @@
 
             #drop-zone.dragover #drop-zone-content {
                 border-color: #000;
+                background-color: #f9f9f9;
+            }
+
+            #submessage_list {
+                flex: 1;
+                overflow: auto;
+            }
+
+            #submessage_list table {
+                border-collapse: collapse;
+                width: 100%;
+            }
+
+            #submessage_list thead th {
+                position: sticky;
+                top: 0;
+                z-index: 1;
+                background-color: #ccc;
+            }
+
+            tr:nth-child(odd) {
+                background-color: #eee;
+            }
+
+            tr:nth-child(even) {
                 background-color: #f9f9f9;
             }
         </style>

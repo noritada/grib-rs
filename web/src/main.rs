@@ -101,23 +101,25 @@ fn app() -> Html {
         html! {
             <>
                 <div>{format!("{} submessage(s)", len)}</div>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>{"#"}</th>
-                            <th>{"parameter"}</th>
-                            <th>{"generating process"}</th>
-                            <th>{"forecast time"}</th>
-                            <th>{"1st fixed surface"}</th>
-                            <th>{"2nd fixed surface"}</th>
-                            <th>{"#points (nan)"}</th>
-                            <th>{"#points (total)"}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {submessages_html}
-                    </tbody>
-                </table>
+                <div id="submessage_list">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>{"#"}</th>
+                                <th>{"parameter"}</th>
+                                <th>{"generating process"}</th>
+                                <th>{"forecast time"}</th>
+                                <th>{"1st fixed surface"}</th>
+                                <th>{"2nd fixed surface"}</th>
+                                <th>{"#points (nan)"}</th>
+                                <th>{"#points (total)"}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {submessages_html}
+                        </tbody>
+                    </table>
+                </div>
             </>
         }
     } else {
@@ -129,7 +131,7 @@ fn app() -> Html {
             <div id="main" ondragover={ on_drag_over }>
                 <h1>{ "GRIB2 Data Viewer" }</h1>
                 <div>{ file_name }</div>
-                <div>{ listing }</div>
+                { listing }
             </div>
             <FileDropArea first_time={*first_time} on_drop={on_file_drop} />
         </>
