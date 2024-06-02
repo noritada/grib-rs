@@ -19,3 +19,6 @@ pub use crate::{
     parser::*,
     reader::*,
 };
+
+#[cfg(doctest)]
+doc_comment::doctest!("../README.md");

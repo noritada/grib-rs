@@ -84,7 +84,7 @@ If you feel a feature is missing, please send us your suggestions through the [G
 ### Usage example
 
 ```rust
-use grib::{self, codetables::grib2::*, ForecastTime, Grib2SubmessageDecoder, Name};
+use grib::{codetables::grib2::*, ForecastTime, Grib2SubmessageDecoder, Name};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let fname = "Z__C_RJTD_20160822020000_NOWC_GPV_Ggis10km_Pphw10_FH0000-0100_grib2.bin";
