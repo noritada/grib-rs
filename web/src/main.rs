@@ -37,21 +37,18 @@ fn app() -> Html {
     {
         let grib_context = grib_context.clone();
         let file = dropped_file.clone();
-        use_effect_with_deps(
-            move |_| {
-                if let Some(file) = file.as_ref() {
-                    let blob = Blob::from(file.deref().clone());
-                    wasm_bindgen_futures::spawn_local(async move {
-                        let result = read_as_bytes(&blob).await;
-                        if let Ok(bytes_) = result {
-                            let grib = grib::from_reader(std::io::Cursor::new(bytes_));
-                            grib_context.set(grib.ok())
-                        }
-                    });
-                }
-            },
-            dropped_file,
-        );
+        use_effect_with(dropped_file, move |_| {
+            if let Some(file) = file.as_ref() {
+                let blob = Blob::from(file.deref().clone());
+                wasm_bindgen_futures::spawn_local(async move {
+                    let result = read_as_bytes(&blob).await;
+                    if let Ok(bytes_) = result {
+                        let grib = grib::from_reader(std::io::Cursor::new(bytes_));
+                        grib_context.set(grib.ok())
+                    }
+                });
+            }
+        });
     }
 
     let listing = if let Some(context) = grib_context.as_ref() {
