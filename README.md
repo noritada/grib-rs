@@ -15,6 +15,12 @@ This is a GRIB format parser library written in [Rust](https://www.rust-lang.org
 
 GRIB is a concise data format commonly used in meteorology to store historical and forecast weather data. It is intended to be a container of a collection of records of 2D data. GRIB files are huge and binary and should be processed efficiently. Also, since GRIB is designed to support various grid types and data compression using parameters defined in external code tables and templates, some popular existing softwares cannot handle some GRIB data.
 
+## Example web application
+
+Example GRIB2 viewer web app using the crate is available [here](https://noritada.github.io/grib-rs/viewer/).
+
+After loaded, the app works completely on your web browser and will not send the data you drop anywhere.
+
 ## Vision
 
 A world where everyone can read weather data easily although its interpretation needs some specific knowledge and experience.
