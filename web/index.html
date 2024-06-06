@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <title>GRIB2 Data Viewer</title>
+        <style>
+            body {
+                position: relative;
+                margin: 0;
+                padding: 0;
+                height: 100vh;
+                font-family: Arial, sans-serif;
+                text-align: center;
+            }
+
+            #main {
+                position: absolute;
+                height: 100%;
+                width: 100%;
+                box-sizing: border-box;
+                padding: 12px;
+                display: flex;
+                flex-direction: column;
+            }
+
+            .invisible {
+                display: none;
+            }
+
+            #drop-zone {
+                position: absolute;
+                height: 100%;
+                width: 100%;
+                box-sizing: border-box;
+                padding: 5%;
+                z-index: 2;
+                background-color: #fff;
+            }
+
+            #drop-zone-content {
+                height: 100%;
+                box-sizing: border-box;
+                border: 10px dashed #ccc;
+                font-size: 60px;
+                line-height: 1.5;
+                color: #666;
+                border-radius: 30px;
+                transition: all 0.3s ease-in-out;
+                pointer-events: none;
+            }
+
+            #drop-zone.dragover #drop-zone-content {
+                border-color: #000;
+                background-color: #f9f9f9;
+            }
+
+            #submessage_list {
+                flex: 1;
+                overflow: auto;
+            }
+
+            #submessage_list table {
+                border-collapse: collapse;
+                width: 100%;
+            }
+
+            #submessage_list thead th {
+                position: sticky;
+                top: 0;
+                z-index: 1;
+                background-color: #ccc;
+            }
+
+            tr:nth-child(odd) {
+                background-color: #eee;
+            }
+
+            tr:nth-child(even) {
+                background-color: #f9f9f9;
+            }
+        </style>
+    </head>
+    <body></body>
+</html>
