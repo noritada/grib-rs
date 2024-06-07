@@ -5,6 +5,9 @@ use grib::codetables::{CodeTable4_2, CodeTable4_3, Lookup};
 use yew::prelude::*;
 mod drop_area;
 use drop_area::FileDropArea;
+mod submessage_modal;
+use submessage_modal::SubmessageModal;
+mod utils;
 
 #[function_component(App)]
 fn app() -> Html {
@@ -25,6 +28,13 @@ fn app() -> Html {
         file.name()
     } else {
         String::new()
+    };
+
+    let on_click_submessage_modal = {
+        Callback::from(move |e: MouseEvent| {
+            e.prevent_default();
+            submessage_modal::hide_submessage_modal();
+        })
     };
 
     let on_drag_over = {
@@ -81,8 +91,16 @@ fn app() -> Html {
                     .unwrap_or((String::new(), String::new()));
                 let num_grid_points = submessage.grid_def().num_points();
                 let num_points_represented = submessage.repr_def().num_points();
+
+                let on_click_submessage_row = {
+                    Callback::from(move |e: MouseEvent| {
+                        e.prevent_default();
+                        submessage_modal::display_submessage_modal();
+                    })
+                };
+
                 html! {
-                    <tr>
+                    <tr onclick={on_click_submessage_row}>
                         <td>{id}</td>
                         <td>{category}</td>
                         <td>{generating_process}</td>
@@ -130,6 +148,7 @@ fn app() -> Html {
                 <div>{ file_name }</div>
                 { listing }
             </div>
+            <SubmessageModal on_click={on_click_submessage_modal} />
             <FileDropArea first_time={*first_time} on_drop={on_file_drop} />
         </>
     }
