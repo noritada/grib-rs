@@ -2,11 +2,13 @@ use std::ops::Deref;
 
 use gloo_file::{futures::read_as_bytes, Blob};
 use grib::codetables::{CodeTable4_2, CodeTable4_3, Lookup};
+use web_sys::ImageData;
 use yew::prelude::*;
 mod drop_area;
 use drop_area::FileDropArea;
 mod submessage_modal;
 use submessage_modal::SubmessageModal;
+mod palette;
 mod utils;
 
 #[function_component(App)]
@@ -14,6 +16,7 @@ fn app() -> Html {
     let first_time = use_state(|| true);
     let dropped_file = use_state(|| None);
     let grib_context = use_state(|| None);
+    let image_data = use_state(|| None);
 
     let first_time_ = first_time.clone();
     let on_file_drop = {
@@ -65,7 +68,8 @@ fn app() -> Html {
         let submessages = context.submessages();
         let (len, _) = submessages.size_hint();
         let submessages_html = submessages
-            .map(|(i, submessage)| {
+            .enumerate()
+            .map(|(index, (i, submessage))| {
                 let id = format!("{}.{}", i.0, i.1);
                 let prod_def = submessage.prod_def();
                 let category = prod_def
@@ -92,9 +96,40 @@ fn app() -> Html {
                 let num_grid_points = submessage.grid_def().num_points();
                 let num_points_represented = submessage.repr_def().num_points();
 
+                let grib_context_ = grib_context.clone();
+                let image_data_ = image_data.clone();
                 let on_click_submessage_row = {
                     Callback::from(move |e: MouseEvent| {
                         e.prevent_default();
+                        if let Some(grib) = grib_context_.as_ref() {
+                            let image_data = if let Some((_i, submessage)) =
+                                grib.submessages().nth(index)
+                            {
+                                if let Ok((w, h)) = submessage.grid_shape() {
+                                    let decoder =
+                                        grib::Grib2SubmessageDecoder::from(submessage).unwrap(); // FIXME
+                                    let values = decoder.dispatch().unwrap(); // FIXME
+                                    let pixel_bytes = values
+                                        .map(|value| palette::jma_amedas_temperature(value))
+                                        .flatten()
+                                        .collect::<Vec<_>>();
+                                    let pixel_bytes: &[u8] = &pixel_bytes;
+                                    let pixel_bytes = wasm_bindgen::Clamped(pixel_bytes);
+                                    let image_data = ImageData::new_with_u8_clamped_array_and_sh(
+                                        pixel_bytes,
+                                        w as u32,
+                                        h as u32,
+                                    )
+                                    .unwrap(); // FIXME
+                                    Some(image_data)
+                                } else {
+                                    None
+                                }
+                            } else {
+                                None // is not expected to happen
+                            };
+                            image_data_.set(image_data);
+                        }
                         submessage_modal::display_submessage_modal();
                     })
                 };
@@ -141,6 +176,8 @@ fn app() -> Html {
         html! {}
     };
 
+    let image_data = image_data.as_ref().map(|i| i.clone());
+
     html! {
         <>
             <div id="main" ondragover={ on_drag_over }>
@@ -148,7 +185,7 @@ fn app() -> Html {
                 <div>{ file_name }</div>
                 { listing }
             </div>
-            <SubmessageModal on_click={on_click_submessage_modal} />
+            <SubmessageModal image_data={image_data} on_click={on_click_submessage_modal} />
             <FileDropArea first_time={*first_time} on_drop={on_file_drop} />
         </>
     }
