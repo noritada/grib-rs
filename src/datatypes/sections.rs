@@ -190,6 +190,16 @@ pub enum GridDefinitionTemplateValues {
 }
 
 impl GridDefinitionTemplateValues {
+    /// Returns the shape of the grid, i.e. a tuple of the number of grids in
+    /// the i and j directions.
+    pub fn grid_shape(&self) -> (usize, usize) {
+        match self {
+            Self::Template0(def) => def.grid_shape(),
+            Self::Template20(def) => def.grid_shape(),
+            Self::Template30(def) => def.grid_shape(),
+        }
+    }
+
     /// Returns an iterator over `(i, j)` of grid points.
     ///
     /// Note that this is a low-level API and it is not checked that the number

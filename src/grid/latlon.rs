@@ -16,6 +16,28 @@ pub struct LatLonGridDefinition {
 }
 
 impl LatLonGridDefinition {
+    /// Returns the shape of the grid, i.e. a tuple of the number of grids in
+    /// the i and j directions.
+    ///
+    /// Examples
+    ///
+    /// ```
+    /// let def = grib::LatLonGridDefinition {
+    ///     ni: 2,
+    ///     nj: 3,
+    ///     first_point_lat: 0,
+    ///     first_point_lon: 0,
+    ///     last_point_lat: 2_000_000,
+    ///     last_point_lon: 1_000_000,
+    ///     scanning_mode: grib::ScanningMode(0b01000000),
+    /// };
+    /// let shape = def.grid_shape();
+    /// assert_eq!(shape, (2, 3));
+    /// ```
+    pub fn grid_shape(&self) -> (usize, usize) {
+        (self.ni as usize, self.nj as usize)
+    }
+
     /// Returns an iterator over `(i, j)` of grid points.
     ///
     /// Note that this is a low-level API and it is not checked that the number
