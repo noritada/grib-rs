@@ -27,8 +27,9 @@ pub(crate) fn submessage_modal(
         });
     }
 
-    if let Some(context) = context_.as_ref() {
+    if let Some((context, width, height)) = context_.as_ref() {
         if let Some(image_data) = image_data {
+            context.clear_rect(0., 0., *width as f64, *height as f64);
             let _ = context.put_image_data(&image_data, 0., 0.);
         }
     }
@@ -58,15 +59,16 @@ pub(crate) fn hide_submessage_modal() {
     }
 }
 
-fn get_canvas_context() -> Option<CanvasRenderingContext2d> {
+fn get_canvas_context() -> Option<(CanvasRenderingContext2d, u32, u32)> {
     let window = web_sys::window()?;
     let document = window.document()?;
     let canvas = document.get_element_by_id("grid-canvas")?;
     let canvas: web_sys::HtmlCanvasElement =
         canvas.dyn_into::<web_sys::HtmlCanvasElement>().ok()?;
-    canvas
+    let context = canvas
         .get_context("2d")
         .ok()??
         .dyn_into::<CanvasRenderingContext2d>()
-        .ok()
+        .ok()?;
+    Some((context, canvas.width(), canvas.height()))
 }
