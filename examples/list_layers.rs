@@ -68,12 +68,14 @@ where
         // `fixed_layers()` returns a tuple of two layers wrapped by `Option`.
         let (first, _second) = submessage.prod_def().fixed_surfaces().unwrap();
         let elevation_level = first.value();
+        let elevation_unit = first.unit().map(|s| format!(" [{s}]")).unwrap_or_default();
 
         println!(
-            "{:<31} {:>14} {:>17}",
+            "{:<31} {:>14} {:>17}{}",
             parameter.to_string(),
             forecast_time,
-            elevation_level
+            elevation_level,
+            elevation_unit,
         );
     }
 

@@ -73,6 +73,53 @@ impl FixedSurface {
         }
     }
 
+    /// Returns the unit string defined for the type of the surface, if any.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// assert_eq!(grib::FixedSurface::new(100, 0, 0).unit(), Some("Pa"));
+    /// ```
+    pub fn unit(&self) -> Option<&str> {
+        // Tentative implementation; pattern matching should be generated from the
+        // CodeFlag CSV file.
+        let unit = match self.surface_type {
+            11 => "m",
+            12 => "m",
+            13 => "%",
+            18 => "Pa",
+            20 => "K",
+            21 => "kg m-3",
+            22 => "kg m-3",
+            23 => "Bq m-3",
+            24 => "Bq m-3",
+            25 => "dBZ",
+            26 => "m",
+            27 => "m",
+            30 => "m",
+            100 => "Pa",
+            102 => "m",
+            103 => "m",
+            104 => r#""sigma" value"#,
+            106 => "m",
+            107 => "K",
+            108 => "Pa",
+            109 => "K m2 kg-1 s-1",
+            114 => "Numeric",
+            117 => "m",
+            151 => "Numeric",
+            152 => "Numeric",
+            160 => "m",
+            161 => "m",
+            168 => "Numeric",
+            169 => "kg m-3",
+            170 => "K",
+            171 => "m2 s-1",
+            _ => return None,
+        };
+        Some(unit)
+    }
+
     /// Checks if the scale factor should be treated as missing.
     pub fn scale_factor_is_nan(&self) -> bool {
         // Handle as NaN if all bits are 1. Note that this is i8::MIN + 1 and not
