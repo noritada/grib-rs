@@ -77,7 +77,7 @@ fn app() -> Html {
                     .unwrap_or_default();
                 let surfaces = prod_def
                     .fixed_surfaces()
-                    .map(|(first, second)| (first.value().to_string(), second.value().to_string()))
+                    .map(|(first, second)| (format_surface(&first), format_surface(&second)))
                     .unwrap_or((String::new(), String::new()));
                 let num_grid_points = submessage.grid_def().num_points();
                 let num_points_represented = submessage.repr_def().num_points();
@@ -133,6 +133,15 @@ fn app() -> Html {
             <FileDropArea first_time={*first_time} on_drop={on_file_drop} />
         </>
     }
+}
+
+fn format_surface(surface: &grib::FixedSurface) -> String {
+    let value = surface.value();
+    let unit = surface
+        .unit()
+        .map(|s| format!(" [{s}]"))
+        .unwrap_or_default();
+    format!("{value}{unit}")
 }
 
 fn main() {
