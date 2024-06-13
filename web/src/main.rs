@@ -57,7 +57,8 @@ fn app() -> Html {
                     let result = read_as_bytes(&blob).await;
                     if let Ok(bytes_) = result {
                         let grib = grib::from_reader(std::io::Cursor::new(bytes_));
-                        grib_context.set(grib.ok())
+                        grib_context.set(grib.ok());
+                        submessage_modal::hide_submessage_modal();
                     }
                 });
             }
@@ -180,12 +181,16 @@ fn app() -> Html {
 
     html! {
         <>
-            <div id="main" ondragover={ on_drag_over }>
+            <div id="main" ondragover={ on_drag_over.clone() }>
                 <h1>{ "GRIB2 Data Viewer" }</h1>
                 <div>{ file_name }</div>
                 { listing }
             </div>
-            <SubmessageModal image_data={image_data} on_click={on_click_submessage_modal} />
+            <SubmessageModal
+                image_data={image_data}
+                on_click={on_click_submessage_modal}
+                on_drag_over={on_drag_over}
+            />
             <FileDropArea first_time={*first_time} on_drop={on_file_drop} />
         </>
     }

@@ -8,6 +8,7 @@ const SUBMESSAGE_MODAL_ID: &str = "submessage-modal";
 pub struct SubmessageModalProps {
     pub image_data: Option<ImageData>,
     pub on_click: Callback<MouseEvent>,
+    pub on_drag_over: Callback<DragEvent>,
 }
 
 #[function_component(SubmessageModal)]
@@ -15,6 +16,7 @@ pub(crate) fn submessage_modal(
     SubmessageModalProps {
         image_data,
         on_click,
+        on_drag_over,
     }: &SubmessageModalProps,
 ) -> Html {
     let context = use_state(|| None);
@@ -35,7 +37,7 @@ pub(crate) fn submessage_modal(
     }
 
     html! {
-        <div id={SUBMESSAGE_MODAL_ID} class="invisible" onclick={on_click}>
+        <div id={SUBMESSAGE_MODAL_ID} class="invisible" onclick={on_click} ondragover={on_drag_over}>
             <div id="submessage-details">
                 <canvas id="grid-canvas"></canvas>
             </div>
