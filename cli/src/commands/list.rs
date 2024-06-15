@@ -68,7 +68,7 @@ impl<'i, R> Display for ListView<'i, R> {
         match self.mode {
             ListViewMode::OneLine => {
                 let header = format!(
-                    "{:>8} │ {:<31} {:<18} {:>14} {:>17} {:>17} │ {:>21}\n",
+                    "{:>8} │ {:<31} {:<18} {:>14} {:>33} {:>33} │ {:>21}\n",
                     "id",
                     "Parameter",
                     "Generating process",
@@ -102,15 +102,13 @@ impl<'i, R> Display for ListView<'i, R> {
                         .unwrap_or_default();
                     let surfaces = prod_def
                         .fixed_surfaces()
-                        .map(|(first, second)| {
-                            (first.value().to_string(), second.value().to_string())
-                        })
+                        .map(|(first, second)| (format_surface(&first), format_surface(&second)))
                         .unwrap_or((String::new(), String::new()));
                     let num_grid_points = submessage.grid_def().num_points();
                     let num_points_represented = submessage.repr_def().num_points();
                     writeln!(
                         f,
-                        "{:>8} │ {:<31} {:<18} {:>14} {:>17} {:>17} │ {:>10}/{:>10}",
+                        "{:>8} │ {:<31} {:<18} {:>14} {:>33} {:>33} │ {:>10}/{:>10}",
                         id,
                         category,
                         generating_process,
@@ -137,4 +135,13 @@ impl<'i, R> Display for ListView<'i, R> {
 enum ListViewMode {
     OneLine,
     Dump,
+}
+
+fn format_surface(surface: &grib::FixedSurface) -> String {
+    let value = surface.value();
+    let unit = surface
+        .unit()
+        .map(|s| format!(" [{s}]"))
+        .unwrap_or_default();
+    format!("{value}{unit}")
 }
