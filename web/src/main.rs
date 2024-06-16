@@ -111,8 +111,7 @@ fn app() -> Html {
                                         grib::Grib2SubmessageDecoder::from(submessage).unwrap(); // FIXME
                                     let values = decoder.dispatch().unwrap(); // FIXME
                                     let pixel_bytes = values
-                                        .map(|value| palette::jma_amedas_temperature(value))
-                                        .flatten()
+                                        .flat_map(palette::jma_amedas_temperature)
                                         .collect::<Vec<_>>();
                                     let pixel_bytes: &[u8] = &pixel_bytes;
                                     let pixel_bytes = wasm_bindgen::Clamped(pixel_bytes);
