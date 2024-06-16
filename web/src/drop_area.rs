@@ -76,6 +76,7 @@ pub(crate) fn file_drop_area(
             <div id="drop-zone-content">
                 <h1>{ "GRIB2 Data Viewer" }</h1>
                 { "Drag and drop file here" }
+                <div class="note">{ "Data is never transferred over the Internet." }</div>
             </div>
         </div>
     }
