@@ -33,7 +33,7 @@
                 width: 100%;
                 box-sizing: border-box;
                 padding: 5%;
-                z-index: 2;
+                z-index: 3;
                 background-color: #fff;
             }
 
@@ -103,6 +103,29 @@
 
             tr:nth-child(even) {
                 background-color: #f9f9f9;
+            }
+
+            #submessage-modal {
+                position: absolute;
+                height: 100%;
+                width: 100%;
+                box-sizing: border-box;
+                padding: 5%;
+                z-index: 2;
+                backdrop-filter: blur(3px);
+                background-color: #fff8;
+            }
+
+            #submessage-details {
+                height: 100%;
+                width: 100%;
+                background-color: #eee;
+            }
+
+            #grid-canvas {
+                height: 100%;
+                width: 80%;
+                image-rendering: pixelated;
             }
         </style>
     </head>

@@ -2,6 +2,10 @@ use wasm_bindgen::JsCast;
 use web_sys::Element;
 use yew::prelude::*;
 
+use crate::utils;
+
+const DROP_ZONE_ID: &str = "drop-zone";
+
 #[derive(Properties, PartialEq)]
 pub struct FileDropAreaProps {
     pub first_time: bool,
@@ -83,7 +87,7 @@ pub(crate) fn file_drop_area(
 }
 
 pub(crate) fn display_drop_zone() {
-    if let Some(classes) = get_drop_zone_classes() {
+    if let Some(classes) = utils::get_classes(DROP_ZONE_ID) {
         classes
             .remove_1("invisible")
             .expect("removing class 'invisible' failed")
@@ -91,17 +95,9 @@ pub(crate) fn display_drop_zone() {
 }
 
 pub(crate) fn hide_drop_zone() {
-    if let Some(classes) = get_drop_zone_classes() {
+    if let Some(classes) = utils::get_classes(DROP_ZONE_ID) {
         classes
             .add_1("invisible")
             .expect("adding class 'invisible' failed")
     }
-}
-
-fn get_drop_zone_classes() -> Option<web_sys::DomTokenList> {
-    let window = web_sys::window()?;
-    let document = window.document()?;
-    let element = document.get_element_by_id("drop-zone")?;
-    let class_list = element.class_list();
-    Some(class_list)
 }

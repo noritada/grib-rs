@@ -17,5 +17,8 @@ web-sys = { version = "0.3", features = [
     "Element",
     "FileList",
     "DragEvent",
+    "HtmlCanvasElement",
+    "CanvasRenderingContext2d",
+    "ImageData",
 ] }
 yew = { version = "0.21", features = ["csr"] }
