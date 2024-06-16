@@ -1,5 +1,5 @@
 [package]
-name = "grib-web"
+name = "grib-demo"
 version = "0.1.0"
 edition = "2021"
 
