@@ -1,4 +1,5 @@
 use std::{
+    borrow::Cow,
     fmt::{self, Display, Formatter},
     path::PathBuf,
 };
@@ -68,14 +69,15 @@ impl<'i, R> Display for ListView<'i, R> {
         match self.mode {
             ListViewMode::OneLine => {
                 let header = format!(
-                    "{:>8} │ {:<31} {:<18} {:>14} {:>33} {:>33} │ {:>21}\n",
+                    "{:>8} │ {:<31} {:<18} {:>14} {:>33} {:>33} │ {:>21} {:<21}\n",
                     "id",
                     "Parameter",
                     "Generating process",
                     "Forecast time",
                     "1st fixed surface",
                     "2nd fixed surface",
-                    "#points (nan/total)"
+                    "#points (nan/total)",
+                    "grid type",
                 );
                 let style = Style::new().bold();
                 write!(f, "{}", style.apply_to(header))?;
@@ -104,11 +106,17 @@ impl<'i, R> Display for ListView<'i, R> {
                         .fixed_surfaces()
                         .map(|(first, second)| (format_surface(&first), format_surface(&second)))
                         .unwrap_or((String::new(), String::new()));
-                    let num_grid_points = submessage.grid_def().num_points();
+                    let grid_def = submessage.grid_def();
+                    let num_grid_points = grid_def.num_points();
                     let num_points_represented = submessage.repr_def().num_points();
+                    let grid_type = grib::GridDefinitionTemplateValues::try_from(grid_def)
+                        .map(|def| Cow::from(def.grid_type()))
+                        .unwrap_or_else(|_| {
+                            Cow::from(format!("unknown (template {})", grid_def.grid_tmpl_num()))
+                        });
                     writeln!(
                         f,
-                        "{:>8} │ {:<31} {:<18} {:>14} {:>33} {:>33} │ {:>10}/{:>10}",
+                        "{:>8} │ {:<31} {:<18} {:>14} {:>33} {:>33} │ {:>10}/{:>10} {:<21}",
                         id,
                         category,
                         generating_process,
@@ -116,7 +124,8 @@ impl<'i, R> Display for ListView<'i, R> {
                         surfaces.0,
                         surfaces.1,
                         num_grid_points - num_points_represented,
-                        num_grid_points
+                        num_grid_points,
+                        grid_type,
                     )?;
                 }
             }
