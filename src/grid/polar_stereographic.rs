@@ -56,7 +56,7 @@ impl PolarStereographicGridDefinition {
     }
 
     /// Returns the grid type.
-    pub fn grid_type(&self) -> &'static str {
+    pub fn short_name(&self) -> &'static str {
         "polar_stereographic"
     }
 

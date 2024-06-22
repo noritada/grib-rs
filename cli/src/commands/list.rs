@@ -110,7 +110,7 @@ impl<'i, R> Display for ListView<'i, R> {
                     let num_grid_points = grid_def.num_points();
                     let num_points_represented = submessage.repr_def().num_points();
                     let grid_type = grib::GridDefinitionTemplateValues::try_from(grid_def)
-                        .map(|def| Cow::from(def.grid_type()))
+                        .map(|def| Cow::from(def.short_name()))
                         .unwrap_or_else(|_| {
                             Cow::from(format!("unknown (template {})", grid_def.grid_tmpl_num()))
                         });

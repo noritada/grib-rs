@@ -39,7 +39,7 @@ impl LatLonGridDefinition {
     }
 
     /// Returns the grid type.
-    pub fn grid_type(&self) -> &'static str {
+    pub fn short_name(&self) -> &'static str {
         "regular_ll"
     }
 

@@ -208,11 +208,11 @@ impl GridDefinitionTemplateValues {
     /// This is provided primarily for debugging and simple notation purposes.
     /// It is better to use enum variants instead of the string notation to
     /// determine the grid type.
-    pub fn grid_type(&self) -> &'static str {
+    pub fn short_name(&self) -> &'static str {
         match self {
-            Self::Template0(def) => def.grid_type(),
-            Self::Template20(def) => def.grid_type(),
-            Self::Template30(def) => def.grid_type(),
+            Self::Template0(def) => def.short_name(),
+            Self::Template20(def) => def.short_name(),
+            Self::Template30(def) => def.short_name(),
         }
     }
 
