@@ -18,6 +18,17 @@ pub struct GaussianGridDefinition {
 }
 
 impl GaussianGridDefinition {
+    /// Returns the shape of the grid, i.e. a tuple of the number of grids in
+    /// the i and j directions.
+    pub fn grid_shape(&self) -> (usize, usize) {
+        (self.ni as usize, self.nj as usize)
+    }
+
+    /// Returns the grid type.
+    pub fn short_name(&self) -> &'static str {
+        "regular_gg"
+    }
+
     /// Returns an iterator over `(i, j)` of grid points.
     ///
     /// Note that this is a low-level API and it is not checked that the number

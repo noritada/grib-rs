@@ -200,6 +200,7 @@ impl GridDefinitionTemplateValues {
             Self::Template0(def) => def.grid_shape(),
             Self::Template20(def) => def.grid_shape(),
             Self::Template30(def) => def.grid_shape(),
+            Self::Template40(def) => def.grid_shape(),
         }
     }
 
@@ -216,6 +217,7 @@ impl GridDefinitionTemplateValues {
             Self::Template0(def) => def.short_name(),
             Self::Template20(def) => def.short_name(),
             Self::Template30(def) => def.short_name(),
+            Self::Template40(def) => def.short_name(),
         }
     }
 
@@ -293,6 +295,11 @@ impl TryFrom<&GridDefinition> for GridDefinitionTemplateValues {
             }
             40 => {
                 let buf = &value.payload;
+                if buf.len() > 67 {
+                    return Err(GribError::NotSupported(format!(
+                        "template {num} with list of number of points"
+                    )));
+                }
                 Ok(GridDefinitionTemplateValues::Template40(
                     GaussianGridDefinition::from_buf(&buf[25..]),
                 ))
