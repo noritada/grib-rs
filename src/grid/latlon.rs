@@ -1,4 +1,7 @@
-use super::{helpers::RegularGridIterator, GridPointIndexIterator, ScanningMode};
+use super::{
+    helpers::{evenly_spaced_degrees, RegularGridIterator},
+    GridPointIndexIterator, ScanningMode,
+};
 use crate::{
     error::GribError,
     utils::{read_as, GribInt},
@@ -112,18 +115,16 @@ impl LatLonGridDefinition {
         }
 
         let ij = self.ij()?;
-
-        let lat_diff = self.last_point_lat - self.first_point_lat;
-        let lon_diff = self.last_point_lon - self.first_point_lon;
-        let (num_div_lat, num_div_lon) = ((self.nj - 1) as i32, (self.ni - 1) as i32);
-        let lat_delta = lat_diff as f32 / num_div_lat as f32;
-        let lat = (0..=num_div_lat)
-            .map(|x| (self.first_point_lat as f32 + x as f32 * lat_delta) / 1_000_000_f32)
-            .collect();
-        let lon_delta = lon_diff as f32 / num_div_lon as f32;
-        let lon = (0..=num_div_lon)
-            .map(|x| (self.first_point_lon as f32 + x as f32 * lon_delta) / 1_000_000_f32)
-            .collect();
+        let lat = evenly_spaced_degrees(
+            self.first_point_lat as f32,
+            self.last_point_lat as f32,
+            (self.nj - 1) as usize,
+        );
+        let lon = evenly_spaced_degrees(
+            self.first_point_lon as f32,
+            self.last_point_lon as f32,
+            (self.ni - 1) as usize,
+        );
 
         let iter = RegularGridIterator::new(lat, lon, ij);
         Ok(iter)
