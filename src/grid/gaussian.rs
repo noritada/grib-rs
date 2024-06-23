@@ -69,6 +69,35 @@ impl GaussianGridDefinition {
     }
 }
 
+// Finds roots (zero points) of the Legendre polynomial using Newton–Raphson
+// method.
+fn legendre_roots_iterator(n: usize) -> impl Iterator<Item = f32> {
+    (0..n).map(move |i| {
+        let guess = (i as f32 + 0.5) * std::f32::consts::PI / (n as f32);
+        find_root(guess.cos(), |x| {
+            let (p_prev, p) = legendre_polynomial(n, x);
+            let fpx = legendre_polynomial_derivative(n, x, p_prev, p);
+            p / fpx
+        })
+    })
+}
+
+// `n` is assumed to be greater than or equal to 2.
+fn legendre_polynomial(n: usize, x: f32) -> (f32, f32) {
+    let mut p0 = 1.0;
+    let mut p1 = x;
+    for k in 2..=n {
+        let pk = ((2 * k - 1) as f32 * x * p1 - (k - 1) as f32 * p0) / k as f32;
+        p0 = p1;
+        p1 = pk;
+    }
+    (p0, p1)
+}
+
+fn legendre_polynomial_derivative(n: usize, x: f32, p_prev: f32, p: f32) -> f32 {
+    (n as f32 * (p_prev - x * p)) / (1.0 - x * x)
+}
+
 // Finds a root (zero point) of the given function using Newton–Raphson method.
 fn find_root<F>(initial_guess: f32, f: F) -> f32
 where
@@ -89,6 +118,40 @@ where
 mod tests {
     use super::*;
     use crate::grid::helpers::test_helpers::assert_almost_eq;
+
+    macro_rules! test_legendre_roots_iterator_with_analytical_solutions {
+        ($((
+            $name:ident,
+            $n:expr,
+            $expected:expr,
+        ),)*) => ($(
+            #[test]
+            fn $name() {
+                let actual = legendre_roots_iterator($n).collect::<Vec<_>>();
+                let expected = $expected;
+                assert_eq!(actual, expected);
+            }
+        )*);
+    }
+
+    test_legendre_roots_iterator_with_analytical_solutions! {
+        (
+            legendre_roots_iterator_for_n_being_2_compared_with_analytical_solutions,
+            2,
+            vec![1.0 / 3.0_f32.sqrt(), -1.0 / 3.0_f32.sqrt()],
+        ),
+        (
+            legendre_roots_iterator_for_n_being_5_compared_with_analytical_solutions,
+            5,
+            vec![
+                (5.0_f32 + 2.0 * (10.0_f32 / 7.0).sqrt()).sqrt() / 3.0,
+                (5.0_f32 - 2.0 * (10.0_f32 / 7.0).sqrt()).sqrt() / 3.0,
+                0.0,
+                - (5.0_f32 - 2.0 * (10.0_f32 / 7.0).sqrt()).sqrt() / 3.0,
+                - (5.0_f32 + 2.0 * (10.0_f32 / 7.0).sqrt()).sqrt() / 3.0,
+            ],
+        ),
+    }
 
     #[test]
     fn finding_root() {
