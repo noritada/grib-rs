@@ -69,7 +69,7 @@ impl<'i, R> Display for ListView<'i, R> {
         match self.mode {
             ListViewMode::OneLine => {
                 let header = format!(
-                    "{:>8} │ {:<31} {:<18} {:>14} {:>33} {:>33} │ {:>21} {:<21}\n",
+                    "{:>8} │ {:<31} {:<18} {:>14} {:>33} {:>33} │ {:>21} {:<21}",
                     "id",
                     "Parameter",
                     "Generating process",
@@ -80,7 +80,7 @@ impl<'i, R> Display for ListView<'i, R> {
                     "grid type",
                 );
                 let style = Style::new().bold();
-                write!(f, "{}", style.apply_to(header))?;
+                writeln!(f, "{}", style.apply_to(header.trim_end()))?;
 
                 for (i, submessage) in entries {
                     let id = format!("{}.{}", i.0, i.1);

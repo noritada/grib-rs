@@ -11,7 +11,7 @@ crate::commands::test_simple_display! {
         "list",
         utils::testdata::grib2::jma_tornado_nowcast()?,
         Vec::<&str>::new(),
-        "      id │ Parameter                       Generating process  Forecast time                 1st fixed surface                 2nd fixed surface │   #points (nan/total) grid type            
+        "      id │ Parameter                       Generating process  Forecast time                 1st fixed surface                 2nd fixed surface │   #points (nan/total) grid type
      0.0 │ code '0' is not implemented     Analysis                    0 [m]                               NaN                               NaN │          0/     86016 regular_ll           
      0.1 │ code '0' is not implemented     Forecast                   10 [m]                               NaN                               NaN │          0/     86016 regular_ll           
      0.2 │ code '0' is not implemented     Forecast                   20 [m]                               NaN                               NaN │          0/     86016 regular_ll           
@@ -26,7 +26,7 @@ crate::commands::test_simple_display! {
         "list",
         utils::testdata::grib2::jma_msmguid()?,
         Vec::<&str>::new(),
-        "      id │ Parameter                       Generating process  Forecast time                 1st fixed surface                 2nd fixed surface │   #points (nan/total) grid type            
+        "      id │ Parameter                       Generating process  Forecast time                 1st fixed surface                 2nd fixed surface │   #points (nan/total) grid type
      0.0 │ code '192' is not implemented   Forecast                    0 [h]                               NaN                               NaN │     106575/    268800 regular_ll           
      0.1 │ Total precipitation rate        Forecast                    0 [h]                               NaN                               NaN │     106575/    268800 regular_ll           
      0.2 │ code '192' is not implemented   Forecast                    3 [h]                               NaN                               NaN │     106575/    268800 regular_ll           
@@ -79,7 +79,7 @@ crate::commands::test_simple_display! {
         "list",
         utils::testdata::grib2::multi_message_data(3)?,
         Vec::<&str>::new(),
-        r#"      id │ Parameter                       Generating process  Forecast time                 1st fixed surface                 2nd fixed surface │   #points (nan/total) grid type            
+        r#"      id │ Parameter                       Generating process  Forecast time                 1st fixed surface                 2nd fixed surface │   #points (nan/total) grid type
      0.0 │ Total precipitation rate        Forecast                    0 [m]                                 0                               NaN │          0/   2949120 unknown (template 101)
      1.0 │ Total precipitation rate        Forecast                    0 [m]                                 0                               NaN │          0/   2949120 unknown (template 101)
      2.0 │ Total precipitation rate        Forecast                    0 [m]                                 0                               NaN │          0/   2949120 unknown (template 101)
