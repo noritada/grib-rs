@@ -213,6 +213,13 @@ test_operation_with_data_with_nan_values_as_little_endian! {
         utils::testdata::flat_binary::jma_msmguid_le()?
     ),
     (
+        decoding_complex_packing_with_first_order_spatial_differencing_as_little_endian,
+        utils::testdata::grib2::ncmrwf_wind_solar()?,
+        "0.0",
+        "-l",
+        utils::testdata::flat_binary::ncmrwf_wind_solar_le()?
+    ),
+    (
         decoding_complex_packing_without_spatial_differencing_as_little_endian,
         utils::testdata::grib2::noaa_ndfd_critfireo()?,
         "0.0",

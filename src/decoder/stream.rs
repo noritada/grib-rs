@@ -47,13 +47,12 @@ where
     type Item = T;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let val = if self.length > 0 {
+        if self.length > 0 {
+            self.length -= 1;
             Some(self.val)
         } else {
             None
-        };
-        self.length -= 1;
-        val
+        }
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
@@ -131,6 +130,15 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn fixed_value_iterator_not_crashing_after_iteration_finished() {
+        let length = 2;
+        let mut iter = FixedValueIterator::new(1u8, length);
+        for _ in 0..length + 1 {
+            let _val = iter.next();
+        }
+    }
 
     #[test]
     fn nbitwise_iterator_u2() {

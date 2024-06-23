@@ -1,9 +1,16 @@
-use std::{convert::TryInto, iter};
+use std::iter;
 
 use num::ToPrimitive;
 
-use self::missing::DecodedValue::{self, Missing1, Missing2, Normal};
+use self::{
+    diff::{
+        FirstOrderSpatialDifferencingDecodeIterator, SecondOrderSpatialDifferencingDecodeIterator,
+        SpatialDifferencingDecodeIterator,
+    },
+    missing::DecodedValue::{self, Missing1, Missing2, Normal},
+};
 use crate::{
+    codetables::grib2::Table5_6,
     decoder::{
         param::{ComplexPackingParam, SimplePackingParam},
         simple::*,
@@ -55,11 +62,16 @@ pub(crate) fn decode_7_3(
     let sect5_data = &target.sect5_payload;
     let simple_param = SimplePackingParam::from_buf(&sect5_data[6..15]);
     let complex_param = ComplexPackingParam::from_buf(&sect5_data[16..42]);
-    let spdiff_level = read_as!(u8, sect5_data, 42);
+    let spdiff_order = read_as!(u8, sect5_data, 42);
+    let spdiff_order = Table5_6::try_from(spdiff_order).map_err(|e| {
+        let number = e.number;
+        GribError::NotSupported(format!("Code Table 5.6 value '{number}' is not supported"))
+    })?;
     let spdiff_param_octet = read_as!(u8, sect5_data, 43);
 
     if complex_param.group_splitting_method_used != 1
         || complex_param.missing_value_management_used > 2
+        || matches!(spdiff_order, Table5_6::Missing)
     {
         return Err(GribError::DecodeError(
             DecodeError::ComplexPackingDecodeError(ComplexPackingDecodeError::NotSupported),
@@ -69,7 +81,7 @@ pub(crate) fn decode_7_3(
     let sect7_data = &target.sect7_payload;
     let sect7_params = diff::SpatialDifferencingExtraDescriptors::new(
         sect7_data,
-        spdiff_level,
+        u8::from(spdiff_order.clone()),
         spdiff_param_octet,
     )?;
 
@@ -81,10 +93,16 @@ pub(crate) fn decode_7_3(
         sect7_params.minimum(),
     );
     let first_values = sect7_params.first_values();
-    let spdiff_unpacked = SpatialDiff2ndOrderDecodeIterator::new(
-        unpacked_data,
-        first_values.collect::<Vec<_>>().into_iter(),
-    );
+    let first_values = first_values.collect::<Vec<_>>().into_iter();
+    let spdiff_unpacked = match spdiff_order {
+        Table5_6::FirstOrderSpatialDifferencing => SpatialDifferencingDecodeIterator::FirstOrder(
+            FirstOrderSpatialDifferencingDecodeIterator::new(unpacked_data, first_values),
+        ),
+        Table5_6::SecondOrderSpatialDifferencing => SpatialDifferencingDecodeIterator::SecondOrder(
+            SecondOrderSpatialDifferencingDecodeIterator::new(unpacked_data, first_values),
+        ),
+        Table5_6::Missing => unreachable!(),
+    };
     let decoder = SimplePackingDecodeIterator::new(spdiff_unpacked, &simple_param);
     let decoder = SimplePackingDecodeIteratorWrapper::SimplePacking(decoder);
     Ok(decoder)
@@ -248,59 +266,6 @@ where
                 Some(group_values)
             }
             _ => None,
-        }
-    }
-}
-
-struct SpatialDiff2ndOrderDecodeIterator<I, J> {
-    iter: I,
-    first_values: J,
-    count: u32,
-    prev1: i32,
-    prev2: i32,
-}
-
-impl<I, J> SpatialDiff2ndOrderDecodeIterator<I, J> {
-    fn new(iter: I, first_values: J) -> Self {
-        Self {
-            iter,
-            first_values,
-            count: 0,
-            prev1: 0,
-            prev2: 0,
-        }
-    }
-}
-
-impl<I, J> Iterator for SpatialDiff2ndOrderDecodeIterator<I, J>
-where
-    I: Iterator<Item = DecodedValue<i32>>,
-    J: Iterator<Item = i32>,
-{
-    type Item = DecodedValue<i32>;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        match self.iter.next() {
-            None => None,
-            Some(Normal(v)) => match self.count {
-                0 => {
-                    self.prev2 = self.first_values.next().unwrap();
-                    self.count += 1;
-                    Some(Normal(self.prev2))
-                }
-                1 => {
-                    self.prev1 = self.first_values.next().unwrap();
-                    self.count += 1;
-                    Some(Normal(self.prev1))
-                }
-                _ => {
-                    let v = v + 2 * self.prev1 - self.prev2;
-                    self.prev2 = self.prev1;
-                    self.prev1 = v;
-                    Some(Normal(v))
-                }
-            },
-            Some(missing) => Some(missing),
         }
     }
 }

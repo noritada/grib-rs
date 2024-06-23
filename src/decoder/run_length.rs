@@ -1,5 +1,3 @@
-use std::convert::TryInto;
-
 use crate::{
     decoder::{stream::NBitwiseIterator, DecodeError, Grib2SubmessageDecoder},
     error::*,

@@ -23,6 +23,16 @@ Source: Deutscher Wetterdienst
 
 - `icon_global_icosahedral_single-level_2021112018_000_TOT_PREC.grib2`
 
+## Data files from NCMRWF
+
+Following data files are from NCMRWF.
+
+The following data file was not placed in a publicly accessible location.
+It was posted as sample data in a [discussion](https://github.com/noritada/grib-rs/discussions/77) in this repository and was incorporated into the repository with permission.
+
+- `wind_solar_ind_0.125_20240521_12Z.grib2.0.xz`
+  (Only the first 1 of 4200 messages in `fcst_20240521.grib2` in `wind_solar_ind_0.125_20240521_12Z.tar.gz`)
+
 ## Data files from NOAA
 
 Following data files are downloaded from [NOAA Operational Model Archive and Distribution System (NOMADS)](https://nomads.ncep.noaa.gov/).
@@ -88,6 +98,8 @@ $ wgrib2 -d 1.3 -order raw -no_header -bin meps-wgrib2-le.bin Z__C_RJTD_20190605
 $ wgrib2 -d 1.1 -order raw -no_header -bin msmguid-wgrib2-le.bin Z__C_RJTD_20190304000000_MSM_GUID_Rjp_P-all_FH03-39_Toorg_grib2.bin
 
 $ wgrib2 -d 1 -order raw -no_header -bin cmc-glb-wgrib2-le.bin CMC_glb_TMP_ISBL_1_latlon.24x.24_2021051800_P000.grib2
+
+$ wgrib2 -d 1 -order raw -no_header -bin wind_solar_ind_0.125_20240521_12Z.wgrib2-le.bin wind_solar_ind_0.125_20240521_12Z.grib2.0
 
 $ wgrib2 -d 1 -order raw -no_header -bin gdas-0-wgrib2-le.bin gdas.t12z.pgrb2.0p25.f000.0-10
 

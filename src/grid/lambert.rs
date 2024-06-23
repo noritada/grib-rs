@@ -21,6 +21,46 @@ pub struct LambertGridDefinition {
 }
 
 impl LambertGridDefinition {
+    /// Returns the shape of the grid, i.e. a tuple of the number of grids in
+    /// the i and j directions.
+    ///
+    /// Examples
+    ///
+    /// ```
+    /// let def = grib::LambertGridDefinition {
+    ///     earth_shape: grib::EarthShapeDefinition {
+    ///         shape_of_the_earth: 1,
+    ///         scale_factor_of_radius_of_spherical_earth: 0,
+    ///         scaled_value_of_radius_of_spherical_earth: 6371200,
+    ///         scale_factor_of_earth_major_axis: 0,
+    ///         scaled_value_of_earth_major_axis: 0,
+    ///         scale_factor_of_earth_minor_axis: 0,
+    ///         scaled_value_of_earth_minor_axis: 0,
+    ///     },
+    ///     ni: 2,
+    ///     nj: 3,
+    ///     first_point_lat: 0,
+    ///     first_point_lon: 0,
+    ///     lad: 0,
+    ///     lov: 0,
+    ///     dx: 1000,
+    ///     dy: 1000,
+    ///     scanning_mode: grib::ScanningMode(0b01000000),
+    ///     latin1: 0,
+    ///     latin2: 0,
+    /// };
+    /// let shape = def.grid_shape();
+    /// assert_eq!(shape, (2, 3));
+    /// ```
+    pub fn grid_shape(&self) -> (usize, usize) {
+        (self.ni as usize, self.nj as usize)
+    }
+
+    /// Returns the grid type.
+    pub fn short_name(&self) -> &'static str {
+        "lambert"
+    }
+
     /// Returns an iterator over `(i, j)` of grid points.
     ///
     /// Note that this is a low-level API and it is not checked that the number

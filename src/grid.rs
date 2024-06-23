@@ -1,9 +1,8 @@
+use helpers::RegularGridIterator;
+
 pub use self::{
-    earth::EarthShapeDefinition,
-    gaussian::GaussianGridDefinition,
-    lambert::LambertGridDefinition,
-    latlon::{LatLonGridDefinition, LatLonGridIterator},
-    polar_stereographic::PolarStereographicGridDefinition,
+    earth::EarthShapeDefinition, gaussian::GaussianGridDefinition, lambert::LambertGridDefinition,
+    latlon::LatLonGridDefinition, polar_stereographic::PolarStereographicGridDefinition,
 };
 
 /// An iterator over latitudes and longitudes of grid points in a submessage.
@@ -15,7 +14,7 @@ pub use self::{
 /// [`SubMessage`]: crate::context::SubMessage
 #[derive(Clone)]
 pub enum GridPointIterator {
-    LatLon(LatLonGridIterator),
+    LatLon(RegularGridIterator),
     Lambert(std::vec::IntoIter<(f32, f32)>),
 }
 

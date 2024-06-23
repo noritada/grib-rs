@@ -3,7 +3,6 @@ use std::{
     collections::HashSet,
     fmt::{self, Display, Formatter},
     io::{Cursor, Read, Seek},
-    result::Result,
 };
 
 use crate::{
@@ -457,6 +456,42 @@ Data Representation:                    {}
             self.5.describe().unwrap_or_default(),
             self.repr_def().num_points(),
         )
+    }
+
+    /// Returns the shape of the grid, i.e. a tuple of the number of grids in
+    /// the i and j directions.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use std::{
+    ///     fs::File,
+    ///     io::{BufReader, Read},
+    /// };
+    ///
+    /// fn main() -> Result<(), Box<dyn std::error::Error>> {
+    ///     let mut buf = Vec::new();
+    ///
+    ///     let f = File::open("testdata/gdas.t12z.pgrb2.0p25.f000.0-10.xz")?;
+    ///     let f = BufReader::new(f);
+    ///     let mut f = xz2::bufread::XzDecoder::new(f);
+    ///     f.read_to_end(&mut buf)?;
+    ///
+    ///     let f = std::io::Cursor::new(buf);
+    ///     let grib2 = grib::from_reader(f)?;
+    ///
+    ///     let mut iter = grib2.iter();
+    ///     let (_, message) = iter.next().ok_or_else(|| "first message is not found")?;
+    ///
+    ///     let shape = message.grid_shape()?;
+    ///     assert_eq!(shape, (1440, 721));
+    ///     Ok(())
+    /// }
+    /// ```
+    pub fn grid_shape(&self) -> Result<(usize, usize), GribError> {
+        let grid_def = self.grid_def();
+        let shape = GridDefinitionTemplateValues::try_from(grid_def)?.grid_shape();
+        Ok(shape)
     }
 
     /// Computes and returns an iterator over `(i, j)` of grid points.

@@ -1,4 +1,4 @@
-use std::{convert::TryInto, slice::Iter};
+use std::slice::Iter;
 
 use chrono::{DateTime, LocalResult, TimeZone, Utc};
 
@@ -193,6 +193,32 @@ pub enum GridDefinitionTemplateValues {
 }
 
 impl GridDefinitionTemplateValues {
+    /// Returns the shape of the grid, i.e. a tuple of the number of grids in
+    /// the i and j directions.
+    pub fn grid_shape(&self) -> (usize, usize) {
+        match self {
+            Self::Template0(def) => def.grid_shape(),
+            Self::Template20(def) => def.grid_shape(),
+            Self::Template30(def) => def.grid_shape(),
+        }
+    }
+
+    /// Returns the grid type.
+    ///
+    /// The grid types are denoted as short strings based on `gridType` used in
+    /// ecCodes.
+    ///
+    /// This is provided primarily for debugging and simple notation purposes.
+    /// It is better to use enum variants instead of the string notation to
+    /// determine the grid type.
+    pub fn short_name(&self) -> &'static str {
+        match self {
+            Self::Template0(def) => def.short_name(),
+            Self::Template20(def) => def.short_name(),
+            Self::Template30(def) => def.short_name(),
+        }
+    }
+
     /// Returns an iterator over `(i, j)` of grid points.
     ///
     /// Note that this is a low-level API and it is not checked that the number
@@ -244,6 +270,11 @@ impl TryFrom<&GridDefinition> for GridDefinitionTemplateValues {
         match num {
             0 => {
                 let buf = &value.payload;
+                if buf.len() > 67 {
+                    return Err(GribError::NotSupported(format!(
+                        "template {num} with list of number of points"
+                    )));
+                }
                 Ok(GridDefinitionTemplateValues::Template0(
                     LatLonGridDefinition::from_buf(&buf[25..]),
                 ))

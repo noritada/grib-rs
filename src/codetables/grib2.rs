@@ -38,10 +38,16 @@ impl Table4_4 {
     }
 }
 
+#[derive(Debug, Clone, Eq, PartialEq, TryFromPrimitive, IntoPrimitive)]
+#[repr(u8)]
+pub enum Table5_6 {
+    FirstOrderSpatialDifferencing = 1,
+    SecondOrderSpatialDifferencing,
+    Missing = 255,
+}
+
 #[cfg(test)]
 mod tests {
-    use std::convert::TryFrom;
-
     use num_enum::TryFromPrimitiveError;
 
     use super::*;
