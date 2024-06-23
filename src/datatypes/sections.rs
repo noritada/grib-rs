@@ -245,6 +245,11 @@ impl TryFrom<&GridDefinition> for GridDefinitionTemplateValues {
         match num {
             0 => {
                 let buf = &value.payload;
+                if buf.len() > 67 {
+                    return Err(GribError::NotSupported(format!(
+                        "template {num} with list of number of points"
+                    )));
+                }
                 Ok(GridDefinitionTemplateValues::Template0(
                     LatLonGridDefinition::from_buf(&buf[25..]),
                 ))
