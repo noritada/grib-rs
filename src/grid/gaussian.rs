@@ -68,3 +68,36 @@ impl GaussianGridDefinition {
         }
     }
 }
+
+// Finds a root (zero point) of the given function using Newton–Raphson method.
+fn find_root<F>(initial_guess: f32, f: F) -> f32
+where
+    F: Fn(f32) -> f32,
+{
+    let mut x = initial_guess;
+    loop {
+        let dx = f(x);
+        x -= dx;
+        if dx.abs() < f32::EPSILON {
+            break;
+        }
+    }
+    x
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::grid::helpers::test_helpers::assert_almost_eq;
+
+    #[test]
+    fn finding_root() {
+        let actual = find_root(1.0, |x| {
+            let fx = x * x - 2.0;
+            let fpx = x * 2.0;
+            fx / fpx
+        });
+        let expected = 1.41421356;
+        assert_almost_eq!(actual, expected, 1.0e-8)
+    }
+}
