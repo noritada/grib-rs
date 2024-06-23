@@ -4,10 +4,14 @@ use proj::Proj;
 #[allow(unused_imports)]
 use crate::{GribError, GridPointIndexIterator};
 
-pub(crate) fn evenly_spaced_degrees(start_deg: f32, end_deg: f32, div: usize) -> Vec<f32> {
-    let delta = (end_deg - start_deg) / div as f32;
+pub(crate) fn evenly_spaced_degrees(
+    start_microdegree: f32,
+    end_microdegree: f32,
+    div: usize,
+) -> Vec<f32> {
+    let delta = (end_microdegree - start_microdegree) / div as f32;
     (0..=div)
-        .map(move |x| (start_deg + x as f32 * delta) / 1_000_000_f32)
+        .map(move |x| (start_microdegree + x as f32 * delta) / 1_000_000_f32)
         .collect()
 }
 
