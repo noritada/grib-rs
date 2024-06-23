@@ -55,6 +55,11 @@ impl PolarStereographicGridDefinition {
         (self.ni as usize, self.nj as usize)
     }
 
+    /// Returns the grid type.
+    pub fn short_name(&self) -> &'static str {
+        "polar_stereographic"
+    }
+
     /// Returns an iterator over `(i, j)` of grid points.
     ///
     /// Note that this is a low-level API and it is not checked that the number

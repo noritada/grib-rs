@@ -1,4 +1,4 @@
-use std::ops::Deref;
+use std::{borrow::Cow, ops::Deref};
 
 use gloo_file::{futures::read_as_bytes, Blob};
 use grib::codetables::{CodeTable4_2, CodeTable4_3, Lookup};
@@ -94,8 +94,14 @@ fn app() -> Html {
                     .fixed_surfaces()
                     .map(|(first, second)| (format_surface(&first), format_surface(&second)))
                     .unwrap_or((String::new(), String::new()));
-                let num_grid_points = submessage.grid_def().num_points();
+                let grid_def = submessage.grid_def();
+                let num_grid_points = grid_def.num_points();
                 let num_points_represented = submessage.repr_def().num_points();
+                let grid_type = grib::GridDefinitionTemplateValues::try_from(grid_def)
+                    .map(|def| Cow::from(def.short_name()))
+                    .unwrap_or_else(|_| {
+                        Cow::from(format!("unknown (template {})", grid_def.grid_tmpl_num()))
+                    });
 
                 let grib_context_ = grib_context.clone();
                 let image_data_ = image_data.clone();
@@ -144,6 +150,7 @@ fn app() -> Html {
                         <td>{surfaces.1}</td>
                         <td>{num_grid_points - num_points_represented}</td>
                         <td>{num_grid_points}</td>
+                        <td>{grid_type}</td>
                     </tr>
                 }
             })
@@ -163,6 +170,7 @@ fn app() -> Html {
                                 <th>{"2nd fixed surface"}</th>
                                 <th>{"#points (nan)"}</th>
                                 <th>{"#points (total)"}</th>
+                                <th>{"grid type"}</th>
                             </tr>
                         </thead>
                         <tbody>

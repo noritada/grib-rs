@@ -200,6 +200,22 @@ impl GridDefinitionTemplateValues {
         }
     }
 
+    /// Returns the grid type.
+    ///
+    /// The grid types are denoted as short strings based on `gridType` used in
+    /// ecCodes.
+    ///
+    /// This is provided primarily for debugging and simple notation purposes.
+    /// It is better to use enum variants instead of the string notation to
+    /// determine the grid type.
+    pub fn short_name(&self) -> &'static str {
+        match self {
+            Self::Template0(def) => def.short_name(),
+            Self::Template20(def) => def.short_name(),
+            Self::Template30(def) => def.short_name(),
+        }
+    }
+
     /// Returns an iterator over `(i, j)` of grid points.
     ///
     /// Note that this is a low-level API and it is not checked that the number
