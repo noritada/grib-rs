@@ -1,4 +1,7 @@
-use super::{GridPointIndexIterator, ScanningMode};
+use super::{
+    helpers::{evenly_spaced_degrees, RegularGridIterator},
+    GridPointIndexIterator, ScanningMode,
+};
 use crate::{
     error::GribError,
     utils::{read_as, GribInt},
@@ -45,6 +48,36 @@ impl GaussianGridDefinition {
         Ok(iter)
     }
 
+    /// Returns an iterator over latitudes and longitudes of grid points.
+    ///
+    /// Note that this is a low-level API and it is not checked that the number
+    /// of iterator iterations is consistent with the number of grid points
+    /// defined in the data.
+    pub fn latlons(&self) -> Result<RegularGridIterator, GribError> {
+        if !self.is_consistent() {
+            return Err(GribError::InvalidValueError("Latitude and longitude for first/last grid points are not consistent with scanning mode".to_owned()));
+        }
+
+        let ij = self.ij()?;
+        let lat = compute_gaussian_latitudes(self.nj as usize)
+            .map_err(|e| GribError::Unknown(e.to_owned()))?;
+        let lon = evenly_spaced_degrees(
+            self.first_point_lon as f32,
+            self.last_point_lon as f32,
+            (self.ni - 1) as usize,
+        );
+
+        let iter = RegularGridIterator::new(lat, lon, ij);
+        Ok(iter)
+    }
+
+    pub(crate) fn is_consistent(&self) -> bool {
+        let lat_diff = self.last_point_lat - self.first_point_lat;
+        let lon_diff = self.last_point_lon - self.first_point_lon;
+        !(((lat_diff > 0) ^ self.scanning_mode.scans_positively_for_j())
+            || ((lon_diff > 0) ^ self.scanning_mode.scans_positively_for_i()))
+    }
+
     pub(crate) fn from_buf(buf: &[u8]) -> Self {
         let ni = read_as!(u32, buf, 0);
         let nj = read_as!(u32, buf, 4);
@@ -67,6 +100,13 @@ impl GaussianGridDefinition {
             scanning_mode: ScanningMode(scanning_mode),
         }
     }
+}
+
+fn compute_gaussian_latitudes(div: usize) -> Result<Vec<f32>, &'static str> {
+    let lat: Vec<_> = legendre_roots_iterator(div)
+        .map(|i| i.asin().to_degrees())
+        .collect();
+    Ok(lat)
 }
 
 // Finds roots (zero points) of the Legendre polynomial using Newton–Raphson
