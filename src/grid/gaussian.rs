@@ -112,10 +112,12 @@ fn compute_gaussian_latitudes(div: usize) -> Result<Vec<f32>, &'static str> {
 // Finds roots (zero points) of the Legendre polynomial using Newton–Raphson
 // method.
 fn legendre_roots_iterator(n: usize) -> impl Iterator<Item = f32> {
+    let coeff = 1.0_f32 - 1.0 / (8 * n * n) as f32 + 1.0 / (8 * n * n * n) as f32;
     (0..n).map(move |i| {
-        // Gabriel Szegö, Inequalities for the zeros of Legendre polynomials and related functions, Trans. Amer. Math. Soc. 39 (1936), 1-17. DOI: https://doi.org/10.1090/S0002-9947-1936-1501831-2
-        let guess = (i as f32 + 0.75) * std::f32::consts::PI / (n as f32 + 0.5);
-        find_root(guess.cos(), |x| {
+        // Francesco G. Tricomi, Sugli zeri dei polinomi sferici ed ultrasferici, Annali di Matematica Pura ed Applicata, 31 (1950), pp. 93–97.
+        // F.G. Lether, P.R. Wenston, Minimax approximations to the zeros of Pn(x) and Gauss-Legendre quadrature, Journal of Computational and Applied Mathematics, Volume 59, Issue 2, 1995, Pages 245-252, ISSN 0377-0427, https://doi.org/10.1016/0377-0427(94)00030-5.
+        let guess = coeff * ((4 * i + 3) as f32 * std::f32::consts::PI / (4 * n + 2) as f32).cos();
+        find_root(guess, |x| {
             let (p_prev, p) = legendre_polynomial(n, x);
             let fpx = legendre_polynomial_derivative(n, x, p_prev, p);
             p / fpx
