@@ -113,7 +113,8 @@ fn compute_gaussian_latitudes(div: usize) -> Result<Vec<f32>, &'static str> {
 // method.
 fn legendre_roots_iterator(n: usize) -> impl Iterator<Item = f32> {
     (0..n).map(move |i| {
-        let guess = (i as f32 + 0.5) * std::f32::consts::PI / (n as f32);
+        // Gabriel Szegö, Inequalities for the zeros of Legendre polynomials and related functions, Trans. Amer. Math. Soc. 39 (1936), 1-17. DOI: https://doi.org/10.1090/S0002-9947-1936-1501831-2
+        let guess = (i as f32 + 0.75) * std::f32::consts::PI / (n as f32 + 0.5);
         find_root(guess.cos(), |x| {
             let (p_prev, p) = legendre_polynomial(n, x);
             let fpx = legendre_polynomial_derivative(n, x, p_prev, p);
@@ -191,6 +192,40 @@ mod tests {
                 - (5.0_f32 + 2.0 * (10.0_f32 / 7.0).sqrt()).sqrt() / 3.0,
             ],
         ),
+    }
+
+    // Values are copied and pasted from ["Features for ERA-40 grids"](https://web.archive.org/web/20160925045844/http://rda.ucar.edu/datasets/common/ecmwf/ERA40/docs/std-transformations/dss_code_glwp.html).
+    #[test]
+    fn gaussian_latitudes_computation_compared_with_numerical_solutions() {
+        let n = 160;
+        let result = compute_gaussian_latitudes(n);
+        assert!(result.is_ok());
+
+        let actual = result.unwrap().into_iter().take(n / 2);
+        let expected = "
+                    +   89.1416,  88.0294,  86.9108,  85.7906,  84.6699,  83.5489,
+                    +   82.4278,  81.3066,  80.1853,  79.0640,  77.9426,  76.8212,
+                    +   75.6998,  74.5784,  73.4570,  72.3356,  71.2141,  70.0927,
+                    +   68.9712,  67.8498,  66.7283,  65.6069,  64.4854,  63.3639,
+                    +   62.2425,  61.1210,  59.9995,  58.8780,  57.7566,  56.6351,
+                    +   55.5136,  54.3921,  53.2707,  52.1492,  51.0277,  49.9062,
+                    +   48.7847,  47.6632,  46.5418,  45.4203,  44.2988,  43.1773,
+                    +   42.0558,  40.9343,  39.8129,  38.6914,  37.5699,  36.4484,
+                    +   35.3269,  34.2054,  33.0839,  31.9624,  30.8410,  29.7195,
+                    +   28.5980,  27.4765,  26.3550,  25.2335,  24.1120,  22.9905,
+                    +   21.8690,  20.7476,  19.6261,  18.5046,  17.3831,  16.2616,
+                    +   15.1401,  14.0186,  12.8971,  11.7756,  10.6542,   9.5327,
+                    +    8.4112,   7.2897,   6.1682,   5.0467,   3.9252,   2.8037,
+                    +    1.6822,   0.5607 /
+                    ";
+        let expected = expected
+            .split(&['+', ' ', ',', '\n', '/'])
+            .filter_map(|s| s.parse::<f32>().ok());
+
+        let delta = 1.0e-4;
+        for (actual_val, expected_val) in actual.zip(expected) {
+            assert_almost_eq!(actual_val, expected_val, delta);
+        }
     }
 
     #[test]
