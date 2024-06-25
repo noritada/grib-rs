@@ -59,8 +59,11 @@ impl GaussianGridDefinition {
         }
 
         let ij = self.ij()?;
-        let lat = compute_gaussian_latitudes(self.nj as usize)
+        let mut lat = compute_gaussian_latitudes(self.nj as usize)
             .map_err(|e| GribError::Unknown(e.to_owned()))?;
+        if self.scanning_mode.scans_positively_for_j() {
+            lat.reverse()
+        };
         let lon = evenly_spaced_degrees(
             self.first_point_lon as f32,
             self.last_point_lon as f32,
