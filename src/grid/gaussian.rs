@@ -64,6 +64,7 @@ impl GaussianGridDefinition {
         if self.scanning_mode.scans_positively_for_j() {
             lat.reverse()
         };
+        let lat = lat.into_iter().map(|v| v as f32).collect();
         let lon = evenly_spaced_degrees(
             self.first_point_lon as f32,
             self.last_point_lon as f32,
@@ -105,7 +106,7 @@ impl GaussianGridDefinition {
     }
 }
 
-fn compute_gaussian_latitudes(div: usize) -> Result<Vec<f32>, &'static str> {
+fn compute_gaussian_latitudes(div: usize) -> Result<Vec<f64>, &'static str> {
     let lat: Vec<_> = legendre_roots_iterator(div)
         .map(|i| i.asin().to_degrees())
         .collect();
@@ -114,12 +115,12 @@ fn compute_gaussian_latitudes(div: usize) -> Result<Vec<f32>, &'static str> {
 
 // Finds roots (zero points) of the Legendre polynomial using Newton–Raphson
 // method.
-fn legendre_roots_iterator(n: usize) -> impl Iterator<Item = f32> {
-    let coeff = 1.0_f32 - 1.0 / (8 * n * n) as f32 + 1.0 / (8 * n * n * n) as f32;
+fn legendre_roots_iterator(n: usize) -> impl Iterator<Item = f64> {
+    let coeff = 1.0_f64 - 1.0 / (8 * n * n) as f64 + 1.0 / (8 * n * n * n) as f64;
     (0..n).map(move |i| {
         // Francesco G. Tricomi, Sugli zeri dei polinomi sferici ed ultrasferici, Annali di Matematica Pura ed Applicata, 31 (1950), pp. 93–97.
         // F.G. Lether, P.R. Wenston, Minimax approximations to the zeros of Pn(x) and Gauss-Legendre quadrature, Journal of Computational and Applied Mathematics, Volume 59, Issue 2, 1995, Pages 245-252, ISSN 0377-0427, https://doi.org/10.1016/0377-0427(94)00030-5.
-        let guess = coeff * ((4 * i + 3) as f32 * std::f32::consts::PI / (4 * n + 2) as f32).cos();
+        let guess = coeff * ((4 * i + 3) as f64 * std::f64::consts::PI / (4 * n + 2) as f64).cos();
         find_root(guess, |x| {
             let (p_prev, p) = legendre_polynomial(n, x);
             let fpx = legendre_polynomial_derivative(n, x, p_prev, p);
@@ -129,31 +130,31 @@ fn legendre_roots_iterator(n: usize) -> impl Iterator<Item = f32> {
 }
 
 // `n` is assumed to be greater than or equal to 2.
-fn legendre_polynomial(n: usize, x: f32) -> (f32, f32) {
+fn legendre_polynomial(n: usize, x: f64) -> (f64, f64) {
     let mut p0 = 1.0;
     let mut p1 = x;
     for k in 2..=n {
-        let pk = ((2 * k - 1) as f32 * x * p1 - (k - 1) as f32 * p0) / k as f32;
+        let pk = ((2 * k - 1) as f64 * x * p1 - (k - 1) as f64 * p0) / k as f64;
         p0 = p1;
         p1 = pk;
     }
     (p0, p1)
 }
 
-fn legendre_polynomial_derivative(n: usize, x: f32, p_prev: f32, p: f32) -> f32 {
-    (n as f32 * (p_prev - x * p)) / (1.0 - x * x)
+fn legendre_polynomial_derivative(n: usize, x: f64, p_prev: f64, p: f64) -> f64 {
+    (n as f64 * (p_prev - x * p)) / (1.0 - x * x)
 }
 
 // Finds a root (zero point) of the given function using Newton–Raphson method.
-fn find_root<F>(initial_guess: f32, f: F) -> f32
+fn find_root<F>(initial_guess: f64, f: F) -> f64
 where
-    F: Fn(f32) -> f32,
+    F: Fn(f64) -> f64,
 {
     let mut x = initial_guess;
     loop {
         let dx = f(x);
         x -= dx;
-        if dx.abs() < f32::EPSILON {
+        if dx.abs() < f64::EPSILON {
             break;
         }
     }
@@ -186,8 +187,6 @@ mod tests {
             .ok_or_else(|| Box::<dyn std::error::Error>::from("first submessage not found"))?;
         let grid_shape = first_submessage.grid_shape()?;
         assert_eq!(grid_shape, (3072, 1536));
-
-        let delta = 1.0e-6;
 
         // Results from the following command line using ecCodes:
         //
@@ -222,6 +221,7 @@ mod tests {
             .split_whitespace()
             .filter_map(|s| s.parse::<f32>().ok());
 
+        let delta = 1.0e-6;
         let first_160_lats = first_submessage
             .latlons()?
             .map(|(lat, _lon)| lat)
@@ -264,6 +264,7 @@ mod tests {
             .split_whitespace()
             .filter_map(|s| s.parse::<f32>().ok());
 
+        let delta = 2.0e-6;
         let first_160_lons = first_submessage.latlons()?.map(|(_lat, lon)| lon).take(160);
         for (actual, expected) in first_160_lons.zip(first_160_lons_expected) {
             assert_almost_eq!(actual, expected, delta);
@@ -291,17 +292,17 @@ mod tests {
         (
             legendre_roots_iterator_for_n_being_2_compared_with_analytical_solutions,
             2,
-            vec![1.0 / 3.0_f32.sqrt(), -1.0 / 3.0_f32.sqrt()],
+            vec![1.0 / 3.0_f64.sqrt(), -1.0 / 3.0_f64.sqrt()],
         ),
         (
             legendre_roots_iterator_for_n_being_5_compared_with_analytical_solutions,
             5,
             vec![
-                (5.0_f32 + 2.0 * (10.0_f32 / 7.0).sqrt()).sqrt() / 3.0,
-                (5.0_f32 - 2.0 * (10.0_f32 / 7.0).sqrt()).sqrt() / 3.0,
+                (5.0_f64 + 2.0 * (10.0_f64 / 7.0).sqrt()).sqrt() / 3.0,
+                (5.0_f64 - 2.0 * (10.0_f64 / 7.0).sqrt()).sqrt() / 3.0,
                 0.0,
-                - (5.0_f32 - 2.0 * (10.0_f32 / 7.0).sqrt()).sqrt() / 3.0,
-                - (5.0_f32 + 2.0 * (10.0_f32 / 7.0).sqrt()).sqrt() / 3.0,
+                - (5.0_f64 - 2.0 * (10.0_f64 / 7.0).sqrt()).sqrt() / 3.0,
+                - (5.0_f64 + 2.0 * (10.0_f64 / 7.0).sqrt()).sqrt() / 3.0,
             ],
         ),
     }
@@ -332,7 +333,7 @@ mod tests {
                     ";
         let expected = expected
             .split(&['+', ' ', ',', '\n', '/'])
-            .filter_map(|s| s.parse::<f32>().ok());
+            .filter_map(|s| s.parse::<f64>().ok());
 
         let delta = 1.0e-4;
         for (actual_val, expected_val) in actual.zip(expected) {
