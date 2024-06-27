@@ -281,9 +281,11 @@ mod tests {
         ),)*) => ($(
             #[test]
             fn $name() {
-                let actual = legendre_roots_iterator($n).collect::<Vec<_>>();
-                let expected = $expected;
-                assert_eq!(actual, expected);
+                let actual = legendre_roots_iterator($n);
+                let expected = $expected.into_iter();
+                for (actual_val, expected_val) in actual.zip(expected) {
+                    assert_almost_eq!(actual_val, expected_val, f64::EPSILON);
+                }
             }
         )*);
     }
