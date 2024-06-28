@@ -20,5 +20,6 @@ pub use crate::{
     reader::*,
 };
 
+#[doc = include_str!("../README.md")]
 #[cfg(doctest)]
-doc_comment::doctest!("../README.md");
+pub struct ReadmeDoctests;

@@ -37,7 +37,6 @@ proj = { version = "0.27", optional = true }
 openjpeg-sys = "1.0.5" # avoiding 1.0.2/1.0.4
 
 [dev-dependencies]
-doc-comment = "0.3"
 flate2 = "1.0"
 tempfile = "3"
 xz2 = "0.1"
