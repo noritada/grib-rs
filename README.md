@@ -123,7 +123,7 @@ The [examples directory](examples) may help you understand the API.
 
 CLI application `gribber` built on the top of the `grib` library is available. It is in the `grib-cli` package and can be installed via `cargo install grib-cli`.
 
-```
+```text
 Usage: gribber [COMMAND]
 
 Commands:
@@ -152,7 +152,7 @@ This repository uses the submodules functionality of Git. So, before running `ca
 
 Then you can build it in the usual way in the Rust world.
 
-```
+```shell
 cargo build
 ```
 
