@@ -20,6 +20,8 @@ pub struct GaussianGridDefinition {
     pub scanning_mode: ScanningMode,
 }
 
+const MAX_ITER: usize = 10;
+
 impl GaussianGridDefinition {
     /// Returns the shape of the grid, i.e. a tuple of the number of grids in
     /// the i and j directions.
@@ -107,15 +109,15 @@ impl GaussianGridDefinition {
 }
 
 fn compute_gaussian_latitudes(div: usize) -> Result<Vec<f64>, &'static str> {
-    let lat: Vec<_> = legendre_roots_iterator(div)
-        .map(|i| i.asin().to_degrees())
+    let lat: Option<Vec<_>> = legendre_roots_iterator(div)
+        .map(|x| x.map(|i| i.asin().to_degrees()))
         .collect();
-    Ok(lat)
+    lat.ok_or("finding root for Legendre polynomial failed")
 }
 
 // Finds roots (zero points) of the Legendre polynomial using Newton–Raphson
 // method.
-fn legendre_roots_iterator(n: usize) -> impl Iterator<Item = f64> {
+fn legendre_roots_iterator(n: usize) -> impl Iterator<Item = Option<f64>> {
     let coeff = 1.0_f64 - 1.0 / (8 * n * n) as f64 + 1.0 / (8 * n * n * n) as f64;
     (0..n).map(move |i| {
         // Francesco G. Tricomi, Sugli zeri dei polinomi sferici ed ultrasferici, Annali di Matematica Pura ed Applicata, 31 (1950), pp. 93–97.
@@ -146,10 +148,11 @@ fn legendre_polynomial_derivative(n: usize, x: f64, p_prev: f64, p: f64) -> f64 
 }
 
 // Finds a root (zero point) of the given function using Newton–Raphson method.
-fn find_root<F>(initial_guess: f64, f: F) -> f64
+fn find_root<F>(initial_guess: f64, f: F) -> Option<f64>
 where
     F: Fn(f64) -> f64,
 {
+    let mut count = MAX_ITER;
     let mut x = initial_guess;
     loop {
         let dx = f(x);
@@ -157,8 +160,14 @@ where
         if dx.abs() < f64::EPSILON {
             break;
         }
+
+        if count > 0 {
+            count -= 1;
+        } else {
+            return None;
+        }
     }
-    x
+    Some(x)
 }
 
 #[cfg(test)]
@@ -284,6 +293,8 @@ mod tests {
                 let actual = legendre_roots_iterator($n);
                 let expected = $expected.into_iter();
                 for (actual_val, expected_val) in actual.zip(expected) {
+                    assert!(actual_val.is_some());
+                    let actual_val = actual_val.unwrap();
                     assert_almost_eq!(actual_val, expected_val, f64::EPSILON);
                 }
             }
@@ -350,7 +361,18 @@ mod tests {
             let fpx = x * 2.0;
             fx / fpx
         });
+        assert!(actual.is_some());
         let expected = 1.41421356;
-        assert_almost_eq!(actual, expected, 1.0e-8)
+        assert_almost_eq!(actual.unwrap(), expected, 1.0e-8)
+    }
+
+    #[test]
+    fn failure_to_find_root() {
+        let actual = find_root(1000.0, |x| {
+            let fx = x * x - 2.0;
+            let fpx = x * 2.0;
+            fx / fpx
+        });
+        assert!(actual.is_none());
     }
 }
