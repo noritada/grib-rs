@@ -117,11 +117,17 @@ fn compute_gaussian_latitudes(div: usize) -> Result<Vec<f64>, &'static str> {
 
 // Finds roots (zero points) of the Legendre polynomial using Newton–Raphson
 // method.
+//
+// The implementation uses initial guess based on following papers:
+//
+// - Francesco G. Tricomi, Sugli zeri dei polinomi sferici ed ultrasferici,
+//   Annali di Matematica Pura ed Applicata, 31 (1950), pp. 93–97.
+// - F.G. Lether, P.R. Wenston, Minimax approximations to the zeros of Pn(x) and
+//   Gauss-Legendre quadrature, Journal of Computational and Applied Mathematics,
+//   Volume 59, Issue 2, 1995, Pages 245-252, ISSN 0377-0427, https://doi.org/10.1016/0377-0427(94)00030-5.
 fn legendre_roots_iterator(n: usize) -> impl Iterator<Item = Option<f64>> {
     let coeff = 1.0_f64 - 1.0 / (8 * n * n) as f64 + 1.0 / (8 * n * n * n) as f64;
     (0..n).map(move |i| {
-        // Francesco G. Tricomi, Sugli zeri dei polinomi sferici ed ultrasferici, Annali di Matematica Pura ed Applicata, 31 (1950), pp. 93–97.
-        // F.G. Lether, P.R. Wenston, Minimax approximations to the zeros of Pn(x) and Gauss-Legendre quadrature, Journal of Computational and Applied Mathematics, Volume 59, Issue 2, 1995, Pages 245-252, ISSN 0377-0427, https://doi.org/10.1016/0377-0427(94)00030-5.
         let guess = coeff * ((4 * i + 3) as f64 * std::f64::consts::PI / (4 * n + 2) as f64).cos();
         find_root(guess, |x| {
             let (p_prev, p) = legendre_polynomial(n, x);
