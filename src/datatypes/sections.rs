@@ -6,7 +6,9 @@ use crate::{
     codetables::SUPPORTED_PROD_DEF_TEMPLATE_NUMBERS,
     datatypes::*,
     error::*,
-    grid::{GridPointIterator, LambertGridDefinition, LatLonGridDefinition},
+    grid::{
+        GaussianGridDefinition, GridPointIterator, LambertGridDefinition, LatLonGridDefinition,
+    },
     utils::{read_as, GribInt},
     GridPointIndexIterator, PolarStereographicGridDefinition,
 };
@@ -187,6 +189,7 @@ pub enum GridDefinitionTemplateValues {
     Template0(LatLonGridDefinition),
     Template20(PolarStereographicGridDefinition),
     Template30(LambertGridDefinition),
+    Template40(GaussianGridDefinition),
 }
 
 impl GridDefinitionTemplateValues {
@@ -197,6 +200,7 @@ impl GridDefinitionTemplateValues {
             Self::Template0(def) => def.grid_shape(),
             Self::Template20(def) => def.grid_shape(),
             Self::Template30(def) => def.grid_shape(),
+            Self::Template40(def) => def.grid_shape(),
         }
     }
 
@@ -213,6 +217,7 @@ impl GridDefinitionTemplateValues {
             Self::Template0(def) => def.short_name(),
             Self::Template20(def) => def.short_name(),
             Self::Template30(def) => def.short_name(),
+            Self::Template40(def) => def.short_name(),
         }
     }
 
@@ -226,6 +231,7 @@ impl GridDefinitionTemplateValues {
             Self::Template0(def) => def.ij(),
             Self::Template20(def) => def.ij(),
             Self::Template30(def) => def.ij(),
+            Self::Template40(def) => def.ij(),
         }
     }
 
@@ -241,6 +247,7 @@ impl GridDefinitionTemplateValues {
             Self::Template20(def) => GridPointIterator::Lambert(def.latlons()?),
             #[cfg(feature = "gridpoints-proj")]
             Self::Template30(def) => GridPointIterator::Lambert(def.latlons()?),
+            Self::Template40(def) => GridPointIterator::LatLon(def.latlons()?),
             #[cfg(not(feature = "gridpoints-proj"))]
             _ => {
                 return Err(GribError::NotSupported(
@@ -280,6 +287,17 @@ impl TryFrom<&GridDefinition> for GridDefinitionTemplateValues {
                 let buf = &value.payload;
                 Ok(GridDefinitionTemplateValues::Template30(
                     LambertGridDefinition::from_buf(&buf[9..]),
+                ))
+            }
+            40 => {
+                let buf = &value.payload;
+                if buf.len() > 67 {
+                    return Err(GribError::NotSupported(format!(
+                        "template {num} with list of number of points"
+                    )));
+                }
+                Ok(GridDefinitionTemplateValues::Template40(
+                    GaussianGridDefinition::from_buf(&buf[25..]),
                 ))
             }
             _ => Err(GribError::NotSupported(format!("template {num}"))),

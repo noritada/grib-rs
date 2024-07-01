@@ -88,6 +88,7 @@ pub(crate) mod test_helpers {
             }
         };
     }
+    pub(crate) use assert_almost_eq;
 
     macro_rules! test_assert_almost_eq_do_not_panic {
         ($((

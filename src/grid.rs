@@ -1,8 +1,8 @@
 use helpers::RegularGridIterator;
 
 pub use self::{
-    earth::EarthShapeDefinition, lambert::LambertGridDefinition, latlon::LatLonGridDefinition,
-    polar_stereographic::PolarStereographicGridDefinition,
+    earth::EarthShapeDefinition, gaussian::GaussianGridDefinition, lambert::LambertGridDefinition,
+    latlon::LatLonGridDefinition, polar_stereographic::PolarStereographicGridDefinition,
 };
 
 /// An iterator over latitudes and longitudes of grid points in a submessage.
@@ -211,6 +211,7 @@ impl ProjectionCentreFlag {
 }
 
 mod earth;
+mod gaussian;
 mod helpers;
 mod lambert;
 mod latlon;
