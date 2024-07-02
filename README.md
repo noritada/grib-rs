@@ -91,10 +91,10 @@ If you feel a feature is missing, please send us your suggestions through the [G
 ### Usage example
 
 ```rust
-use grib::{self, codetables::grib2::*, ForecastTime, Grib2SubmessageDecoder, Name};
+use grib::{codetables::grib2::*, ForecastTime, Grib2SubmessageDecoder, Name};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let fname = "Z__C_RJTD_20160822020000_NOWC_GPV_Ggis10km_Pphw10_FH0000-0100_grib2.bin";
+    let fname = "testdata/Z__C_RJTD_20160822020000_NOWC_GPV_Ggis10km_Pphw10_FH0000-0100_grib2.bin";
     let f = std::fs::File::open(fname)?;
     let f = std::io::BufReader::new(f);
     let grib2 = grib::from_reader(f)?;
@@ -130,12 +130,12 @@ The [examples directory](examples) may help you understand the API.
 
 CLI application `gribber` built on the top of the `grib` library is available. It is in the `grib-cli` package and can be installed via `cargo install grib-cli`.
 
-```
+```text
 Usage: gribber [COMMAND]
 
 Commands:
   completions  Generate shell completions for your shell to stdout
-  decode       Export decoded data
+  decode       Export decoded data with latitudes and longitudes
   info         Show identification information
   inspect      Inspect and describes the data structure
   list         List layers contained in the data
@@ -159,7 +159,7 @@ This repository uses the submodules functionality of Git. So, before running `ca
 
 Then you can build it in the usual way in the Rust world.
 
-```
+```shell
 cargo build
 ```
 

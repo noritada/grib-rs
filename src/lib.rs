@@ -19,3 +19,7 @@ pub use crate::{
     parser::*,
     reader::*,
 };
+
+#[doc = include_str!("../README.md")]
+#[cfg(doctest)]
+pub struct ReadmeDoctests;
