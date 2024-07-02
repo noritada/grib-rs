@@ -87,7 +87,7 @@ If you feel a feature is missing, please send us your suggestions through the [G
 use grib::{codetables::grib2::*, ForecastTime, Grib2SubmessageDecoder, Name};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let fname = "Z__C_RJTD_20160822020000_NOWC_GPV_Ggis10km_Pphw10_FH0000-0100_grib2.bin";
+    let fname = "testdata/Z__C_RJTD_20160822020000_NOWC_GPV_Ggis10km_Pphw10_FH0000-0100_grib2.bin";
     let f = std::fs::File::open(fname)?;
     let f = std::io::BufReader::new(f);
     let grib2 = grib::from_reader(f)?;

@@ -745,14 +745,14 @@ mod tests {
     test_submessage_iterator! {
         (
             item_0_from_submessage_iterator_for_single_message_data_with_multiple_submessages,
-            "testdata/Z__C_RJTD_20160822020000_NOWC_GPV_Ggis10km_Pphw10_FH0000-0100_grib2.bin.xz",
+            "testdata/Z__C_RJTD_20190304000000_MSM_GUID_Rjp_P-all_FH03-39_Toorg_grib2.bin.xz",
             0,
             (0, 0),
             (0, 1, None, 2, 3, 4, 5, 6, 0),
         ),
         (
             item_1_from_submessage_iterator_for_single_message_data_with_multiple_submessages,
-            "testdata/Z__C_RJTD_20160822020000_NOWC_GPV_Ggis10km_Pphw10_FH0000-0100_grib2.bin.xz",
+            "testdata/Z__C_RJTD_20190304000000_MSM_GUID_Rjp_P-all_FH03-39_Toorg_grib2.bin.xz",
             1,
             (0, 1),
             (0, 1, None, 2, 7, 8, 9, 10, 0),

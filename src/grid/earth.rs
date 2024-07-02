@@ -103,6 +103,16 @@ mod tests {
         Ok(buf)
     }
 
+    fn cat_as_bytes(file_name: &str) -> Result<Vec<u8>, std::io::Error> {
+        let mut buf = Vec::new();
+
+        let f = File::open(file_name)?;
+        let mut f = BufReader::new(f);
+        f.read_to_end(&mut buf)?;
+
+        Ok(buf)
+    }
+
     #[test]
     fn radii_for_shape_1() -> Result<(), Box<dyn std::error::Error>> {
         let buf = unxz_as_bytes("testdata/ds.critfireo.bin.xz")?;
@@ -145,8 +155,8 @@ mod tests {
 
     #[test]
     fn radii_for_shape_4() -> Result<(), Box<dyn std::error::Error>> {
-        let buf = unxz_as_bytes(
-            "testdata/Z__C_RJTD_20160822020000_NOWC_GPV_Ggis10km_Pphw10_FH0000-0100_grib2.bin.xz",
+        let buf = cat_as_bytes(
+            "testdata/Z__C_RJTD_20160822020000_NOWC_GPV_Ggis10km_Pphw10_FH0000-0100_grib2.bin",
         )?;
         let earth_actual = EarthShapeDefinition::from_buf(&buf[0x33..]);
         let earth_expected = EarthShapeDefinition {
