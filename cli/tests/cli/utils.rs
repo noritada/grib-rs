@@ -1,7 +1,6 @@
 use std::{
     fs::File,
     io::{self, BufReader, Read, Write},
-    os::unix::ffi::OsStrExt,
     path::Path,
 };
 
@@ -27,7 +26,7 @@ where
 
     let f = File::open(&file_path)?;
     let mut f = BufReader::new(f);
-    match file_path.as_ref().extension().map(|s| s.as_bytes()) {
+    match file_path.as_ref().extension().map(|s| s.as_encoded_bytes()) {
         Some(b"gz") => {
             let mut f = flate2::read::GzDecoder::new(f);
             f.read_to_end(&mut buf)?;
