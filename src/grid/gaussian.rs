@@ -61,7 +61,7 @@ impl GaussianGridDefinition {
         }
 
         let ij = self.ij()?;
-        let mut lat = compute_gaussian_latitudes(self.nj as usize)
+        let mut lat = compute_gaussian_latitudes_in_degrees(self.nj as usize)
             .map_err(|e| GribError::Unknown(e.to_owned()))?;
         if self.scanning_mode.scans_positively_for_j() {
             lat.reverse()
@@ -108,11 +108,15 @@ impl GaussianGridDefinition {
     }
 }
 
-fn compute_gaussian_latitudes(div: usize) -> Result<Vec<f64>, &'static str> {
-    let lat: Option<Vec<_>> = legendre_roots_iterator(div)
-        .map(|x| x.map(|i| i.asin().to_degrees()))
+fn compute_gaussian_latitudes_in_degrees(div: usize) -> Result<Vec<f64>, &'static str> {
+    let lat: Option<Vec<_>> = compute_gaussian_latitudes(div)
+        .map(|x| x.map(|i| i.to_degrees()))
         .collect();
     lat.ok_or("finding root for Legendre polynomial failed")
+}
+
+pub fn compute_gaussian_latitudes(div: usize) -> impl Iterator<Item = Option<f64>> {
+    legendre_roots_iterator(div).map(|x| x.map(|i| i.asin()))
 }
 
 // Finds roots (zero points) of the Legendre polynomial using Newton–Raphson
@@ -330,7 +334,7 @@ mod tests {
     #[test]
     fn gaussian_latitudes_computation_compared_with_numerical_solutions() {
         let n = 160;
-        let result = compute_gaussian_latitudes(n);
+        let result = compute_gaussian_latitudes_in_degrees(n);
         assert!(result.is_ok());
 
         let actual = result.unwrap().into_iter().take(n / 2);

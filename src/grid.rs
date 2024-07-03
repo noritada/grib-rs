@@ -1,8 +1,11 @@
 use helpers::RegularGridIterator;
 
 pub use self::{
-    earth::EarthShapeDefinition, gaussian::GaussianGridDefinition, lambert::LambertGridDefinition,
-    latlon::LatLonGridDefinition, polar_stereographic::PolarStereographicGridDefinition,
+    earth::EarthShapeDefinition,
+    gaussian::{compute_gaussian_latitudes, GaussianGridDefinition},
+    lambert::LambertGridDefinition,
+    latlon::LatLonGridDefinition,
+    polar_stereographic::PolarStereographicGridDefinition,
 };
 
 /// An iterator over latitudes and longitudes of grid points in a submessage.
