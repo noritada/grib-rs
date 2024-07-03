@@ -75,47 +75,34 @@ mod tests {
 
     use super::*;
 
-    fn ungz_as_bytes<P>(file_path: P) -> Result<Vec<u8>, std::io::Error>
+    fn get_uncompressed<P>(file_path: P) -> Result<Vec<u8>, std::io::Error>
     where
         P: AsRef<std::path::Path>,
     {
         let mut buf = Vec::new();
 
-        let f = File::open(file_path)?;
-        let f = BufReader::new(f);
-        let mut f = flate2::read::GzDecoder::new(f);
-        f.read_to_end(&mut buf)?;
-
-        Ok(buf)
-    }
-
-    fn unxz_as_bytes<P>(file_path: P) -> Result<Vec<u8>, std::io::Error>
-    where
-        P: AsRef<std::path::Path>,
-    {
-        let mut buf = Vec::new();
-
-        let f = File::open(file_path)?;
-        let f = BufReader::new(f);
-        let mut f = xz2::bufread::XzDecoder::new(f);
-        f.read_to_end(&mut buf)?;
-
-        Ok(buf)
-    }
-
-    fn cat_as_bytes(file_name: &str) -> Result<Vec<u8>, std::io::Error> {
-        let mut buf = Vec::new();
-
-        let f = File::open(file_name)?;
+        let f = File::open(&file_path)?;
         let mut f = BufReader::new(f);
-        f.read_to_end(&mut buf)?;
+        match file_path.as_ref().extension().map(|s| s.as_encoded_bytes()) {
+            Some(b"gz") => {
+                let mut f = flate2::read::GzDecoder::new(f);
+                f.read_to_end(&mut buf)?;
+            }
+            Some(b"xz") => {
+                let mut f = xz2::bufread::XzDecoder::new(f);
+                f.read_to_end(&mut buf)?;
+            }
+            _ => {
+                f.read_to_end(&mut buf)?;
+            }
+        };
 
         Ok(buf)
     }
 
     #[test]
     fn radii_for_shape_1() -> Result<(), Box<dyn std::error::Error>> {
-        let buf = unxz_as_bytes("testdata/ds.critfireo.bin.xz")?;
+        let buf = get_uncompressed("testdata/ds.critfireo.bin.xz")?;
         let earth_actual = EarthShapeDefinition::from_buf(&buf[0x83..]);
         let earth_expected = EarthShapeDefinition {
             shape_of_the_earth: 1,
@@ -134,7 +121,7 @@ mod tests {
 
     #[test]
     fn radii_for_shape_2() -> Result<(), Box<dyn std::error::Error>> {
-        let buf = ungz_as_bytes(
+        let buf = get_uncompressed(
             "testdata/MRMS_ReflectivityAtLowestAltitude_00.50_20230406-120039.grib2.gz",
         )?;
         let earth_actual = EarthShapeDefinition::from_buf(&buf[0x33..]);
@@ -155,7 +142,7 @@ mod tests {
 
     #[test]
     fn radii_for_shape_4() -> Result<(), Box<dyn std::error::Error>> {
-        let buf = cat_as_bytes(
+        let buf = get_uncompressed(
             "testdata/Z__C_RJTD_20160822020000_NOWC_GPV_Ggis10km_Pphw10_FH0000-0100_grib2.bin",
         )?;
         let earth_actual = EarthShapeDefinition::from_buf(&buf[0x33..]);
@@ -176,7 +163,7 @@ mod tests {
 
     #[test]
     fn radii_for_shape_6() -> Result<(), Box<dyn std::error::Error>> {
-        let buf = unxz_as_bytes("testdata/gdas.t12z.pgrb2.0p25.f000.0-10.xz")?;
+        let buf = get_uncompressed("testdata/gdas.t12z.pgrb2.0p25.f000.0-10.xz")?;
         let earth_actual = EarthShapeDefinition::from_buf(&buf[0x33..]);
         let earth_expected = EarthShapeDefinition {
             shape_of_the_earth: 6,
