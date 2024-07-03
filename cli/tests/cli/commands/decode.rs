@@ -73,7 +73,7 @@ macro_rules! test_operation_with_data_without_nan_values_and_byte_order_options 
                 .stdout(predicate::str::is_empty())
                 .stderr(predicate::str::is_empty());
 
-            let actual = utils::cat_as_bytes(&out_path)?;
+            let actual = utils::get_uncompressed(&out_path)?;
             assert_eq!(actual, $expected);
 
             Ok(())
@@ -154,7 +154,7 @@ fn decoding_run_length_packing_as_big_endian() -> Result<(), Box<dyn std::error:
             b => b.to_vec(),
         })
         .collect();
-    let actual = utils::cat_as_bytes(&out_path)?;
+    let actual = utils::get_uncompressed(&out_path)?;
     assert_eq!(actual, expected);
 
     Ok(())
@@ -189,7 +189,7 @@ macro_rules! test_operation_with_data_with_nan_values_as_little_endian {
                     b => b.to_vec(),
                 })
                 .collect();
-            let actual = utils::cat_as_bytes(&out_path)?;
+            let actual = utils::get_uncompressed(&out_path)?;
             assert_eq!(actual, expected);
 
             Ok(())
@@ -279,7 +279,7 @@ macro_rules! test_operation_with_data_without_nan_values_compared_using_simple_p
             let dig: i16 = $dig;
             let expected = $expected;
             let expected = utils::encode_le_bytes_using_simple_packing(expected, ref_val, exp, dig);
-            let actual = utils::cat_as_bytes(&out_path)?;
+            let actual = utils::get_uncompressed(&out_path)?;
             let actual = utils::encode_le_bytes_using_simple_packing(actual, ref_val, exp, dig);
             assert_eq!(actual, expected);
 
