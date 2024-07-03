@@ -1,6 +1,6 @@
 use std::io::{self, Read, Seek, SeekFrom};
 
-use crate::{datatypes::*, error::*, utils::read_as, SectionBody, SectionInfo};
+use crate::{datatypes::*, error::*, helpers::read_as, SectionBody, SectionInfo};
 
 const SECT0_IS_MAGIC: &[u8] = b"GRIB";
 const SECT0_IS_MAGIC_SIZE: usize = SECT0_IS_MAGIC.len();

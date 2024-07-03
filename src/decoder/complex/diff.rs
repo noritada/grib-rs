@@ -2,7 +2,7 @@ use super::{
     missing::DecodedValue::{self, Normal},
     ComplexPackingDecodeError,
 };
-use crate::{decoder::DecodeError, error::GribError, utils::grib_int_from_bytes};
+use crate::{decoder::DecodeError, error::GribError, helpers::grib_int_from_bytes};
 
 pub(crate) struct SpatialDifferencingExtraDescriptors<'a> {
     slice: &'a [u8],

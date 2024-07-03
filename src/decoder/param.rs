@@ -1,4 +1,4 @@
-use crate::utils::{read_as, GribInt};
+use crate::helpers::{read_as, GribInt};
 
 pub(crate) struct SimplePackingParam {
     pub(crate) ref_val: f32,

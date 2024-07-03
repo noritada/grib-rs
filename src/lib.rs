@@ -5,9 +5,9 @@ mod datatypes;
 mod decoder;
 mod error;
 mod grid;
+mod helpers;
 mod parser;
 mod reader;
-mod utils;
 
 pub use crate::{
     codetables::Code::{self, Name, Num},

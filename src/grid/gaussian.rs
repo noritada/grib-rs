@@ -4,7 +4,7 @@ use super::{
 };
 use crate::{
     error::GribError,
-    utils::{read_as, GribInt},
+    helpers::{read_as, GribInt},
 };
 
 #[derive(Debug, PartialEq, Eq)]

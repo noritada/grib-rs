@@ -1,7 +1,7 @@
 use super::{earth::EarthShapeDefinition, GridPointIndexIterator, ScanningMode};
 use crate::{
     error::GribError,
-    utils::{read_as, GribInt},
+    helpers::{read_as, GribInt},
     ProjectionCentreFlag,
 };
 

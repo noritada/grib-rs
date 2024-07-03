@@ -9,7 +9,7 @@ use crate::{
     grid::{
         GaussianGridDefinition, GridPointIterator, LambertGridDefinition, LatLonGridDefinition,
     },
-    utils::{read_as, GribInt},
+    helpers::{read_as, GribInt},
     GridPointIndexIterator, PolarStereographicGridDefinition,
 };
 

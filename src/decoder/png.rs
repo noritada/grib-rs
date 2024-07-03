@@ -4,7 +4,7 @@ use crate::{
         simple::{SimplePackingDecodeError, SimplePackingDecodeIterator},
         stream::NBitwiseIterator,
     },
-    utils::read_as,
+    helpers::read_as,
     DecodeError, Grib2SubmessageDecoder, GribError,
 };
 
