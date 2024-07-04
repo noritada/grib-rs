@@ -4,7 +4,7 @@ use super::{
 };
 use crate::{
     error::GribError,
-    utils::{read_as, GribInt},
+    helpers::{read_as, GribInt},
 };
 
 #[derive(Debug, PartialEq, Eq)]
@@ -83,7 +83,8 @@ impl LatLonGridDefinition {
         Ok(iter)
     }
 
-    /// Returns an iterator over latitudes and longitudes of grid points.
+    /// Returns an iterator over latitudes and longitudes of grid points in
+    /// degrees.
     ///
     /// Note that this is a low-level API and it is not checked that the number
     /// of iterator iterations is consistent with the number of grid points

@@ -1,4 +1,4 @@
-use crate::utils::read_as;
+use crate::helpers::read_as;
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct EarthShapeDefinition {

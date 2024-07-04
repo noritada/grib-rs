@@ -18,7 +18,7 @@ use crate::{
         DecodeError, Grib2SubmessageDecoder,
     },
     error::*,
-    utils::{read_as, GribInt},
+    helpers::{read_as, GribInt},
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]

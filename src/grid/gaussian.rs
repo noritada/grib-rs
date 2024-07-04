@@ -4,7 +4,7 @@ use super::{
 };
 use crate::{
     error::GribError,
-    utils::{read_as, GribInt},
+    helpers::{read_as, GribInt},
 };
 
 #[derive(Debug, PartialEq, Eq)]
@@ -50,7 +50,8 @@ impl GaussianGridDefinition {
         Ok(iter)
     }
 
-    /// Returns an iterator over latitudes and longitudes of grid points.
+    /// Returns an iterator over latitudes and longitudes of grid points in
+    /// degrees.
     ///
     /// Note that this is a low-level API and it is not checked that the number
     /// of iterator iterations is consistent with the number of grid points
@@ -61,7 +62,7 @@ impl GaussianGridDefinition {
         }
 
         let ij = self.ij()?;
-        let mut lat = compute_gaussian_latitudes(self.nj as usize)
+        let mut lat = compute_gaussian_latitudes_in_degrees(self.nj as usize)
             .map_err(|e| GribError::Unknown(e.to_owned()))?;
         if self.scanning_mode.scans_positively_for_j() {
             lat.reverse()
@@ -108,11 +109,37 @@ impl GaussianGridDefinition {
     }
 }
 
-fn compute_gaussian_latitudes(div: usize) -> Result<Vec<f64>, &'static str> {
-    let lat: Option<Vec<_>> = legendre_roots_iterator(div)
-        .map(|x| x.map(|i| i.asin().to_degrees()))
+fn compute_gaussian_latitudes_in_degrees(div: usize) -> Result<Vec<f64>, &'static str> {
+    let lat: Option<Vec<_>> = compute_gaussian_latitudes(div)
+        .map(|x| x.map(|i| i.to_degrees()))
         .collect();
     lat.ok_or("finding root for Legendre polynomial failed")
+}
+
+/// Computes Gaussian latitudes in radians.
+///
+/// The Newton-Raphson method is used for the computation.
+/// If the computation does not converge and no solution is obtained after the
+/// predefined number of iterations (10), the solution will have the value
+/// `None`.
+///
+/// # Examples
+///
+/// ```
+/// let mut iter = grib::utils::compute_gaussian_latitudes(0);
+/// assert_eq!(iter.next(), None);
+///
+/// let mut iter = grib::utils::compute_gaussian_latitudes(1);
+/// assert_eq!(iter.next(), Some(Some(0.0)));
+/// assert_eq!(iter.next(), None);
+///
+/// let mut iter = grib::utils::compute_gaussian_latitudes(2);
+/// assert!((iter.next().unwrap().unwrap() - (1.0 / 3.0_f64.sqrt()).asin()).abs() < 1e-15);
+/// assert!((iter.next().unwrap().unwrap() - (-1.0 / 3.0_f64.sqrt()).asin()).abs() < 1e-15);
+/// assert_eq!(iter.next(), None);
+/// ```
+pub fn compute_gaussian_latitudes(div: usize) -> impl Iterator<Item = Option<f64>> {
+    legendre_roots_iterator(div).map(|x| x.map(|i| i.asin()))
 }
 
 // Finds roots (zero points) of the Legendre polynomial using Newton–Raphson
@@ -330,7 +357,7 @@ mod tests {
     #[test]
     fn gaussian_latitudes_computation_compared_with_numerical_solutions() {
         let n = 160;
-        let result = compute_gaussian_latitudes(n);
+        let result = compute_gaussian_latitudes_in_degrees(n);
         assert!(result.is_ok());
 
         let actual = result.unwrap().into_iter().take(n / 2);

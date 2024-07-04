@@ -5,9 +5,10 @@ mod datatypes;
 mod decoder;
 mod error;
 mod grid;
+mod helpers;
 mod parser;
 mod reader;
-mod utils;
+pub mod utils;
 
 pub use crate::{
     codetables::Code::{self, Name, Num},
@@ -15,7 +16,11 @@ pub use crate::{
     datatypes::*,
     decoder::*,
     error::*,
-    grid::*,
+    grid::{
+        EarthShapeDefinition, GaussianGridDefinition, GridPointIndexIterator, GridPointIterator,
+        LambertGridDefinition, LatLonGridDefinition, PolarStereographicGridDefinition,
+        ProjectionCentreFlag, ScanningMode,
+    },
     parser::*,
     reader::*,
 };

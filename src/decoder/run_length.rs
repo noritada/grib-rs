@@ -1,7 +1,7 @@
 use crate::{
     decoder::{stream::NBitwiseIterator, DecodeError, Grib2SubmessageDecoder},
     error::*,
-    utils::read_as,
+    helpers::read_as,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]

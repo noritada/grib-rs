@@ -7,7 +7,7 @@ use crate::{
         DecodeError, Grib2SubmessageDecoder,
     },
     error::*,
-    utils::read_as,
+    helpers::read_as,
 };
 
 pub(crate) enum SimplePackingDecodeIteratorWrapper<I> {

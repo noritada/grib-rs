@@ -6,7 +6,7 @@ use crate::{
         Grib2SubmessageDecoder,
     },
     error::*,
-    utils::read_as,
+    helpers::read_as,
 };
 
 mod ext;
