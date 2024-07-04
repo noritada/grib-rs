@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.0] - 2024-07-04
+### Added
+
+- Library `grib`
+  - Support for regular Gaussian grids (Template 3.40). (#85, #90)
+  - New method `SubMessage::grid_shape()` to access the grid shape without iteration. (#80)
+  - New method `FixedSurface::unit()` to access the unit string defined for the type of the surface, if any. (#81)
+  - New method `GridDefinitionTemplateValues::short_name()` to return the short name defined for the grid, based on ecCodes `gridType` strings. (#87)
+  - New utility function `grib::utils::compute_gaussian_latitudes()` to compute Gaussian latitudes. (#92)
+- Others
+  - GRIB2 viewer web app for demo using the crate is now available. (#79, #83, #84)
+  - Now that example code in README.md has been subject to testing, we can know any update omissions. (#89)
+
+### Changed
+
+- Library `grib`
+  - `SubMessage::latlons()` now strictly returns an error for quasi-regular latitude/longitude grids as unsupported. (#86)
+  - `LatLonGridIterator` has been renamed to `RegularGridIterator`. (#88)
+
+### Contributors
+
+- Thanks for sharing the data that cannot be processed.
+  - @BruAPAHE (#85)
+
 ## [0.9.2] - 2024-05-24
 ### Added
 
@@ -332,7 +356,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - inspect: display of information mainly for development purpose such as template numbers
     - list: display of a list of sections (the style is still tentative)
 
-[unreleased]: https://github.com/noritada/grib-rs/compare/v0.9.2...HEAD
+[unreleased]: https://github.com/noritada/grib-rs/compare/v0.10.0...HEAD
+[0.10.0]: https://github.com/noritada/grib-rs/compare/v0.9.2...v0.10.0
 [0.9.2]: https://github.com/noritada/grib-rs/compare/v0.9.1...v0.9.2
 [0.9.1]: https://github.com/noritada/grib-rs/compare/v0.9.0...v0.9.1
 [0.9.0]: https://github.com/noritada/grib-rs/compare/v0.8.0...v0.9.0
