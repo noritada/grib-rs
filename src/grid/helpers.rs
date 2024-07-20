@@ -83,8 +83,16 @@ pub(crate) fn latlons_from_projection_definition_and_first_point(
 pub(crate) mod test_helpers {
     macro_rules! assert_almost_eq {
         ($a1:expr, $a2:expr, $d:expr) => {
-            if $a1 - $a2 > $d || $a2 - $a1 > $d {
-                panic!();
+            if $a1 - $a2 > $d {
+                panic!(
+                    "assertion a1 - a2 <= delta failed\n  diff: {} - {}\n delta: {}",
+                    $a1, $a2, $d
+                );
+            } else if $a2 - $a1 > $d {
+                panic!(
+                    "assertion a2 - a1 <= delta failed\n  diff: {} - {}\n delta: {}",
+                    $a2, $a1, $d
+                );
             }
         };
     }
@@ -118,10 +126,11 @@ pub(crate) mod test_helpers {
             $name:ident,
             $a1:expr,
             $a2:expr,
-            $d:expr
+            $d:expr,
+            $message:expr
         ),)*) => ($(
             #[test]
-            #[should_panic]
+            #[should_panic(expected = $message)]
             fn $name() {
                 assert_almost_eq!($a1, $a2, $d)
             }
@@ -129,12 +138,34 @@ pub(crate) mod test_helpers {
     }
 
     test_assert_almost_eq_panic! {
-        (assert_almost_eq_panics_for_positive_lt_positive, 1.01, 1.02, 0.001),
-        (assert_almost_eq_panics_for_positive_gt_positive, 1.02, 1.01, 0.001),
-        (assert_almost_eq_panics_for_negative_lt_negative, -1.02, -1.01, 0.001),
-        (assert_almost_eq_panics_for_negative_gt_negative, -1.01, -1.02, 0.001),
-        (assert_almost_eq_panics_for_positive_negative, 0.01, -0.01, 0.001),
-        (assert_almost_eq_panics_for_negative_positive, -0.01, 0.01, 0.001),
+        (
+            assert_almost_eq_panics_for_positive_lt_positive, 1.01, 1.02, 0.001,
+            "  diff: 1.02 - 1.01\n delta: 0.001"
+        ),
+        (
+            assert_almost_eq_panics_for_positive_gt_positive, 1.02, 1.01, 0.001,
+            "  diff: 1.02 - 1.01\n delta: 0.001"
+        ),
+        (
+            assert_almost_eq_panics_for_negative_lt_negative, -1.02, -1.01, 0.001,
+            "  diff: -1.01 - -1.02\n delta: 0.001"
+        ),
+        (
+            assert_almost_eq_panics_for_negative_gt_negative, -1.01, -1.02, 0.001,
+            "  diff: -1.01 - -1.02\n delta: 0.001"
+        ),
+        (
+            assert_almost_eq_panics_for_positive_negative, 0.01, -0.01, 0.001,
+            "  diff: 0.01 - -0.01\n delta: 0.001"
+        ),
+        (
+            assert_almost_eq_panics_for_negative_positive, -0.01, 0.01, 0.001,
+            "  diff: 0.01 - -0.01\n delta: 0.001"
+        ),
+        (
+            assert_almost_eq_panic_message_containing_trailing_zeros, -0.0100, 0.0100, 0.0010,
+            "  diff: 0.01 - -0.01\n delta: 0.001"
+        ),
     }
 
     #[allow(dead_code)]
