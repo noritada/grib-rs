@@ -85,12 +85,12 @@ pub(crate) mod test_helpers {
         ($a1:expr, $a2:expr, $d:expr) => {
             if $a1 - $a2 > $d {
                 panic!(
-                    "assertion a1 - a2 <= delta failed\n  diff: {} - {}\n delta: {}",
+                    "assertion a1 - a2 <= delta failed\n a1 - a2: {} - {}\n   delta: {}",
                     $a1, $a2, $d
                 );
             } else if $a2 - $a1 > $d {
                 panic!(
-                    "assertion a2 - a1 <= delta failed\n  diff: {} - {}\n delta: {}",
+                    "assertion a2 - a1 <= delta failed\n a2 - a1: {} - {}\n   delta: {}",
                     $a2, $a1, $d
                 );
             }
@@ -140,31 +140,31 @@ pub(crate) mod test_helpers {
     test_assert_almost_eq_panic! {
         (
             assert_almost_eq_panics_for_positive_lt_positive, 1.01, 1.02, 0.001,
-            "  diff: 1.02 - 1.01\n delta: 0.001"
+            " a2 - a1: 1.02 - 1.01\n   delta: 0.001"
         ),
         (
             assert_almost_eq_panics_for_positive_gt_positive, 1.02, 1.01, 0.001,
-            "  diff: 1.02 - 1.01\n delta: 0.001"
+            " a1 - a2: 1.02 - 1.01\n   delta: 0.001"
         ),
         (
             assert_almost_eq_panics_for_negative_lt_negative, -1.02, -1.01, 0.001,
-            "  diff: -1.01 - -1.02\n delta: 0.001"
+            " a2 - a1: -1.01 - -1.02\n   delta: 0.001"
         ),
         (
             assert_almost_eq_panics_for_negative_gt_negative, -1.01, -1.02, 0.001,
-            "  diff: -1.01 - -1.02\n delta: 0.001"
+            " a1 - a2: -1.01 - -1.02\n   delta: 0.001"
         ),
         (
             assert_almost_eq_panics_for_positive_negative, 0.01, -0.01, 0.001,
-            "  diff: 0.01 - -0.01\n delta: 0.001"
+            " a1 - a2: 0.01 - -0.01\n   delta: 0.001"
         ),
         (
             assert_almost_eq_panics_for_negative_positive, -0.01, 0.01, 0.001,
-            "  diff: 0.01 - -0.01\n delta: 0.001"
+            " a2 - a1: 0.01 - -0.01\n   delta: 0.001"
         ),
         (
             assert_almost_eq_panic_message_containing_trailing_zeros, -0.0100, 0.0100, 0.0010,
-            "  diff: 0.01 - -0.01\n delta: 0.001"
+            " a2 - a1: 0.01 - -0.01\n   delta: 0.001"
         ),
     }
 
