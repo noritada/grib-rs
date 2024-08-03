@@ -52,14 +52,7 @@ pub(crate) fn decode(
     let sect5_data = &target.sect5_payload;
     let param = SimplePackingParam::from_buf(&sect5_data[6..15]);
     let value_type = read_as!(u8, sect5_data, 15);
-
-    if value_type != 0 {
-        return Err(GribError::DecodeError(
-            DecodeError::SimplePackingDecodeError(
-                SimplePackingDecodeError::OriginalFieldValueTypeNotSupported,
-            ),
-        ));
-    }
+    check_original_field_value_type_support(value_type)?;
 
     let decoder = if param.nbit == 0 {
         SimplePackingDecodeIteratorWrapper::FixedValue(FixedValueIterator::new(
@@ -106,6 +99,18 @@ impl<I: Iterator<Item = N>, N: ToPrimitive> Iterator for SimplePackingDecodeIter
             }
             _ => None,
         }
+    }
+}
+
+pub(crate) fn check_original_field_value_type_support(code: u8) -> Result<(), GribError> {
+    if code == 0 {
+        Ok(())
+    } else {
+        Err(GribError::DecodeError(
+            DecodeError::SimplePackingDecodeError(
+                SimplePackingDecodeError::OriginalFieldValueTypeNotSupported,
+            ),
+        ))
     }
 }
 
