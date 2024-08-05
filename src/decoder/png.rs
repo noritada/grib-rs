@@ -1,10 +1,7 @@
 use crate::{
     decoder::{
-        param::SimplePackingParam,
-        simple::{check_original_field_value_type_support, SimplePackingDecodeIterator},
-        stream::NBitwiseIterator,
+        param::SimplePackingParam, simple::SimplePackingDecodeIterator, stream::NBitwiseIterator,
     },
-    helpers::read_as,
     DecodeError, Grib2SubmessageDecoder, GribError,
 };
 
@@ -18,9 +15,7 @@ pub(crate) fn decode(
     target: &Grib2SubmessageDecoder,
 ) -> Result<SimplePackingDecodeIterator<impl Iterator<Item = u32> + '_>, GribError> {
     let sect5_data = &target.sect5_payload;
-    let param = SimplePackingParam::from_buf(&sect5_data[6..15]);
-    let value_type = read_as!(u8, sect5_data, 15);
-    check_original_field_value_type_support(value_type)?;
+    let param = SimplePackingParam::from_buf(&sect5_data[6..16])?;
 
     let buf = read_image_buffer(&target.sect7_payload).map_err(|e| {
         GribError::DecodeError(DecodeError::PngDecodeError(PngDecodeError::PngError(

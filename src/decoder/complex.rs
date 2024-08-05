@@ -34,9 +34,7 @@ pub(crate) fn decode_7_2(
     GribError,
 > {
     let sect5_data = &target.sect5_payload;
-    let simple_param = SimplePackingParam::from_buf(&sect5_data[6..15]);
-    let value_type = read_as!(u8, sect5_data, 15);
-    check_original_field_value_type_support(value_type)?;
+    let simple_param = SimplePackingParam::from_buf(&sect5_data[6..16])?;
     let complex_param = ComplexPackingParam::from_buf(&sect5_data[16..42]);
 
     if complex_param.group_splitting_method_used != 1
@@ -62,9 +60,7 @@ pub(crate) fn decode_7_3(
     GribError,
 > {
     let sect5_data = &target.sect5_payload;
-    let simple_param = SimplePackingParam::from_buf(&sect5_data[6..15]);
-    let value_type = read_as!(u8, sect5_data, 15);
-    check_original_field_value_type_support(value_type)?;
+    let simple_param = SimplePackingParam::from_buf(&sect5_data[6..16])?;
     let complex_param = ComplexPackingParam::from_buf(&sect5_data[16..42]);
     let spdiff_order = read_as!(u8, sect5_data, 42);
     let spdiff_order = Table5_6::try_from(spdiff_order).map_err(|e| {
