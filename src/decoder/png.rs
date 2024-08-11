@@ -1,6 +1,8 @@
 use crate::{
     decoder::{
-        param::SimplePackingParam, simple::SimplePackingDecodeIterator, stream::NBitwiseIterator,
+        param::SimplePackingParam,
+        simple::{SimplePackingDecodeIterator, SimplePackingDecodeIteratorWrapper},
+        stream::{FixedValueIterator, NBitwiseIterator},
     },
     DecodeError, Grib2SubmessageDecoder, GribError,
 };
@@ -13,7 +15,7 @@ pub enum PngDecodeError {
 
 pub(crate) fn decode(
     target: &Grib2SubmessageDecoder,
-) -> Result<SimplePackingDecodeIterator<impl Iterator<Item = u32> + '_>, GribError> {
+) -> Result<SimplePackingDecodeIteratorWrapper<impl Iterator<Item = u32> + '_>, GribError> {
     let sect5_data = &target.sect5_payload;
     let param = SimplePackingParam::from_buf(&sect5_data[6..16])?;
 
@@ -22,6 +24,18 @@ pub(crate) fn decode(
             e.to_string(),
         )))
     })?;
+
+    if param.nbit == 0 {
+        eprintln!(
+            "WARNING: nbit = 0 for PNG decoder is not tested.
+            Please report your data and help us develop the library."
+        );
+        let decoder = SimplePackingDecodeIteratorWrapper::FixedValue(FixedValueIterator::new(
+            param.zero_bit_reference_value(),
+            target.num_points_encoded,
+        ));
+        return Ok(decoder);
+    };
 
     if param.nbit != 16 {
         eprintln!(
@@ -32,6 +46,7 @@ pub(crate) fn decode(
 
     let iter = NBitwiseIterator::new(buf, usize::from(param.nbit));
     let iter = SimplePackingDecodeIterator::new(iter, &param);
+    let iter = SimplePackingDecodeIteratorWrapper::SimplePacking(iter);
     Ok(iter)
 }
 
