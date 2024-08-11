@@ -33,6 +33,10 @@ impl SimplePackingParam {
             nbit,
         })
     }
+
+    pub(crate) fn zero_bit_reference_value(&self) -> f32 {
+        self.ref_val * 10_f32.powi(-i32::from(self.dig))
+    }
 }
 
 pub(crate) struct ComplexPackingParam {
