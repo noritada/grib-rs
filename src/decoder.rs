@@ -12,10 +12,7 @@ use crate::{
         complex::ComplexPackingDecodeError,
         png::PngDecodeError,
         run_length::RunLengthEncodingDecodeError,
-        simple::{
-            SimplePackingDecodeError, SimplePackingDecodeIterator,
-            SimplePackingDecodeIteratorWrapper,
-        },
+        simple::{SimplePackingDecodeError, SimplePackingDecodeIteratorWrapper},
     },
     error::*,
     reader::Grib2Read,
@@ -186,7 +183,7 @@ enum Grib2SubmessageDecoderIteratorWrapper<T0, T2, T3, T40, T41> {
     Template40(PhantomData<T40>),
     #[cfg(not(target_arch = "wasm32"))]
     Template40(SimplePackingDecodeIteratorWrapper<T40>),
-    Template41(SimplePackingDecodeIterator<T41>),
+    Template41(SimplePackingDecodeIteratorWrapper<T41>),
     Template200(std::vec::IntoIter<f32>),
 }
 
