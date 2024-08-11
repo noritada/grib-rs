@@ -4,10 +4,9 @@ use crate::{
     decoder::{
         param::SimplePackingParam,
         stream::{FixedValueIterator, NBitwiseIterator},
-        DecodeError, Grib2SubmessageDecoder,
+        Grib2SubmessageDecoder,
     },
     error::*,
-    helpers::read_as,
 };
 
 pub(crate) enum SimplePackingDecodeIteratorWrapper<I> {
@@ -50,16 +49,7 @@ pub(crate) fn decode(
     target: &Grib2SubmessageDecoder,
 ) -> Result<SimplePackingDecodeIteratorWrapper<impl Iterator<Item = u32> + '_>, GribError> {
     let sect5_data = &target.sect5_payload;
-    let param = SimplePackingParam::from_buf(&sect5_data[6..15]);
-    let value_type = read_as!(u8, sect5_data, 15);
-
-    if value_type != 0 {
-        return Err(GribError::DecodeError(
-            DecodeError::SimplePackingDecodeError(
-                SimplePackingDecodeError::OriginalFieldValueTypeNotSupported,
-            ),
-        ));
-    }
+    let param = SimplePackingParam::from_buf(&sect5_data[6..16])?;
 
     let decoder = if param.nbit == 0 {
         SimplePackingDecodeIteratorWrapper::FixedValue(FixedValueIterator::new(
@@ -121,8 +111,8 @@ mod tests {
 
     #[test]
     fn decode_simple_packing() {
-        let buf = vec![0x35, 0x3e, 0x6b, 0xf6, 0x80, 0x1a, 0x00, 0x00, 0x10];
-        let param = SimplePackingParam::from_buf(&buf);
+        let buf = vec![0x35, 0x3e, 0x6b, 0xf6, 0x80, 0x1a, 0x00, 0x00, 0x10, 0x00];
+        let param = SimplePackingParam::from_buf(&buf).unwrap();
         let input: Vec<u8> = vec![0x00, 0x06, 0x00, 0x0d];
         let expected: Vec<f32> = vec![7.987_831_6e-7, 9.030_913e-7];
 

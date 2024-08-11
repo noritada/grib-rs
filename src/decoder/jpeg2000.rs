@@ -6,7 +6,6 @@ use crate::{
         Grib2SubmessageDecoder,
     },
     error::*,
-    helpers::read_as,
 };
 
 mod ext;
@@ -25,8 +24,7 @@ pub(crate) fn decode(
     target: &Grib2SubmessageDecoder,
 ) -> Result<SimplePackingDecodeIteratorWrapper<impl Iterator<Item = i32>>, GribError> {
     let sect5_data = &target.sect5_payload;
-    let simple_param = SimplePackingParam::from_buf(&sect5_data[6..15]);
-    let value_type = read_as!(u8, sect5_data, 15);
+    let simple_param = SimplePackingParam::from_buf(&sect5_data[6..16])?;
 
     if simple_param.nbit == 0 {
         eprintln!(
@@ -39,14 +37,6 @@ pub(crate) fn decode(
         ));
         return Ok(decoder);
     };
-
-    if value_type != 0 {
-        return Err(GribError::DecodeError(
-            DecodeError::SimplePackingDecodeError(
-                SimplePackingDecodeError::OriginalFieldValueTypeNotSupported,
-            ),
-        ));
-    }
 
     let stream = Stream::from_bytes(&target.sect7_payload)
         .map_err(|e| GribError::DecodeError(DecodeError::Jpeg2000CodeStreamDecodeError(e)))?;
