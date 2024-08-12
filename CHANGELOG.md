@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.1] - 2024-08-12
+### Changed
+
+- Library `grib`
+  - Complex packing decoder now strictly checks that original field values are floating-points. (#95)
+
+### Fixed
+
+- Library `grib`
+  - Fixed a possible issue that decoders returned wrong values when nbit is 0 and D is not 0, although no such data have been found so far. (#96)
+
 ## [0.10.0] - 2024-07-04
 ### Added
 
@@ -356,7 +367,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - inspect: display of information mainly for development purpose such as template numbers
     - list: display of a list of sections (the style is still tentative)
 
-[unreleased]: https://github.com/noritada/grib-rs/compare/v0.10.0...HEAD
+[unreleased]: https://github.com/noritada/grib-rs/compare/v0.10.1...HEAD
+[0.10.1]: https://github.com/noritada/grib-rs/compare/v0.10.0...v0.10.1
 [0.10.0]: https://github.com/noritada/grib-rs/compare/v0.9.2...v0.10.0
 [0.9.2]: https://github.com/noritada/grib-rs/compare/v0.9.1...v0.9.2
 [0.9.1]: https://github.com/noritada/grib-rs/compare/v0.9.0...v0.9.1
