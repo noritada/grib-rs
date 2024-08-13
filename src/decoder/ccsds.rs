@@ -1,6 +1,9 @@
 use crate::{
     decoder::{
-        param::SimplePackingParam, simple::*, stream::FixedValueIterator, Grib2SubmessageDecoder,
+        param::{CcsdsCompressionParam, SimplePackingParam},
+        simple::*,
+        stream::FixedValueIterator,
+        Grib2SubmessageDecoder,
     },
     error::*,
 };
@@ -10,6 +13,7 @@ pub(crate) fn decode(
 ) -> Result<SimplePackingDecodeIteratorWrapper<impl Iterator<Item = u32> + '_>, GribError> {
     let sect5_data = &target.sect5_payload;
     let simple_param = SimplePackingParam::from_buf(&sect5_data[6..16])?;
+    let ccsds_param = CcsdsCompressionParam::from_buf(&sect5_data[16..20]);
 
     let decoder = if simple_param.nbit == 0 {
         SimplePackingDecodeIteratorWrapper::<std::ops::Range<u32>>::FixedValue(

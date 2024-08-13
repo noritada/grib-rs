@@ -75,3 +75,22 @@ impl ComplexPackingParam {
         }
     }
 }
+
+pub(crate) struct CcsdsCompressionParam {
+    pub(crate) mask: u8,
+    pub(crate) block_size: u8,
+    pub(crate) reference_sample_interval: u16,
+}
+
+impl CcsdsCompressionParam {
+    pub(crate) fn from_buf(buf: &[u8]) -> Self {
+        let mask = read_as!(u8, buf, 0);
+        let block_size = read_as!(u8, buf, 1);
+        let reference_sample_interval = read_as!(u16, buf, 2);
+        Self {
+            mask,
+            block_size,
+            reference_sample_interval,
+        }
+    }
+}
