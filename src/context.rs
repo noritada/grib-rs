@@ -354,6 +354,50 @@ pub struct SubMessage<'a, R>(
 );
 
 impl<'a, R> SubMessage<'a, R> {
+    /// Looks up the product codes of the submessage and returns its WMO
+    /// description.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use std::{
+    ///     fs::File,
+    ///     io::{BufReader, Read},
+    /// };
+    ///
+    /// fn main() -> Result<(), Box<dyn std::error::Error>> {
+    ///     let mut buf = Vec::new();
+    ///
+    ///     let f = File::open("testdata/gdas.t12z.pgrb2.0p25.f000.0-10.xz")?;
+    ///     let f = BufReader::new(f);
+    ///     let mut f = xz2::bufread::XzDecoder::new(f);
+    ///     f.read_to_end(&mut buf)?;
+    ///
+    ///     let f = std::io::Cursor::new(buf);
+    ///     let grib2 = grib::from_reader(f)?;
+    ///
+    ///     let mut iter = grib2.iter();
+    ///     let (_, message) = iter.next().ok_or_else(|| "first message is not found")?;
+    ///
+    ///     let desc = message.product_description();
+    ///     assert_eq!(desc, Some("Pressure reduced to MSL".to_owned()));
+    ///     Ok(())
+    /// }
+    /// ```
+    pub fn product_description(&self) -> Option<String> {
+        let prod_def = self.prod_def();
+        let category = prod_def.parameter_category();
+        let number = prod_def.parameter_number();
+        category
+            .zip(number)
+            .map(|(c, n)| {
+                CodeTable4_2::new(self.indicator().discipline, c)
+                    .lookup(usize::from(n))
+                    .description()
+            })
+            .unwrap_or_default()
+    }
+
     pub fn indicator(&self) -> &Indicator {
         // panics should not happen if data is correct
         match self.0.body.body.as_ref().unwrap() {
