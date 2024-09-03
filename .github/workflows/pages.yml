@@ -1,7 +1,7 @@
 name: Deploy the latest documentation and WASM app to GitHub Pages
 on:
   push:
-    branches: [ master ]
+    branches: [master]
 
   workflow_dispatch:
 
