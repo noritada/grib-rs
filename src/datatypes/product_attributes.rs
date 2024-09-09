@@ -2,6 +2,51 @@ use std::fmt::{self, Display, Formatter};
 
 use crate::codetables::{grib2::*, *};
 
+/// Parameter of the product.
+///
+/// In the context of GRIB products, parameters refer to weather elements such
+/// as air temperature, air pressure, and humidity, and other physical
+/// quantities.
+#[derive(Debug, PartialEq, Eq)]
+pub struct Parameter {
+    /// Discipline of processed data in the GRIB message.
+    pub discipline: u8,
+    /// GRIB master tables version number.
+    pub centre: u16,
+    /// Parameter category by product discipline.
+    pub master_ver: u8,
+    /// GRIB local tables version number.
+    pub local_ver: u8,
+    /// Identification of originating/generating centre.
+    pub category: u8,
+    /// Parameter number by product discipline and parameter category.
+    pub num: u8,
+}
+
+impl Parameter {
+    /// Looks up the parameter's WMO description.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// // Extracted from the first submessage of JMA MSM GRIB2 data.
+    /// let param = grib::Parameter {
+    ///     discipline: 0,
+    ///     centre: 34,
+    ///     master_ver: 2,
+    ///     local_ver: 1,
+    ///     category: 3,
+    ///     num: 5,
+    /// };
+    /// assert_eq!(param.description(), Some("Geopotential height".to_owned()))
+    /// ```
+    pub fn description(&self) -> Option<String> {
+        CodeTable4_2::new(self.discipline, self.category)
+            .lookup(usize::from(self.num))
+            .description()
+    }
+}
+
 #[derive(Debug, PartialEq, Eq)]
 pub struct ForecastTime {
     pub unit: Code<grib2::Table4_4, u8>,
