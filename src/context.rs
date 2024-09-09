@@ -354,10 +354,88 @@ pub struct SubMessage<'a, R>(
 );
 
 impl<'a, R> SubMessage<'a, R> {
+    /// Returns the product's parameter.
+    ///
+    /// In the context of GRIB products, parameters refer to weather elements
+    /// such as air temperature, air pressure, and humidity, and other physical
+    /// quantities.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use std::{
+    ///     fs::File,
+    ///     io::{BufReader, Read},
+    /// };
+    ///
+    /// use grib::codetables::NCEP;
+    ///
+    /// fn main() -> Result<(), Box<dyn std::error::Error>> {
+    ///     let mut buf = Vec::new();
+    ///
+    ///     let f = File::open("testdata/gdas.t12z.pgrb2.0p25.f000.0-10.xz")?;
+    ///     let f = BufReader::new(f);
+    ///     let mut f = xz2::bufread::XzDecoder::new(f);
+    ///     f.read_to_end(&mut buf)?;
+    ///
+    ///     let f = std::io::Cursor::new(buf);
+    ///     let grib2 = grib::from_reader(f)?;
+    ///
+    ///     let mut iter = grib2.iter();
+    ///     let (_, message) = iter.next().ok_or_else(|| "first message is not found")?;
+    ///
+    ///     let param = message.parameter();
+    ///     assert_eq!(
+    ///         param,
+    ///         Some(grib::Parameter {
+    ///             discipline: 0,
+    ///             centre: 7,
+    ///             master_ver: 2,
+    ///             local_ver: 1,
+    ///             category: 3,
+    ///             num: 1
+    ///         })
+    ///     );
+    ///     let param = param.unwrap();
+    ///     assert_eq!(
+    ///         param.description(),
+    ///         Some("Pressure reduced to MSL".to_owned())
+    ///     );
+    ///     assert_eq!(NCEP::try_from(param), Ok(NCEP::PRMSL));
+    ///     Ok(())
+    /// }
+    /// ```
+    pub fn parameter(&self) -> Option<Parameter> {
+        let discipline = self.indicator().discipline;
+        let ident = self.identification();
+        let centre = ident.centre_id();
+        let master_ver = ident.master_table_version();
+        let local_ver = ident.local_table_version();
+        let prod_def = self.prod_def();
+        let category = prod_def.parameter_category()?;
+        let num = prod_def.parameter_number()?;
+        Some(Parameter {
+            discipline,
+            centre,
+            master_ver,
+            local_ver,
+            category,
+            num,
+        })
+    }
+
     pub fn indicator(&self) -> &Indicator {
         // panics should not happen if data is correct
         match self.0.body.body.as_ref().unwrap() {
             SectionBody::Section0(data) => data,
+            _ => panic!("something unexpected happened"),
+        }
+    }
+
+    fn identification(&self) -> &Identification {
+        // panics should not happen if data is correct
+        match self.1.body.body.as_ref().unwrap() {
+            SectionBody::Section1(data) => data,
             _ => panic!("something unexpected happened"),
         }
     }
