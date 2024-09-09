@@ -368,6 +368,8 @@ impl<'a, R> SubMessage<'a, R> {
     ///     io::{BufReader, Read},
     /// };
     ///
+    /// use grib::codetables::NCEP;
+    ///
     /// fn main() -> Result<(), Box<dyn std::error::Error>> {
     ///     let mut buf = Vec::new();
     ///
@@ -394,10 +396,12 @@ impl<'a, R> SubMessage<'a, R> {
     ///             num: 1
     ///         })
     ///     );
+    ///     let param = param.unwrap();
     ///     assert_eq!(
-    ///         param.unwrap().description(),
+    ///         param.description(),
     ///         Some("Pressure reduced to MSL".to_owned())
     ///     );
+    ///     assert_eq!(NCEP::try_from(param), Ok(NCEP::PRMSL));
     ///     Ok(())
     /// }
     /// ```

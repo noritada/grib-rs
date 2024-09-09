@@ -7,6 +7,26 @@ use crate::codetables::{grib2::*, *};
 /// In the context of GRIB products, parameters refer to weather elements such
 /// as air temperature, air pressure, and humidity, and other physical
 /// quantities.
+///
+/// [`NCEP`] would help you to test whether the parameter is what you want to
+/// use.
+///
+/// # Examples
+///
+/// ```
+/// use grib::codetables::NCEP;
+///
+/// // Extracted from the first submessage of JMA MSM GRIB2 data.
+/// let param = grib::Parameter {
+///     discipline: 0,
+///     centre: 34,
+///     master_ver: 2,
+///     local_ver: 1,
+///     category: 3,
+///     num: 5,
+/// };
+/// assert_eq!(NCEP::try_from(param), Ok(NCEP::HGT));
+/// ```
 #[derive(Debug, PartialEq, Eq)]
 pub struct Parameter {
     /// Discipline of processed data in the GRIB message.
@@ -44,6 +64,10 @@ impl Parameter {
         CodeTable4_2::new(self.discipline, self.category)
             .lookup(usize::from(self.num))
             .description()
+    }
+
+    pub(crate) fn as_u32(&self) -> u32 {
+        (u32::from(self.discipline) << 16) + (u32::from(self.category) << 8) + u32::from(self.num)
     }
 }
 
