@@ -8,25 +8,10 @@ use crate::codetables::{grib2::*, *};
 /// as air temperature, air pressure, and humidity, and other physical
 /// quantities.
 ///
-/// [`NCEP`] would help you to test whether the parameter is what you want to
-/// use.
+/// With [`is_identical_to`], users can check if the parameter is identical to a
+/// third-party code, such as [`NCEP`].
 ///
-/// # Examples
-///
-/// ```
-/// use grib::codetables::NCEP;
-///
-/// // Extracted from the first submessage of JMA MSM GRIB2 data.
-/// let param = grib::Parameter {
-///     discipline: 0,
-///     centre: 34,
-///     master_ver: 2,
-///     local_ver: 1,
-///     category: 3,
-///     num: 5,
-/// };
-/// assert_eq!(NCEP::try_from(param), Ok(NCEP::HGT));
-/// ```
+/// [`is_identical_to`]: Parameter::is_identical_to
 #[derive(Debug, PartialEq, Eq)]
 pub struct Parameter {
     /// Discipline of processed data in the GRIB message.
@@ -64,6 +49,34 @@ impl Parameter {
         CodeTable4_2::new(self.discipline, self.category)
             .lookup(usize::from(self.num))
             .description()
+    }
+
+    /// Checks if the parameter is identical to a third-party `code`, such as
+    /// [`NCEP`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use grib::codetables::NCEP;
+    ///
+    /// // Extracted from the first submessage of JMA MSM GRIB2 data.
+    /// let param = grib::Parameter {
+    ///     discipline: 0,
+    ///     centre: 34,
+    ///     master_ver: 2,
+    ///     local_ver: 1,
+    ///     category: 3,
+    ///     num: 5,
+    /// };
+    /// assert!(param.is_identical_to(NCEP::HGT));
+    /// ```
+    pub fn is_identical_to<'a, T>(&'a self, code: T) -> bool
+    where
+        T: TryFrom<&'a Self>,
+        T: PartialEq,
+    {
+        let self_ = T::try_from(self);
+        self_.is_ok_and(|v| v == code)
     }
 
     pub(crate) fn as_u32(&self) -> u32 {

@@ -401,7 +401,7 @@ impl<'a, R> SubMessage<'a, R> {
     ///         param.description(),
     ///         Some("Pressure reduced to MSL".to_owned())
     ///     );
-    ///     assert_eq!(NCEP::try_from(param), Ok(NCEP::PRMSL));
+    ///     assert!(param.is_identical_to(NCEP::PRMSL));
     ///     Ok(())
     /// }
     /// ```

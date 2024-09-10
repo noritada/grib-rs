@@ -14,10 +14,10 @@ pub enum NCEP {
     HGT = 0x_00_03_05,
 }
 
-impl TryFrom<Parameter> for NCEP {
+impl TryFrom<&Parameter> for NCEP {
     type Error = &'static str;
 
-    fn try_from(value: Parameter) -> Result<Self, Self::Error> {
+    fn try_from(value: &Parameter) -> Result<Self, Self::Error> {
         let code = value.as_u32();
         Self::try_from_primitive(code).map_err(|_| "code not found")
     }
