@@ -4,8 +4,8 @@ use crate::Parameter;
 
 #[derive(Debug, Eq, PartialEq, Clone, TryFromPrimitive, IntoPrimitive)]
 #[repr(u32)]
-/// Parameter code used in NCEP.
-pub enum NCEP {
+/// Parameter abbreviation codes used in NCEP.
+pub enum NCEPCode {
     /// Pressure.
     PRES = 0x_00_03_00,
     /// Pressure reduced to MSL.
@@ -14,7 +14,7 @@ pub enum NCEP {
     HGT = 0x_00_03_05,
 }
 
-impl TryFrom<&Parameter> for NCEP {
+impl TryFrom<&Parameter> for NCEPCode {
     type Error = &'static str;
 
     fn try_from(value: &Parameter) -> Result<Self, Self::Error> {
