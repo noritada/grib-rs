@@ -24,9 +24,7 @@ impl Wgrib2Table {
     }
 
     pub(crate) fn enum_variants(&self) -> proc_macro2::TokenStream {
-        let variant_idents = self
-            .entries()
-            .map(|ent| proc_macro2::Ident::new(&ent.name, Span::call_site()));
+        let variant_idents = self.entries().map(|ent| ent.enum_variant());
 
         quote! {
             #(#variant_idents),*
@@ -87,6 +85,26 @@ impl Wgrib2TableEntry {
             desc,
             unit,
         })
+    }
+
+    pub(crate) fn enum_variant(&self) -> proc_macro2::TokenStream {
+        let ident = proc_macro2::Ident::new(&self.name, Span::call_site());
+        let num = ((self.discipline as u32) << 16)
+            + ((self.param_category as u32) << 8)
+            + self.param_number as u32;
+        let num = proc_macro2::Literal::u32_unsuffixed(num);
+        let doc = format!(
+            "{}. Units: {}.
+
+(Product Discipline {}, Parameter Category {}, Parameter Number {}.)",
+            self.desc, self.unit, self.discipline, self.param_category, self.param_number
+        );
+        let doc = proc_macro2::Literal::string(&doc);
+
+        quote! {
+            #[doc = #doc]
+            #ident = #num
+        }
     }
 }
 
