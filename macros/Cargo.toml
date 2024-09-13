@@ -10,4 +10,17 @@ homepage.workspace = true
 categories.workspace = true
 keywords.workspace = true
 
+[lib]
+proc-macro = true
+
+[[test]]
+name = "tests"
+path = "tests/progress.rs"
+
 [dependencies]
+proc-macro2 = "1"
+quote = "1"
+syn = { version = "2", features = ["full"] }
+
+[dev-dependencies]
+trybuild = { version = "1", features = ["diff"] }

@@ -1,7 +1,10 @@
 use std::str::FromStr;
 
+use proc_macro2::Span;
+use quote::quote;
+
 #[derive(Debug, PartialEq, Eq)]
-struct Wgrib2Table(Vec<Wgrib2TableEntry>);
+pub(crate) struct Wgrib2Table(Vec<Wgrib2TableEntry>);
 
 impl Wgrib2Table {
     fn from_file<P>(path: P) -> Result<Self, &'static str>
@@ -18,6 +21,21 @@ impl Wgrib2Table {
             .map(|line| line.trim_end().parse::<Wgrib2TableEntry>().ok())
             .collect();
         Some(Self(lines?))
+    }
+
+    pub(crate) fn enum_variants(&self) -> proc_macro2::TokenStream {
+        let variant_idents = self
+            .entries()
+            .map(|ent| proc_macro2::Ident::new(&ent.name, Span::call_site()));
+
+        quote! {
+            #(#variant_idents),*
+        }
+    }
+
+    fn entries(&self) -> std::slice::Iter<Wgrib2TableEntry> {
+        let Self(entries) = self;
+        entries.iter()
     }
 }
 
