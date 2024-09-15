@@ -4,7 +4,7 @@ use proc_macro::TokenStream;
 use quote::quote;
 use syn::{
     parse::{Parse, ParseStream},
-    parse_macro_input, Lit, Result, Token,
+    parse_macro_input, DeriveInput, Lit, Result, Token,
 };
 
 #[proc_macro_attribute]
@@ -14,7 +14,12 @@ pub fn parameter_codes(args: TokenStream, input: TokenStream) -> TokenStream {
     let entries = wgrib2::Wgrib2Table::from_file(table_path).unwrap();
     let entries = entries.enum_variants();
 
-    let input = parse_macro_input!(input as syn::DeriveInput);
+    let input = parse_macro_input!(input as DeriveInput);
+    if !is_empty_enum(&input) {
+        return syn::Error::new(input.ident.span(), "not an empty enum")
+            .into_compile_error()
+            .into();
+    }
     let vis = input.vis;
     let ident = input.ident;
 
@@ -24,6 +29,10 @@ pub fn parameter_codes(args: TokenStream, input: TokenStream) -> TokenStream {
         }
     }
     .into()
+}
+
+fn is_empty_enum(input: &DeriveInput) -> bool {
+    matches!(&input.data, syn::Data::Enum(enum_) if enum_.variants.is_empty())
 }
 
 #[derive(Debug)]
