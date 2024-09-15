@@ -1,6 +1,6 @@
 use grib_proc_macros::parameter_codes;
 
-#[parameter_codes]
+#[parameter_codes(path = "tests/data/table")]
 pub enum FooCodes {}
 
 #[allow(dead_code)]

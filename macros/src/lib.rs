@@ -2,21 +2,21 @@ mod wgrib2;
 
 use proc_macro::TokenStream;
 use quote::quote;
+use syn::{
+    parse::{Parse, ParseStream},
+    parse_macro_input, Lit, Result, Token,
+};
 
 #[proc_macro_attribute]
 pub fn parameter_codes(args: TokenStream, input: TokenStream) -> TokenStream {
-    let _ = args;
-    let input = syn::parse_macro_input!(input as syn::DeriveInput);
+    let args = parse_macro_input!(args as ParameterCodesArgs);
+    let table_path = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join(&args.path);
+    let entries = wgrib2::Wgrib2Table::from_file(table_path).unwrap();
+    let entries = entries.enum_variants();
+
+    let input = parse_macro_input!(input as syn::DeriveInput);
     let vis = input.vis;
     let ident = input.ident;
-
-    let entries = "\
-0:1:0:255:0:0:0:0:TMP:Temperature:K
-0:1:0:255:0:0:0:1:VTMP:Virtual Temperature:K
-0:1:0:255:0:0:3:5:HGT:Geopotential Height:gpm
-";
-    let entries = entries.parse::<wgrib2::Wgrib2Table>().unwrap();
-    let entries = entries.enum_variants();
 
     quote! {
         #vis enum #ident {
@@ -24,4 +24,22 @@ pub fn parameter_codes(args: TokenStream, input: TokenStream) -> TokenStream {
         }
     }
     .into()
+}
+
+#[derive(Debug)]
+struct ParameterCodesArgs {
+    path: String,
+}
+
+impl Parse for ParameterCodesArgs {
+    fn parse(input: ParseStream) -> Result<Self> {
+        if input.parse::<syn::Ident>()? != "path" {
+            return Err(input.error("'path' argument not found"));
+        }
+        let _: Token![=] = input.parse()?;
+        match input.parse::<Lit>()? {
+            Lit::Str(s) => Ok(Self { path: s.value() }),
+            _ => Err(input.error("non-`str` 'path' value")),
+        }
+    }
 }

@@ -7,7 +7,7 @@ use quote::quote;
 pub(crate) struct Wgrib2Table(Vec<Wgrib2TableEntry>);
 
 impl Wgrib2Table {
-    fn from_file<P>(path: P) -> Result<Self, &'static str>
+    pub(crate) fn from_file<P>(path: P) -> Result<Self, &'static str>
     where
         P: AsRef<std::path::Path>,
     {
