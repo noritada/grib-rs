@@ -8,7 +8,11 @@ fn determine(value: FooCodes) -> ! {
     match value {
         FooCodes::TMP => todo!(),
         FooCodes::VTMP => todo!(),
+        FooCodes::SOIL_M => todo!(),
         FooCodes::HGT => todo!(),
+        FooCodes::U_GWD => todo!(),
+        FooCodes::FiveWAVA => todo!(),
+        FooCodes::FourLFTX => todo!(),
     }
 }
 

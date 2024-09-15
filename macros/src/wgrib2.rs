@@ -1,4 +1,4 @@
-use std::str::FromStr;
+use std::{borrow::Cow, str::FromStr};
 
 use proc_macro2::Span;
 use quote::quote;
@@ -88,16 +88,22 @@ impl Wgrib2TableEntry {
     }
 
     pub(crate) fn enum_variant(&self) -> proc_macro2::TokenStream {
-        let ident = proc_macro2::Ident::new(&self.name, Span::call_site());
+        let name = normalize_name(&self.name);
+        let ident = proc_macro2::Ident::new(&name, Span::call_site());
         let num = ((self.discipline as u32) << 16)
             + ((self.param_category as u32) << 8)
             + self.param_number as u32;
         let num = proc_macro2::Literal::u32_unsuffixed(num);
         let doc = format!(
-            "{}. Units: {}.
+            "Code `{}`. {}. Units: {}.
 
 (Product Discipline {}, Parameter Category {}, Parameter Number {}.)",
-            self.desc, self.unit, self.discipline, self.param_category, self.param_number
+            self.name,
+            self.desc,
+            self.unit,
+            self.discipline,
+            self.param_category,
+            self.param_number
         );
         let doc = proc_macro2::Literal::string(&doc);
 
@@ -113,6 +119,41 @@ impl FromStr for Wgrib2TableEntry {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Self::from_str_impl(s).ok_or("parsing as a wgrib2 table failed")
+    }
+}
+
+// Makes the specified string available as an Rust enum variant identifier.
+// Only supports cases used in the NCEP table.
+fn normalize_name(name: &str) -> Cow<str> {
+    let name = normalize_name_starting_with_number(name);
+    normalize_name_with_hyphens(name)
+}
+
+fn normalize_name_starting_with_number(name: &str) -> Cow<str> {
+    let mut chars = name.chars();
+    match chars.next() {
+        Some('4') => {
+            let mut s = String::with_capacity(name.len() + 4);
+            s.push_str("Four");
+            s.push_str(chars.as_str());
+            Cow::Owned(s)
+        }
+        Some('5') => {
+            let mut s = String::with_capacity(name.len() + 4);
+            s.push_str("Five");
+            s.push_str(chars.as_str());
+            Cow::Owned(s)
+        }
+        _ => Cow::Borrowed(name),
+    }
+}
+
+fn normalize_name_with_hyphens(name: Cow<str>) -> Cow<str> {
+    if name.contains('-') {
+        let s = name.replace('-', "_");
+        Cow::Owned(s)
+    } else {
+        name
     }
 }
 
