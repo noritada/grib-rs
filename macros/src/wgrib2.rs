@@ -1,6 +1,7 @@
 use std::{
     borrow::Cow,
     collections::{hash_map::Entry, HashMap},
+    fmt,
     str::FromStr,
 };
 
@@ -48,16 +49,26 @@ impl Wgrib2Table {
     }
 
     pub(crate) fn enum_variants(&self) -> proc_macro2::TokenStream {
-        let variant_idents = self.entries().map(|ent| ent.enum_variant());
+        let mut merger = HashMap::<u32, Vec<&Wgrib2TableEntry>>::with_capacity(self.remapper.len());
+        for entry in self.codes.iter() {
+            if let Some(first_code) = self.remapper.get(&entry.id()) {
+                merger
+                    .entry(*first_code)
+                    .and_modify(|list| list.push(entry))
+                    .or_insert(vec![entry]);
+            }
+        }
+
+        let entries = self
+            .codes
+            .iter()
+            .filter(|entry| !self.remapper.contains_key(&entry.id()));
+        let variant_idents =
+            entries.map(|ent| ent.enum_variant(merger.get(&ent.id()).unwrap_or(&vec![])));
 
         quote! {
             #(#variant_idents),*
         }
-    }
-
-    fn entries(&self) -> std::slice::Iter<Wgrib2TableEntry> {
-        let Self { codes: entries, .. } = self;
-        entries.iter()
     }
 }
 
@@ -111,20 +122,20 @@ impl Wgrib2TableEntry {
         })
     }
 
-    pub(crate) fn enum_variant(&self) -> proc_macro2::TokenStream {
+    pub(crate) fn enum_variant(&self, others: &[&Self]) -> proc_macro2::TokenStream {
         let name = self.normalized_name();
         let ident = proc_macro2::Ident::new(&name, Span::call_site());
         let num = proc_macro2::Literal::u32_unsuffixed(self.id());
+        let mut table_entries = vec![self];
+        table_entries.extend_from_slice(others);
         let doc = format!(
-            "Code `{}`. {}. Units: {}.
+            "Code `{}`.
 
-(Product Discipline {}, Parameter Category {}, Parameter Number {}.)",
+| Product Discipline | Parameter Category | Parameter Number | Description | Units | Abbreviation |
+|---|---|---|---|---|---|
+{}",
             self.name,
-            self.desc,
-            self.unit,
-            self.discipline,
-            self.param_category,
-            self.param_number
+            DocTableEntries(&table_entries)
         );
         let doc = proc_macro2::Literal::string(&doc);
 
@@ -150,6 +161,26 @@ impl FromStr for Wgrib2TableEntry {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Self::from_str_impl(s).ok_or("parsing as a wgrib2 table failed")
+    }
+}
+
+struct DocTableEntries<'a>(&'a [&'a Wgrib2TableEntry]);
+
+impl<'a> fmt::Display for DocTableEntries<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let Self(inner) = self;
+        for entry in inner.iter() {
+            f.write_fmt(format_args!(
+                "| {} | {} | {} | {} | {} | {} |\n",
+                entry.discipline,
+                entry.param_category,
+                entry.param_number,
+                entry.desc,
+                entry.unit,
+                entry.name,
+            ))?;
+        }
+        Ok(())
     }
 }
 
