@@ -1,4 +1,4 @@
-use grib_proc_macros::parameter_codes;
+use grib_codegen::parameter_codes;
 
 #[parameter_codes(path = "tests/data/table")]
 pub enum FooCodes {}

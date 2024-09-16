@@ -1,5 +1,5 @@
 [package]
-name = "grib-proc-macros"
+name = "grib-codegen"
 version.workspace = true
 authors.workspace = true
 edition.workspace = true
