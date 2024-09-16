@@ -1,10 +1,17 @@
-use std::{borrow::Cow, str::FromStr};
+use std::{
+    borrow::Cow,
+    collections::{hash_map::Entry, HashMap},
+    str::FromStr,
+};
 
 use proc_macro2::Span;
 use quote::quote;
 
 #[derive(Debug, PartialEq, Eq)]
-pub(crate) struct Wgrib2Table(Vec<Wgrib2TableEntry>);
+pub(crate) struct Wgrib2Table {
+    codes: Vec<Wgrib2TableEntry>,
+    remapper: HashMap<u32, u32>,
+}
 
 impl Wgrib2Table {
     pub(crate) fn from_file<P>(path: P) -> Result<Self, &'static str>
@@ -20,7 +27,24 @@ impl Wgrib2Table {
             .lines()
             .map(|line| line.trim_end().parse::<Wgrib2TableEntry>().ok())
             .collect();
-        Some(Self(lines?))
+        let codes = lines?;
+
+        let mut table = HashMap::<String, u32>::with_capacity(codes.len());
+        let mut remapper = HashMap::<u32, u32>::with_capacity(codes.len() / 10);
+        for code in codes.iter() {
+            let key = code.normalized_name();
+            let value = code.id();
+            match table.entry(key.to_string()) {
+                Entry::Occupied(first_value) => {
+                    remapper.insert(value, *first_value.get());
+                }
+                Entry::Vacant(entry) => {
+                    entry.insert(value);
+                }
+            }
+        }
+
+        Some(Self { codes, remapper })
     }
 
     pub(crate) fn enum_variants(&self) -> proc_macro2::TokenStream {
@@ -32,7 +56,7 @@ impl Wgrib2Table {
     }
 
     fn entries(&self) -> std::slice::Iter<Wgrib2TableEntry> {
-        let Self(entries) = self;
+        let Self { codes: entries, .. } = self;
         entries.iter()
     }
 }
@@ -88,12 +112,9 @@ impl Wgrib2TableEntry {
     }
 
     pub(crate) fn enum_variant(&self) -> proc_macro2::TokenStream {
-        let name = normalize_name(&self.name);
+        let name = self.normalized_name();
         let ident = proc_macro2::Ident::new(&name, Span::call_site());
-        let num = ((self.discipline as u32) << 16)
-            + ((self.param_category as u32) << 8)
-            + self.param_number as u32;
-        let num = proc_macro2::Literal::u32_unsuffixed(num);
+        let num = proc_macro2::Literal::u32_unsuffixed(self.id());
         let doc = format!(
             "Code `{}`. {}. Units: {}.
 
@@ -111,6 +132,16 @@ impl Wgrib2TableEntry {
             #[doc = #doc]
             #ident = #num
         }
+    }
+
+    fn normalized_name(&self) -> Cow<'_, str> {
+        normalize_name(&self.name)
+    }
+
+    fn id(&self) -> u32 {
+        ((self.discipline as u32) << 16)
+            + ((self.param_category as u32) << 8)
+            + self.param_number as u32
     }
 }
 
@@ -166,9 +197,11 @@ mod tests {
         let input = "\
 0:1:0:255:0:0:0:0:TMP:Temperature:K
 0:1:0:255:0:0:0:1:VTMP:Virtual Temperature:K
+0:1:0:255:0:0:3:16:U-GWD:Zonal Flux of Gravity Wave Stress:N/m^2
+0:0:0:255:7:1:3:194:U-GWD:Zonal Flux of Gravity Wave Stress:N/m^2
 ";
         let actual = input.parse::<Wgrib2Table>();
-        let expected = vec![
+        let expected_codes = vec![
             Wgrib2TableEntry {
                 discipline: 0,
                 master_table_start_ver: 0,
@@ -193,8 +226,37 @@ mod tests {
                 desc: "Virtual Temperature".to_owned(),
                 unit: "K".to_owned(),
             },
+            Wgrib2TableEntry {
+                discipline: 0,
+                master_table_start_ver: 0,
+                master_table_end_ver: 255,
+                centre: 0,
+                local_table_ver: 0,
+                param_category: 3,
+                param_number: 16,
+                name: "U-GWD".to_owned(),
+                desc: "Zonal Flux of Gravity Wave Stress".to_owned(),
+                unit: "N/m^2".to_owned(),
+            },
+            Wgrib2TableEntry {
+                discipline: 0,
+                master_table_start_ver: 0,
+                master_table_end_ver: 255,
+                centre: 7,
+                local_table_ver: 1,
+                param_category: 3,
+                param_number: 194,
+                name: "U-GWD".to_owned(),
+                desc: "Zonal Flux of Gravity Wave Stress".to_owned(),
+                unit: "N/m^2".to_owned(),
+            },
         ];
-        let expected = Ok(Wgrib2Table(expected));
+        let expected_remapper = [(0x_00_03_c2, 0x_00_03_10)];
+        let expected_remapper = HashMap::from(expected_remapper);
+        let expected = Ok(Wgrib2Table {
+            codes: expected_codes,
+            remapper: expected_remapper,
+        });
         assert_eq!(actual, expected);
     }
 }
