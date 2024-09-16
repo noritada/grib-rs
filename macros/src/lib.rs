@@ -9,10 +9,16 @@ use syn::{
 
 #[proc_macro_attribute]
 pub fn parameter_codes(args: TokenStream, input: TokenStream) -> TokenStream {
-    let args = parse_macro_input!(args as ParameterCodesArgs);
-    let table_path = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join(&args.path);
-    let entries = wgrib2::Wgrib2Table::from_file(table_path).unwrap();
-    let entries = entries.enum_variants();
+    let attr_args = parse_macro_input!(args as ParameterCodesArgs);
+    let (table_path, span) = &attr_args.path;
+    let table_path = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join(table_path);
+    let entries = if let Ok(entries) = wgrib2::Wgrib2Table::from_file(table_path) {
+        entries.enum_variants()
+    } else {
+        return syn::Error::new(*span, "wrong input file")
+            .into_compile_error()
+            .into();
+    };
 
     let input = parse_macro_input!(input as DeriveInput);
     if !is_empty_enum(&input) {
@@ -37,7 +43,7 @@ fn is_empty_enum(input: &DeriveInput) -> bool {
 
 #[derive(Debug)]
 struct ParameterCodesArgs {
-    path: String,
+    path: (String, proc_macro2::Span),
 }
 
 impl Parse for ParameterCodesArgs {
@@ -46,8 +52,11 @@ impl Parse for ParameterCodesArgs {
             return Err(input.error("'path' argument not found"));
         }
         let _: Token![=] = input.parse()?;
+        let span = input.span();
         match input.parse::<Lit>()? {
-            Lit::Str(s) => Ok(Self { path: s.value() }),
+            Lit::Str(s) => Ok(Self {
+                path: (s.value(), span),
+            }),
             _ => Err(input.error("non-`str` 'path' value")),
         }
     }
