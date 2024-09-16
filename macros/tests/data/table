@@ -5,3 +5,4 @@
 0:1:0:255:0:0:3:16:U-GWD:Zonal Flux of Gravity Wave Stress:N/m^2
 0:1:0:255:0:0:3:19:5WAVA:5-Wave Geopotential Height Anomaly:gpm
 0:1:0:255:0:0:7:11:4LFTX:Best (4 layer) Lifted Index:K
+0:0:0:255:7:1:3:194:U-GWD:Zonal Flux of Gravity Wave Stress:N/m^2

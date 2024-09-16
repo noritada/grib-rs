@@ -48,7 +48,7 @@ impl Wgrib2Table {
         Some(Self { codes, remapper })
     }
 
-    pub(crate) fn enum_variants(&self) -> proc_macro2::TokenStream {
+    pub(crate) fn enum_variants(&self) -> (proc_macro2::TokenStream, proc_macro2::TokenStream) {
         let mut merger = HashMap::<u32, Vec<&Wgrib2TableEntry>>::with_capacity(self.remapper.len());
         for entry in self.codes.iter() {
             if let Some(first_code) = self.remapper.get(&entry.id()) {
@@ -65,10 +65,19 @@ impl Wgrib2Table {
             .filter(|entry| !self.remapper.contains_key(&entry.id()));
         let variant_idents =
             entries.map(|ent| ent.enum_variant(merger.get(&ent.id()).unwrap_or(&vec![])));
+        let remapper = self
+            .remapper
+            .iter()
+            .map(|(key, value)| quote! {(#key, #value)});
 
-        quote! {
-            #(#variant_idents),*
-        }
+        (
+            quote! {
+                #(#variant_idents),*
+            },
+            quote! {
+                #(#remapper),*
+            },
+        )
     }
 }
 

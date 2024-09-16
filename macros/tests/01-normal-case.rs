@@ -18,4 +18,6 @@ fn determine(value: FooCodes) -> ! {
 
 fn main() {
     assert_eq!(FooCodes::HGT as u32, 0x_00_03_05);
+    assert_eq!(FooCodes::remap(&0), None);
+    assert_eq!(FooCodes::remap(&0x_00_03_c2), Some(FooCodes::U_GWD as u32));
 }
