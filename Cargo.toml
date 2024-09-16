@@ -13,7 +13,7 @@ keywords.workspace = true
 exclude = ["/.github", "/testdata"]
 
 [workspace]
-members = ["gen", "cli", "demo"]
+members = ["gen", "cli", "demo", "codegen"]
 
 [workspace.package]
 version = "0.10.1"
