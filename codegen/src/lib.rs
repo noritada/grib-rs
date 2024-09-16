@@ -1,4 +1,4 @@
-mod wgrib2;
+mod param_codes;
 
 use proc_macro::TokenStream;
 use quote::quote;
@@ -12,7 +12,7 @@ pub fn parameter_codes(args: TokenStream, input: TokenStream) -> TokenStream {
     let attr_args = parse_macro_input!(args as ParameterCodesArgs);
     let (table_path, span) = &attr_args.path;
     let table_path = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join(table_path);
-    let (entries, remapper) = if let Ok(entries) = wgrib2::Wgrib2Table::from_file(table_path) {
+    let (entries, remapper) = if let Ok(entries) = param_codes::Wgrib2Table::from_file(table_path) {
         entries.enum_variants()
     } else {
         return syn::Error::new(*span, "wrong input file")
