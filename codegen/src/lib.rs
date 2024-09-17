@@ -26,6 +26,7 @@ pub fn parameter_codes(args: TokenStream, input: TokenStream) -> TokenStream {
             .into_compile_error()
             .into();
     }
+    let attrs = input.attrs;
     let vis = input.vis;
     let ident = input.ident;
 
@@ -33,6 +34,7 @@ pub fn parameter_codes(args: TokenStream, input: TokenStream) -> TokenStream {
         use std::cell::LazyCell;
         use std::collections::HashMap;
 
+        #(#attrs)*
         #vis enum #ident {
             #entries
         }
