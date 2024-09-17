@@ -4,7 +4,7 @@ use proc_macro::TokenStream;
 use quote::quote;
 use syn::{
     parse::{Parse, ParseStream},
-    parse_macro_input, DeriveInput, Lit, Result, Token,
+    parse_macro_input, ItemEnum, Lit, Result, Token,
 };
 
 #[proc_macro_attribute]
@@ -20,8 +20,8 @@ pub fn parameter_codes(args: TokenStream, input: TokenStream) -> TokenStream {
             .into();
     };
 
-    let input = parse_macro_input!(input as DeriveInput);
-    if !is_empty_enum(&input) {
+    let input = parse_macro_input!(input as ItemEnum);
+    if !input.variants.is_empty() {
         return syn::Error::new(input.ident.span(), "not an empty enum")
             .into_compile_error()
             .into();
@@ -47,10 +47,6 @@ pub fn parameter_codes(args: TokenStream, input: TokenStream) -> TokenStream {
         }
     }
     .into()
-}
-
-fn is_empty_enum(input: &DeriveInput) -> bool {
-    matches!(&input.data, syn::Data::Enum(enum_) if enum_.variants.is_empty())
 }
 
 #[derive(Debug)]
