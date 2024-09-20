@@ -194,15 +194,15 @@ impl<R> Grib2<R> {
     /// }
     /// ```
     #[inline]
-    pub fn iter(&self) -> SubmessageIterator<R> {
-        self.submessages()
+    pub fn iter(&self) -> <&Self as IntoIterator>::IntoIter {
+        self.into_iter()
     }
 
     /// Returns an iterator over submessages in the data.
     ///
     /// This is an alias to [`Grib2::iter()`].
-    pub fn submessages(&self) -> SubmessageIterator<R> {
-        SubmessageIterator::new(self)
+    pub fn submessages(&self) -> <&Self as IntoIterator>::IntoIter {
+        self.into_iter()
     }
 
     /// Returns an iterator over sections in the data.
@@ -256,6 +256,15 @@ impl<R: Grib2Read> Grib2<R> {
 
     pub fn list_templates(&self) -> Vec<TemplateInfo> {
         get_templates(&self.sections)
+    }
+}
+
+impl<'a, R: 'a> IntoIterator for &'a Grib2<R> {
+    type Item = (MessageIndex, SubMessage<'a, R>);
+    type IntoIter = SubmessageIterator<'a, R>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        Self::IntoIter::new(self)
     }
 }
 
