@@ -185,6 +185,65 @@ mod tests {
         assert_eq!(actual, expected)
     }
 
+    macro_rules! test_lat_lon_calculation_for_inconsistent_longitude_definitions {
+        ($((
+            $name:ident,
+            $grid:expr,
+            $expected_head:expr,
+            $expected_tail:expr
+        ),)*) => ($(
+            #[test]
+            fn $name() {
+                let grid = $grid;
+                let latlons = grid.latlons();
+                assert!(latlons.is_ok());
+
+                let latlons = latlons.unwrap();
+                let actual = latlons.clone().take(3).collect::<Vec<_>>();
+                let expected = $expected_head;
+                assert_eq!(actual, expected);
+
+                let (len, _) = latlons.size_hint();
+                let actual = latlons.skip(len - 3).collect::<Vec<_>>();
+                let expected = $expected_tail;
+                assert_eq!(actual, expected);
+            }
+        )*);
+    }
+
+    test_lat_lon_calculation_for_inconsistent_longitude_definitions! {
+        (
+            // grid point definition extracted from
+            // testdata/CMC_glb_TMP_ISBL_1_latlon.24x.24_2021051800_P000.grib2
+            lat_lon_calculation_for_larger_starting_longitude_and_positive_direction_scan,
+            LatLonGridDefinition {
+                ni: 1500,
+                nj: 751,
+                first_point_lat: -90000000,
+                first_point_lon: 180000000,
+                last_point_lat: 90000000,
+                last_point_lon: 179760000,
+                scanning_mode: ScanningMode(0b01000000),
+            },
+            vec![(-90.0, 180.0), (-90.0, 180.24), (-90.0, 180.48)],
+            vec![(90.0, 179.28003), (90.0, 179.52002), (90.0, 179.76001)]
+        ),
+        (
+            lat_lon_calculation_for_larger_ending_longitude_and_negative_direction_scan,
+            LatLonGridDefinition {
+                ni: 1500,
+                nj: 751,
+                first_point_lat: -90000000,
+                first_point_lon: 179760000,
+                last_point_lat: 90000000,
+                last_point_lon: 180000000,
+                scanning_mode: ScanningMode(0b11000000),
+            },
+            vec![(-90.0, 179.76001), (-90.0, 179.52002), (-90.0, 179.28003)],
+            vec![(90.0, 180.48), (90.0, 180.24), (90.0, 180.0)]
+        ),
+    }
+
     macro_rules! test_consistencies_between_lat_lon_and_scanning_mode {
         ($((
             $name:ident,
