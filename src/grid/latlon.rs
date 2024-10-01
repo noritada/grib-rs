@@ -134,12 +134,10 @@ impl LatLonGridDefinition {
         let (first_lon, last_lon) = (self.first_point_lon as f32, self.last_point_lon as f32);
         let (first_lon, last_lon) = if self.is_consistent_for_i() {
             (first_lon, last_lon)
+        } else if self.first_point_lon > self.last_point_lon {
+            (first_lon, last_lon + 360_000_000_f32)
         } else {
-            if self.first_point_lon > self.last_point_lon {
-                (first_lon, last_lon + 360_000_000_f32)
-            } else {
-                (first_lon + 360_000_000_f32, last_lon)
-            }
+            (first_lon + 360_000_000_f32, last_lon)
         };
 
         let lon = evenly_spaced_degrees(first_lon, last_lon, (self.ni - 1) as usize);
