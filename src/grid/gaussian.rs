@@ -1,5 +1,5 @@
 use super::{
-    helpers::{evenly_spaced_degrees, RegularGridIterator},
+    helpers::{evenly_spaced_longitudes, RegularGridIterator},
     GridPointIndexIterator, ScanningMode,
 };
 use crate::{
@@ -57,8 +57,11 @@ impl GaussianGridDefinition {
     /// of iterator iterations is consistent with the number of grid points
     /// defined in the data.
     pub fn latlons(&self) -> Result<RegularGridIterator, GribError> {
-        if !self.is_consistent() {
-            return Err(GribError::InvalidValueError("Latitude and longitude for first/last grid points are not consistent with scanning mode".to_owned()));
+        if !self.is_consistent_for_j() {
+            return Err(GribError::InvalidValueError(
+                "Latitudes for first/last grid points are not consistent with scanning mode"
+                    .to_owned(),
+            ));
         }
 
         let ij = self.ij()?;
@@ -68,21 +71,20 @@ impl GaussianGridDefinition {
             lat.reverse()
         };
         let lat = lat.into_iter().map(|v| v as f32).collect();
-        let lon = evenly_spaced_degrees(
-            self.first_point_lon as f32,
-            self.last_point_lon as f32,
+        let lon = evenly_spaced_longitudes(
+            self.first_point_lon,
+            self.last_point_lon,
             (self.ni - 1) as usize,
+            self.scanning_mode,
         );
 
         let iter = RegularGridIterator::new(lat, lon, ij);
         Ok(iter)
     }
 
-    pub(crate) fn is_consistent(&self) -> bool {
+    pub(crate) fn is_consistent_for_j(&self) -> bool {
         let lat_diff = self.last_point_lat - self.first_point_lat;
-        let lon_diff = self.last_point_lon - self.first_point_lon;
-        !(((lat_diff > 0) ^ self.scanning_mode.scans_positively_for_j())
-            || ((lon_diff > 0) ^ self.scanning_mode.scans_positively_for_i()))
+        !((lat_diff > 0) ^ self.scanning_mode.scans_positively_for_j())
     }
 
     pub(crate) fn from_buf(buf: &[u8]) -> Self {
