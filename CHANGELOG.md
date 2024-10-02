@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.2] - 2024-10-02
+### Fixed
+
+- Library `grib`
+  - Fixed longitude computation failures in the regular lat/lon and Gaussian grids when start/end latitudes are inconsistent with scanning mode. (#51, #103, #104)
+
 ## [0.10.1] - 2024-08-12
 ### Changed
 
@@ -367,7 +373,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - inspect: display of information mainly for development purpose such as template numbers
     - list: display of a list of sections (the style is still tentative)
 
-[unreleased]: https://github.com/noritada/grib-rs/compare/v0.10.1...HEAD
+[unreleased]: https://github.com/noritada/grib-rs/compare/v0.10.2...HEAD
+[0.10.2]: https://github.com/noritada/grib-rs/compare/v0.10.1...v0.10.2
 [0.10.1]: https://github.com/noritada/grib-rs/compare/v0.10.0...v0.10.1
 [0.10.0]: https://github.com/noritada/grib-rs/compare/v0.9.2...v0.10.0
 [0.9.2]: https://github.com/noritada/grib-rs/compare/v0.9.1...v0.9.2
