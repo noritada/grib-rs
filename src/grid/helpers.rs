@@ -1,8 +1,38 @@
 #[cfg(feature = "gridpoints-proj")]
 use proj::Proj;
 
+use super::ScanningMode;
 #[allow(unused_imports)]
 use crate::{GribError, GridPointIndexIterator};
+
+pub(crate) fn evenly_spaced_longitudes(
+    start_microdegree: i32,
+    end_microdegree: i32,
+    div: usize,
+    scanning_mode: ScanningMode,
+) -> Vec<f32> {
+    let diff = end_microdegree - start_microdegree;
+    let is_consistent = !((diff > 0) ^ scanning_mode.scans_positively_for_i());
+
+    let (start, end) = (start_microdegree as f32, end_microdegree as f32);
+    let (start, end) = if is_consistent {
+        (start, end)
+    } else if start_microdegree > end_microdegree {
+        (start, end + 360_000_000_f32)
+    } else {
+        (start + 360_000_000_f32, end)
+    };
+
+    let lons = evenly_spaced_degrees(start, end, div);
+
+    if is_consistent {
+        lons
+    } else {
+        lons.into_iter()
+            .map(|x| if x < 360.0 { x } else { x - 360.0 })
+            .collect()
+    }
+}
 
 pub(crate) fn evenly_spaced_degrees(
     start_microdegree: f32,
