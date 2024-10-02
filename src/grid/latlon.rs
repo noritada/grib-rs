@@ -164,29 +164,6 @@ impl LatLonGridDefinition {
 mod tests {
     use super::*;
 
-    #[test]
-    fn test_lat_lon_grid_definition_and_iteration() {
-        let grid = LatLonGridDefinition {
-            ni: 3,
-            nj: 2,
-            first_point_lat: 36_000_000,
-            first_point_lon: 135_000_000,
-            last_point_lat: 35_000_000,
-            last_point_lon: 137_000_000,
-            scanning_mode: ScanningMode(0b00000000),
-        };
-        let actual = grid.latlons().unwrap().collect::<Vec<_>>();
-        let expected = vec![
-            (36., 135.),
-            (36., 136.),
-            (36., 137.),
-            (35., 135.),
-            (35., 136.),
-            (35., 137.),
-        ];
-        assert_eq!(actual, expected)
-    }
-
     macro_rules! test_lat_lon_calculation_for_inconsistent_longitude_definitions {
         ($((
             $name:ident,
@@ -215,9 +192,23 @@ mod tests {
 
     test_lat_lon_calculation_for_inconsistent_longitude_definitions! {
         (
+            lat_lon_calculation_for_increasing_longitudes_and_positive_direction_scan,
+            LatLonGridDefinition {
+                ni: 1500,
+                nj: 751,
+                first_point_lat: -90000000,
+                first_point_lon: 0,
+                last_point_lat: 90000000,
+                last_point_lon: 359760000,
+                scanning_mode: ScanningMode(0b01000000),
+            },
+            vec![(-90.0, 0.0), (-90.0, 0.24), (-90.0, 0.48)],
+            vec![(90.0, 359.28), (90.0, 359.52), (90.0, 359.76)]
+        ),
+        (
             // grid point definition extracted from
             // testdata/CMC_glb_TMP_ISBL_1_latlon.24x.24_2021051800_P000.grib2
-            lat_lon_calculation_for_larger_starting_longitude_and_positive_direction_scan,
+            lat_lon_calculation_for_decreasing_longitudes_and_positive_direction_scan,
             LatLonGridDefinition {
                 ni: 1500,
                 nj: 751,
@@ -231,7 +222,21 @@ mod tests {
             vec![(90.0, 179.28003), (90.0, 179.52002), (90.0, 179.76001)]
         ),
         (
-            lat_lon_calculation_for_larger_ending_longitude_and_negative_direction_scan,
+            lat_lon_calculation_for_decreasing_longitudes_and_negative_direction_scan,
+            LatLonGridDefinition {
+                ni: 1500,
+                nj: 751,
+                first_point_lat: -90000000,
+                first_point_lon: 359760000,
+                last_point_lat: 90000000,
+                last_point_lon: 0,
+                scanning_mode: ScanningMode(0b11000000),
+            },
+            vec![(-90.0, 359.76), (-90.0, 359.52), (-90.0, 359.28)],
+            vec![(90.0, 0.48), (90.0, 0.24), (90.0, 0.0)]
+        ),
+        (
+            lat_lon_calculation_for_increasing_longitudes_and_negative_direction_scan,
             LatLonGridDefinition {
                 ni: 1500,
                 nj: 751,
