@@ -154,7 +154,7 @@ impl Wgrib2TableEntry {
         }
     }
 
-    fn normalized_name(&self) -> Cow<'_, str> {
+    fn normalized_name(&self) -> String {
         normalize_name(&self.name)
     }
 
@@ -194,38 +194,14 @@ impl fmt::Display for DocTableEntries<'_> {
 }
 
 // Makes the specified string available as an Rust enum variant identifier.
-// Only supports cases used in the NCEP table.
-fn normalize_name(name: &str) -> Cow<str> {
-    let name = normalize_name_starting_with_number(name);
-    normalize_name_with_hyphens(name)
-}
-
-fn normalize_name_starting_with_number(name: &str) -> Cow<str> {
-    let mut chars = name.chars();
-    match chars.next() {
-        Some('4') => {
-            let mut s = String::with_capacity(name.len() + 4);
-            s.push_str("Four");
-            s.push_str(chars.as_str());
-            Cow::Owned(s)
-        }
-        Some('5') => {
-            let mut s = String::with_capacity(name.len() + 4);
-            s.push_str("Five");
-            s.push_str(chars.as_str());
-            Cow::Owned(s)
-        }
-        _ => Cow::Borrowed(name),
-    }
-}
-
-fn normalize_name_with_hyphens(name: Cow<str>) -> Cow<str> {
-    if name.contains('-') {
+fn normalize_name(name: &str) -> String {
+    let name = if name.contains('-') {
         let s = name.replace('-', "_");
         Cow::Owned(s)
     } else {
-        name
-    }
+        Cow::Borrowed(name)
+    };
+    format!("_{name}")
 }
 
 #[cfg(test)]
