@@ -229,7 +229,7 @@ where
     }
 }
 
-impl<'cacher, I> Iterator for Grib2SubmessageIndexStream<'cacher, I>
+impl<I> Iterator for Grib2SubmessageIndexStream<'_, I>
 where
     I: Iterator<Item = Result<SectionInfo, ParseError>>,
 {

@@ -46,7 +46,7 @@ impl<'i, R> ListView<'i, R> {
     }
 }
 
-impl<'i, R> cli::PredictableNumLines for ListView<'i, R> {
+impl<R> cli::PredictableNumLines for ListView<'_, R> {
     fn num_lines(&self) -> usize {
         match self.mode {
             ListViewMode::OneLine => {
@@ -63,7 +63,7 @@ impl<'i, R> cli::PredictableNumLines for ListView<'i, R> {
     }
 }
 
-impl<'i, R> Display for ListView<'i, R> {
+impl<R> Display for ListView<'_, R> {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         let entries = &self.data;
         match self.mode {

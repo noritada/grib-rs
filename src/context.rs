@@ -353,7 +353,7 @@ pub struct SubMessage<'a, R>(
     pub(crate) RefMut<'a, R>,
 );
 
-impl<'a, R> SubMessage<'a, R> {
+impl<R> SubMessage<'_, R> {
     /// Returns the product's parameter.
     ///
     /// In the context of GRIB products, parameters refer to weather elements

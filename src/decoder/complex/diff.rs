@@ -63,7 +63,7 @@ impl<'s, 'a> FirstValues<'s, 'a> {
     }
 }
 
-impl<'s, 'a> Iterator for FirstValues<'s, 'a> {
+impl Iterator for FirstValues<'_, '_> {
     type Item = i32;
 
     fn next(&mut self) -> Option<Self::Item> {
