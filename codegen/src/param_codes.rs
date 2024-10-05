@@ -175,7 +175,7 @@ impl FromStr for Wgrib2TableEntry {
 
 struct DocTableEntries<'a>(&'a [&'a Wgrib2TableEntry]);
 
-impl<'a> fmt::Display for DocTableEntries<'a> {
+impl fmt::Display for DocTableEntries<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let Self(inner) = self;
         for entry in inner.iter() {
