@@ -65,17 +65,18 @@ impl Wgrib2Table {
             .filter(|entry| !self.remapper.contains_key(&entry.id()));
         let variant_idents =
             entries.map(|ent| ent.enum_variant(merger.get(&ent.id()).unwrap_or(&vec![])));
-        let remapper = self
-            .remapper
-            .iter()
-            .map(|(key, value)| quote! {(#key, #value)});
+        let mapper = self.codes.iter().map(|entry| {
+            let id = entry.id();
+            let name = entry.enum_variant_ident();
+            quote! { #id => Ok(Self::#name) }
+        });
 
         (
             quote! {
                 #(#variant_idents),*
             },
             quote! {
-                #(#remapper),*
+                #(#mapper),*
             },
         )
     }
@@ -132,8 +133,7 @@ impl Wgrib2TableEntry {
     }
 
     pub(crate) fn enum_variant(&self, others: &[&Self]) -> proc_macro2::TokenStream {
-        let name = self.normalized_name();
-        let ident = proc_macro2::Ident::new(&name, Span::call_site());
+        let ident = self.enum_variant_ident();
         let num = proc_macro2::Literal::u32_unsuffixed(self.id());
         let mut table_entries = vec![self];
         table_entries.extend_from_slice(others);
@@ -152,6 +152,12 @@ impl Wgrib2TableEntry {
             #[doc = #doc]
             #ident = #num
         }
+    }
+
+    pub(crate) fn enum_variant_ident(&self) -> proc_macro2::TokenStream {
+        let name = self.normalized_name();
+        let ident = proc_macro2::Ident::new(&name, Span::call_site());
+        quote! { #ident }
     }
 
     fn normalized_name(&self) -> String {

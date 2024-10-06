@@ -12,7 +12,7 @@ pub fn parameter_codes(args: TokenStream, input: TokenStream) -> TokenStream {
     let attr_args = parse_macro_input!(args as ParameterCodesArgs);
     let (table_path, span) = &attr_args.path;
     let table_path = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join(table_path);
-    let (entries, remapper) = if let Ok(entries) = param_codes::Wgrib2Table::from_file(table_path) {
+    let (entries, mapper) = if let Ok(entries) = param_codes::Wgrib2Table::from_file(table_path) {
         entries.enum_variants()
     } else {
         return syn::Error::new(*span, "wrong input file")
@@ -31,20 +31,19 @@ pub fn parameter_codes(args: TokenStream, input: TokenStream) -> TokenStream {
     let ident = input.ident;
 
     quote! {
-        use std::cell::LazyCell;
-        use std::collections::HashMap;
-
         #(#attrs)*
         #vis enum #ident {
             #entries
         }
 
-        impl #ident {
-            const REMAPPER: LazyCell<HashMap<u32, u32>> =
-                LazyCell::new(|| HashMap::from([#remapper]));
+        impl TryFrom<u32> for #ident {
+            type Error = &'static str;
 
-            #vis fn remap(code: &u32) -> Option<u32> {
-                Self::REMAPPER.get(code).copied()
+            fn try_from(value: u32) -> Result<Self, Self::Error> {
+                match value {
+                    #mapper,
+                    _ => Err("code not found")
+                }
             }
         }
     }

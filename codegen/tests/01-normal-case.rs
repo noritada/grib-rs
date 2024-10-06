@@ -22,8 +22,10 @@ fn determine(value: FooCodes) -> ! {
 
 fn main() {
     assert_eq!(FooCodes::_HGT as u32, 0x_00_03_05);
-    assert_eq!(FooCodes::remap(&0), None);
-    assert_eq!(FooCodes::remap(&0x_00_03_c2), Some(FooCodes::_U_GWD as u32));
+    assert_eq!(FooCodes::try_from(0x_00_00_00), Ok(FooCodes::_TMP));
+    assert_eq!(FooCodes::try_from(0x_00_03_10), Ok(FooCodes::_U_GWD));
+    assert_eq!(FooCodes::try_from(0x_00_03_c2), Ok(FooCodes::_U_GWD));
+    assert_eq!(FooCodes::try_from(0xffffffff), Err("code not found"));
     assert_eq!(format!("{:?}", FooCodes::_TMP), "_TMP");
     assert_eq!(FooCodes::_TMP, FooCodes::_TMP);
 }
