@@ -65,17 +65,18 @@ impl Wgrib2Table {
             .filter(|entry| !self.remapper.contains_key(&entry.id()));
         let variant_idents =
             entries.map(|ent| ent.enum_variant(merger.get(&ent.id()).unwrap_or(&vec![])));
-        let remapper = self
-            .remapper
-            .iter()
-            .map(|(key, value)| quote! {(#key, #value)});
+        let mapper = self.codes.iter().map(|entry| {
+            let id = entry.id();
+            let name = entry.enum_variant_ident();
+            quote! { #id => Ok(Self::#name) }
+        });
 
         (
             quote! {
                 #(#variant_idents),*
             },
             quote! {
-                #(#remapper),*
+                #(#mapper),*
             },
         )
     }
@@ -132,8 +133,7 @@ impl Wgrib2TableEntry {
     }
 
     pub(crate) fn enum_variant(&self, others: &[&Self]) -> proc_macro2::TokenStream {
-        let name = self.normalized_name();
-        let ident = proc_macro2::Ident::new(&name, Span::call_site());
+        let ident = self.enum_variant_ident();
         let num = proc_macro2::Literal::u32_unsuffixed(self.id());
         let mut table_entries = vec![self];
         table_entries.extend_from_slice(others);
@@ -154,7 +154,13 @@ impl Wgrib2TableEntry {
         }
     }
 
-    fn normalized_name(&self) -> Cow<'_, str> {
+    pub(crate) fn enum_variant_ident(&self) -> proc_macro2::TokenStream {
+        let name = self.normalized_name();
+        let ident = proc_macro2::Ident::new(&name, Span::call_site());
+        quote! { #ident }
+    }
+
+    fn normalized_name(&self) -> String {
         normalize_name(&self.name)
     }
 
@@ -194,38 +200,14 @@ impl fmt::Display for DocTableEntries<'_> {
 }
 
 // Makes the specified string available as an Rust enum variant identifier.
-// Only supports cases used in the NCEP table.
-fn normalize_name(name: &str) -> Cow<str> {
-    let name = normalize_name_starting_with_number(name);
-    normalize_name_with_hyphens(name)
-}
-
-fn normalize_name_starting_with_number(name: &str) -> Cow<str> {
-    let mut chars = name.chars();
-    match chars.next() {
-        Some('4') => {
-            let mut s = String::with_capacity(name.len() + 4);
-            s.push_str("Four");
-            s.push_str(chars.as_str());
-            Cow::Owned(s)
-        }
-        Some('5') => {
-            let mut s = String::with_capacity(name.len() + 4);
-            s.push_str("Five");
-            s.push_str(chars.as_str());
-            Cow::Owned(s)
-        }
-        _ => Cow::Borrowed(name),
-    }
-}
-
-fn normalize_name_with_hyphens(name: Cow<str>) -> Cow<str> {
-    if name.contains('-') {
+fn normalize_name(name: &str) -> String {
+    let name = if name.contains('-') {
         let s = name.replace('-', "_");
         Cow::Owned(s)
     } else {
-        name
-    }
+        Cow::Borrowed(name)
+    };
+    format!("_{name}")
 }
 
 #[cfg(test)]
