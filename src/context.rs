@@ -275,6 +275,12 @@ fn get_templates(sects: &[SectionInfo]) -> Vec<TemplateInfo> {
     vec
 }
 
+/// An iterator over submessages in the GRIB data.
+///
+/// This `struct` is created by the [`iter`] method on [`Grib2`]. See its
+/// documentation for more.
+///
+/// [`iter`]: Grib2::iter
 #[derive(Clone)]
 pub struct SubmessageIterator<'a, R> {
     context: &'a Grib2<R>,

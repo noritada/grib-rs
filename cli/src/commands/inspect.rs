@@ -6,7 +6,7 @@ use std::{
 
 use clap::{arg, ArgAction, ArgMatches, Command};
 use console::Style;
-use grib::{Grib2, SectionInfo, SubMessageSection, TemplateInfo};
+use grib::{SectionInfo, SubMessageSection, SubmessageIterator, TemplateInfo};
 
 use crate::cli;
 
@@ -187,11 +187,11 @@ impl Display for InspectSectionsItem<'_> {
 }
 
 struct InspectSubMessagesItem<'i, R> {
-    data: <&'i Grib2<R> as IntoIterator>::IntoIter,
+    data: SubmessageIterator<'i, R>,
 }
 
 impl<'i, R> InspectSubMessagesItem<'i, R> {
-    fn new(data: <&'i Grib2<R> as IntoIterator>::IntoIter) -> Self {
+    fn new(data: SubmessageIterator<'i, R>) -> Self {
         Self { data }
     }
 
