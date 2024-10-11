@@ -8,7 +8,7 @@ use clap::{arg, ArgAction, ArgMatches, Command};
 use console::Style;
 use grib::{
     codetables::{CodeTable4_2, CodeTable4_3, Lookup},
-    Grib2,
+    SubmessageIterator,
 };
 
 use crate::cli;
@@ -39,12 +39,12 @@ pub fn exec(args: &ArgMatches) -> anyhow::Result<()> {
 }
 
 struct ListView<'i, R> {
-    data: <&'i Grib2<R> as IntoIterator>::IntoIter,
+    data: SubmessageIterator<'i, R>,
     mode: ListViewMode,
 }
 
 impl<'i, R> ListView<'i, R> {
-    fn new(data: <&'i Grib2<R> as IntoIterator>::IntoIter, mode: ListViewMode) -> Self {
+    fn new(data: SubmessageIterator<'i, R>, mode: ListViewMode) -> Self {
         Self { data, mode }
     }
 }
