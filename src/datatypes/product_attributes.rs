@@ -16,13 +16,13 @@ use crate::codetables::{grib2::*, *};
 pub struct Parameter {
     /// Discipline of processed data in the GRIB message.
     pub discipline: u8,
-    /// GRIB master tables version number.
+    /// Identification of originating/generating centre.
     pub centre: u16,
-    /// Parameter category by product discipline.
+    /// GRIB master tables version number.
     pub master_ver: u8,
     /// GRIB local tables version number.
     pub local_ver: u8,
-    /// Identification of originating/generating centre.
+    /// Parameter category by product discipline.
     pub category: u8,
     /// Parameter number by product discipline and parameter category.
     pub num: u8,
