@@ -224,14 +224,14 @@ impl<R> Grib2<R> {
     /// }
     /// ```
     #[inline]
-    pub fn iter(&self) -> <&Self as IntoIterator>::IntoIter {
+    pub fn iter(&self) -> SubmessageIterator<R> {
         self.into_iter()
     }
 
     /// Returns an iterator over submessages in the data.
     ///
     /// This is an alias to [`Grib2::iter()`].
-    pub fn submessages(&self) -> <&Self as IntoIterator>::IntoIter {
+    pub fn submessages(&self) -> SubmessageIterator<R> {
         self.into_iter()
     }
 
