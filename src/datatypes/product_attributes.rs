@@ -9,7 +9,7 @@ use crate::codetables::{grib2::*, *};
 /// quantities.
 ///
 /// With [`is_identical_to`], users can check if the parameter is identical to a
-/// third-party code, such as [`ECMWFCode`] and [`NCEPCode`].
+/// third-party code, such as [`NCEPCode`].
 ///
 /// [`is_identical_to`]: Parameter::is_identical_to
 #[derive(Debug, PartialEq, Eq)]
@@ -52,12 +52,12 @@ impl Parameter {
     }
 
     /// Checks if the parameter is identical to a third-party `code`, such as
-    /// [`ECMWFCode`] and [`NCEPCode`].
+    /// [`NCEPCode`].
     ///
     /// # Examples
     ///
     /// ```
-    /// use grib::codetables::{ECMWFCode, NCEPCode};
+    /// use grib::codetables::NCEPCode;
     ///
     /// // Extracted from the first submessage of JMA MSM GRIB2 data.
     /// let param = grib::Parameter {
@@ -68,8 +68,7 @@ impl Parameter {
     ///     category: 3,
     ///     num: 5,
     /// };
-    /// assert!(param.is_identical_to(ECMWFCode::GH));
-    /// assert!(param.is_identical_to(NCEPCode::HGT));
+    /// assert!(param.is_identical_to(NCEPCode::_HGT));
     /// ```
     pub fn is_identical_to<'a, T>(&'a self, code: T) -> bool
     where
