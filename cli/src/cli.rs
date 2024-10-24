@@ -1,7 +1,6 @@
-use std::{fs::File, io::BufReader, path::Path};
+use std::{fs::File, io::BufReader, path::Path, sync::LazyLock};
 
 use grib::{Grib2, SeekableGrib2Reader};
-use once_cell::sync::Lazy;
 #[cfg(unix)]
 use pager::Pager;
 use regex::Regex;
@@ -63,7 +62,7 @@ impl std::str::FromStr for CliMessageIndex {
     type Err = anyhow::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        static RE: Lazy<Regex> = Lazy::new(|| {
+        static RE: LazyLock<Regex> = LazyLock::new(|| {
             Regex::new(
                 r"(?x)      # insignificant whitespace mode
                 ^
