@@ -13,7 +13,7 @@ keywords.workspace = true
 exclude = ["/.github", "/testdata"]
 
 [workspace]
-members = ["shared", "codegen", "gen", "cli"]
+members = ["grib-data-helpers", "grib-template-derive", "gen", "cli"]
 
 [workspace.package]
 version = "0.8.0"

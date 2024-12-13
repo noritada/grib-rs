@@ -4,6 +4,8 @@ pub trait Dump {
     fn dump<W: Write>(&self, output: &mut W) -> Result<(), Error>;
 }
 
+mod buf;
+
 #[cfg(test)]
 mod tests {
     use super::*;

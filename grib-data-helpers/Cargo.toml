@@ -1,5 +1,5 @@
 [package]
-name = "grib-shared"
+name = "grib-data-helpers"
 version = "0.1.0"
 description = "Shared utilities for the grib-codegen crate, used as an internal dependency"
 authors.workspace = true

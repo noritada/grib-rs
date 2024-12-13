@@ -1,6 +1,6 @@
-use grib_shared::Dump;
+use grib_data_helpers::Dump;
 
-#[derive(grib_codegen::Dump)]
+#[derive(grib_template_derive::Dump)]
 pub struct Params {
     /// Field 1
     field1: u8,

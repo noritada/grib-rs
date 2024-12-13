@@ -1,5 +1,5 @@
 [package]
-name = "grib-codegen"
+name = "grib-template-derive"
 version = "0.1.0"
 authors.workspace = true
 edition.workspace = true
@@ -22,7 +22,7 @@ path = "tests/runner.rs"
 trybuild = { version = "1.0.49", features = ["diff"] }
 
 [dependencies]
-grib-shared = { path = "../shared", version = "=0.1.0" }
+grib-data-helpers = { path = "../grib-data-helpers", version = "=0.1.0" }
 # proc-macro2 = "1"
 quote = "1"
 syn = "2"
