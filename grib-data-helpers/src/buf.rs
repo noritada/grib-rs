@@ -1,22 +1,22 @@
-pub(crate) fn read_number<N>(buf: &[u8], pos: &mut usize) -> Result<N, &'static str>
+pub(crate) fn read_number<N>(slice: &[u8], pos: &mut usize) -> Result<N, &'static str>
 where
-    N: FromBytes,
+    N: FromSlice,
 {
     let start = *pos;
     *pos += std::mem::size_of::<N>();
-    if *pos > (*buf).len() {
+    if *pos > (*slice).len() {
         return Err("reading a number failed");
     }
-    let val = FromBytes::from_be_bytes(&buf[start..*pos]);
+    let val = FromSlice::from_slice(&slice[start..*pos]);
     Ok(val)
 }
 
-pub(crate) trait FromBytes {
-    fn from_be_bytes(bytes: &[u8]) -> Self;
+pub(crate) trait FromSlice {
+    fn from_slice(slice: &[u8]) -> Self;
 }
 
-impl<const N: usize> FromBytes for [u8; N] {
-    fn from_be_bytes(bytes: &[u8]) -> [u8; N] {
+impl<const N: usize> FromSlice for [u8; N] {
+    fn from_slice(bytes: &[u8]) -> [u8; N] {
         // panics if N is larger than the slice length
         bytes[..N].try_into().unwrap()
     }
@@ -24,9 +24,9 @@ impl<const N: usize> FromBytes for [u8; N] {
 
 macro_rules! add_impl_for_types {
     ($($ty:ty,)*) => ($(
-        impl FromBytes for $ty {
-            fn from_be_bytes(bytes: &[u8]) -> $ty {
-                <$ty>::from_be_bytes(FromBytes::from_be_bytes(bytes))
+        impl FromSlice for $ty {
+            fn from_slice(slice: &[u8]) -> $ty {
+                <$ty>::from_be_bytes(FromSlice::from_slice(slice))
             }
         }
     )*);
