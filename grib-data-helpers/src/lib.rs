@@ -1,5 +1,7 @@
 use std::io::{Error, Write};
 
+pub use buf::{read_number, FromSlice};
+
 pub trait Dump {
     fn dump<W: Write>(&self, output: &mut W) -> Result<(), Error>;
 }

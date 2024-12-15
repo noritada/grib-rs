@@ -1,6 +1,44 @@
 use proc_macro::TokenStream;
 use quote::quote;
 
+#[proc_macro_derive(FromSlice)]
+pub fn derive_from_slice(input: TokenStream) -> TokenStream {
+    let input = syn::parse_macro_input!(input as syn::DeriveInput);
+    let name = input.ident;
+
+    let fields = match input.data {
+        syn::Data::Struct(ref s) => match &s.fields {
+            syn::Fields::Named(fields) => &fields.named,
+            _ => unimplemented!(),
+        },
+        _ => unimplemented!(),
+    };
+
+    let mut field_reads = Vec::new();
+    let mut idents = Vec::new();
+
+    for field in fields {
+        let ident = field.ident.as_ref().unwrap();
+        let ty = &field.ty;
+
+        field_reads.push(quote! {
+            let #ident = grib_data_helpers::read_number::<#ty>(slice, &mut pos).unwrap();
+        });
+        idents.push(ident);
+    }
+
+    quote! {
+        impl grib_data_helpers::FromSlice for #name {
+            fn from_slice(slice: &[u8]) -> Self {
+                let mut pos = 0;
+                #(#field_reads)*
+                Self { #(#idents),* }
+            }
+        }
+    }
+    .into()
+}
+
 #[proc_macro_derive(Dump, attributes(doc))]
 pub fn derive(input: TokenStream) -> TokenStream {
     let input = syn::parse_macro_input!(input as syn::DeriveInput);

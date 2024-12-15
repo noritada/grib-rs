@@ -1,4 +1,4 @@
-pub(crate) fn read_number<N>(slice: &[u8], pos: &mut usize) -> Result<N, &'static str>
+pub fn read_number<N>(slice: &[u8], pos: &mut usize) -> Result<N, &'static str>
 where
     N: FromSlice,
 {
@@ -11,7 +11,7 @@ where
     Ok(val)
 }
 
-pub(crate) trait FromSlice {
+pub trait FromSlice {
     fn from_slice(slice: &[u8]) -> Self;
 }
 
