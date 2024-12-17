@@ -1,11 +1,11 @@
-pub fn read_number<N>(slice: &[u8], pos: &mut usize) -> Result<N, &'static str>
+pub fn read_from_slice<N>(slice: &[u8], pos: &mut usize) -> Result<N, &'static str>
 where
     N: FromSlice,
 {
     let start = *pos;
     *pos += std::mem::size_of::<N>();
     if *pos > (*slice).len() {
-        return Err("reading a number failed");
+        return Err("reading from slice failed");
     }
     let val = FromSlice::from_slice(&slice[start..*pos]);
     Ok(val)

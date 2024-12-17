@@ -22,7 +22,7 @@ pub fn derive_from_slice(input: TokenStream) -> TokenStream {
         let ty = &field.ty;
 
         field_reads.push(quote! {
-            let #ident = grib_data_helpers::read_number::<#ty>(slice, &mut pos).unwrap();
+            let #ident = grib_data_helpers::read_from_slice::<#ty>(slice, &mut pos).unwrap();
         });
         idents.push(ident);
     }
