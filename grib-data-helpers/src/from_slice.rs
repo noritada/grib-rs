@@ -33,3 +33,5 @@ macro_rules! add_impl_for_types {
 }
 
 add_impl_for_types![u8, u16, u32, u64,];
+
+mod as_grib_int;
