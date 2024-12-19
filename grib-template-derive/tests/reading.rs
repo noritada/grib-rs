@@ -7,7 +7,7 @@ pub struct Params {
     /// Field 2
     field2: u16,
     /// Field 3
-    field3: u16,
+    field3: i16,
     /// Field 4
     field4: u32,
     /// Field 5
@@ -24,13 +24,13 @@ pub struct InnerParams {
 
 fn main() {
     let buf = vec![
-        0x01_u8, 0xff, 0x00, 0x01, 0x23, 0x76, 0x54, 0x32, 0x10, 0xf0, 0x0f,
+        0x01_u8, 0xff, 0x00, 0xff, 0x00, 0x76, 0x54, 0x32, 0x10, 0xf0, 0x0f,
     ];
     let actual = Params::from_slice(&buf);
     let expected = Params {
         field1: 0x01,
         field2: 0xff00,
-        field3: 0x0123,
+        field3: -0x7f00,
         field4: 0x76543210,
         field5: InnerParams {
             field1: 0xf0,
