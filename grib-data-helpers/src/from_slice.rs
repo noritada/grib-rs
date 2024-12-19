@@ -22,7 +22,7 @@ impl<const N: usize> FromSlice for [u8; N] {
     }
 }
 
-macro_rules! add_impl_for_types {
+macro_rules! add_impl_for_unsigned_integer_types {
     ($($ty:ty,)*) => ($(
         impl FromSlice for $ty {
             fn from_slice(slice: &[u8]) -> $ty {
@@ -32,6 +32,6 @@ macro_rules! add_impl_for_types {
     )*);
 }
 
-add_impl_for_types![u8, u16, u32, u64,];
+add_impl_for_unsigned_integer_types![u8, u16, u32, u64,];
 
 mod as_grib_int;

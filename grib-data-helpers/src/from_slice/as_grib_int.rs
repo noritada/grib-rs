@@ -1,10 +1,10 @@
-pub(crate) trait GribInt<I> {
+pub(crate) trait AsGribInt<I> {
     fn as_grib_int(&self) -> I;
 }
 
-macro_rules! add_impl_for_ints {
+macro_rules! add_impl_for_integer_types {
     ($(($ty_src:ty, $ty_dst:ty),)*) => ($(
-        impl GribInt<$ty_dst> for $ty_src {
+        impl AsGribInt<$ty_dst> for $ty_src {
             fn as_grib_int(&self) -> $ty_dst {
                 if self.leading_zeros() == 0 {
                     let abs = (self << 1 >> 1) as $ty_dst;
@@ -17,7 +17,7 @@ macro_rules! add_impl_for_ints {
     )*);
 }
 
-add_impl_for_ints! {
+add_impl_for_integer_types! {
     (u8, i8),
     (u16, i16),
     (u32, i32),
