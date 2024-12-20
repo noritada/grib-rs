@@ -9,9 +9,9 @@ pub fn derive_from_slice(input: TokenStream) -> TokenStream {
     let fields = match input.data {
         syn::Data::Struct(ref s) => match &s.fields {
             syn::Fields::Named(fields) => &fields.named,
-            _ => unimplemented!(),
+            _ => unimplemented!("`FromSlice` can only be derived for structs with named fields"),
         },
-        _ => unimplemented!(),
+        _ => unimplemented!("`FromSlice` can only be derived for structs"),
     };
 
     let mut field_reads = Vec::new();
@@ -59,9 +59,9 @@ pub fn derive(input: TokenStream) -> TokenStream {
                     })
                 })
                 .collect::<Vec<_>>(),
-            _ => unimplemented!(),
+            _ => unimplemented!("`Dump` can only be derived for structs with named fields"),
         },
-        _ => unimplemented!(),
+        _ => unimplemented!("`Dump` can only be derived for structs"),
     };
 
     quote! {
