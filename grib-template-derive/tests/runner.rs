@@ -1,6 +1,6 @@
 #[test]
 fn tests() {
     let t = trybuild::TestCases::new();
-    t.pass("tests/dumping.rs");
-    t.pass("tests/reading.rs");
+    t.pass("tests/dump.rs");
+    t.pass("tests/from_slice.rs");
 }
