@@ -25,6 +25,8 @@ jobs:
           components: clippy, rustfmt
       - name: Run rustfmt
         run: cargo fmt --all -- --check
+      - name: Install dependencies needed to build proj
+        run: sudo apt install libsqlite3-dev
       - name: Run clippy
         run: cargo clippy --workspace -- -D warnings
 
@@ -80,6 +82,9 @@ jobs:
       #   run: |
       #     sudo apt -qq install build-essential g++-multilib
       #     sudo ln -s /usr/bin/g++ /usr/bin/musl-g++
+      - name: Install dependencies needed to build proj
+        run: sudo apt install libsqlite3-dev
+        if: matrix.os == 'ubuntu-latest'
       - name: Build
         run: cargo build --target ${{ matrix.target }} --verbose --workspace ${{ matrix.features }}
       - name: Run tests
@@ -112,6 +117,8 @@ jobs:
           submodules: recursive
       - name: Install Rust
         uses: dtolnay/rust-toolchain@nightly
+      - name: Install dependencies needed to build proj
+        run: sudo apt install libsqlite3-dev
       - name: Run test with sanitizer
         env:
           RUSTFLAGS: -Z sanitizer=address
