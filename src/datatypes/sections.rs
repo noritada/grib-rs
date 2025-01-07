@@ -1,4 +1,4 @@
-use std::slice::Iter;
+use std::{fmt, slice::Iter};
 
 use chrono::{DateTime, LocalResult, TimeZone, Utc};
 
@@ -91,16 +91,33 @@ impl Identification {
         self.payload[6]
     }
 
+    /// Unchecked reference time of the data.
+    ///
+    /// This method returns unchecked data, so for example, if the data contains
+    /// a "date and time" such as "2000-13-32 25:61:62", it will be returned as
+    /// is.
+    pub fn ref_time_unchecked(&self) -> UtcDateTime {
+        let payload = &self.payload;
+        UtcDateTime::new(
+            read_as!(u16, payload, 7),
+            payload[9],
+            payload[10],
+            payload[11],
+            payload[12],
+            payload[13],
+        )
+    }
+
     /// Reference time of data
     pub fn ref_time(&self) -> Result<DateTime<Utc>, GribError> {
-        let payload = &self.payload;
+        let time = self.ref_time_unchecked();
         create_date_time(
-            read_as!(u16, payload, 7).into(),
-            self.payload[9].into(),
-            self.payload[10].into(),
-            self.payload[11].into(),
-            self.payload[12].into(),
-            self.payload[13].into(),
+            time.year.into(),
+            time.month.into(),
+            time.day.into(),
+            time.hour.into(),
+            time.minute.into(),
+            time.second.into(),
         )
     }
 
@@ -115,6 +132,39 @@ impl Identification {
     #[inline]
     pub fn data_type(&self) -> u8 {
         self.payload[15]
+    }
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub struct UtcDateTime {
+    pub year: u16,
+    pub month: u8,
+    pub day: u8,
+    pub hour: u8,
+    pub minute: u8,
+    pub second: u8,
+}
+
+impl UtcDateTime {
+    pub fn new(year: u16, month: u8, day: u8, hour: u8, minute: u8, second: u8) -> Self {
+        Self {
+            year,
+            month,
+            day,
+            hour,
+            minute,
+            second,
+        }
+    }
+}
+
+impl fmt::Display for UtcDateTime {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{:04}-{:02}-{:02} {:02}:{:02}:{:02} UTC",
+            self.year, self.month, self.day, self.hour, self.minute, self.second
+        )
     }
 }
 
@@ -573,6 +623,12 @@ mod tests {
                 "invalid date time: 2022-11-31 00:00:00".to_owned()
             ))
         );
+    }
+
+    #[test]
+    fn test_utc_date_time_string() {
+        let time = UtcDateTime::new(2025, 1, 1, 0, 0, 0);
+        assert_eq!(format!("{time}"), "2025-01-01 00:00:00 UTC".to_owned())
     }
 
     #[test]
