@@ -27,7 +27,7 @@ categories = ["science"]
 keywords = ["GRIB", "weather", "meteorology"]
 
 [dependencies]
-chrono = "0.4.23" # `TimeZone::with_ymd_and_hms` needed
+chrono = { version = "0.4.23", optional = true }
 num = "0.4"
 num_enum = "0.7"
 png = "0.17"
@@ -46,6 +46,7 @@ grib-build = { path = "gen", version = "0.4.3" }
 
 [features]
 gridpoints-proj = ["dep:proj"]
+chrono = ["dep:chrono"]
 
 [profile.release]
 strip = true

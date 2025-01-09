@@ -1,5 +1,6 @@
 use std::{fmt, slice::Iter};
 
+#[cfg(feature = "chrono")]
 use chrono::{DateTime, LocalResult, TimeZone, Utc};
 
 use crate::{
@@ -108,6 +109,7 @@ impl Identification {
         )
     }
 
+    #[cfg(feature = "chrono")]
     /// Reference time of data
     pub fn ref_time(&self) -> Result<DateTime<Utc>, GribError> {
         let time = self.ref_time_unchecked();
@@ -168,6 +170,7 @@ impl fmt::Display for UtcDateTime {
     }
 }
 
+#[cfg(feature = "chrono")]
 #[inline]
 fn create_date_time(
     year: i32,
@@ -600,6 +603,7 @@ mod tests {
             $second:expr,
             $ok_expected:expr
         ),)*) => ($(
+            #[cfg(feature = "chrono")]
             #[test]
             fn $name() {
                 let result = create_date_time($year, $month, $day, $hour, $minute, $second);
@@ -614,6 +618,7 @@ mod tests {
         (date_time_creation_for_invalid_time, 2022, 1, 1, 0, 61, 0, false),
     }
 
+    #[cfg(feature = "chrono")]
     #[test]
     fn error_in_date_time_creation() {
         let result = create_date_time(2022, 11, 31, 0, 0, 0);
