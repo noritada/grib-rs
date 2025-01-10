@@ -1,6 +1,6 @@
 use grib_codegen::parameter_codes;
 
-#[parameter_codes(path = "tests/data/table")]
+#[parameter_codes(path = "codegen/tests/data/table")]
 #[derive(Debug, PartialEq)]
 #[repr(u32)]
 pub enum FooCodes {}

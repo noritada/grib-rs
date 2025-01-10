@@ -9,20 +9,20 @@ use crate::codetables::{grib2::*, *};
 /// quantities.
 ///
 /// With [`is_identical_to`], users can check if the parameter is identical to a
-/// third-party code, such as [`NCEP`].
+/// third-party code, such as [`NCEPCode`].
 ///
 /// [`is_identical_to`]: Parameter::is_identical_to
 #[derive(Debug, PartialEq, Eq)]
 pub struct Parameter {
     /// Discipline of processed data in the GRIB message.
     pub discipline: u8,
-    /// GRIB master tables version number.
+    /// Identification of originating/generating centre.
     pub centre: u16,
-    /// Parameter category by product discipline.
+    /// GRIB master tables version number.
     pub master_ver: u8,
     /// GRIB local tables version number.
     pub local_ver: u8,
-    /// Identification of originating/generating centre.
+    /// Parameter category by product discipline.
     pub category: u8,
     /// Parameter number by product discipline and parameter category.
     pub num: u8,
@@ -52,12 +52,12 @@ impl Parameter {
     }
 
     /// Checks if the parameter is identical to a third-party `code`, such as
-    /// [`NCEP`].
+    /// [`NCEPCode`].
     ///
     /// # Examples
     ///
     /// ```
-    /// use grib::codetables::NCEP;
+    /// use grib::codetables::NCEPCode;
     ///
     /// // Extracted from the first submessage of JMA MSM GRIB2 data.
     /// let param = grib::Parameter {
@@ -68,7 +68,7 @@ impl Parameter {
     ///     category: 3,
     ///     num: 5,
     /// };
-    /// assert!(param.is_identical_to(NCEP::HGT));
+    /// assert!(param.is_identical_to(NCEPCode::_HGT));
     /// ```
     pub fn is_identical_to<'a, T>(&'a self, code: T) -> bool
     where
