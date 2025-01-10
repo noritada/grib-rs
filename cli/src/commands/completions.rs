@@ -3,7 +3,7 @@ use clap::{arg, ArgAction, ArgMatches, Command};
 use clap_complete::{generate, Generator, Shell};
 
 pub(crate) fn cli() -> Command {
-    Command::new("completions")
+    Command::new(crate::cli::module_component!())
         .about("Generate shell completions for your shell to stdout")
         .arg(
             arg!(<SHELL> "The shell to generate completions for")

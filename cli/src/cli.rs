@@ -132,6 +132,13 @@ fn is_dash<P: AsRef<Path>>(path: P) -> bool {
     matches!(path.as_ref().to_str(), Some("-"))
 }
 
+macro_rules! module_component {
+    () => {
+        module_path!().split("::").last().unwrap_or("")
+    };
+}
+pub(crate) use module_component;
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -8,7 +8,7 @@ use grib::GribError;
 use crate::cli;
 
 pub fn cli() -> Command {
-    Command::new("decode")
+    Command::new(crate::cli::module_component!())
         .about("Export decoded data with latitudes and longitudes")
         .arg(
             arg!(<FILE> "Target file name (or a single dash (`-`) for standard input)")
