@@ -27,10 +27,6 @@ pub(crate) fn decode(
     let simple_param = SimplePackingParam::from_buf(&sect5_data[6..16])?;
 
     if simple_param.nbit == 0 {
-        eprintln!(
-            "WARNING: nbit = 0 for JPEG 2000 code stream format decoder is not tested.
-            Please report your data and help us develop the library."
-        );
         let decoder = SimplePackingDecodeIteratorWrapper::FixedValue(FixedValueIterator::new(
             simple_param.zero_bit_reference_value(),
             target.num_points_encoded,
