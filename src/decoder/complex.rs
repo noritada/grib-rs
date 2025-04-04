@@ -9,6 +9,7 @@ use self::{
     },
     missing::DecodedValue::{self, Missing1, Missing2, Normal},
 };
+use super::param::SpatialDifferencingParam;
 use crate::{
     codetables::grib2::Table5_6,
     decoder::{
@@ -18,7 +19,7 @@ use crate::{
         DecodeError, Grib2SubmessageDecoder,
     },
     error::*,
-    helpers::{read_as, GribInt},
+    helpers::GribInt,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -62,12 +63,11 @@ pub(crate) fn decode_7_3(
     let sect5_data = &target.sect5_payload;
     let simple_param = SimplePackingParam::from_buf(&sect5_data[6..16])?;
     let complex_param = ComplexPackingParam::from_buf(&sect5_data[16..42]);
-    let spdiff_order = read_as!(u8, sect5_data, 42);
-    let spdiff_order = Table5_6::try_from(spdiff_order).map_err(|e| {
+    let spdiff_param = SpatialDifferencingParam::from_buf(&sect5_data[42..44]);
+    let spdiff_order = Table5_6::try_from(spdiff_param.order).map_err(|e| {
         let number = e.number;
         GribError::NotSupported(format!("Code Table 5.6 value '{number}' is not supported"))
     })?;
-    let spdiff_param_octet = read_as!(u8, sect5_data, 43);
 
     if complex_param.group_splitting_method_used != 1
         || complex_param.missing_value_management_used > 2
@@ -79,11 +79,7 @@ pub(crate) fn decode_7_3(
     }
 
     let sect7_data = &target.sect7_payload;
-    let sect7_params = diff::SpatialDifferencingExtraDescriptors::new(
-        sect7_data,
-        u8::from(spdiff_order.clone()),
-        spdiff_param_octet,
-    )?;
+    let sect7_params = diff::SpatialDifferencingExtraDescriptors::new(&spdiff_param, sect7_data)?;
 
     let unpacked_data = decode_complex_packing(
         complex_param,
