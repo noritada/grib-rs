@@ -56,7 +56,8 @@ impl Stream {
 
             let user_data = p_user_data as *mut SliceWithOffset;
 
-            let len = (*user_data).buf.len();
+            #[allow(clippy::needless_borrow)]
+            let len = (&(*user_data).buf).len();
 
             let offset = (*user_data).offset;
 
@@ -64,7 +65,8 @@ impl Stream {
 
             let bytes_read = std::cmp::min(bytes_left, p_nb_bytes);
 
-            let slice = &(*user_data).buf[offset..offset + bytes_read];
+            #[allow(clippy::needless_borrow)]
+            let slice = &(&(*user_data).buf)[offset..offset + bytes_read];
 
             std::ptr::copy_nonoverlapping(slice.as_ptr(), p_buffer as *mut u8, bytes_read);
 
