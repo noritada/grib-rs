@@ -27,6 +27,8 @@ pub(crate) fn decode(
     let simple_param = SimplePackingParam::from_buf(&sect5_data[6..16])?;
 
     if simple_param.nbit == 0 {
+        // Tested with the World Aviation Forecast System (WAFS) GRIV files from the repo: https://aviationweather.gov/wifs/api.html
+        // See #111 and #113.
         let decoder = SimplePackingDecodeIteratorWrapper::FixedValue(FixedValueIterator::new(
             simple_param.zero_bit_reference_value(),
             target.num_points_encoded,
