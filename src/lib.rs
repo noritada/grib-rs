@@ -8,6 +8,7 @@ mod grid;
 mod helpers;
 mod parser;
 mod reader;
+mod time;
 pub mod utils;
 
 pub use crate::{
@@ -23,6 +24,7 @@ pub use crate::{
     },
     parser::*,
     reader::*,
+    time::*,
 };
 
 #[doc = include_str!("../README.md")]
