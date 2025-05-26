@@ -1,4 +1,9 @@
-use std::{fs::File, io::BufReader, path::Path, sync::LazyLock};
+use std::{
+    fs::File,
+    io::{BufReader, BufWriter, Write},
+    path::Path,
+    sync::LazyLock,
+};
 
 use grib::{Grib2, SeekableGrib2Reader};
 #[cfg(unix)]
@@ -84,6 +89,34 @@ impl std::str::FromStr for CliMessageIndex {
         let submessage_index = usize::from_str(submessage_index.as_str()).unwrap();
         let inner = (message_index, submessage_index);
         Ok(Self(inner))
+    }
+}
+
+pub(crate) enum WriteStream {
+    File(BufWriter<std::fs::File>),
+    Stdout(std::io::Stdout),
+}
+
+impl WriteStream {
+    pub(crate) fn new<P>(out_path: P) -> std::io::Result<Self>
+    where
+        P: AsRef<Path>,
+    {
+        let stream = if matches!(out_path.as_ref().to_str(), Some("-")) {
+            Self::Stdout(std::io::stdout())
+        } else {
+            let f = File::create(out_path)?;
+            let f = BufWriter::new(f);
+            Self::File(f)
+        };
+        Ok(stream)
+    }
+
+    pub(crate) fn write_all(&mut self, buf: &[u8]) -> std::io::Result<()> {
+        match self {
+            Self::File(file) => file.write_all(buf),
+            Self::Stdout(stdout) => stdout.write_all(buf),
+        }
     }
 }
 

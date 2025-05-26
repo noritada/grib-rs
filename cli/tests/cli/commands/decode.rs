@@ -331,6 +331,26 @@ test_operation_with_data_without_nan_values_compared_using_simple_packing! {
     ),
 }
 
+#[test]
+fn test_output_to_stdout() -> Result<(), Box<dyn std::error::Error>> {
+    let input = utils::testdata::grib2::jma_kousa()?;
+    let out_path = "-";
+    let expected = utils::testdata::flat_binary::jma_kousa_be()?;
+
+    let mut cmd = Command::cargo_bin(CMD_NAME)?;
+    cmd.arg("decode")
+        .arg(input.path())
+        .arg("0.3")
+        .arg("-b")
+        .arg(&out_path);
+    cmd.assert()
+        .success()
+        .stdout(predicate::eq(expected))
+        .stderr(predicate::str::is_empty());
+
+    Ok(())
+}
+
 macro_rules! test_trial_to_decode_nonexisting_submessage {
     ($(($name:ident, $input:expr, $message_index:expr),)*) => ($(
         #[test]

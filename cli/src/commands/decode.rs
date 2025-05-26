@@ -1,9 +1,4 @@
-use std::{
-    fmt,
-    fs::File,
-    io::{BufWriter, Write},
-    path::PathBuf,
-};
+use std::{fmt, path::PathBuf};
 
 use anyhow::Result;
 use clap::{arg, ArgMatches, Command};
@@ -35,10 +30,8 @@ fn write_output(
     mut values: impl Iterator<Item = f32>,
     to_bytes: fn(&f32) -> [u8; 4],
 ) -> Result<()> {
-    File::create(out_path).and_then(|f| {
-        let mut stream = BufWriter::new(f);
-        values.try_for_each(|f| stream.write_all(&to_bytes(&f)))
-    })?;
+    let mut stream = crate::cli::WriteStream::new(out_path)?;
+    values.try_for_each(|f| stream.write_all(&to_bytes(&f)))?;
     Ok(())
 }
 
