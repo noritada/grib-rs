@@ -112,6 +112,9 @@ pub fn from_reader<SR: Read + Seek>(
 ///
 /// # Examples
 ///
+/// You can use this method to create a reader from a slice, i.e., a borrowed
+/// sequence of bytes:
+///
 /// ```
 /// use std::io::Read;
 ///
@@ -130,9 +133,34 @@ pub fn from_reader<SR: Read + Seek>(
 ///     Ok(())
 /// }
 /// ```
-pub fn from_slice(bytes: &[u8]) -> Result<Grib2<SeekableGrib2Reader<Cursor<&[u8]>>>, GribError> {
+///
+/// Also, you can use this method to create a reader from an owned sequence of
+/// bytes:
+///
+/// ```
+/// use std::io::Read;
+///
+/// fn main() -> Result<(), Box<dyn std::error::Error>> {
+///     let f = std::fs::File::open(
+///         "testdata/icon_global_icosahedral_single-level_2021112018_000_TOT_PREC.grib2",
+///     )?;
+///     let mut f = std::io::BufReader::new(f);
+///     let mut buf = Vec::new();
+///     f.read_to_end(&mut buf).unwrap();
+///     let result = grib::from_slice(buf);
+///
+///     assert!(result.is_ok());
+///     let grib2 = result?;
+///     assert_eq!(grib2.len(), 1);
+///     Ok(())
+/// }
+/// ```
+pub fn from_slice<T>(bytes: T) -> Result<Grib2<SeekableGrib2Reader<Cursor<T>>>, GribError>
+where
+    T: AsRef<[u8]>,
+{
     let reader = Cursor::new(bytes);
-    Grib2::<SeekableGrib2Reader<Cursor<&[u8]>>>::read_with_seekable(reader)
+    Grib2::<SeekableGrib2Reader<Cursor<T>>>::read_with_seekable(reader)
 }
 
 pub struct Grib2<R> {
