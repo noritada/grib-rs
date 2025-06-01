@@ -125,7 +125,7 @@ pub fn from_reader<SR: Read + Seek>(
 ///     let mut f = std::io::BufReader::new(f);
 ///     let mut buf = Vec::new();
 ///     f.read_to_end(&mut buf).unwrap();
-///     let result = grib::from_slice(&buf);
+///     let result = grib::from_bytes(&buf);
 ///
 ///     assert!(result.is_ok());
 ///     let grib2 = result?;
@@ -147,7 +147,7 @@ pub fn from_reader<SR: Read + Seek>(
 ///     let mut f = std::io::BufReader::new(f);
 ///     let mut buf = Vec::new();
 ///     f.read_to_end(&mut buf).unwrap();
-///     let result = grib::from_slice(buf);
+///     let result = grib::from_bytes(buf);
 ///
 ///     assert!(result.is_ok());
 ///     let grib2 = result?;
@@ -155,7 +155,7 @@ pub fn from_reader<SR: Read + Seek>(
 ///     Ok(())
 /// }
 /// ```
-pub fn from_slice<T>(bytes: T) -> Result<Grib2<SeekableGrib2Reader<Cursor<T>>>, GribError>
+pub fn from_bytes<T>(bytes: T) -> Result<Grib2<SeekableGrib2Reader<Cursor<T>>>, GribError>
 where
     T: AsRef<[u8]>,
 {
@@ -660,7 +660,7 @@ mod tests {
     }
 
     #[test]
-    fn from_buf_reader() {
+    fn context_from_buf_reader() {
         let f = File::open(
             "testdata/icon_global_icosahedral_single-level_2021112018_000_TOT_PREC.grib2",
         )
@@ -671,7 +671,7 @@ mod tests {
     }
 
     #[test]
-    fn from_bytes() {
+    fn context_from_bytes() {
         let f = File::open(
             "testdata/icon_global_icosahedral_single-level_2021112018_000_TOT_PREC.grib2",
         )
@@ -679,7 +679,7 @@ mod tests {
         let mut f = BufReader::new(f);
         let mut buf = Vec::new();
         f.read_to_end(&mut buf).unwrap();
-        let result = from_slice(&buf);
+        let result = from_bytes(&buf);
         assert!(result.is_ok())
     }
 
