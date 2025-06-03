@@ -10,7 +10,10 @@ use crate::cli;
 pub fn cli() -> Command {
     Command::new("decode")
         .about("Export decoded data with latitudes and longitudes")
-        .arg(arg!(<FILE> "Target file").value_parser(clap::value_parser!(PathBuf)))
+        .arg(
+            arg!(<FILE> "Target file name (or a single dash (`-`) for standard input)")
+                .value_parser(clap::value_parser!(PathBuf)),
+        )
         .arg(arg!(<INDEX> "Submessage index"))
         .arg(
             arg!(-b --"big-endian" <OUT_FILE> "Export (without lat/lon) as a big-endian flat binary file")
