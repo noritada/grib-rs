@@ -332,18 +332,20 @@ test_operation_with_data_without_nan_values_compared_using_simple_packing! {
 }
 
 #[test]
-fn test_output_to_stdout() -> Result<(), Box<dyn std::error::Error>> {
+fn test_input_from_stdin_and_output_to_stdout() -> Result<(), Box<dyn std::error::Error>> {
     let input = utils::testdata::grib2::jma_kousa()?;
     let out_path = "-";
     let expected = utils::testdata::flat_binary::jma_kousa_be()?;
 
     let mut cmd = Command::cargo_bin(CMD_NAME)?;
     cmd.arg("decode")
-        .arg(input.path())
+        .arg("-")
         .arg("0.3")
         .arg("-b")
         .arg(&out_path);
-    cmd.assert()
+    let mut cmd = assert_cmd::Command::from_std(cmd);
+    cmd.write_stdin(utils::get_uncompressed(input)?)
+        .assert()
         .success()
         .stdout(predicate::eq(expected))
         .stderr(predicate::str::is_empty());
