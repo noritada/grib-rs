@@ -17,7 +17,10 @@ pub fn cli() -> Command {
     Command::new("list")
         .about("List layers contained in the data")
         .arg(arg!(-d --dump "Show details of each data").action(ArgAction::SetTrue))
-        .arg(arg!(<FILE> "Target file").value_parser(clap::value_parser!(PathBuf)))
+        .arg(
+            arg!(<FILE> "Target file name (or a single dash (`-`) for standard input)")
+                .value_parser(clap::value_parser!(PathBuf)),
+        )
 }
 
 pub fn exec(args: &ArgMatches) -> anyhow::Result<()> {
