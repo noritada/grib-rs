@@ -123,7 +123,7 @@ impl Grib2SubmessageDecoder {
     /// Dispatches a decoding process and gets an iterator of decoded values.
     pub fn dispatch(
         &self,
-    ) -> Result<Grib2DecodedValues<impl Iterator<Item = f32> + '_>, GribError> {
+    ) -> Result<Grib2DecodedValues<'_, impl Iterator<Item = f32> + '_>, GribError> {
         let decoder = match self.template_num {
             0 => Grib2ValueIterator::Template0(simple::decode(self)?),
             2 => Grib2ValueIterator::Template2(complex::decode_7_2(self)?),

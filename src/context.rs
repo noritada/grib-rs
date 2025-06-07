@@ -222,14 +222,14 @@ impl<R> Grib2<R> {
     /// }
     /// ```
     #[inline]
-    pub fn iter(&self) -> SubmessageIterator<R> {
+    pub fn iter(&self) -> SubmessageIterator<'_, R> {
         self.into_iter()
     }
 
     /// Returns an iterator over submessages in the data.
     ///
     /// This is an alias to [`Grib2::iter()`].
-    pub fn submessages(&self) -> SubmessageIterator<R> {
+    pub fn submessages(&self) -> SubmessageIterator<'_, R> {
         self.into_iter()
     }
 
@@ -257,7 +257,7 @@ impl<R> Grib2<R> {
     ///     Ok(())
     /// }
     /// ```
-    pub fn sections(&self) -> std::slice::Iter<SectionInfo> {
+    pub fn sections(&self) -> std::slice::Iter<'_, SectionInfo> {
         self.sections.iter()
     }
 }

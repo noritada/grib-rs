@@ -53,7 +53,7 @@ impl Identification {
         }
     }
 
-    pub fn iter(&self) -> Iter<u8> {
+    pub fn iter(&self) -> Iter<'_, u8> {
         self.payload.iter()
     }
 
@@ -147,7 +147,7 @@ impl LocalUse {
         Self { payload: slice }
     }
 
-    pub fn iter(&self) -> Iter<u8> {
+    pub fn iter(&self) -> Iter<'_, u8> {
         self.payload.iter()
     }
 }
@@ -167,7 +167,7 @@ impl GridDefinition {
         }
     }
 
-    pub fn iter(&self) -> Iter<u8> {
+    pub fn iter(&self) -> Iter<'_, u8> {
         self.payload.iter()
     }
 
@@ -323,7 +323,7 @@ impl ProdDefinition {
         }
     }
 
-    pub fn iter(&self) -> Iter<u8> {
+    pub fn iter(&self) -> Iter<'_, u8> {
         self.payload.iter()
     }
 
@@ -510,7 +510,7 @@ impl ReprDefinition {
         }
     }
 
-    pub fn iter(&self) -> Iter<u8> {
+    pub fn iter(&self) -> Iter<'_, u8> {
         self.payload.iter()
     }
 
