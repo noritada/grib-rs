@@ -107,20 +107,6 @@ impl Identification {
         )
     }
 
-    #[cfg(feature = "chrono")]
-    /// Reference time of data
-    pub fn ref_time(&self) -> Result<chrono::DateTime<chrono::Utc>, GribError> {
-        let time = self.ref_time_unchecked();
-        crate::time::create_date_time(
-            time.year.into(),
-            time.month.into(),
-            time.day.into(),
-            time.hour.into(),
-            time.minute.into(),
-            time.second.into(),
-        )
-    }
-
     /// Production status of processed data in this GRIB message
     /// (see Code Table 1.3)
     #[inline]

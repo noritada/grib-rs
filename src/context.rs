@@ -14,7 +14,7 @@ use crate::{
     grid::GridPointIterator,
     parser::Grib2SubmessageIndexStream,
     reader::{Grib2Read, Grib2SectionStream, SeekableGrib2Reader, SECT8_ES_SIZE},
-    GridPointIndexIterator,
+    GridPointIndexIterator, TemporalInfo,
 };
 
 #[derive(Default, Debug, Clone, PartialEq, Eq)]
@@ -390,6 +390,14 @@ impl<'a, R> SubMessage<'a, R> {
         }
     }
 
+    pub fn ident(&self) -> &Identification {
+        // panics should not happen if data is correct
+        match self.1.body.body.as_ref().unwrap() {
+            SectionBody::Section1(data) => data,
+            _ => panic!("something unexpected happened"),
+        }
+    }
+
     pub fn grid_def(&self) -> &GridDefinition {
         // panics should not happen if data is correct
         match self.3.body.body.as_ref().unwrap() {
@@ -484,6 +492,13 @@ Data Representation:                    {}
             self.5.describe().unwrap_or_default(),
             self.repr_def().num_points(),
         )
+    }
+
+    pub fn temporal_info(&self) -> TemporalInfo {
+        let ref_time_significance = self.ident().ref_time_significance();
+        let ref_time_unchecked = self.ident().ref_time_unchecked();
+        let forecast_time = self.prod_def().forecast_time();
+        TemporalInfo::new(ref_time_significance, ref_time_unchecked, forecast_time)
     }
 
     /// Returns the shape of the grid, i.e. a tuple of the number of grids in

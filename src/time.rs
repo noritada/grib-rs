@@ -5,6 +5,41 @@ use chrono::{DateTime, LocalResult, TimeZone, Utc};
 
 #[cfg(feature = "chrono")]
 use crate::error::GribError;
+use crate::ForecastTime;
+
+pub struct TemporalInfo {
+    pub ref_time_significance: u8,
+    pub ref_time_unchecked: UtcDateTime,
+    #[cfg(feature = "chrono")]
+    pub ref_time: Option<DateTime<Utc>>,
+    pub forecast_time: Option<ForecastTime>,
+}
+
+impl TemporalInfo {
+    pub(crate) fn new(
+        ref_time_significance: u8,
+        ref_time_unchecked: UtcDateTime,
+        forecast_time: Option<ForecastTime>,
+    ) -> Self {
+        #[cfg(feature = "chrono")]
+        let ref_time = create_date_time(
+            ref_time_unchecked.year.into(),
+            ref_time_unchecked.month.into(),
+            ref_time_unchecked.day.into(),
+            ref_time_unchecked.hour.into(),
+            ref_time_unchecked.minute.into(),
+            ref_time_unchecked.second.into(),
+        )
+        .ok();
+        Self {
+            ref_time_significance,
+            ref_time_unchecked,
+            #[cfg(feature = "chrono")]
+            ref_time,
+            forecast_time,
+        }
+    }
+}
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct UtcDateTime {
@@ -41,7 +76,7 @@ impl fmt::Display for UtcDateTime {
 
 #[cfg(feature = "chrono")]
 #[inline]
-pub(crate) fn create_date_time(
+fn create_date_time(
     year: i32,
     month: u32,
     day: u32,
