@@ -3,8 +3,6 @@ use std::fmt;
 #[cfg(feature = "chrono")]
 use chrono::{DateTime, LocalResult, TimeZone, Utc};
 
-#[cfg(feature = "chrono")]
-use crate::error::GribError;
 use crate::ForecastTime;
 
 pub struct TemporalInfo {
@@ -29,8 +27,7 @@ impl TemporalInfo {
             ref_time_unchecked.hour.into(),
             ref_time_unchecked.minute.into(),
             ref_time_unchecked.second.into(),
-        )
-        .ok();
+        );
         Self {
             ref_time_significance,
             ref_time_unchecked,
@@ -83,14 +80,12 @@ fn create_date_time(
     hour: u32,
     minute: u32,
     second: u32,
-) -> Result<DateTime<Utc>, GribError> {
+) -> Option<DateTime<Utc>> {
     let result = Utc.with_ymd_and_hms(year, month, day, hour, minute, second);
     if let LocalResult::None = result {
-        Err(GribError::InvalidValueError(format!(
-            "invalid date time: {year:04}-{month:02}-{day:02} {hour:02}:{minute:02}:{second:02}"
-        )))
+        None
     } else {
-        Ok(result.unwrap())
+        Some(result.unwrap())
     }
 }
 
@@ -113,7 +108,7 @@ mod tests {
             #[test]
             fn $name() {
                 let result = create_date_time($year, $month, $day, $hour, $minute, $second);
-                assert_eq!(result.is_ok(), $ok_expected);
+                assert_eq!(result.is_some(), $ok_expected);
             }
         )*);
     }
@@ -122,18 +117,6 @@ mod tests {
         (date_time_creation_for_valid_date_time, 2022, 1, 1, 0, 0, 0, true),
         (date_time_creation_for_invalid_date, 2022, 11, 31, 0, 0, 0, false),
         (date_time_creation_for_invalid_time, 2022, 1, 1, 0, 61, 0, false),
-    }
-
-    #[cfg(feature = "chrono")]
-    #[test]
-    fn error_in_date_time_creation() {
-        let result = create_date_time(2022, 11, 31, 0, 0, 0);
-        assert_eq!(
-            result,
-            Err(GribError::InvalidValueError(
-                "invalid date time: 2022-11-31 00:00:00".to_owned()
-            ))
-        );
     }
 
     #[test]
