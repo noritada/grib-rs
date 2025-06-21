@@ -1,23 +1,27 @@
 use std::fmt;
 
 #[cfg(feature = "chrono")]
-use chrono::{DateTime, LocalResult, TimeZone, Utc};
+use chrono::{DateTime, LocalResult, TimeDelta, TimeZone, Utc};
 
 use crate::ForecastTime;
+#[cfg(feature = "chrono")]
+use crate::{codetables::grib2::Table4_4, Code};
 
 pub struct TemporalInfo {
     pub ref_time_significance: u8,
     pub ref_time_unchecked: UtcDateTime,
     #[cfg(feature = "chrono")]
     pub ref_time: Option<DateTime<Utc>>,
-    pub forecast_time: Option<ForecastTime>,
+    pub forecast_time_diff: Option<ForecastTime>,
+    #[cfg(feature = "chrono")]
+    pub forecast_time_target: Option<DateTime<Utc>>,
 }
 
 impl TemporalInfo {
     pub(crate) fn new(
         ref_time_significance: u8,
         ref_time_unchecked: UtcDateTime,
-        forecast_time: Option<ForecastTime>,
+        forecast_time_diff: Option<ForecastTime>,
     ) -> Self {
         #[cfg(feature = "chrono")]
         let ref_time = create_date_time(
@@ -28,12 +32,20 @@ impl TemporalInfo {
             ref_time_unchecked.minute.into(),
             ref_time_unchecked.second.into(),
         );
+        #[cfg(feature = "chrono")]
+        let forecast_time_delta = forecast_time_diff.as_ref().and_then(|ft| time_delta(ft));
+        #[cfg(feature = "chrono")]
+        let forecast_time_target = ref_time
+            .zip(forecast_time_delta)
+            .map(|(time, delta)| time + delta);
         Self {
             ref_time_significance,
             ref_time_unchecked,
             #[cfg(feature = "chrono")]
             ref_time,
-            forecast_time,
+            forecast_time_diff,
+            #[cfg(feature = "chrono")]
+            forecast_time_target,
         }
     }
 }
@@ -86,6 +98,22 @@ fn create_date_time(
         None
     } else {
         Some(result.unwrap())
+    }
+}
+
+#[cfg(feature = "chrono")]
+fn time_delta(ft: &ForecastTime) -> Option<TimeDelta> {
+    match ft.unit {
+        Code::Name(Table4_4::Second) => TimeDelta::try_seconds(i64::try_from(ft.value).ok()?),
+        Code::Name(Table4_4::Minute) => TimeDelta::try_minutes(i64::try_from(ft.value).ok()?),
+        Code::Name(Table4_4::Hour) => TimeDelta::try_hours(i64::try_from(ft.value).ok()?),
+        Code::Name(Table4_4::ThreeHours) => TimeDelta::try_hours(i64::try_from(ft.value).ok()? * 3),
+        Code::Name(Table4_4::SixHours) => TimeDelta::try_hours(i64::try_from(ft.value).ok()? * 6),
+        Code::Name(Table4_4::TwelveHours) => {
+            TimeDelta::try_hours(i64::try_from(ft.value).ok()? * 12)
+        }
+        Code::Name(Table4_4::Day) => TimeDelta::try_days(i64::try_from(ft.value).ok()?),
+        _ => None,
     }
 }
 
