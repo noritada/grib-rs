@@ -405,7 +405,7 @@ impl<R> SubMessage<'_, R> {
     ///     io::{BufReader, Read},
     /// };
     ///
-    /// use grib::codetables::NCEP;
+    /// use grib::codetables::NCEPCode;
     ///
     /// fn main() -> Result<(), Box<dyn std::error::Error>> {
     ///     let mut buf = Vec::new();
@@ -438,7 +438,7 @@ impl<R> SubMessage<'_, R> {
     ///         param.description(),
     ///         Some("Pressure reduced to MSL".to_owned())
     ///     );
-    ///     assert!(param.is_identical_to(NCEP::PRMSL));
+    ///     assert!(param.is_identical_to(NCEPCode::_PRMSL));
     ///     Ok(())
     /// }
     /// ```
