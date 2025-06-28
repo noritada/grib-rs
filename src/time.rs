@@ -33,7 +33,9 @@ impl TemporalInfo {
             ref_time_unchecked.second.into(),
         );
         #[cfg(feature = "chrono")]
-        let forecast_time_delta = forecast_time_diff.as_ref().and_then(|ft| time_delta(ft));
+        let forecast_time_delta = forecast_time_diff
+            .as_ref()
+            .and_then(|ft| BasicTimeDelta::new(ft).and_then(|td| td.convert(ft)));
         #[cfg(feature = "chrono")]
         let forecast_time_target = ref_time
             .zip(forecast_time_delta)
@@ -102,18 +104,26 @@ fn create_date_time(
 }
 
 #[cfg(feature = "chrono")]
-fn time_delta(ft: &ForecastTime) -> Option<TimeDelta> {
-    match ft.unit {
-        Code::Name(Table4_4::Second) => TimeDelta::try_seconds(i64::try_from(ft.value).ok()?),
-        Code::Name(Table4_4::Minute) => TimeDelta::try_minutes(i64::try_from(ft.value).ok()?),
-        Code::Name(Table4_4::Hour) => TimeDelta::try_hours(i64::try_from(ft.value).ok()?),
-        Code::Name(Table4_4::ThreeHours) => TimeDelta::try_hours(i64::try_from(ft.value).ok()? * 3),
-        Code::Name(Table4_4::SixHours) => TimeDelta::try_hours(i64::try_from(ft.value).ok()? * 6),
-        Code::Name(Table4_4::TwelveHours) => {
-            TimeDelta::try_hours(i64::try_from(ft.value).ok()? * 12)
+struct BasicTimeDelta(fn(i64) -> Option<TimeDelta>, i64);
+
+#[cfg(feature = "chrono")]
+impl BasicTimeDelta {
+    fn new(ft: &ForecastTime) -> Option<Self> {
+        match ft.unit {
+            Code::Name(Table4_4::Second) => Some(Self(TimeDelta::try_seconds, 1)),
+            Code::Name(Table4_4::Minute) => Some(Self(TimeDelta::try_minutes, 1)),
+            Code::Name(Table4_4::Hour) => Some(Self(TimeDelta::try_hours, 1)),
+            Code::Name(Table4_4::ThreeHours) => Some(Self(TimeDelta::try_hours, 3)),
+            Code::Name(Table4_4::SixHours) => Some(Self(TimeDelta::try_hours, 6)),
+            Code::Name(Table4_4::TwelveHours) => Some(Self(TimeDelta::try_hours, 12)),
+            Code::Name(Table4_4::Day) => Some(Self(TimeDelta::try_days, 1)),
+            _ => None,
         }
-        Code::Name(Table4_4::Day) => TimeDelta::try_days(i64::try_from(ft.value).ok()?),
-        _ => None,
+    }
+
+    fn convert(&self, ft: &ForecastTime) -> Option<TimeDelta> {
+        let BasicTimeDelta(func, value) = self;
+        func(i64::try_from(ft.value).ok()? * value)
     }
 }
 
