@@ -23,7 +23,7 @@ anyhow = "1"
 chrono = "0.4.23"
 clap = "4.1"
 clap_complete = "4"
-console = "0.15"
+console = "0.16"
 regex = "1.6"
 
 [target.'cfg(unix)'.dependencies]
