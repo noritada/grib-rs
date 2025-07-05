@@ -7,46 +7,52 @@ use crate::ForecastTime;
 #[cfg(feature = "chrono")]
 use crate::{codetables::grib2::Table4_4, Code};
 
-pub struct TemporalInfo {
+pub struct TemporalRawInfo {
     pub ref_time_significance: u8,
     pub ref_time_unchecked: UtcDateTime,
-    #[cfg(feature = "chrono")]
-    pub ref_time: Option<DateTime<Utc>>,
     pub forecast_time_diff: Option<ForecastTime>,
-    #[cfg(feature = "chrono")]
-    pub forecast_time_target: Option<DateTime<Utc>>,
 }
 
-impl TemporalInfo {
+impl TemporalRawInfo {
     pub(crate) fn new(
         ref_time_significance: u8,
         ref_time_unchecked: UtcDateTime,
         forecast_time_diff: Option<ForecastTime>,
     ) -> Self {
-        #[cfg(feature = "chrono")]
+        Self {
+            ref_time_significance,
+            ref_time_unchecked,
+            forecast_time_diff,
+        }
+    }
+}
+
+#[cfg(feature = "chrono")]
+pub struct TemporalInfo {
+    pub ref_time: Option<DateTime<Utc>>,
+    pub forecast_time_target: Option<DateTime<Utc>>,
+}
+
+#[cfg(feature = "chrono")]
+impl From<&TemporalRawInfo> for TemporalInfo {
+    fn from(value: &TemporalRawInfo) -> Self {
         let ref_time = create_date_time(
-            ref_time_unchecked.year.into(),
-            ref_time_unchecked.month.into(),
-            ref_time_unchecked.day.into(),
-            ref_time_unchecked.hour.into(),
-            ref_time_unchecked.minute.into(),
-            ref_time_unchecked.second.into(),
+            value.ref_time_unchecked.year.into(),
+            value.ref_time_unchecked.month.into(),
+            value.ref_time_unchecked.day.into(),
+            value.ref_time_unchecked.hour.into(),
+            value.ref_time_unchecked.minute.into(),
+            value.ref_time_unchecked.second.into(),
         );
-        #[cfg(feature = "chrono")]
-        let forecast_time_delta = forecast_time_diff
+        let forecast_time_delta = value
+            .forecast_time_diff
             .as_ref()
             .and_then(|ft| BasicTimeDelta::new(ft).and_then(|td| td.convert(ft)));
-        #[cfg(feature = "chrono")]
         let forecast_time_target = ref_time
             .zip(forecast_time_delta)
             .map(|(time, delta)| time + delta);
         Self {
-            ref_time_significance,
-            ref_time_unchecked,
-            #[cfg(feature = "chrono")]
             ref_time,
-            forecast_time_diff,
-            #[cfg(feature = "chrono")]
             forecast_time_target,
         }
     }

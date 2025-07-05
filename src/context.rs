@@ -5,6 +5,8 @@ use std::{
     io::{Cursor, Read, Seek},
 };
 
+#[cfg(feature = "chrono")]
+use crate::TemporalInfo;
 use crate::{
     codetables::{
         CodeTable3_1, CodeTable4_0, CodeTable4_1, CodeTable4_2, CodeTable4_3, CodeTable5_0, Lookup,
@@ -14,7 +16,7 @@ use crate::{
     grid::GridPointIterator,
     parser::Grib2SubmessageIndexStream,
     reader::{Grib2Read, Grib2SectionStream, SeekableGrib2Reader, SECT8_ES_SIZE},
-    GridPointIndexIterator, TemporalInfo,
+    GridPointIndexIterator, TemporalRawInfo,
 };
 
 #[derive(Default, Debug, Clone, PartialEq, Eq)]
@@ -494,11 +496,17 @@ Data Representation:                    {}
         )
     }
 
-    pub fn temporal_info(&self) -> TemporalInfo {
+    pub fn temporal_raw_info(&self) -> TemporalRawInfo {
         let ref_time_significance = self.ident().ref_time_significance();
         let ref_time_unchecked = self.ident().ref_time_unchecked();
         let forecast_time = self.prod_def().forecast_time();
-        TemporalInfo::new(ref_time_significance, ref_time_unchecked, forecast_time)
+        TemporalRawInfo::new(ref_time_significance, ref_time_unchecked, forecast_time)
+    }
+
+    #[cfg(feature = "chrono")]
+    pub fn temporal_info(&self) -> TemporalInfo {
+        let raw_info = self.temporal_raw_info();
+        TemporalInfo::from(&raw_info)
     }
 
     /// Returns the shape of the grid, i.e. a tuple of the number of grids in
