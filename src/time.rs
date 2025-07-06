@@ -7,9 +7,14 @@ use chrono::{DateTime, LocalResult, TimeDelta, TimeZone, Utc};
 use crate::codetables::grib2::Table4_4;
 use crate::{codetables::grib2::Table1_2, Code, ForecastTime};
 
+/// Time-related raw information.
 pub struct TemporalRawInfo {
+    /// "Significance of reference time" set in Section 1 of the submessage. See
+    /// [Code Table 1.2](crate::codetables::grib2::Table1_2).
     pub ref_time_significance: Code<Table1_2, u8>,
+    /// "Reference time" set in Section 1 of the submessage.
     pub ref_time_unchecked: UtcDateTime,
+    /// "Forecast time" set in Section 3 of the submessage.
     pub forecast_time_diff: Option<ForecastTime>,
 }
 
@@ -29,8 +34,11 @@ impl TemporalRawInfo {
 }
 
 #[cfg(feature = "chrono")]
+/// Time-related calculated information.
 pub struct TemporalInfo {
+    /// "Reference time" represented as [`chrono::DateTime`].
     pub ref_time: Option<DateTime<Utc>>,
+    /// "Forecast time" calculated and represented as [`chrono::DateTime`].
     pub forecast_time_target: Option<DateTime<Utc>>,
 }
 
@@ -60,12 +68,19 @@ impl From<&TemporalRawInfo> for TemporalInfo {
 }
 
 #[derive(Debug, PartialEq, Eq)]
+/// UTC date and time container.
 pub struct UtcDateTime {
+    /// Year.
     pub year: u16,
+    /// Month.
     pub month: u8,
+    /// Day.
     pub day: u8,
+    /// Hour.
     pub hour: u8,
+    /// Minute.
     pub minute: u8,
+    /// Second.
     pub second: u8,
 }
 

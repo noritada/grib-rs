@@ -496,6 +496,7 @@ Data Representation:                    {}
         )
     }
 
+    /// Returns time-related raw information associated with the submessage.
     pub fn temporal_raw_info(&self) -> TemporalRawInfo {
         let ref_time_significance = self.ident().ref_time_significance();
         let ref_time_unchecked = self.ident().ref_time_unchecked();
@@ -504,6 +505,8 @@ Data Representation:                    {}
     }
 
     #[cfg(feature = "chrono")]
+    /// Returns time-related calculated information associated with the
+    /// submessage.
     pub fn temporal_info(&self) -> TemporalInfo {
         let raw_info = self.temporal_raw_info();
         TemporalInfo::from(&raw_info)
