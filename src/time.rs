@@ -3,12 +3,12 @@ use std::fmt;
 #[cfg(feature = "chrono")]
 use chrono::{DateTime, LocalResult, TimeDelta, TimeZone, Utc};
 
-use crate::ForecastTime;
 #[cfg(feature = "chrono")]
-use crate::{codetables::grib2::Table4_4, Code};
+use crate::codetables::grib2::Table4_4;
+use crate::{codetables::grib2::Table1_2, Code, ForecastTime};
 
 pub struct TemporalRawInfo {
-    pub ref_time_significance: u8,
+    pub ref_time_significance: Code<Table1_2, u8>,
     pub ref_time_unchecked: UtcDateTime,
     pub forecast_time_diff: Option<ForecastTime>,
 }
@@ -19,6 +19,7 @@ impl TemporalRawInfo {
         ref_time_unchecked: UtcDateTime,
         forecast_time_diff: Option<ForecastTime>,
     ) -> Self {
+        let ref_time_significance = Table1_2::try_from(ref_time_significance).into();
         Self {
             ref_time_significance,
             ref_time_unchecked,
