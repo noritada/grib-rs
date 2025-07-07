@@ -7,6 +7,7 @@ use chrono::{DateTime, LocalResult, TimeDelta, TimeZone, Utc};
 use crate::codetables::grib2::Table4_4;
 use crate::{codetables::grib2::Table1_2, Code, ForecastTime};
 
+#[derive(Debug, PartialEq, Eq)]
 /// Time-related raw information.
 pub struct TemporalRawInfo {
     /// "Significance of reference time" set in Section 1 of the submessage. See
@@ -34,6 +35,7 @@ impl TemporalRawInfo {
 }
 
 #[cfg(feature = "chrono")]
+#[derive(Debug, PartialEq, Eq)]
 /// Time-related calculated information.
 pub struct TemporalInfo {
     /// "Reference time" represented as [`chrono::DateTime`].
