@@ -392,7 +392,7 @@ impl<'a, R> SubMessage<'a, R> {
         }
     }
 
-    pub fn ident(&self) -> &Identification {
+    fn identification(&self) -> &Identification {
         // panics should not happen if data is correct
         match self.1.body.body.as_ref().unwrap() {
             SectionBody::Section1(data) => data,
@@ -552,8 +552,8 @@ Data Representation:                    {}
     /// }
     /// ```
     pub fn temporal_raw_info(&self) -> TemporalRawInfo {
-        let ref_time_significance = self.ident().ref_time_significance();
-        let ref_time_unchecked = self.ident().ref_time_unchecked();
+        let ref_time_significance = self.identification().ref_time_significance();
+        let ref_time_unchecked = self.identification().ref_time_unchecked();
         let forecast_time = self.prod_def().forecast_time();
         TemporalRawInfo::new(ref_time_significance, ref_time_unchecked, forecast_time)
     }
