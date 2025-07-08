@@ -471,7 +471,7 @@ impl<R> SubMessage<'_, R> {
         }
     }
 
-    fn identification(&self) -> &Identification {
+    pub fn identification(&self) -> &Identification {
         // panics should not happen if data is correct
         match self.1.body.body.as_ref().unwrap() {
             SectionBody::Section1(data) => data,
