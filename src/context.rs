@@ -5,7 +5,7 @@ use std::{
     io::{Cursor, Read, Seek},
 };
 
-#[cfg(feature = "chrono")]
+#[cfg(feature = "time-calculation")]
 use crate::TemporalInfo;
 use crate::{
     codetables::{
@@ -558,7 +558,7 @@ Data Representation:                    {}
         TemporalRawInfo::new(ref_time_significance, ref_time_unchecked, forecast_time)
     }
 
-    #[cfg(feature = "chrono")]
+    #[cfg(feature = "time-calculation")]
     /// Returns time-related calculated information associated with the
     /// submessage.
     ///

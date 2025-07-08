@@ -5,7 +5,7 @@
     "rust-analyzer": {
       "initialization_options": {
         "cargo": {
-          "features": ["chrono"]
+          "features": ["time-calculation"]
         }
       }
     }
