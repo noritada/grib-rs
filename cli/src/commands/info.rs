@@ -3,7 +3,6 @@ use std::{
     path::PathBuf,
 };
 
-use chrono::{DateTime, Utc};
 use clap::{arg, ArgMatches, Command};
 use grib::{
     codetables::{
@@ -40,7 +39,7 @@ pub fn exec(args: &ArgMatches) -> anyhow::Result<()> {
                     message_index.0,
                     sect0_body,
                     sect1_body,
-                    sect1_body.ref_time()?
+                    sect1_body.ref_time_unchecked()
                 )
             );
         }
@@ -48,7 +47,7 @@ pub fn exec(args: &ArgMatches) -> anyhow::Result<()> {
     Ok(())
 }
 
-struct InfoView<'i>(usize, &'i Indicator, &'i Identification, DateTime<Utc>);
+struct InfoView<'i>(usize, &'i Indicator, &'i Identification, grib::UtcDateTime);
 
 impl Display for InfoView<'_> {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {

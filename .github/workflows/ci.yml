@@ -40,6 +40,10 @@ jobs:
             with_test: true
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
+            features: --features time-calculation
+            with_test: true
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
             features: --features gridpoints-proj
             with_test: true
           # - os: ubuntu-latest

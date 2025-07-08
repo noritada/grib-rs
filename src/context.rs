@@ -5,6 +5,8 @@ use std::{
     io::{Cursor, Read, Seek},
 };
 
+#[cfg(feature = "time-calculation")]
+use crate::TemporalInfo;
 use crate::{
     codetables::{
         CodeTable3_1, CodeTable4_0, CodeTable4_1, CodeTable4_2, CodeTable4_3, CodeTable5_0, Lookup,
@@ -14,7 +16,7 @@ use crate::{
     grid::GridPointIterator,
     parser::Grib2SubmessageIndexStream,
     reader::{Grib2Read, Grib2SectionStream, SeekableGrib2Reader, SECT8_ES_SIZE},
-    GridPointIndexIterator,
+    GridPointIndexIterator, TemporalRawInfo,
 };
 
 #[derive(Default, Debug, Clone, PartialEq, Eq)]
@@ -571,6 +573,123 @@ Data Representation:                    {}
             self.5.describe().unwrap_or_default(),
             self.repr_def().num_points(),
         )
+    }
+
+    /// Returns time-related raw information associated with the submessage.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use std::{
+    ///     fs::File,
+    ///     io::{BufReader, Read},
+    /// };
+    ///
+    /// use grib::{
+    ///     codetables::grib2::{Table1_2, Table4_4},
+    ///     Code, ForecastTime, TemporalRawInfo, UtcDateTime,
+    /// };
+    ///
+    /// fn main() -> Result<(), Box<dyn std::error::Error>> {
+    ///     let f = File::open(
+    ///         "testdata/Z__C_RJTD_20160822020000_NOWC_GPV_Ggis10km_Pphw10_FH0000-0100_grib2.bin",
+    ///     )?;
+    ///     let f = BufReader::new(f);
+    ///     let grib2 = grib::from_reader(f)?;
+    ///
+    ///     let mut iter = grib2.iter();
+    ///
+    ///     {
+    ///         let (_, message) = iter.next().ok_or_else(|| "first message is not found")?;
+    ///         let actual = message.temporal_raw_info();
+    ///         let expected = TemporalRawInfo {
+    ///             ref_time_significance: Code::Name(Table1_2::Analysis),
+    ///             ref_time_unchecked: UtcDateTime::new(2016, 8, 22, 2, 0, 0),
+    ///             forecast_time_diff: Some(ForecastTime {
+    ///                 unit: Code::Name(Table4_4::Minute),
+    ///                 value: 0,
+    ///             }),
+    ///         };
+    ///         assert_eq!(actual, expected);
+    ///     }
+    ///
+    ///     {
+    ///         let (_, message) = iter.next().ok_or_else(|| "second message is not found")?;
+    ///         let actual = message.temporal_raw_info();
+    ///         let expected = TemporalRawInfo {
+    ///             ref_time_significance: Code::Name(Table1_2::Analysis),
+    ///             ref_time_unchecked: UtcDateTime::new(2016, 8, 22, 2, 0, 0),
+    ///             forecast_time_diff: Some(ForecastTime {
+    ///                 unit: Code::Name(Table4_4::Minute),
+    ///                 value: 10,
+    ///             }),
+    ///         };
+    ///         assert_eq!(actual, expected);
+    ///     }
+    ///
+    ///     Ok(())
+    /// }
+    /// ```
+    pub fn temporal_raw_info(&self) -> TemporalRawInfo {
+        let ref_time_significance = self.identification().ref_time_significance();
+        let ref_time_unchecked = self.identification().ref_time_unchecked();
+        let forecast_time = self.prod_def().forecast_time();
+        TemporalRawInfo::new(ref_time_significance, ref_time_unchecked, forecast_time)
+    }
+
+    #[cfg(feature = "time-calculation")]
+    /// Returns time-related calculated information associated with the
+    /// submessage.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use std::{
+    ///     fs::File,
+    ///     io::{BufReader, Read},
+    /// };
+    ///
+    /// use chrono::{TimeZone, Utc};
+    /// use grib::{
+    ///     codetables::grib2::{Table1_2, Table4_4},
+    ///     Code, ForecastTime, TemporalInfo, UtcDateTime,
+    /// };
+    ///
+    /// fn main() -> Result<(), Box<dyn std::error::Error>> {
+    ///     let f = File::open(
+    ///         "testdata/Z__C_RJTD_20160822020000_NOWC_GPV_Ggis10km_Pphw10_FH0000-0100_grib2.bin",
+    ///     )?;
+    ///     let f = BufReader::new(f);
+    ///     let grib2 = grib::from_reader(f)?;
+    ///
+    ///     let mut iter = grib2.iter();
+    ///
+    ///     {
+    ///         let (_, message) = iter.next().ok_or_else(|| "first message is not found")?;
+    ///         let actual = message.temporal_info();
+    ///         let expected = TemporalInfo {
+    ///             ref_time: Some(Utc.with_ymd_and_hms(2016, 8, 22, 2, 0, 0).unwrap()),
+    ///             forecast_time_target: Some(Utc.with_ymd_and_hms(2016, 8, 22, 2, 0, 0).unwrap()),
+    ///         };
+    ///         assert_eq!(actual, expected);
+    ///     }
+    ///
+    ///     {
+    ///         let (_, message) = iter.next().ok_or_else(|| "second message is not found")?;
+    ///         let actual = message.temporal_info();
+    ///         let expected = TemporalInfo {
+    ///             ref_time: Some(Utc.with_ymd_and_hms(2016, 8, 22, 2, 0, 0).unwrap()),
+    ///             forecast_time_target: Some(Utc.with_ymd_and_hms(2016, 8, 22, 2, 10, 0).unwrap()),
+    ///         };
+    ///         assert_eq!(actual, expected);
+    ///     }
+    ///
+    ///     Ok(())
+    /// }
+    /// ```
+    pub fn temporal_info(&self) -> TemporalInfo {
+        let raw_info = self.temporal_raw_info();
+        TemporalInfo::from(&raw_info)
     }
 
     /// Returns the shape of the grid, i.e. a tuple of the number of grids in

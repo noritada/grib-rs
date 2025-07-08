@@ -13,3 +13,6 @@ Thumbs.db
 **/*.rs.bk
 Cargo.lock
 /gen/target/
+
+**/.zed/*
+!**/.zed/settings.template.json
