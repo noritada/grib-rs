@@ -126,6 +126,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 The [examples directory](examples) may help you understand the API.
 
+### Cargo features
+
+Practical applications of GRIB data may require time calculations, processing of geospatial coordinates, and decompression of data compressed by various algorithms, which may require other libraries. Since it is not always in the best interest of all users to have dependencies on all libraries enabled at all times, this library crate uses Cargo features to make some features and dependencies optional.
+
+See the `features` section of [Cargo.toml](Cargo.toml) for more information.
+
 ## CLI application `gribber`
 
 CLI application `gribber` built on the top of the `grib` library is available. It is in the `grib-cli` package and can be installed via `cargo install grib-cli`.

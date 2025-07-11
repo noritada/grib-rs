@@ -45,7 +45,12 @@ xz2 = "0.1"
 grib-build = { path = "gen", version = "0.4.3" }
 
 [features]
+# Enable computation of latitudes and longitudes of grid points points using
+# PROJ for some grid systems.
 gridpoints-proj = ["dep:proj"]
+
+# Enable date and time validity checks and date and time calculations using
+# chrono crate.
 time-calculation = ["dep:chrono"]
 
 [profile.release]
