@@ -7,6 +7,51 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.11.0] - 2025-07-12
+### New supports
+
+- Code Tables
+  - Code Table 1.2 (significance of reference time)
+    (#119)
+
+### Enhancements
+
+- Now `IntoIter` trait is implemented for `&Grib2`.
+  (#107)
+- `Grib2` struct can now be created from an owned sequence of bytes as well using `from_bytes()`,
+  which replaces `from_slice()` that only takes a borrowed sequence.
+  (#117)
+- 3 enhancements have been made to the time-related information APIs.
+  (#119)
+  - Introduction of the "time-calculation" feature and reduction of dependency on chrono crate.
+    This crate no longer depends on chrono unless the "time-calculation" feature is explicitly enabled.
+    This reduces the number of dependencies needed to build the code in cases where time calculations are not required.
+  - Accessors to time-related information of a submessage.
+    `SubMessage::temporal_raw_info()` and `SubMessage::temporal_info()`,
+    which return reference time, forecast time, etc. in batches, are now available.
+    The latter is available only when the "time-calculation" feature is enabled.
+  - New feature to calculate forecast time.
+    The new method `SubMessage::temporal_info()` mentioned above can be used to get the calculated forecast time.
+    This forecast time is calculated from the reference time, the time elapsed from it and its units.
+- An accessor, `SubMessage::identification()`, is newly introduced to return `Identification`.
+  (#110 (thanks @ejd); #120)
+
+### Enhancements for CLI application `gribber`
+
+- CLI now uses `std::sync::LazyLock` and requires Rust 1.80 or higher for builds.
+  Instead, it no longer depends on `once_cell` crate.
+- Now that CLI can handle standard input/output, data can be exchanged with external commands through pipes.
+  (#118)
+
+### Others
+
+- Suppressed warnings about untested JPEG 2000 code stream format decoding since it has passed plenty of operational testing.
+  (#111 (thanks @agasparovic); #113 (thanks @jodavaho))
+- As usual, followed the latest lint warnings.
+  (e.g. #115 (thanks @ejd))
+- As usual, updated dependencies.
+  (e.g. #116 (thanks @ejd))
+
 ## [0.10.2] - 2024-10-02
 ### Fixed
 
@@ -373,7 +418,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - inspect: display of information mainly for development purpose such as template numbers
     - list: display of a list of sections (the style is still tentative)
 
-[unreleased]: https://github.com/noritada/grib-rs/compare/v0.10.2...HEAD
+[unreleased]: https://github.com/noritada/grib-rs/compare/v0.11.0...HEAD
+[0.11.0]: https://github.com/noritada/grib-rs/compare/v0.10.2...v0.11.0
 [0.10.2]: https://github.com/noritada/grib-rs/compare/v0.10.1...v0.10.2
 [0.10.1]: https://github.com/noritada/grib-rs/compare/v0.10.0...v0.10.1
 [0.10.0]: https://github.com/noritada/grib-rs/compare/v0.9.2...v0.10.0
