@@ -16,7 +16,7 @@ exclude = ["/.github", "/testdata"]
 members = ["gen", "cli", "demo", "codegen"]
 
 [workspace.package]
-version = "0.10.2"
+version = "0.11.0"
 authors = ["Noritada Kobayashi <noritada.kobayashi@gmail.com>"]
 edition = "2021"
 license = "MIT OR Apache-2.0"
