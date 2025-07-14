@@ -31,7 +31,7 @@ categories = ["science"]
 keywords = ["GRIB", "weather", "meteorology"]
 
 [dependencies]
-chrono = { version = "0.4.23", optional = true }
+chrono = { version = "0.4.34", optional = true }
 num = "0.4"
 num_enum = "0.7"
 png = "0.17"
