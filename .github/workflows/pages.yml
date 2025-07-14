@@ -23,12 +23,14 @@ jobs:
         with:
           submodules: recursive
       - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@nightly
         with:
           targets: wasm32-unknown-unknown
 
       - name: Build documentation
-        run: cargo doc --no-deps --release
+        run: cargo doc --all-features --no-deps --release
+        env:
+          RUSTDOCFLAGS: --cfg docsrs
       - name: Stage documentation
         run: mv target/doc dist
 

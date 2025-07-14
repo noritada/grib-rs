@@ -12,6 +12,10 @@ categories.workspace = true
 keywords.workspace = true
 exclude = ["/.github", "/testdata"]
 
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
 [workspace]
 members = ["gen", "cli", "demo"]
 

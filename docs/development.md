@@ -14,7 +14,8 @@ Since there is a lot of work that needs to be done in the release process, and I
 4. Switch to a clean repository and pull the `master` branch.
    Cloning is better to avoid mistakes, but fast-forward updating of an existing repository is fine as long as it stays clean, so I always have a clean repository for the release operation.
 5. Run `cargo test --workspace --release` to reconfirm that the tests pass.
-6. Run `cargo doc --no-deps --open` in lib crate to reconfirm the generated documentation.
+6. Run `RUSTDOCFLAGS="--cfg docsrs" cargo +nightly doc --all-features --no-deps --open` in lib crate to reconfirm the generated documentation.
+   Note that a simple `cargo doc --no-deps` command execution does not generate documentation on feature-specific APIs.
 7. Run the following commands, starting with the dependent packages, i.e. `grib-build`, `grib`, `grib-cli`, in that order.
    - `cargo package`
    - `cargo publish`
