@@ -638,6 +638,7 @@ Data Representation:                    {}
     }
 
     #[cfg(feature = "time-calculation")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "time-calculation")))]
     /// Returns time-related calculated information associated with the
     /// submessage.
     ///

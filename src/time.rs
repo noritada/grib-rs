@@ -35,6 +35,7 @@ impl TemporalRawInfo {
 }
 
 #[cfg(feature = "time-calculation")]
+#[cfg_attr(docsrs, doc(cfg(feature = "time-calculation")))]
 #[derive(Debug, PartialEq, Eq)]
 /// Time-related calculated information.
 pub struct TemporalInfo {

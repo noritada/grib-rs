@@ -116,6 +116,7 @@ impl PolarStereographicGridDefinition {
     /// of iterator iterations is consistent with the number of grid points
     /// defined in the data.
     #[cfg(feature = "gridpoints-proj")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "gridpoints-proj")))]
     pub fn latlons(&self) -> Result<std::vec::IntoIter<(f32, f32)>, GribError> {
         let lad = self.lad as f64 * 1e-6;
         let lov = self.lov as f64 * 1e-6;
