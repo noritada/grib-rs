@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.11.1] - 2025-07-14
+### Documentation improvements
+
+- Descriptions on features are now included in Cargo.toml and linked from README.md.
+  (#121)
+- API documentation on docs.rs and GitHub Pages now includes descriptions on feature-specific APIs.
+  (#122)
+
+### Fixes
+
+- Correct the dependency on chrono to fix a build failure
+  (#123)
+
 ## [0.11.0] - 2025-07-12
 ### New supports
 
@@ -418,7 +431,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - inspect: display of information mainly for development purpose such as template numbers
     - list: display of a list of sections (the style is still tentative)
 
-[unreleased]: https://github.com/noritada/grib-rs/compare/v0.11.0...HEAD
+[unreleased]: https://github.com/noritada/grib-rs/compare/v0.11.1...HEAD
+[0.11.1]: https://github.com/noritada/grib-rs/compare/v0.11.0...v0.11.1
 [0.11.0]: https://github.com/noritada/grib-rs/compare/v0.10.2...v0.11.0
 [0.10.2]: https://github.com/noritada/grib-rs/compare/v0.10.1...v0.10.2
 [0.10.1]: https://github.com/noritada/grib-rs/compare/v0.10.0...v0.10.1
