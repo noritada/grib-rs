@@ -1,5 +1,5 @@
 pub use dump::Dump;
-pub use from_slice::{read_from_slice, FromSlice};
+pub use try_from_slice::{read_from_slice, TryFromSlice, TryFromSliceResult};
 
 mod dump;
-mod from_slice;
+mod try_from_slice;

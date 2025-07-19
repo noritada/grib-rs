@@ -1,6 +1,6 @@
-use grib_data_helpers::FromSlice;
+use grib_data_helpers::TryFromSlice;
 
-#[derive(Debug, PartialEq, Eq, grib_template_derive::FromSlice)]
+#[derive(Debug, PartialEq, Eq, grib_template_derive::TryFromSlice)]
 pub struct Params {
     /// Field 1
     field1: u8,
@@ -14,7 +14,7 @@ pub struct Params {
     field5: InnerParams,
 }
 
-#[derive(Debug, PartialEq, Eq, grib_template_derive::FromSlice)]
+#[derive(Debug, PartialEq, Eq, grib_template_derive::TryFromSlice)]
 pub struct InnerParams {
     /// Field 1
     field1: u8,
@@ -26,8 +26,8 @@ fn main() {
     let buf = vec![
         0x01_u8, 0xff, 0x00, 0xff, 0x00, 0x76, 0x54, 0x32, 0x10, 0xf0, 0x0f,
     ];
-    let actual = Params::from_slice(&buf);
-    let expected = Params {
+    let actual = Params::try_from_slice(&buf);
+    let expected = Ok(Params {
         field1: 0x01,
         field2: 0xff00,
         field3: -0x7f00,
@@ -36,7 +36,7 @@ fn main() {
             field1: 0xf0,
             field2: 0x0f,
         },
-    };
+    });
 
     assert_eq!(actual, expected)
 }
