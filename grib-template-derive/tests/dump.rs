@@ -24,6 +24,11 @@ fn main() {
     params.dump(&mut buf).unwrap();
     assert_eq!(
         String::from_utf8_lossy(buf.get_ref()),
-        "field1 (Field 1): 1\nfield2 (Field 2): 2\nfield3 (Field 3): 3\nfield4 (Field 4): 4\n"
+        "\
+1-1: field1 = 1  // Field 1
+2-3: field2 = 2  // Field 2
+4-5: field3 = 3  // Field 3
+6-9: field4 = 4  // Field 4
+"
     )
 }

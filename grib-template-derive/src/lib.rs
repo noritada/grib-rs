@@ -45,29 +45,41 @@ pub fn derive(input: TokenStream) -> TokenStream {
     let ident = input.ident;
 
     let fields = match input.data {
-        syn::Data::Struct(ds) => match ds.fields {
-            syn::Fields::Named(ref fields) => fields
-                .named
-                .iter()
-                .flat_map(|f| {
-                    let ident = &f.ident.clone()?;
-                    let doc = get_doc(&f.attrs)
-                        .map(|s| format!(" ({})", s.trim()))
-                        .unwrap_or(String::new());
-                    Some(quote! {
-                        writeln!(output, "{}{}: {}", stringify!(#ident), #doc, self.#ident)?;
-                    })
-                })
-                .collect::<Vec<_>>(),
+        syn::Data::Struct(ref ds) => match &ds.fields {
+            syn::Fields::Named(fields) => &fields.named,
             _ => unimplemented!("`Dump` can only be derived for structs with named fields"),
         },
         _ => unimplemented!("`Dump` can only be derived for structs"),
     };
 
+    let mut dumps = Vec::new();
+    let mut start_pos = quote! { 1usize }; // WMO documentation style octet representation
+
+    for field in fields {
+        let ident = field.ident.as_ref().unwrap();
+        let ty = &field.ty;
+        let end_pos = quote! { #start_pos + std::mem::size_of::<#ty>() };
+
+        let doc = get_doc(&field.attrs)
+            .map(|s| format!("  // {}", s.trim()))
+            .unwrap_or(String::new());
+        dumps.push(quote! {
+            writeln!(output, "{}-{}: {} = {}{}",
+                #start_pos,
+                #end_pos - 1,
+                stringify!(#ident),
+                self.#ident,
+                #doc,
+            )?;
+        });
+
+        start_pos = end_pos;
+    }
+
     quote! {
         impl Dump for #ident {
             fn dump<W: std::io::Write>(&self, output: &mut W) -> Result<(), std::io::Error> {
-                #(#fields)*;
+                #(#dumps)*;
                 Ok(())
             }
         }
