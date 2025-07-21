@@ -27,6 +27,7 @@ categories = ["science"]
 keywords = ["GRIB", "weather", "meteorology"]
 
 [dependencies]
+aec-sys = { path = "aec-rs/aec-sys" }
 chrono = "0.4.23" # `TimeZone::with_ymd_and_hms` needed
 num = "0.4"
 num_enum = "0.7"

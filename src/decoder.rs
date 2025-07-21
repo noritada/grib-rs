@@ -169,8 +169,8 @@ where
 // even when JPEG 2000 code stream format support is not available (there may be
 // a better way).
 #[cfg(target_arch = "wasm32")]
-type Grib2ValueIterator<T0, T2, T3, T41> =
-    Grib2SubmessageDecoderIteratorWrapper<T0, T2, T3, std::vec::IntoIter<f32>, T41>;
+type Grib2ValueIterator<T0, T2, T3, T41, T42> =
+    Grib2SubmessageDecoderIteratorWrapper<T0, T2, T3, std::vec::IntoIter<f32>, T41, T42>;
 #[cfg(not(target_arch = "wasm32"))]
 type Grib2ValueIterator<T0, T2, T3, T40, T41, T42> =
     Grib2SubmessageDecoderIteratorWrapper<T0, T2, T3, T40, T41, T42>;
@@ -249,6 +249,7 @@ pub enum DecodeError {
     PngDecodeError(PngDecodeError),
     RunLengthEncodingDecodeError(RunLengthEncodingDecodeError),
     LengthMismatch,
+    Unknown(String),
 }
 
 impl From<SimplePackingDecodeError> for DecodeError {
