@@ -124,6 +124,13 @@ test_operation_with_data_without_nan_values_and_byte_order_options! {
         "-l",
         utils::testdata::flat_binary::noaa_mrms_le()?
     ),
+    (
+        decoding_ccsds_compression_as_little_endian,
+        utils::testdata::grib2::ecmwf_realtime_oper_fc()?,
+        "0.0",
+        "-l",
+        utils::testdata::flat_binary::ecmwf_realtime_oper_fc_0_le()?
+    ),
 }
 
 #[test]

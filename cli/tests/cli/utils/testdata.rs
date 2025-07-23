@@ -55,6 +55,7 @@ pub(crate) mod grib2 {
     }
 
     definitions_of_grib2_test_data! {
+        (ecmwf_realtime_oper_fc, "20240101000000-0h-oper-fc.grib2.0-10.xz"),
         (
             jma_kousa,
             "Z__C_RJTD_20170221120000_MSG_GPV_Gll0p5deg_Pys_B20170221120000_F2017022115-2017022212_grib2.bin.xz"
@@ -102,6 +103,7 @@ pub(crate) mod flat_binary {
 
     definitions_of_flat_binary_test_data! {
         (cmc_glb_le, "cmc-glb-wgrib2-le.bin.xz"),
+        (ecmwf_realtime_oper_fc_0_le, "ecmwf-realtime-oper-fc-0-le.bin.xz"),
         (jma_kousa_be, "kousa-wgrib2-be.bin.xz"),
         (jma_kousa_le, "kousa-wgrib2-le.bin.xz"),
         (jma_meps_le, "meps-wgrib2-le.bin.xz"),
