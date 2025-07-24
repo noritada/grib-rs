@@ -76,6 +76,7 @@ For data using the following encoding methods, grid point values can be extracte
 | 5.3 | complex packing and spatial differencing |
 | 5.40 | JPEG 2000 code stream format |
 | 5.41 | Portable Network Graphics (PNG) |
+| 5.42 | CCSDS recommended lossless compression |
 | 5.200 | run length packing with level values |
 
 ## Planned features
