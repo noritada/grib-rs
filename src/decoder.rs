@@ -131,6 +131,7 @@ impl Grib2SubmessageDecoder {
             #[cfg(not(target_arch = "wasm32"))]
             40 => Grib2ValueIterator::Template40(jpeg2000::decode(self)?),
             41 => Grib2ValueIterator::Template41(png::decode(self)?),
+            #[cfg(not(target_arch = "wasm32"))]
             42 => Grib2ValueIterator::Template42(ccsds::decode(self)?),
             200 => Grib2ValueIterator::Template200(run_length::decode(self)?),
             _ => {
@@ -169,8 +170,14 @@ where
 // even when JPEG 2000 code stream format support is not available (there may be
 // a better way).
 #[cfg(target_arch = "wasm32")]
-type Grib2ValueIterator<T0, T2, T3, T41, T42> =
-    Grib2SubmessageDecoderIteratorWrapper<T0, T2, T3, std::vec::IntoIter<f32>, T41, T42>;
+type Grib2ValueIterator<T0, T2, T3, T41> = Grib2SubmessageDecoderIteratorWrapper<
+    T0,
+    T2,
+    T3,
+    std::vec::IntoIter<f32>,
+    T41,
+    std::vec::IntoIter<f32>,
+>;
 #[cfg(not(target_arch = "wasm32"))]
 type Grib2ValueIterator<T0, T2, T3, T40, T41, T42> =
     Grib2SubmessageDecoderIteratorWrapper<T0, T2, T3, T40, T41, T42>;
@@ -185,6 +192,10 @@ enum Grib2SubmessageDecoderIteratorWrapper<T0, T2, T3, T40, T41, T42> {
     #[cfg(not(target_arch = "wasm32"))]
     Template40(SimplePackingDecodeIteratorWrapper<T40>),
     Template41(SimplePackingDecodeIteratorWrapper<T41>),
+    #[allow(dead_code)]
+    #[cfg(target_arch = "wasm32")]
+    Template42(PhantomData<T42>),
+    #[cfg(not(target_arch = "wasm32"))]
     Template42(SimplePackingDecodeIteratorWrapper<T42>),
     Template200(std::vec::IntoIter<f32>),
 }
@@ -217,7 +228,10 @@ where
             #[cfg(target_arch = "wasm32")]
             Self::Template40(_) => unreachable!(),
             Self::Template41(inner) => inner.next(),
+            #[cfg(not(target_arch = "wasm32"))]
             Self::Template42(inner) => inner.next(),
+            #[cfg(target_arch = "wasm32")]
+            Self::Template42(_) => unreachable!(),
             Self::Template200(inner) => inner.next(),
         }
     }
@@ -232,7 +246,10 @@ where
             #[cfg(target_arch = "wasm32")]
             Self::Template40(_) => unreachable!(),
             Self::Template41(inner) => inner.size_hint(),
+            #[cfg(not(target_arch = "wasm32"))]
             Self::Template42(inner) => inner.size_hint(),
+            #[cfg(target_arch = "wasm32")]
+            Self::Template42(_) => unreachable!(),
             Self::Template200(inner) => inner.size_hint(),
         }
     }
@@ -278,6 +295,7 @@ impl From<RunLengthEncodingDecodeError> for DecodeError {
 }
 
 mod bitmap;
+#[cfg(not(target_arch = "wasm32"))]
 mod ccsds;
 mod complex;
 #[cfg(not(target_arch = "wasm32"))]

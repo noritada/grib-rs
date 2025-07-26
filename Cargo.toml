@@ -27,7 +27,6 @@ categories = ["science"]
 keywords = ["GRIB", "weather", "meteorology"]
 
 [dependencies]
-aec-sys = { path = "aec-rs/aec-sys" }
 chrono = "0.4.23" # `TimeZone::with_ymd_and_hms` needed
 num = "0.4"
 num_enum = "0.7"
@@ -35,6 +34,7 @@ png = "0.17"
 proj = { version = "0.27", optional = true }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+aec-sys = { path = "aec-rs/aec-sys" }
 openjpeg-sys = "1.0.5" # avoiding 1.0.2/1.0.4
 
 [dev-dependencies]
