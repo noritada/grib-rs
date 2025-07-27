@@ -24,7 +24,7 @@ pub(crate) fn decode(
         let element_size_in_bytes = usize::from(simple_param.nbit >> 3) + 1;
         let size = element_size_in_bytes * target.num_points_encoded;
         let mut decoded = vec![0; size];
-        let mut stream = aec_sys::Stream::new(
+        let mut stream = libaec_sys::Stream::new(
             simple_param.nbit.into(),
             ccsds_param.block_size.into(),
             ccsds_param.reference_sample_interval.into(),
