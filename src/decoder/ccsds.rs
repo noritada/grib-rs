@@ -36,8 +36,7 @@ pub(crate) fn decode(
 
         let decoder = NBitwiseIterator::new(decoded.into_iter(), element_size_in_bytes * 8);
         let decoder = SimplePackingDecodeIterator::new(decoder, &simple_param);
-        let decoder = SimplePackingDecodeIteratorWrapper::SimplePacking(decoder);
-        decoder
+        SimplePackingDecodeIteratorWrapper::SimplePacking(decoder)
     };
     Ok(decoder)
 }
