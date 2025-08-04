@@ -52,3 +52,6 @@ gridpoints-proj = ["dep:proj"]
 strip = true
 lto = true
 codegen-units = 1
+
+[patch.crates-io]
+libaec-sys = { git = "https://github.com/noritada/aecoder-rs", branch = "fix/status_dll_not_found-on-windows" }
