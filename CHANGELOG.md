@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.11.2] - 2025-08-05
+### New supports
+
+- Templates
+  - Template 5.42/7.42 (CCSDS recommended lossless compression)
+    (#94; #125)
+
+### Others
+
+- Fixed API documentation build failure on docs.rs
+  (#124)
+
 ## [0.11.1] - 2025-07-14
 ### Documentation improvements
 
@@ -431,7 +443,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - inspect: display of information mainly for development purpose such as template numbers
     - list: display of a list of sections (the style is still tentative)
 
-[unreleased]: https://github.com/noritada/grib-rs/compare/v0.11.1...HEAD
+[unreleased]: https://github.com/noritada/grib-rs/compare/v0.11.2...HEAD
+[0.11.2]: https://github.com/noritada/grib-rs/compare/v0.11.1...v0.11.2
 [0.11.1]: https://github.com/noritada/grib-rs/compare/v0.11.0...v0.11.1
 [0.11.0]: https://github.com/noritada/grib-rs/compare/v0.10.2...v0.11.0
 [0.10.2]: https://github.com/noritada/grib-rs/compare/v0.10.1...v0.10.2
