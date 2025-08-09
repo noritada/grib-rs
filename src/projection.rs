@@ -1,5 +1,8 @@
+/// Projection parameters.
 pub enum ProjectionParams {
+    /// Lambert Conformal Conic projection
     Lcc(LccParams),
+    /// Stereographic projection
     Stere(StereParams),
 }
 
@@ -12,12 +15,19 @@ impl ProjectionParams {
     }
 }
 
+/// Parameters for Lambert Conformal Conic projection.
 pub struct LccParams {
+    /// Semimajor radius of the ellipsoid axis (in meters)
     pub a: f64,
+    /// Semiminor radius of the ellipsoid axis (in meters)
     pub b: f64,
+    /// Latitude of origin (in degree)
     pub lat_0: f64,
+    /// Central meridian (in degree)
     pub lon_0: f64,
+    /// First standard parallel (in degree)
     pub lat_1: f64,
+    /// Second standard parallel (in degree)
     pub lat_2: f64,
 }
 
@@ -37,11 +47,17 @@ impl LccParams {
     }
 }
 
+/// Parameters for Stereographic projection.
 pub struct StereParams {
+    /// Semimajor radius of the ellipsoid axis (in meters)
     pub a: f64,
+    /// Semiminor radius of the ellipsoid axis (in meters)
     pub b: f64,
+    /// Latitude where scale is not distorted (in degree)
     pub lat_ts: f64,
+    /// Latitude of origin (in degree)
     pub lat_0: f64,
+    /// Central meridian (in degree)
     pub lon_0: f64,
 }
 
