@@ -73,3 +73,5 @@ impl StereParams {
         format!("+a={a} +b={b} +proj=stere +lat_ts={lat_ts} +lat_0={lat_0} +lon_0={lon_0}")
     }
 }
+
+mod lcc;
