@@ -85,6 +85,77 @@ impl Projection {
         };
         Ok(context)
     }
+
+    const ERR_TRANSFORMATION_OUTSIDE_DOMAIN: &str =
+        "Coordinate transformation outside projection domain";
+
+    pub fn project(&self, xy: &(f64, f64), inverse: bool) -> Result<(f64, f64), &'static str> {
+        if inverse {
+            self.inverse(xy)
+        } else {
+            self.forward(xy)
+        }
+    }
+
+    fn forward(&self, (lambda, phi): &(f64, f64)) -> Result<(f64, f64), &'static str> {
+        let Self {
+            params: Params { e, e_sq, k0, .. },
+            n,
+            c,
+            rho0,
+        } = self;
+
+        let rho = if (phi.abs() - HALF_PI).abs() < EPS10 {
+            if phi * n <= 0. {
+                return Err(Self::ERR_TRANSFORMATION_OUTSIDE_DOMAIN);
+            }
+            0.
+        } else {
+            c * if *e_sq != 0. {
+                t(phi.cos(), phi.sin(), *e).powf(*n)
+            } else {
+                (FORTH_PI + 0.5 * phi).tan().powf(-n)
+            }
+        };
+        let lambda = lambda * n;
+        let x = k0 * (rho * lambda.sin());
+        let y = k0 * (rho0 - rho * lambda.cos());
+        Ok((x, y))
+    }
+
+    fn inverse(&self, (x, y): &(f64, f64)) -> Result<(f64, f64), &'static str> {
+        let Self {
+            params: Params { e, e_sq, k0, .. },
+            n,
+            c,
+            rho0,
+        } = self;
+
+        let x = x / k0;
+        let y = rho0 - y / k0;
+
+        let rho = x.hypot(y);
+        let lp = if rho != 0. {
+            let (rho, x, y) = if *n < 0. { (-rho, -x, -y) } else { (rho, x, y) };
+
+            let phi = if *e_sq != 0. {
+                let phi = phi2((rho / c).powf(1. / n), *e)?;
+                if phi == f64::INFINITY {
+                    return Err(Self::ERR_TRANSFORMATION_OUTSIDE_DOMAIN);
+                }
+                phi
+            } else {
+                2. * ((c / rho).powf(1. / n)).atan() - HALF_PI
+            };
+            let lambda = x.atan2(y) / n;
+            (lambda, phi)
+        } else {
+            let phi = if *n > 0. { HALF_PI } else { -HALF_PI };
+            (0., phi)
+        };
+
+        Ok(lp)
+    }
 }
 
 fn n_in_secant_cone_ellipsoidal(p: &Params, m1: &f64, t1: &f64) -> Result<f64, &'static str> {
@@ -120,4 +191,15 @@ fn t(cos_phi: f64, sin_phi: f64, e: f64) -> f64 {
         } else {
             (1. - sin_phi) / cos_phi
         }
+}
+
+// See formula deformation for pj_phi2().
+fn phi2(ts0: f64, e: f64) -> Result<f64, &'static str> {
+    let phi2 = sinhpsi2tanphi((1. / ts0 - ts0) / 2., e)?.atan();
+    Ok(phi2)
+}
+
+// See formula deformation for pj_sinhpsi2tanphi().
+fn sinhpsi2tanphi(taup: f64, e: f64) -> Result<f64, &'static str> {
+    unimplemented!()
 }
