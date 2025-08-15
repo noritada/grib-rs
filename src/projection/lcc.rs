@@ -139,7 +139,9 @@ impl Projection {
             let (rho, x, y) = if *n < 0. { (-rho, -x, -y) } else { (rho, x, y) };
 
             let phi = if *e_sq != 0. {
-                let phi = phi2((rho / c).powf(1. / n), *e)?;
+                let phi = phi2((rho / c).powf(1. / n), *e).ok_or(
+                    "the inverse of the isometric latitude function could not be solved numerically"
+                )?;
                 if phi == f64::INFINITY {
                     return Err(Self::ERR_TRANSFORMATION_OUTSIDE_DOMAIN);
                 }
@@ -194,12 +196,48 @@ fn t(cos_phi: f64, sin_phi: f64, e: f64) -> f64 {
 }
 
 // See formula deformation for pj_phi2().
-fn phi2(ts0: f64, e: f64) -> Result<f64, &'static str> {
+fn phi2(ts0: f64, e: f64) -> Option<f64> {
     let phi2 = sinhpsi2tanphi((1. / ts0 - ts0) / 2., e)?.atan();
-    Ok(phi2)
+    Some(phi2)
 }
 
 // See formula deformation for pj_sinhpsi2tanphi().
-fn sinhpsi2tanphi(taup: f64, e: f64) -> Result<f64, &'static str> {
-    unimplemented!()
+fn sinhpsi2tanphi(taup: f64, e: f64) -> Option<f64> {
+    const MAX_ITER: usize = 5;
+    let root_eps: f64 = f64::EPSILON.sqrt();
+    let tol: f64 = root_eps / 10.; // the criterion for Newton's method
+    let tmax: f64 = 2. / root_eps; // threshold for large arg limit exact
+    let e2m: f64 = 1. - e * e;
+    let stol: f64 = tol * 1.0_f64.max(taup.abs());
+
+    // The initial guess.  70 corresponds to chi = 89.18 deg
+    let mut tau = if taup.abs() > 70. {
+        taup * (e * e.atanh()).exp()
+    } else {
+        taup / e2m
+    };
+
+    // handles +/-inf and nan and e = 1
+    if !(tau.abs() < tmax) {
+        return Some(tau);
+    }
+
+    let mut count = MAX_ITER;
+    while count > 0 {
+        let tau1 = (1. + tau * tau).sqrt();
+        let sig = (e * (e * tau / tau1).atanh()).sinh();
+        let taupa = (1. + sig * sig).sqrt() * tau - sig * tau1;
+        let dtau =
+            (taup - taupa) * (1. + e2m * (tau * tau)) / (e2m * tau1 * (1. + taupa * taupa).sqrt());
+
+        tau += dtau;
+
+        // backwards test to allow nans to succeed.
+        if !(dtau.abs() >= stol) {
+            return Some(tau);
+        }
+
+        count -= 1;
+    }
+    None
 }
