@@ -1,11 +1,14 @@
 use std::f64::consts::PI;
 
+use super::LccParams;
+
 // FIXME: use constant values defined in proj
 const EPS10: f64 = f64::EPSILON;
 const HALF_PI: f64 = PI / 2.;
 const FORTH_PI: f64 = PI / 4.;
 
-pub struct Params {
+struct LccDefinition {
+    lam0: f64,
     phi0: f64,
     phi1: f64,
     phi2: f64,
@@ -14,15 +17,47 @@ pub struct Params {
     k0: f64,
 }
 
+impl From<&LccParams> for LccDefinition {
+    fn from(value: &LccParams) -> Self {
+        let LccParams {
+            a,
+            b,
+            lat_0,
+            lon_0,
+            lat_1,
+            lat_2,
+        } = value;
+
+        let lam0 = lon_0.to_radians();
+        let phi0 = lat_0.to_radians();
+        let phi1 = lat_1.to_radians();
+        let phi2 = lat_2.to_radians();
+        let f = (a - b) / a;
+        let e_sq = 2. * f - f * f;
+        let e = e_sq.sqrt();
+
+        Self {
+            lam0,
+            phi0,
+            phi1,
+            phi2,
+            e,
+            e_sq,
+            k0: 1.,
+        }
+    }
+}
+
 pub struct Projection {
-    params: Params,
+    params: LccDefinition,
     n: f64,
     c: f64,
     rho0: f64,
 }
 
 impl Projection {
-    pub fn new(p: Params) -> Result<Self, &'static str> {
+    pub fn new(p: &LccParams) -> Result<Self, &'static str> {
+        let p = LccDefinition::from(p);
         if (p.phi1 + p.phi2).abs() < EPS10 {
             return Err("Invalid value for lat_1 and lat_2: |lat_1 + lat_2| should be > 0");
         }
@@ -99,7 +134,7 @@ impl Projection {
 
     fn forward(&self, (lambda, phi): &(f64, f64)) -> Result<(f64, f64), &'static str> {
         let Self {
-            params: Params { e, e_sq, k0, .. },
+            params: LccDefinition { e, e_sq, k0, .. },
             n,
             c,
             rho0,
@@ -125,7 +160,7 @@ impl Projection {
 
     fn inverse(&self, (x, y): &(f64, f64)) -> Result<(f64, f64), &'static str> {
         let Self {
-            params: Params { e, e_sq, k0, .. },
+            params: LccDefinition { e, e_sq, k0, .. },
             n,
             c,
             rho0,
@@ -160,7 +195,11 @@ impl Projection {
     }
 }
 
-fn n_in_secant_cone_ellipsoidal(p: &Params, m1: &f64, t1: &f64) -> Result<f64, &'static str> {
+fn n_in_secant_cone_ellipsoidal(
+    p: &LccDefinition,
+    m1: &f64,
+    t1: &f64,
+) -> Result<f64, &'static str> {
     let err_message = "Invalid value for eccentricity";
     let sin_phi2 = p.phi2.sin();
     let cos_phi2 = p.phi2.cos();
@@ -176,7 +215,7 @@ fn n_in_secant_cone_ellipsoidal(p: &Params, m1: &f64, t1: &f64) -> Result<f64, &
     Ok(n)
 }
 
-fn n_in_secant_cone_spherical(p: &Params, cos_phi1: f64, cos_phi2: f64) -> f64 {
+fn n_in_secant_cone_spherical(p: &LccDefinition, cos_phi1: f64, cos_phi2: f64) -> f64 {
     (cos_phi1 / cos_phi2).ln()
         / ((FORTH_PI + 0.5 * p.phi2).tan() / (FORTH_PI + 0.5 * p.phi1).tan()).ln()
 }
