@@ -37,10 +37,8 @@ impl ProjectionParams {
 
 /// Parameters for Lambert Conformal Conic projection.
 pub struct LccParams {
-    /// Semimajor radius of the ellipsoid axis (in meters)
-    pub a: f64,
-    /// Semiminor radius of the ellipsoid axis (in meters)
-    pub b: f64,
+    /// Ellipsoid definition
+    pub ellipsoid: Ellipsoid,
     /// Latitude of origin (in degree)
     pub lat_0: f64,
     /// Central meridian (in degree)
@@ -54,8 +52,7 @@ pub struct LccParams {
 impl LccParams {
     fn proj_args(&self) -> String {
         let Self {
-            a,
-            b,
+            ellipsoid: Ellipsoid { a, b, .. },
             lat_0,
             lon_0,
             lat_1,
@@ -69,10 +66,8 @@ impl LccParams {
 
 /// Parameters for Stereographic projection.
 pub struct StereParams {
-    /// Semimajor radius of the ellipsoid axis (in meters)
-    pub a: f64,
-    /// Semiminor radius of the ellipsoid axis (in meters)
-    pub b: f64,
+    /// Ellipsoid definition
+    pub ellipsoid: Ellipsoid,
     /// Latitude where scale is not distorted (in degree)
     pub lat_ts: f64,
     /// Latitude of origin (in degree)
@@ -84,13 +79,32 @@ pub struct StereParams {
 impl StereParams {
     fn proj_args(&self) -> String {
         let Self {
-            a,
-            b,
+            ellipsoid: Ellipsoid { a, b, .. },
             lat_ts,
             lat_0,
             lon_0,
         } = self;
         format!("+a={a} +b={b} +proj=stere +lat_ts={lat_ts} +lat_0={lat_0} +lon_0={lon_0}")
+    }
+}
+
+pub struct Ellipsoid {
+    /// Semimajor radius of the ellipsoid axis (in meters)
+    pub a: f64,
+    /// Semiminor radius of the ellipsoid axis (in meters)
+    pub b: f64,
+    /// Eccentricity
+    pub e: f64,
+    /// Eccentricity squared
+    pub e_sq: f64,
+}
+
+impl Ellipsoid {
+    pub fn from_a_and_b(a: f64, b: f64) -> Self {
+        let f = (a - b) / a;
+        let e_sq = 2. * f - f * f;
+        let e = e_sq.sqrt();
+        Self { a, b, e, e_sq }
     }
 }
 

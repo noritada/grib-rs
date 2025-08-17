@@ -3,7 +3,7 @@ use crate::{
     error::GribError,
     helpers::{read_as, GribInt},
     projection::{ProjectionParams, StereParams},
-    ProjectionCentreFlag,
+    Ellipsoid, ProjectionCentreFlag,
 };
 
 #[derive(Debug, PartialEq, Eq)]
@@ -53,8 +53,7 @@ impl TryFrom<&PolarStereographicGridDefinition> for ProjectionParams {
         };
 
         Ok(Self::Stere(StereParams {
-            a,
-            b,
+            ellipsoid: Ellipsoid::from_a_and_b(a, b),
             lat_ts: lad,
             lat_0: lat_origin,
             lon_0: lov,

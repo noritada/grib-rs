@@ -3,6 +3,7 @@ use crate::{
     error::GribError,
     helpers::{read_as, GribInt},
     projection::{LccParams, ProjectionParams},
+    Ellipsoid,
 };
 
 #[derive(Debug, PartialEq, Eq)]
@@ -46,8 +47,7 @@ impl TryFrom<&LambertGridDefinition> for ProjectionParams {
         })?;
 
         Ok(Self::Lcc(LccParams {
-            a,
-            b,
+            ellipsoid: Ellipsoid::from_a_and_b(a, b),
             lat_0: lad,
             lon_0: lov,
             lat_1: latin1,

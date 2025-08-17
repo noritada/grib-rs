@@ -1,6 +1,6 @@
 use std::f64::consts::PI;
 
-use super::LccParams;
+use super::{Ellipsoid, LccParams};
 
 // FIXME: use constant values defined in proj
 const EPS10: f64 = f64::EPSILON;
@@ -20,8 +20,7 @@ struct LccDefinition {
 impl From<&LccParams> for LccDefinition {
     fn from(value: &LccParams) -> Self {
         let LccParams {
-            a,
-            b,
+            ellipsoid: Ellipsoid { e, e_sq, .. },
             lat_0,
             lon_0,
             lat_1,
@@ -32,17 +31,14 @@ impl From<&LccParams> for LccDefinition {
         let phi0 = lat_0.to_radians();
         let phi1 = lat_1.to_radians();
         let phi2 = lat_2.to_radians();
-        let f = (a - b) / a;
-        let e_sq = 2. * f - f * f;
-        let e = e_sq.sqrt();
 
         Self {
             lam0,
             phi0,
             phi1,
             phi2,
-            e,
-            e_sq,
+            e: *e,
+            e_sq: *e_sq,
             k0: 1.,
         }
     }
