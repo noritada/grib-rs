@@ -153,8 +153,6 @@ impl LambertGridDefinition {
     /// Note that this is a low-level API and it is not checked that the number
     /// of iterator iterations is consistent with the number of grid points
     /// defined in the data.
-    #[cfg(feature = "gridpoints-proj")]
-    #[cfg_attr(docsrs, doc(cfg(feature = "gridpoints-proj")))]
     pub fn latlons(&self) -> Result<std::vec::IntoIter<(f32, f32)>, GribError> {
         let params = ProjectionParams::try_from(self)?;
         let dx = self.dx as f64 * 1e-3;
@@ -254,7 +252,6 @@ mod tests {
         Ok(())
     }
 
-    #[cfg(feature = "gridpoints-proj")]
     #[test]
     fn lambert_grid_latlon_computation() -> Result<(), Box<dyn std::error::Error>> {
         use crate::grid::helpers::test_helpers::assert_coord_almost_eq;

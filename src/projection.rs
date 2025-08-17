@@ -1,3 +1,23 @@
+pub enum Projection {
+    Lcc(lcc::Projection),
+}
+
+impl Projection {
+    pub fn new(params: &ProjectionParams) -> Result<Self, &'static str> {
+        let inner = match params {
+            ProjectionParams::Lcc(p) => Self::Lcc(lcc::Projection::new(p)?),
+            ProjectionParams::Stere(_) => todo!(),
+        };
+        Ok(inner)
+    }
+
+    pub fn project(&self, xy: &(f64, f64), inverse: bool) -> Result<(f64, f64), &'static str> {
+        match self {
+            Self::Lcc(inner) => inner.project(xy, inverse),
+        }
+    }
+}
+
 /// Projection parameters.
 pub enum ProjectionParams {
     /// Lambert Conformal Conic projection
