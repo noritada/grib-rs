@@ -3,7 +3,8 @@ use proj::Proj;
 
 use super::ScanningMode;
 #[allow(unused_imports)]
-use crate::{GribError, GridPointIndexIterator};
+use crate::GribError;
+use crate::GridPointIndexIterator;
 
 pub(crate) fn evenly_spaced_longitudes(
     start_microdegree: i32,

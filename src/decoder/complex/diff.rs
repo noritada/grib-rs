@@ -2,7 +2,11 @@ use super::{
     missing::DecodedValue::{self, Normal},
     ComplexPackingDecodeError,
 };
-use crate::{decoder::DecodeError, error::GribError, helpers::grib_int_from_bytes};
+use crate::{
+    decoder::{param::SpatialDifferencingParam, DecodeError},
+    error::GribError,
+    helpers::grib_int_from_bytes,
+};
 
 pub(crate) struct SpatialDifferencingExtraDescriptors<'a> {
     slice: &'a [u8],
@@ -11,17 +15,20 @@ pub(crate) struct SpatialDifferencingExtraDescriptors<'a> {
 
 impl<'a> SpatialDifferencingExtraDescriptors<'a> {
     pub(crate) fn new(
+        param: &SpatialDifferencingParam,
         parent_slice: &'a [u8],
-        spdiff_order: u8,
-        num_octets: u8,
     ) -> Result<Self, GribError> {
-        if num_octets == 0 || num_octets > 4 {
+        let SpatialDifferencingParam {
+            order,
+            extra_desc_num_octets,
+        } = param;
+        if *extra_desc_num_octets == 0 || *extra_desc_num_octets > 4 {
             return Err(GribError::DecodeError(
                 DecodeError::ComplexPackingDecodeError(ComplexPackingDecodeError::NotSupported),
             ));
         }
-        let num_octets = usize::from(num_octets);
-        let byte_length = usize::from(spdiff_order + 1) * num_octets;
+        let num_octets = usize::from(*extra_desc_num_octets);
+        let byte_length = usize::from(order + 1) * num_octets;
 
         Ok(Self {
             slice: &parent_slice[..byte_length],
@@ -208,9 +215,13 @@ mod tests {
         ($(($name:ident, $num_octets:expr, $expected:expr),)*) => ($(
             #[test]
             fn $name() {
+                let spdiff_param = SpatialDifferencingParam {
+                    order: 2,
+                    extra_desc_num_octets: $num_octets,
+                };
                 let octets = (0x00..0x10).collect::<Vec<_>>();
                 let spdiff_params =
-                    SpatialDifferencingExtraDescriptors::new(&octets, 2, $num_octets).unwrap();
+                    SpatialDifferencingExtraDescriptors::new(&spdiff_param, &octets).unwrap();
                 let actual = spdiff_params.minimum();
                 assert_eq!(actual, $expected);
             }
@@ -228,9 +239,13 @@ mod tests {
         ($(($name:ident, $num_octets:expr, $expected:expr),)*) => ($(
             #[test]
             fn $name() {
+                let spdiff_param = SpatialDifferencingParam {
+                    order: 2,
+                    extra_desc_num_octets: $num_octets,
+                };
                 let octets = (0x00..0x10).collect::<Vec<_>>();
                 let spdiff_params =
-                    SpatialDifferencingExtraDescriptors::new(&octets, 2, $num_octets).unwrap();
+                    SpatialDifferencingExtraDescriptors::new(&spdiff_param, &octets).unwrap();
                 let actual = spdiff_params.first_values().collect::<Vec<_>>();
                 assert_eq!(actual, $expected);
             }

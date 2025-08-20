@@ -14,7 +14,7 @@ use grib::{
 use crate::cli;
 
 pub fn cli() -> Command {
-    Command::new("list")
+    Command::new(crate::cli::module_component!())
         .about("List layers contained in the data")
         .arg(arg!(-d --dump "Show details of each data").action(ArgAction::SetTrue))
         .arg(

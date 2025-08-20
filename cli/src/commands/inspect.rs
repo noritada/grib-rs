@@ -11,7 +11,7 @@ use grib::{SectionInfo, SubMessageSection, SubmessageIterator, TemplateInfo};
 use crate::cli;
 
 pub fn cli() -> Command {
-    Command::new("inspect")
+    Command::new(crate::cli::module_component!())
         .about("Inspect and describes the data structure")
         .arg(
             arg!(-s --sections "Print sections constructing the GRIB message")

@@ -76,6 +76,22 @@ impl ComplexPackingParam {
     }
 }
 
+pub(crate) struct SpatialDifferencingParam {
+    pub(crate) order: u8,
+    pub(crate) extra_desc_num_octets: u8,
+}
+
+impl SpatialDifferencingParam {
+    pub(crate) fn from_buf(buf: &[u8]) -> Self {
+        let order = read_as!(u8, buf, 0);
+        let extra_desc_num_octets = read_as!(u8, buf, 1);
+        Self {
+            order,
+            extra_desc_num_octets,
+        }
+    }
+}
+
 pub(crate) struct CcsdsCompressionParam {
     pub(crate) mask: u8,
     pub(crate) block_size: u8,

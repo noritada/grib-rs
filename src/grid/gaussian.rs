@@ -189,20 +189,16 @@ where
 {
     let mut count = MAX_ITER;
     let mut x = initial_guess;
-    loop {
+    while count > 0 {
         let dx = f(x);
         x -= dx;
         if dx.abs() < f64::EPSILON {
-            break;
+            return Some(x);
         }
 
-        if count > 0 {
-            count -= 1;
-        } else {
-            return None;
-        }
+        count -= 1;
     }
-    Some(x)
+    None
 }
 
 #[cfg(test)]

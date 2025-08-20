@@ -8,13 +8,13 @@ use grib::GribError;
 use crate::cli;
 
 pub fn cli() -> Command {
-    Command::new("decode")
+    Command::new(crate::cli::module_component!())
         .about("Export decoded data with latitudes and longitudes")
         .arg(
             arg!(<FILE> "Target file name (or a single dash (`-`) for standard input)")
                 .value_parser(clap::value_parser!(PathBuf)),
         )
-        .arg(arg!(<INDEX> "Submessage index"))
+        .arg(arg!(<INDEX> "Submessage index").value_parser(clap::value_parser!(cli::CliMessageIndex)))
         .arg(
             arg!(-b --"big-endian" <OUT_FILE> "Export (without lat/lon) as a big-endian flat binary file")
                 .required(false) // There is no syntax yet for optional options.
@@ -41,11 +41,10 @@ fn write_output(
 pub fn exec(args: &ArgMatches) -> Result<()> {
     let file_name = args.get_one::<PathBuf>("FILE").unwrap();
     let grib = cli::grib(file_name)?;
-    let index = args.get_one::<String>("INDEX").unwrap();
-    let cli::CliMessageIndex(message_index) = index.parse()?;
+    let cli::CliMessageIndex(message_index) = args.get_one("INDEX").unwrap();
     let (_, submessage) = grib
         .iter()
-        .find(|(index, _)| *index == message_index)
+        .find(|(index, _)| index == message_index)
         .ok_or_else(|| anyhow::anyhow!("no such index: {}.{}", message_index.0, message_index.1))?;
     let latlons = submessage.latlons();
     let decoder = grib::Grib2SubmessageDecoder::from(submessage)?;

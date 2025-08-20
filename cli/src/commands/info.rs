@@ -15,7 +15,7 @@ use grib::{
 use crate::cli;
 
 pub fn cli() -> Command {
-    Command::new("info")
+    Command::new(crate::cli::module_component!())
         .about("Show identification information")
         .arg(
             arg!(<FILE> "Target file name (or a single dash (`-`) for standard input)")
