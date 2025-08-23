@@ -110,3 +110,25 @@ impl CcsdsCompressionParam {
         }
     }
 }
+
+pub(crate) struct RunLengthPackingParam {
+    pub(crate) nbit: u8,
+    pub(crate) maxv: u16,
+    pub(crate) max_level: u16,
+    pub(crate) num_digits: u8,
+}
+
+impl RunLengthPackingParam {
+    pub(crate) fn from_buf(buf: &[u8]) -> Self {
+        let nbit = read_as!(u8, buf, 0);
+        let maxv = read_as!(u16, buf, 1);
+        let max_level = read_as!(u16, buf, 3);
+        let num_digits = read_as!(u8, buf, 5);
+        Self {
+            nbit,
+            maxv,
+            max_level,
+            num_digits,
+        }
+    }
+}
