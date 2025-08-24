@@ -48,6 +48,7 @@ xz2 = "0.1"
 
 [build-dependencies]
 grib-build = { path = "gen", version = "0.4.3" }
+toml_edit = "0.23"
 
 [features]
 # Enable computation of latitudes and longitudes of grid points points using

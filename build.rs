@@ -1,4 +1,4 @@
-use std::{env, fs, path::Path};
+use std::{env, fs, io::Read, path::Path};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let out_dir = env::var_os("OUT_DIR").unwrap();
@@ -41,6 +41,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
     fs::write(output_path, format!("{db}"))?;
 
+    let manifest = read_feature_docs()?;
+    let output_path = Path::new(&out_dir).join("features.txt");
+    fs::write(output_path, format!("{manifest}"))?;
+
     println!("cargo:rerun-if-changed=build.rs");
     Ok(())
 }
@@ -53,4 +57,21 @@ fn check_nonemptiness(dir: &Path) -> Result<(), String> {
                 .ok_or_else(|| format!("{} is empty", dir.to_string_lossy()))
                 .map(|_| ())
         })
+}
+
+fn read_feature_docs() -> Result<String, Box<dyn std::error::Error>> {
+    let mut f = std::fs::File::open("Cargo.toml")?;
+    let mut manifest = String::new();
+    f.read_to_string(&mut manifest)?;
+
+    let doc = manifest.parse::<toml_edit::DocumentMut>()?;
+    let features = doc["features"].to_string();
+    let new_doc = format!(
+        "```text
+[features]
+{features}
+```"
+    );
+
+    Ok(new_doc)
 }
