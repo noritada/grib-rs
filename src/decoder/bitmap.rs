@@ -73,12 +73,7 @@ pub(crate) fn create_bitmap_for_nonnullable_data(num_points: usize) -> Vec<u8> {
 }
 
 pub(crate) fn num_octets_for_bitmap(num_points: usize) -> usize {
-    let (div, mod_) = (num_points / 8, num_points % 8);
-    if mod_ == 0 {
-        div
-    } else {
-        div + 1
-    }
+    (num_points + 7) / 8
 }
 
 #[cfg(test)]
