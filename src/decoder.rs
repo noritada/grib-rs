@@ -8,7 +8,7 @@ use crate::decoder::jpeg2000::Jpeg2000CodeStreamDecodeError;
 use crate::{
     context::{SectionBody, SubMessage},
     decoder::{
-        bitmap::{create_bitmap_for_nonnullable_data, BitmapDecodeIterator},
+        bitmap::{dummy_sect6_for_nonnullable_data, BitmapDecodeIterator},
         complex::ComplexPackingDecodeError,
         png::PngDecodeError,
         run_length::RunLengthEncodingDecodeError,
@@ -50,9 +50,9 @@ pub struct Grib2SubmessageDecoder {
     num_points_total: usize,
     pub(crate) num_points_encoded: usize,
     template_num: u16,
-    pub(crate) sect5_payload: Box<[u8]>,
-    bitmap: Vec<u8>,
-    pub(crate) sect7_payload: Box<[u8]>,
+    pub(crate) sect5_bytes: Vec<u8>,
+    sect6_bytes: Vec<u8>,
+    sect7_bytes: Vec<u8>,
 }
 
 impl Grib2SubmessageDecoder {
@@ -60,17 +60,17 @@ impl Grib2SubmessageDecoder {
         num_points_total: usize,
         num_points_encoded: usize,
         template_num: u16,
-        sect5_payload: Box<[u8]>,
-        bitmap: Vec<u8>,
-        sect7_payload: Box<[u8]>,
+        sect5_bytes: Vec<u8>,
+        sect6_bytes: Vec<u8>,
+        sect7_bytes: Vec<u8>,
     ) -> Self {
         Self {
             num_points_total,
             num_points_encoded,
             template_num,
-            sect5_payload,
-            bitmap,
-            sect7_payload,
+            sect5_bytes,
+            sect6_bytes,
+            sect7_bytes,
         }
     }
 
@@ -95,13 +95,10 @@ impl Grib2SubmessageDecoder {
         let sect3_num_points = sect3_body.num_points() as usize;
 
         let bitmap = match sect6_body.bitmap_indicator {
-            0x00 => {
-                let sect6_data = reader.read_sect_payload_as_slice(sect6)?;
-                sect6_data[1..].into()
-            }
+            0x00 => reader.read_sect_as_slice(sect6)?,
             0xff => {
                 let num_points = sect3_num_points;
-                create_bitmap_for_nonnullable_data(num_points)
+                dummy_sect6_for_nonnullable_data(num_points)
             }
             _ => {
                 return Err(GribError::DecodeError(
@@ -114,9 +111,9 @@ impl Grib2SubmessageDecoder {
             sect3_num_points,
             sect5_body.num_points() as usize,
             sect5_body.repr_tmpl_num(),
-            reader.read_sect_payload_as_slice(sect5)?,
+            reader.read_sect_as_slice(sect5)?,
             bitmap,
-            reader.read_sect_payload_as_slice(sect7)?,
+            reader.read_sect_as_slice(sect7)?,
         ))
     }
 
@@ -140,9 +137,16 @@ impl Grib2SubmessageDecoder {
                 ))
             }
         };
-        let decoder =
-            BitmapDecodeIterator::new(self.bitmap.iter(), decoder, self.num_points_total)?;
+        let decoder = BitmapDecodeIterator::new(
+            self.sect6_bytes[6..].into_iter(),
+            decoder,
+            self.num_points_total,
+        )?;
         Ok(Grib2DecodedValues(decoder))
+    }
+
+    pub(crate) fn sect7_payload(&self) -> &[u8] {
+        &self.sect7_bytes[5..]
     }
 }
 

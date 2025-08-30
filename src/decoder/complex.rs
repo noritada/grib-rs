@@ -34,9 +34,9 @@ pub(crate) fn decode_7_2(
     SimplePackingDecodeIteratorWrapper<impl Iterator<Item = DecodedValue<i32>> + '_>,
     GribError,
 > {
-    let sect5_data = &target.sect5_payload;
-    let simple_param = SimplePackingParam::from_buf(&sect5_data[6..16])?;
-    let complex_param = ComplexPackingParam::from_buf(&sect5_data[16..42]);
+    let sect5_data = &target.sect5_bytes;
+    let simple_param = SimplePackingParam::from_buf(&sect5_data[11..21])?;
+    let complex_param = ComplexPackingParam::from_buf(&sect5_data[21..47]);
 
     if complex_param.group_splitting_method_used != 1
         || complex_param.missing_value_management_used > 2
@@ -46,7 +46,7 @@ pub(crate) fn decode_7_2(
         ));
     }
 
-    let sect7_data = &target.sect7_payload;
+    let sect7_data = target.sect7_payload();
 
     let unpacked_data = decode_complex_packing(complex_param, sect7_data, 0, simple_param.nbit, 0);
     let decoder = SimplePackingDecodeIterator::new(unpacked_data, &simple_param);
@@ -60,10 +60,10 @@ pub(crate) fn decode_7_3(
     SimplePackingDecodeIteratorWrapper<impl Iterator<Item = DecodedValue<i32>> + '_>,
     GribError,
 > {
-    let sect5_data = &target.sect5_payload;
-    let simple_param = SimplePackingParam::from_buf(&sect5_data[6..16])?;
-    let complex_param = ComplexPackingParam::from_buf(&sect5_data[16..42]);
-    let spdiff_param = SpatialDifferencingParam::from_buf(&sect5_data[42..44]);
+    let sect5_data = &target.sect5_bytes;
+    let simple_param = SimplePackingParam::from_buf(&sect5_data[11..21])?;
+    let complex_param = ComplexPackingParam::from_buf(&sect5_data[21..47]);
+    let spdiff_param = SpatialDifferencingParam::from_buf(&sect5_data[47..49]);
     let spdiff_order = Table5_6::try_from(spdiff_param.order).map_err(|e| {
         let number = e.number;
         GribError::NotSupported(format!("Code Table 5.6 value '{number}' is not supported"))
@@ -78,7 +78,7 @@ pub(crate) fn decode_7_3(
         ));
     }
 
-    let sect7_data = &target.sect7_payload;
+    let sect7_data = target.sect7_payload();
     let sect7_params = diff::SpatialDifferencingExtraDescriptors::new(&spdiff_param, sect7_data)?;
 
     let unpacked_data = decode_complex_packing(

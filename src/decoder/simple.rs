@@ -48,8 +48,8 @@ pub enum SimplePackingDecodeError {
 pub(crate) fn decode(
     target: &Grib2SubmessageDecoder,
 ) -> Result<SimplePackingDecodeIteratorWrapper<impl Iterator<Item = u32> + '_>, GribError> {
-    let sect5_data = &target.sect5_payload;
-    let param = SimplePackingParam::from_buf(&sect5_data[6..16])?;
+    let sect5_data = &target.sect5_bytes;
+    let param = SimplePackingParam::from_buf(&sect5_data[11..21])?;
 
     let decoder = if param.nbit == 0 {
         SimplePackingDecodeIteratorWrapper::FixedValue(FixedValueIterator::new(
@@ -57,7 +57,7 @@ pub(crate) fn decode(
             target.num_points_encoded,
         ))
     } else {
-        let iter = NBitwiseIterator::new(&target.sect7_payload, usize::from(param.nbit));
+        let iter = NBitwiseIterator::new(target.sect7_payload(), usize::from(param.nbit));
         let iter = SimplePackingDecodeIterator::new(iter, &param);
         SimplePackingDecodeIteratorWrapper::SimplePacking(iter)
     };

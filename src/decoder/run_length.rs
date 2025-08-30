@@ -17,12 +17,12 @@ pub enum RunLengthEncodingDecodeError {
 pub(crate) fn decode(
     target: &Grib2SubmessageDecoder,
 ) -> Result<std::vec::IntoIter<f32>, GribError> {
-    let sect5_data = &target.sect5_payload;
-    let param = RunLengthPackingParam::from_buf(&sect5_data[6..12]);
+    let sect5_data = &target.sect5_bytes;
+    let param = RunLengthPackingParam::from_buf(&sect5_data[11..17]);
 
     let mut level_map = Vec::with_capacity(param.max_level.into());
     level_map.push(f32::NAN);
-    let mut pos = 12;
+    let mut pos = 17;
 
     for _ in 0..param.max_level {
         let val: f32 = read_as!(u16, sect5_data, pos).into();
@@ -34,7 +34,7 @@ pub(crate) fn decode(
     }
 
     let decoded_levels = rleunpack(
-        &target.sect7_payload,
+        target.sect7_payload(),
         param.nbit,
         param.maxv,
         Some(target.num_points_encoded),

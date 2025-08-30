@@ -23,8 +23,8 @@ pub enum Jpeg2000CodeStreamDecodeError {
 pub(crate) fn decode(
     target: &Grib2SubmessageDecoder,
 ) -> Result<SimplePackingDecodeIteratorWrapper<impl Iterator<Item = i32>>, GribError> {
-    let sect5_data = &target.sect5_payload;
-    let simple_param = SimplePackingParam::from_buf(&sect5_data[6..16])?;
+    let sect5_data = &target.sect5_bytes;
+    let simple_param = SimplePackingParam::from_buf(&sect5_data[11..21])?;
 
     if simple_param.nbit == 0 {
         // Tested with the World Aviation Forecast System (WAFS) GRIV files from the repo: https://aviationweather.gov/wifs/api.html
@@ -36,7 +36,7 @@ pub(crate) fn decode(
         return Ok(decoder);
     };
 
-    let stream = Stream::from_bytes(&target.sect7_payload)
+    let stream = Stream::from_bytes(target.sect7_payload())
         .map_err(|e| GribError::DecodeError(DecodeError::Jpeg2000CodeStreamDecodeError(e)))?;
     let jp2_unpacked = decode_jp2(stream)
         .map_err(|e| GribError::DecodeError(DecodeError::Jpeg2000CodeStreamDecodeError(e)))?;

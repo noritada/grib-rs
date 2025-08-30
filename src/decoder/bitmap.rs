@@ -67,9 +67,10 @@ fn has_zero_at_offset(byte: &u8, offset: &usize) -> bool {
     masked == 0
 }
 
-pub(crate) fn create_bitmap_for_nonnullable_data(num_points: usize) -> Vec<u8> {
+pub(crate) fn dummy_sect6_for_nonnullable_data(num_points: usize) -> Vec<u8> {
+    const SECT_HEADER_SIZE: usize = 6;
     let size = num_octets_for_bitmap(num_points);
-    vec![0b11111111u8; size]
+    vec![0b11111111u8; SECT_HEADER_SIZE + size]
 }
 
 pub(crate) fn num_octets_for_bitmap(num_points: usize) -> usize {
