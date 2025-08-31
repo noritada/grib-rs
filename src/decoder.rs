@@ -10,6 +10,7 @@ use crate::{
     decoder::{
         bitmap::{dummy_bitmap_for_nonnullable_data, BitmapDecodeIterator},
         complex::ComplexPackingDecodeError,
+        param::Section5Param,
         png::PngDecodeError,
         run_length::RunLengthEncodingDecodeError,
         simple::{SimplePackingDecodeError, SimplePackingDecodeIteratorWrapper},
@@ -48,22 +49,20 @@ use crate::{
 /// ```
 pub struct Grib2SubmessageDecoder {
     num_points_total: usize,
-    pub(crate) num_points_encoded: usize,
-    template_num: u16,
+    sect5_param: Section5Param,
     pub(crate) sect5_bytes: Vec<u8>,
     sect6_bytes: Vec<u8>,
     sect7_bytes: Vec<u8>,
 }
 
 impl Grib2SubmessageDecoder {
-    fn new(
+    pub fn new(
         num_points_total: usize,
-        num_points_encoded: usize,
-        template_num: u16,
         sect5_bytes: Vec<u8>,
         sect6_bytes: Vec<u8>,
         sect7_bytes: Vec<u8>,
     ) -> Result<Self, GribError> {
+        let sect5_param = Section5Param::from_buf(&sect5_bytes[5..11]);
         let sect6_bytes = match sect6_bytes[5] {
             0x00 => sect6_bytes,
             0xff => {
@@ -80,8 +79,7 @@ impl Grib2SubmessageDecoder {
 
         Ok(Self {
             num_points_total,
-            num_points_encoded,
-            template_num,
+            sect5_param,
             sect5_bytes,
             sect6_bytes,
             sect7_bytes,
@@ -94,17 +92,14 @@ impl Grib2SubmessageDecoder {
         let sect5 = submessage.5.body;
         let sect6 = submessage.6.body;
         let sect7 = submessage.7.body;
-        let (sect3_body, sect5_body) = match (submessage.3.body.body.as_ref(), sect5.body.as_ref())
-        {
-            (Some(SectionBody::Section3(b3)), Some(SectionBody::Section5(b5))) => (b3, b5),
+        let sect3_body = match submessage.3.body.body.as_ref() {
+            Some(SectionBody::Section3(b3)) => b3,
             _ => return Err(GribError::InternalDataError),
         };
         let sect3_num_points = sect3_body.num_points() as usize;
 
         Self::new(
             sect3_num_points,
-            sect5_body.num_points() as usize,
-            sect5_body.repr_tmpl_num(),
             reader.read_sect_as_slice(sect5)?,
             reader.read_sect_as_slice(sect6)?,
             reader.read_sect_as_slice(sect7)?,
@@ -115,7 +110,7 @@ impl Grib2SubmessageDecoder {
     pub fn dispatch(
         &self,
     ) -> Result<Grib2DecodedValues<'_, impl Iterator<Item = f32> + '_>, GribError> {
-        let decoder = match self.template_num {
+        let decoder = match self.sect5_param.template_num {
             0 => Grib2ValueIterator::Template0(simple::decode(self)?),
             2 => Grib2ValueIterator::Template2(complex::decode_7_2(self)?),
             3 => Grib2ValueIterator::Template3(complex::decode_7_3(self)?),
@@ -137,6 +132,10 @@ impl Grib2SubmessageDecoder {
             self.num_points_total,
         )?;
         Ok(Grib2DecodedValues(decoder))
+    }
+
+    pub(crate) fn num_points_encoded(&self) -> usize {
+        self.sect5_param.num_points_encoded as usize
     }
 
     pub(crate) fn sect7_payload(&self) -> &[u8] {

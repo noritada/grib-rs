@@ -37,7 +37,7 @@ pub(crate) fn decode(
         target.sect7_payload(),
         param.nbit,
         param.maxv,
-        Some(target.num_points_encoded),
+        Some(target.num_points_encoded()),
     )
     .map_err(DecodeError::RunLengthEncodingDecodeError)?;
 

@@ -54,7 +54,7 @@ pub(crate) fn decode(
     let decoder = if param.nbit == 0 {
         SimplePackingDecodeIteratorWrapper::FixedValue(FixedValueIterator::new(
             param.zero_bit_reference_value(),
-            target.num_points_encoded,
+            target.num_points_encoded(),
         ))
     } else {
         let iter = NBitwiseIterator::new(target.sect7_payload(), usize::from(param.nbit));

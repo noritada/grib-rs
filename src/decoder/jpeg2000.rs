@@ -31,7 +31,7 @@ pub(crate) fn decode(
         // See #111 and #113.
         let decoder = SimplePackingDecodeIteratorWrapper::FixedValue(FixedValueIterator::new(
             simple_param.zero_bit_reference_value(),
-            target.num_points_encoded,
+            target.num_points_encoded(),
         ));
         return Ok(decoder);
     };

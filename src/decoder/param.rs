@@ -3,6 +3,22 @@ use crate::{
     GribError,
 };
 
+pub(crate) struct Section5Param {
+    pub(crate) num_points_encoded: u32,
+    pub(crate) template_num: u16,
+}
+
+impl Section5Param {
+    pub(crate) fn from_buf(buf: &[u8]) -> Self {
+        let num_points_encoded = read_as!(u32, buf, 0);
+        let template_num = read_as!(u16, buf, 4);
+        Self {
+            num_points_encoded,
+            template_num,
+        }
+    }
+}
+
 pub(crate) struct SimplePackingParam {
     pub(crate) ref_val: f32,
     pub(crate) exp: i16,

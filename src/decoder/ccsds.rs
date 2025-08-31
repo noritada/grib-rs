@@ -18,11 +18,11 @@ pub(crate) fn decode(
     let decoder = if simple_param.nbit == 0 {
         SimplePackingDecodeIteratorWrapper::FixedValue(FixedValueIterator::new(
             simple_param.zero_bit_reference_value(),
-            target.num_points_encoded,
+            target.num_points_encoded(),
         ))
     } else {
         let element_size_in_bytes = usize::from(simple_param.nbit >> 3) + 1;
-        let size = element_size_in_bytes * target.num_points_encoded;
+        let size = element_size_in_bytes * target.num_points_encoded();
         let mut decoded = vec![0; size];
         let mut stream = aec::Stream::new(
             simple_param.nbit.into(),
