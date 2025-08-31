@@ -8,7 +8,7 @@ use crate::decoder::jpeg2000::Jpeg2000CodeStreamDecodeError;
 use crate::{
     context::{SectionBody, SubMessage},
     decoder::{
-        bitmap::{dummy_sect6_for_nonnullable_data, BitmapDecodeIterator},
+        bitmap::{dummy_bitmap_for_nonnullable_data, BitmapDecodeIterator},
         complex::ComplexPackingDecodeError,
         png::PngDecodeError,
         run_length::RunLengthEncodingDecodeError,
@@ -63,15 +63,29 @@ impl Grib2SubmessageDecoder {
         sect5_bytes: Vec<u8>,
         sect6_bytes: Vec<u8>,
         sect7_bytes: Vec<u8>,
-    ) -> Self {
-        Self {
+    ) -> Result<Self, GribError> {
+        let sect6_bytes = match sect6_bytes[5] {
+            0x00 => sect6_bytes,
+            0xff => {
+                let mut sect6_bytes = sect6_bytes;
+                sect6_bytes.append(&mut dummy_bitmap_for_nonnullable_data(num_points_total));
+                sect6_bytes
+            }
+            _ => {
+                return Err(GribError::DecodeError(
+                    DecodeError::BitMapIndicatorUnsupported,
+                ))
+            }
+        };
+
+        Ok(Self {
             num_points_total,
             num_points_encoded,
             template_num,
             sect5_bytes,
             sect6_bytes,
             sect7_bytes,
-        }
+        })
     }
 
     /// Sets up a decoder for grid point values of `submessage`.
@@ -80,41 +94,21 @@ impl Grib2SubmessageDecoder {
         let sect5 = submessage.5.body;
         let sect6 = submessage.6.body;
         let sect7 = submessage.7.body;
-        let (sect3_body, sect5_body, sect6_body) = match (
-            submessage.3.body.body.as_ref(),
-            sect5.body.as_ref(),
-            sect6.body.as_ref(),
-        ) {
-            (
-                Some(SectionBody::Section3(b3)),
-                Some(SectionBody::Section5(b5)),
-                Some(SectionBody::Section6(b6)),
-            ) => (b3, b5, b6),
+        let (sect3_body, sect5_body) = match (submessage.3.body.body.as_ref(), sect5.body.as_ref())
+        {
+            (Some(SectionBody::Section3(b3)), Some(SectionBody::Section5(b5))) => (b3, b5),
             _ => return Err(GribError::InternalDataError),
         };
         let sect3_num_points = sect3_body.num_points() as usize;
 
-        let bitmap = match sect6_body.bitmap_indicator {
-            0x00 => reader.read_sect_as_slice(sect6)?,
-            0xff => {
-                let num_points = sect3_num_points;
-                dummy_sect6_for_nonnullable_data(num_points)
-            }
-            _ => {
-                return Err(GribError::DecodeError(
-                    DecodeError::BitMapIndicatorUnsupported,
-                ));
-            }
-        };
-
-        Ok(Self::new(
+        Self::new(
             sect3_num_points,
             sect5_body.num_points() as usize,
             sect5_body.repr_tmpl_num(),
             reader.read_sect_as_slice(sect5)?,
-            bitmap,
+            reader.read_sect_as_slice(sect6)?,
             reader.read_sect_as_slice(sect7)?,
-        ))
+        )
     }
 
     /// Dispatches a decoding process and gets an iterator of decoded values.
