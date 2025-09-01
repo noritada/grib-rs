@@ -103,11 +103,10 @@ impl<I: Iterator<Item = N>, N: ToPrimitive> Iterator for SimplePackingDecodeIter
 mod tests {
     use std::{
         fs::File,
-        io::{BufReader, Cursor, Read},
+        io::{BufReader, Read},
     };
 
     use super::*;
-    use crate::context::from_reader;
 
     #[test]
     fn decode_simple_packing() {
@@ -137,15 +136,14 @@ mod tests {
         let mut f = BufReader::new(f);
         let mut buf = Vec::new();
         f.read_to_end(&mut buf).unwrap();
-        let f = Cursor::new(buf);
 
-        let grib = from_reader(f).unwrap();
-        let message_index = (0, 0);
-        let (_, submessage) = grib
-            .iter()
-            .find(|(index, _)| *index == message_index)
-            .unwrap();
-        let decoder = Grib2SubmessageDecoder::from(submessage).unwrap();
+        let decoder = Grib2SubmessageDecoder::new(
+            2949120,
+            buf[0x0000009d..0x000000b2].to_vec(),
+            buf[0x000000b2..0x000000b8].to_vec(),
+            buf[0x000000b8..0x000000bd].to_vec(),
+        )
+        .unwrap();
         // Runs `SimplePackingDecoder::decode()` internally.
         let actual = decoder.dispatch().unwrap().collect::<Vec<_>>();
         let expected = vec![0f32; 0x002d0000];

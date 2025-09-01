@@ -45,11 +45,10 @@ pub(crate) fn decode(
 mod tests {
     use std::{
         fs::File,
-        io::{BufReader, Cursor, Read},
+        io::{BufReader, Read},
     };
 
     use super::*;
-    use crate::context::from_reader;
 
     #[test]
     fn decode_ccsds_compression_when_nbit_is_zero() -> Result<(), Box<dyn std::error::Error>> {
@@ -58,15 +57,14 @@ mod tests {
         let mut f = xz2::bufread::XzDecoder::new(f);
         let mut buf = Vec::new();
         f.read_to_end(&mut buf)?;
-        let f = Cursor::new(buf);
 
-        let grib = from_reader(f)?;
-        let message_index = (2, 0);
-        let (_, submessage) = grib
-            .iter()
-            .find(|(index, _)| *index == message_index)
-            .unwrap();
-        let decoder = Grib2SubmessageDecoder::from(submessage)?;
+        // submessage 2.0
+        let decoder = Grib2SubmessageDecoder::new(
+            405900,
+            buf[0x0006870b..0x00068724].to_vec(),
+            buf[0x00068724..0x0006872a].to_vec(),
+            buf[0x0006872a..0x0006872f].to_vec(),
+        )?;
         // Runs `decode()` internally.
         let actual = decoder.dispatch()?.collect::<Vec<_>>();
         let expected = vec![0f32; 0x0006318c];
