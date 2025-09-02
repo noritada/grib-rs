@@ -47,6 +47,45 @@ use crate::{
 ///     Ok(())
 /// }
 /// ```
+///
+/// If the byte sequences for Sections 5, 6, and 7 of the GRIB2 data are known,
+/// and the number of grid points (described in Section 3) is also known, it is
+/// also possible to create a decoder instance by passing them to
+/// [`Grib2SubmessageDecoder::new`]. The example above is equivalent to the
+/// following:
+///
+/// ```
+/// use std::io::Read;
+///
+/// use grib::Grib2SubmessageDecoder;
+///
+/// fn main() -> Result<(), Box<dyn std::error::Error>> {
+///     let f =
+///         std::fs::File::open("testdata/CMC_glb_TMP_ISBL_1_latlon.24x.24_2021051800_P000.grib2")?;
+///     let mut f = std::io::BufReader::new(f);
+///     let mut buf = Vec::new();
+///     f.read_to_end(&mut buf)?;
+///
+///     let decoder = Grib2SubmessageDecoder::new(
+///         1126500,
+///         buf[0x0000008f..0x000000a6].to_vec(),
+///         buf[0x000000a6..0x000000ac].to_vec(),
+///         buf[0x000000ac..0x0003d6c7].to_vec(),
+///     )?;
+///     let mut decoded = decoder.dispatch()?;
+///     assert_eq!(decoded.size_hint(), (1126500, Some(1126500)));
+///
+///     let first_value = decoded.next();
+///     assert_eq!(first_value.map(|f| f.round()), Some(236.0_f32));
+///
+///     let last_value = decoded.nth(1126498);
+///     assert_eq!(last_value.map(|f| f.round()), Some(286.0_f32));
+///
+///     let next_to_last_value = decoded.next();
+///     assert_eq!(next_to_last_value, None);
+///     Ok(())
+/// }
+/// ```
 pub struct Grib2SubmessageDecoder {
     num_points_total: usize,
     sect5_param: Section5Param,
@@ -56,6 +95,10 @@ pub struct Grib2SubmessageDecoder {
 }
 
 impl Grib2SubmessageDecoder {
+    /// Creates an instance from the number of grid points (described in Section
+    /// 3) and byte sequences for Sections 5, 6, and 7 of the GRIB2 data.
+    ///
+    /// For code examples, refer to the description of this `struct`.
     pub fn new(
         num_points_total: usize,
         sect5_bytes: Vec<u8>,
