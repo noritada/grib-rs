@@ -1,5 +1,7 @@
 use crate::{
-    decoder::{stream::NBitwiseIterator, DecodeError, Grib2SubmessageDecoder},
+    decoder::{
+        param::RunLengthPackingParam, stream::NBitwiseIterator, DecodeError, Grib2SubmessageDecoder,
+    },
     error::*,
     helpers::read_as,
 };
@@ -16,18 +18,15 @@ pub(crate) fn decode(
     target: &Grib2SubmessageDecoder,
 ) -> Result<std::vec::IntoIter<f32>, GribError> {
     let sect5_data = &target.sect5_payload;
-    let nbit = read_as!(u8, sect5_data, 6);
-    let maxv = read_as!(u16, sect5_data, 7);
-    let max_level = read_as!(u16, sect5_data, 9);
-    let num_digits = read_as!(u8, sect5_data, 11);
+    let param = RunLengthPackingParam::from_buf(&sect5_data[6..12]);
 
-    let mut level_map = Vec::with_capacity(max_level.into());
+    let mut level_map = Vec::with_capacity(param.max_level.into());
     level_map.push(f32::NAN);
     let mut pos = 12;
 
-    for _ in 0..max_level {
+    for _ in 0..param.max_level {
         let val: f32 = read_as!(u16, sect5_data, pos).into();
-        let num_digits: i32 = num_digits.into();
+        let num_digits: i32 = param.num_digits.into();
         let factor = 10_f32.powi(-num_digits);
         let val = val * factor;
         level_map.push(val);
@@ -36,8 +35,8 @@ pub(crate) fn decode(
 
     let decoded_levels = rleunpack(
         &target.sect7_payload,
-        nbit,
-        maxv,
+        param.nbit,
+        param.maxv,
         Some(target.num_points_encoded),
     )
     .map_err(DecodeError::RunLengthEncodingDecodeError)?;
