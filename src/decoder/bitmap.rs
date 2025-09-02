@@ -68,12 +68,8 @@ fn has_zero_at_offset(byte: &u8, offset: &usize) -> bool {
 }
 
 pub(crate) fn dummy_bitmap_for_nonnullable_data(num_points: usize) -> Vec<u8> {
-    let size = num_octets_for_bitmap(num_points);
+    let size = num_points.div_ceil(8);
     vec![0b11111111u8; size]
-}
-
-pub(crate) fn num_octets_for_bitmap(num_points: usize) -> usize {
-    (num_points + 7) / 8
 }
 
 #[cfg(test)]
@@ -132,14 +128,5 @@ mod test {
         assert_eq!(iter.size_hint(), (24, Some(24)));
         let _ = iter.next();
         assert_eq!(iter.size_hint(), (23, Some(23)));
-    }
-
-    #[test]
-    fn bitmap_size_calculation() {
-        let actual = (0..16)
-            .map(|n| num_octets_for_bitmap(n))
-            .collect::<Vec<_>>();
-        let expected = [0, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2];
-        assert_eq!(actual, expected);
     }
 }
