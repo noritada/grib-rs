@@ -170,7 +170,7 @@ impl Grib2SubmessageDecoder {
             }
         };
         let decoder = BitmapDecodeIterator::new(
-            self.sect6_bytes[6..].into_iter(),
+            self.sect6_bytes[6..].iter(),
             decoder,
             self.num_points_total,
         )?;
