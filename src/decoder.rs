@@ -8,8 +8,9 @@ use crate::decoder::jpeg2000::Jpeg2000CodeStreamDecodeError;
 use crate::{
     context::{SectionBody, SubMessage},
     decoder::{
-        bitmap::{create_bitmap_for_nonnullable_data, BitmapDecodeIterator},
+        bitmap::{dummy_bitmap_for_nonnullable_data, BitmapDecodeIterator},
         complex::ComplexPackingDecodeError,
+        param::Section5Param,
         png::PngDecodeError,
         run_length::RunLengthEncodingDecodeError,
         simple::{SimplePackingDecodeError, SimplePackingDecodeIteratorWrapper},
@@ -46,32 +47,86 @@ use crate::{
 ///     Ok(())
 /// }
 /// ```
+///
+/// If the byte sequences for Sections 5, 6, and 7 of the GRIB2 data are known,
+/// and the number of grid points (described in Section 3) is also known, it is
+/// also possible to create a decoder instance by passing them to
+/// [`Grib2SubmessageDecoder::new`]. The example above is equivalent to the
+/// following:
+///
+/// ```
+/// use std::io::Read;
+///
+/// use grib::Grib2SubmessageDecoder;
+///
+/// fn main() -> Result<(), Box<dyn std::error::Error>> {
+///     let f =
+///         std::fs::File::open("testdata/CMC_glb_TMP_ISBL_1_latlon.24x.24_2021051800_P000.grib2")?;
+///     let mut f = std::io::BufReader::new(f);
+///     let mut buf = Vec::new();
+///     f.read_to_end(&mut buf)?;
+///
+///     let decoder = Grib2SubmessageDecoder::new(
+///         1126500,
+///         buf[0x0000008f..0x000000a6].to_vec(),
+///         buf[0x000000a6..0x000000ac].to_vec(),
+///         buf[0x000000ac..0x0003d6c7].to_vec(),
+///     )?;
+///     let mut decoded = decoder.dispatch()?;
+///     assert_eq!(decoded.size_hint(), (1126500, Some(1126500)));
+///
+///     let first_value = decoded.next();
+///     assert_eq!(first_value.map(|f| f.round()), Some(236.0_f32));
+///
+///     let last_value = decoded.nth(1126498);
+///     assert_eq!(last_value.map(|f| f.round()), Some(286.0_f32));
+///
+///     let next_to_last_value = decoded.next();
+///     assert_eq!(next_to_last_value, None);
+///     Ok(())
+/// }
+/// ```
 pub struct Grib2SubmessageDecoder {
     num_points_total: usize,
-    pub(crate) num_points_encoded: usize,
-    template_num: u16,
-    pub(crate) sect5_payload: Box<[u8]>,
-    bitmap: Vec<u8>,
-    pub(crate) sect7_payload: Box<[u8]>,
+    sect5_param: Section5Param,
+    pub(crate) sect5_bytes: Vec<u8>,
+    sect6_bytes: Vec<u8>,
+    sect7_bytes: Vec<u8>,
 }
 
 impl Grib2SubmessageDecoder {
-    fn new(
+    /// Creates an instance from the number of grid points (described in Section
+    /// 3) and byte sequences for Sections 5, 6, and 7 of the GRIB2 data.
+    ///
+    /// For code examples, refer to the description of this `struct`.
+    pub fn new(
         num_points_total: usize,
-        num_points_encoded: usize,
-        template_num: u16,
-        sect5_payload: Box<[u8]>,
-        bitmap: Vec<u8>,
-        sect7_payload: Box<[u8]>,
-    ) -> Self {
-        Self {
+        sect5_bytes: Vec<u8>,
+        sect6_bytes: Vec<u8>,
+        sect7_bytes: Vec<u8>,
+    ) -> Result<Self, GribError> {
+        let sect5_param = Section5Param::from_buf(&sect5_bytes[5..11]);
+        let sect6_bytes = match sect6_bytes[5] {
+            0x00 => sect6_bytes,
+            0xff => {
+                let mut sect6_bytes = sect6_bytes;
+                sect6_bytes.append(&mut dummy_bitmap_for_nonnullable_data(num_points_total));
+                sect6_bytes
+            }
+            _ => {
+                return Err(GribError::DecodeError(
+                    DecodeError::BitMapIndicatorUnsupported,
+                ))
+            }
+        };
+
+        Ok(Self {
             num_points_total,
-            num_points_encoded,
-            template_num,
-            sect5_payload,
-            bitmap,
-            sect7_payload,
-        }
+            sect5_param,
+            sect5_bytes,
+            sect6_bytes,
+            sect7_bytes,
+        })
     }
 
     /// Sets up a decoder for grid point values of `submessage`.
@@ -80,51 +135,25 @@ impl Grib2SubmessageDecoder {
         let sect5 = submessage.5.body;
         let sect6 = submessage.6.body;
         let sect7 = submessage.7.body;
-        let (sect3_body, sect5_body, sect6_body) = match (
-            submessage.3.body.body.as_ref(),
-            sect5.body.as_ref(),
-            sect6.body.as_ref(),
-        ) {
-            (
-                Some(SectionBody::Section3(b3)),
-                Some(SectionBody::Section5(b5)),
-                Some(SectionBody::Section6(b6)),
-            ) => (b3, b5, b6),
+        let sect3_body = match submessage.3.body.body.as_ref() {
+            Some(SectionBody::Section3(b3)) => b3,
             _ => return Err(GribError::InternalDataError),
         };
         let sect3_num_points = sect3_body.num_points() as usize;
 
-        let bitmap = match sect6_body.bitmap_indicator {
-            0x00 => {
-                let sect6_data = reader.read_sect_payload_as_slice(sect6)?;
-                sect6_data[1..].into()
-            }
-            0xff => {
-                let num_points = sect3_num_points;
-                create_bitmap_for_nonnullable_data(num_points)
-            }
-            _ => {
-                return Err(GribError::DecodeError(
-                    DecodeError::BitMapIndicatorUnsupported,
-                ));
-            }
-        };
-
-        Ok(Self::new(
+        Self::new(
             sect3_num_points,
-            sect5_body.num_points() as usize,
-            sect5_body.repr_tmpl_num(),
-            reader.read_sect_payload_as_slice(sect5)?,
-            bitmap,
-            reader.read_sect_payload_as_slice(sect7)?,
-        ))
+            reader.read_sect_as_slice(sect5)?,
+            reader.read_sect_as_slice(sect6)?,
+            reader.read_sect_as_slice(sect7)?,
+        )
     }
 
     /// Dispatches a decoding process and gets an iterator of decoded values.
     pub fn dispatch(
         &self,
     ) -> Result<Grib2DecodedValues<'_, impl Iterator<Item = f32> + '_>, GribError> {
-        let decoder = match self.template_num {
+        let decoder = match self.sect5_param.template_num {
             0 => Grib2ValueIterator::Template0(simple::decode(self)?),
             2 => Grib2ValueIterator::Template2(complex::decode_7_2(self)?),
             3 => Grib2ValueIterator::Template3(complex::decode_7_3(self)?),
@@ -140,9 +169,20 @@ impl Grib2SubmessageDecoder {
                 ))
             }
         };
-        let decoder =
-            BitmapDecodeIterator::new(self.bitmap.iter(), decoder, self.num_points_total)?;
+        let decoder = BitmapDecodeIterator::new(
+            self.sect6_bytes[6..].iter(),
+            decoder,
+            self.num_points_total,
+        )?;
         Ok(Grib2DecodedValues(decoder))
+    }
+
+    pub(crate) fn num_points_encoded(&self) -> usize {
+        self.sect5_param.num_points_encoded as usize
+    }
+
+    pub(crate) fn sect7_payload(&self) -> &[u8] {
+        &self.sect7_bytes[5..]
     }
 }
 

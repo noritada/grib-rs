@@ -48,16 +48,16 @@ pub enum SimplePackingDecodeError {
 pub(crate) fn decode(
     target: &Grib2SubmessageDecoder,
 ) -> Result<SimplePackingDecodeIteratorWrapper<impl Iterator<Item = u32> + '_>, GribError> {
-    let sect5_data = &target.sect5_payload;
-    let param = SimplePackingParam::from_buf(&sect5_data[6..16])?;
+    let sect5_data = &target.sect5_bytes;
+    let param = SimplePackingParam::from_buf(&sect5_data[11..21])?;
 
     let decoder = if param.nbit == 0 {
         SimplePackingDecodeIteratorWrapper::FixedValue(FixedValueIterator::new(
             param.zero_bit_reference_value(),
-            target.num_points_encoded,
+            target.num_points_encoded(),
         ))
     } else {
-        let iter = NBitwiseIterator::new(&target.sect7_payload, usize::from(param.nbit));
+        let iter = NBitwiseIterator::new(target.sect7_payload(), usize::from(param.nbit));
         let iter = SimplePackingDecodeIterator::new(iter, &param);
         SimplePackingDecodeIteratorWrapper::SimplePacking(iter)
     };
@@ -103,11 +103,10 @@ impl<I: Iterator<Item = N>, N: ToPrimitive> Iterator for SimplePackingDecodeIter
 mod tests {
     use std::{
         fs::File,
-        io::{BufReader, Cursor, Read},
+        io::{BufReader, Read},
     };
 
     use super::*;
-    use crate::context::from_reader;
 
     #[test]
     fn decode_simple_packing() {
@@ -137,15 +136,14 @@ mod tests {
         let mut f = BufReader::new(f);
         let mut buf = Vec::new();
         f.read_to_end(&mut buf).unwrap();
-        let f = Cursor::new(buf);
 
-        let grib = from_reader(f).unwrap();
-        let message_index = (0, 0);
-        let (_, submessage) = grib
-            .iter()
-            .find(|(index, _)| *index == message_index)
-            .unwrap();
-        let decoder = Grib2SubmessageDecoder::from(submessage).unwrap();
+        let decoder = Grib2SubmessageDecoder::new(
+            2949120,
+            buf[0x0000009d..0x000000b2].to_vec(),
+            buf[0x000000b2..0x000000b8].to_vec(),
+            buf[0x000000b8..0x000000bd].to_vec(),
+        )
+        .unwrap();
         // Runs `SimplePackingDecoder::decode()` internally.
         let actual = decoder.dispatch().unwrap().collect::<Vec<_>>();
         let expected = vec![0f32; 0x002d0000];

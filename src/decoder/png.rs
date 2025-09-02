@@ -16,10 +16,10 @@ pub enum PngDecodeError {
 pub(crate) fn decode(
     target: &Grib2SubmessageDecoder,
 ) -> Result<SimplePackingDecodeIteratorWrapper<impl Iterator<Item = u32> + '_>, GribError> {
-    let sect5_data = &target.sect5_payload;
-    let param = SimplePackingParam::from_buf(&sect5_data[6..16])?;
+    let sect5_data = &target.sect5_bytes;
+    let param = SimplePackingParam::from_buf(&sect5_data[11..21])?;
 
-    let buf = read_image_buffer(&target.sect7_payload).map_err(|e| {
+    let buf = read_image_buffer(target.sect7_payload()).map_err(|e| {
         GribError::DecodeError(DecodeError::PngDecodeError(PngDecodeError::PngError(
             e.to_string(),
         )))
@@ -32,7 +32,7 @@ pub(crate) fn decode(
         );
         let decoder = SimplePackingDecodeIteratorWrapper::FixedValue(FixedValueIterator::new(
             param.zero_bit_reference_value(),
-            target.num_points_encoded,
+            target.num_points_encoded(),
         ));
         return Ok(decoder);
     };
