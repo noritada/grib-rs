@@ -20,9 +20,7 @@ pub(crate) fn decode(
     let param = SimplePackingParam::from_buf(&sect5_data[11..21])?;
 
     let buf = read_image_buffer(target.sect7_payload()).map_err(|e| {
-        GribError::DecodeError(DecodeError::PngDecodeError(PngDecodeError::PngError(
-            e.to_string(),
-        )))
+        GribError::DecodeError(DecodeError::PngDecodeError(PngDecodeError::PngError(e)))
     })?;
 
     if param.nbit == 0 {
@@ -50,11 +48,14 @@ pub(crate) fn decode(
     Ok(iter)
 }
 
-fn read_image_buffer(buf: &[u8]) -> Result<Vec<u8>, png::DecodingError> {
+fn read_image_buffer(buf: &[u8]) -> Result<Vec<u8>, String> {
     let reader = std::io::Cursor::new(&buf);
     let decoder = png::Decoder::new(reader);
-    let mut reader = decoder.read_info()?;
-    let mut out_buf = vec![0; reader.output_buffer_size()];
-    let _info = reader.next_frame(&mut out_buf)?;
+    let mut reader = decoder.read_info().map_err(|e| e.to_string())?;
+    let buf_size = reader
+        .output_buffer_size()
+        .ok_or_else(|| "Getting output buffer size failed")?;
+    let mut out_buf = vec![0; buf_size];
+    let _info = reader.next_frame(&mut out_buf).map_err(|e| e.to_string())?;
     Ok(out_buf)
 }
