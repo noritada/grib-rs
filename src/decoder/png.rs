@@ -54,7 +54,7 @@ fn read_image_buffer(buf: &[u8]) -> Result<Vec<u8>, String> {
     let mut reader = decoder.read_info().map_err(|e| e.to_string())?;
     let buf_size = reader
         .output_buffer_size()
-        .ok_or_else(|| "Getting output buffer size failed")?;
+        .ok_or("Getting output buffer size failed")?;
     let mut out_buf = vec![0; buf_size];
     let _info = reader.next_frame(&mut out_buf).map_err(|e| e.to_string())?;
     Ok(out_buf)
