@@ -32,7 +32,7 @@ pub(crate) fn decode(
         );
         stream
             .decode(target.sect7_payload(), &mut decoded)
-            .map_err(|e| DecodeError::from(e))?;
+            .map_err(DecodeError::from)?;
 
         let decoder = NBitwiseIterator::new(decoded.into_iter(), element_size_in_bytes * 8);
         let decoder = SimplePackingDecodeIterator::new(decoder, &simple_param);
