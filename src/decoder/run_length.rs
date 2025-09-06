@@ -2,21 +2,12 @@ use crate::{
     decoder::{
         param::RunLengthPackingParam, stream::NBitwiseIterator, DecodeError, Grib2SubmessageDecoder,
     },
-    error::*,
     helpers::read_as,
 };
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub enum RunLengthEncodingDecodeError {
-    NotSupported,
-    InvalidFirstValue,
-    LengthMismatch,
-    InvalidLevelValue(u16),
-}
-
 pub(crate) fn decode(
     target: &Grib2SubmessageDecoder,
-) -> Result<std::vec::IntoIter<f32>, GribError> {
+) -> Result<std::vec::IntoIter<f32>, DecodeError> {
     let sect5_data = &target.sect5_bytes;
     let param = RunLengthPackingParam::from_buf(&sect5_data[11..17]);
 
@@ -38,17 +29,14 @@ pub(crate) fn decode(
         param.nbit,
         param.maxv,
         Some(target.num_points_encoded()),
-    )
-    .map_err(DecodeError::RunLengthEncodingDecodeError)?;
+    )?;
 
     let level_to_value = |level: &u16| -> Result<f32, DecodeError> {
         let index: usize = (*level).into();
         level_map
             .get(index)
             .copied()
-            .ok_or(DecodeError::RunLengthEncodingDecodeError(
-                RunLengthEncodingDecodeError::InvalidLevelValue(*level),
-            ))
+            .ok_or(DecodeError::from(format!("invalid level value: {level}")))
     };
 
     let decoded: Result<Vec<_>, _> = (*decoded_levels).iter().map(level_to_value).collect();
@@ -61,7 +49,7 @@ fn rleunpack(
     nbit: u8,
     maxv: u16,
     expected_len: Option<usize>,
-) -> Result<Box<[u16]>, RunLengthEncodingDecodeError> {
+) -> Result<Box<[u16]>, DecodeError> {
     let mut out_buf = match expected_len {
         Some(sz) => Vec::with_capacity(sz),
         None => Vec::new(),
@@ -80,7 +68,7 @@ fn rleunpack(
             cached = Some(value);
             exp = 1;
         } else {
-            let prev = cached.ok_or(RunLengthEncodingDecodeError::InvalidFirstValue)?;
+            let prev = cached.ok_or(DecodeError::from("invalid first value"))?;
             let length: usize = ((value - rlbase) as usize) * exp;
             out_buf.append(&mut vec![prev; length]);
             exp *= lngu;
@@ -89,7 +77,7 @@ fn rleunpack(
 
     if let Some(len) = expected_len {
         if len != out_buf.len() {
-            return Err(RunLengthEncodingDecodeError::LengthMismatch);
+            return Err(DecodeError::LengthMismatch);
         }
     }
 

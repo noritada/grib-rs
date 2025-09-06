@@ -21,7 +21,7 @@ use std::{
 use openjpeg_sys as opj;
 use opj::OPJ_CODEC_FORMAT;
 
-use crate::decoder::jpeg2000::Jpeg2000CodeStreamDecodeError;
+use crate::DecodeError;
 
 pub(crate) struct Stream(pub(crate) *mut opj::opj_stream_t);
 
@@ -34,7 +34,7 @@ impl Drop for Stream {
 }
 
 impl Stream {
-    pub(crate) fn from_bytes(buf: &[u8]) -> Result<Self, Jpeg2000CodeStreamDecodeError> {
+    pub(crate) fn from_bytes(buf: &[u8]) -> Result<Self, DecodeError> {
         #[derive(Debug)]
         struct SliceWithOffset<'a> {
             buf: &'a [u8],
@@ -105,14 +105,14 @@ impl Drop for Codec {
 }
 
 impl Codec {
-    pub(crate) fn j2k() -> Result<Self, Jpeg2000CodeStreamDecodeError> {
+    pub(crate) fn j2k() -> Result<Self, DecodeError> {
         Self::create(OPJ_CODEC_FORMAT::OPJ_CODEC_J2K)
     }
 
-    pub(crate) fn create(format: OPJ_CODEC_FORMAT) -> Result<Self, Jpeg2000CodeStreamDecodeError> {
+    pub(crate) fn create(format: OPJ_CODEC_FORMAT) -> Result<Self, DecodeError> {
         NonNull::new(unsafe { opj::opj_create_decompress(format) })
             .map(Self)
-            .ok_or(Jpeg2000CodeStreamDecodeError::DecoderSetupError)
+            .ok_or(DecodeError::from("setup of j2k decoder failed"))
     }
 }
 

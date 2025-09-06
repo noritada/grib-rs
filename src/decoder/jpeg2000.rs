@@ -1,28 +1,16 @@
 use openjpeg_sys as opj;
 
-use crate::{
-    decoder::{
-        param::SimplePackingParam, simple::*, stream::FixedValueIterator, DecodeError,
-        Grib2SubmessageDecoder,
-    },
-    error::*,
+use crate::decoder::{
+    param::SimplePackingParam, simple::*, stream::FixedValueIterator, DecodeError,
+    Grib2SubmessageDecoder,
 };
 
 mod ext;
 use ext::*;
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub enum Jpeg2000CodeStreamDecodeError {
-    NotSupported,
-    DecoderSetupError,
-    MainHeaderReadError,
-    BodyReadError,
-    LengthMismatch,
-}
-
 pub(crate) fn decode(
     target: &Grib2SubmessageDecoder,
-) -> Result<SimplePackingDecodeIteratorWrapper<impl Iterator<Item = i32>>, GribError> {
+) -> Result<SimplePackingDecodeIteratorWrapper<impl Iterator<Item = i32>>, DecodeError> {
     let sect5_data = &target.sect5_bytes;
     let simple_param = SimplePackingParam::from_buf(&sect5_data[11..21])?;
 
@@ -36,33 +24,33 @@ pub(crate) fn decode(
         return Ok(decoder);
     };
 
-    let stream = Stream::from_bytes(target.sect7_payload())
-        .map_err(|e| GribError::DecodeError(DecodeError::Jpeg2000CodeStreamDecodeError(e)))?;
-    let jp2_unpacked = decode_jp2(stream)
-        .map_err(|e| GribError::DecodeError(DecodeError::Jpeg2000CodeStreamDecodeError(e)))?;
+    let stream = Stream::from_bytes(target.sect7_payload())?;
+    let jp2_unpacked = decode_jp2(stream)?;
     let decoder = SimplePackingDecodeIterator::new(jp2_unpacked, &simple_param);
     let decoder = SimplePackingDecodeIteratorWrapper::SimplePacking(decoder);
     Ok(decoder)
 }
 
-fn decode_jp2(stream: Stream) -> Result<impl Iterator<Item = i32>, Jpeg2000CodeStreamDecodeError> {
+fn decode_jp2(stream: Stream) -> Result<impl Iterator<Item = i32>, DecodeError> {
     let codec = Codec::j2k()?;
 
     let mut decode_params = unsafe { std::mem::zeroed::<opj::opj_dparameters>() };
     unsafe { opj::opj_set_default_decoder_parameters(&mut decode_params as *mut _) };
 
     if unsafe { openjpeg_sys::opj_setup_decoder(codec.0.as_ptr(), &mut decode_params) } != 1 {
-        return Err(Jpeg2000CodeStreamDecodeError::DecoderSetupError);
+        return Err(DecodeError::from("setup of openjpeg decoder failed"));
     }
 
     let mut image = Image::new();
 
     if unsafe { opj::opj_read_header(stream.0, codec.0.as_ptr(), &mut image.0) } != 1 {
-        return Err(Jpeg2000CodeStreamDecodeError::MainHeaderReadError);
+        return Err(DecodeError::from(
+            "decoding of JPEG 2000 image header failed",
+        ));
     }
 
     if unsafe { opj::opj_decode(codec.0.as_ptr(), stream.0, image.0) } != 1 {
-        return Err(Jpeg2000CodeStreamDecodeError::BodyReadError);
+        return Err(DecodeError::from("decoding of JPEG 2000 image failed"));
     }
 
     drop(codec);
@@ -81,6 +69,8 @@ fn decode_jp2(stream: Stream) -> Result<impl Iterator<Item = i32>, Jpeg2000CodeS
         };
         Ok(vec.into_iter())
     } else {
-        Err(Jpeg2000CodeStreamDecodeError::NotSupported)
+        Err(DecodeError::from(
+            "unexpected non-gray-scale image components",
+        ))
     }
 }

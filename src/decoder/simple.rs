@@ -6,7 +6,7 @@ use crate::{
         stream::{FixedValueIterator, NBitwiseIterator},
         Grib2SubmessageDecoder,
     },
-    error::*,
+    DecodeError,
 };
 
 pub(crate) enum SimplePackingDecodeIteratorWrapper<I> {
@@ -38,16 +38,9 @@ where
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub enum SimplePackingDecodeError {
-    NotSupported,
-    OriginalFieldValueTypeNotSupported,
-    LengthMismatch,
-}
-
 pub(crate) fn decode(
     target: &Grib2SubmessageDecoder,
-) -> Result<SimplePackingDecodeIteratorWrapper<impl Iterator<Item = u32> + '_>, GribError> {
+) -> Result<SimplePackingDecodeIteratorWrapper<impl Iterator<Item = u32> + '_>, DecodeError> {
     let sect5_data = &target.sect5_bytes;
     let param = SimplePackingParam::from_buf(&sect5_data[11..21])?;
 

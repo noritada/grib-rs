@@ -5,12 +5,12 @@ use crate::{
         stream::{FixedValueIterator, NBitwiseIterator},
         Grib2SubmessageDecoder,
     },
-    error::*,
+    DecodeError,
 };
 
 pub(crate) fn decode(
     target: &Grib2SubmessageDecoder,
-) -> Result<SimplePackingDecodeIteratorWrapper<impl Iterator<Item = u32> + '_>, GribError> {
+) -> Result<SimplePackingDecodeIteratorWrapper<impl Iterator<Item = u32> + '_>, DecodeError> {
     let sect5_data = &target.sect5_bytes;
     let simple_param = SimplePackingParam::from_buf(&sect5_data[11..21])?;
     let ccsds_param = CcsdsCompressionParam::from_buf(&sect5_data[21..25]);
@@ -32,7 +32,7 @@ pub(crate) fn decode(
         );
         stream
             .decode(target.sect7_payload(), &mut decoded)
-            .map_err(|e| GribError::DecodeError(crate::DecodeError::Unknown(e.to_owned())))?;
+            .map_err(DecodeError::from)?;
 
         let decoder = NBitwiseIterator::new(decoded.into_iter(), element_size_in_bytes * 8);
         let decoder = SimplePackingDecodeIterator::new(decoder, &simple_param);

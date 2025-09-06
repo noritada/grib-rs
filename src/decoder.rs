@@ -3,17 +3,12 @@ use std::marker::PhantomData;
 
 use num::ToPrimitive;
 
-#[cfg(not(target_arch = "wasm32"))]
-use crate::decoder::jpeg2000::Jpeg2000CodeStreamDecodeError;
 use crate::{
     context::{SectionBody, SubMessage},
     decoder::{
         bitmap::{dummy_bitmap_for_nonnullable_data, BitmapDecodeIterator},
-        complex::ComplexPackingDecodeError,
         param::Section5Param,
-        png::PngDecodeError,
-        run_length::RunLengthEncodingDecodeError,
-        simple::{SimplePackingDecodeError, SimplePackingDecodeIteratorWrapper},
+        simple::SimplePackingDecodeIteratorWrapper,
     },
     error::*,
     reader::Grib2Read,
@@ -113,10 +108,11 @@ impl Grib2SubmessageDecoder {
                 sect6_bytes.append(&mut dummy_bitmap_for_nonnullable_data(num_points_total));
                 sect6_bytes
             }
-            _ => {
-                return Err(GribError::DecodeError(
-                    DecodeError::BitMapIndicatorUnsupported,
-                ))
+            n => {
+                return Err(GribError::DecodeError(DecodeError::NotSupported(
+                    "GRIB2 code table 6.0 (bit map indicator)",
+                    n.into(),
+                )))
             }
         };
 
@@ -163,10 +159,11 @@ impl Grib2SubmessageDecoder {
             #[cfg(not(target_arch = "wasm32"))]
             42 => Grib2ValueIterator::Template42(ccsds::decode(self)?),
             200 => Grib2ValueIterator::Template200(run_length::decode(self)?),
-            _ => {
-                return Err(GribError::DecodeError(
-                    DecodeError::TemplateNumberUnsupported,
-                ))
+            n => {
+                return Err(GribError::DecodeError(DecodeError::NotSupported(
+                    "GRIB2 code table 5.0 (data representation template number)",
+                    n,
+                )))
             }
         };
         let decoder = BitmapDecodeIterator::new(
@@ -297,40 +294,20 @@ where
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum DecodeError {
-    TemplateNumberUnsupported,
-    BitMapIndicatorUnsupported,
-    SimplePackingDecodeError(SimplePackingDecodeError),
-    ComplexPackingDecodeError(ComplexPackingDecodeError),
-    #[cfg(not(target_arch = "wasm32"))]
-    Jpeg2000CodeStreamDecodeError(Jpeg2000CodeStreamDecodeError),
-    PngDecodeError(PngDecodeError),
-    RunLengthEncodingDecodeError(RunLengthEncodingDecodeError),
+    NotSupported(&'static str, u16),
     LengthMismatch,
-    Unknown(String),
+    UnclassifiedError(String),
 }
 
-impl From<SimplePackingDecodeError> for DecodeError {
-    fn from(e: SimplePackingDecodeError) -> Self {
-        Self::SimplePackingDecodeError(e)
+impl From<String> for DecodeError {
+    fn from(value: String) -> Self {
+        Self::UnclassifiedError(value)
     }
 }
 
-impl From<ComplexPackingDecodeError> for DecodeError {
-    fn from(e: ComplexPackingDecodeError) -> Self {
-        Self::ComplexPackingDecodeError(e)
-    }
-}
-
-#[cfg(not(target_arch = "wasm32"))]
-impl From<Jpeg2000CodeStreamDecodeError> for DecodeError {
-    fn from(e: Jpeg2000CodeStreamDecodeError) -> Self {
-        Self::Jpeg2000CodeStreamDecodeError(e)
-    }
-}
-
-impl From<RunLengthEncodingDecodeError> for DecodeError {
-    fn from(e: RunLengthEncodingDecodeError) -> Self {
-        Self::RunLengthEncodingDecodeError(e)
+impl From<&str> for DecodeError {
+    fn from(value: &str) -> Self {
+        Self::UnclassifiedError(value.to_owned())
     }
 }
 
