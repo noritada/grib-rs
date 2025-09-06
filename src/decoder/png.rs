@@ -13,9 +13,8 @@ pub(crate) fn decode(
     let sect5_data = &target.sect5_bytes;
     let param = SimplePackingParam::from_buf(&sect5_data[11..21])?;
 
-    let buf = read_image_buffer(target.sect7_payload()).map_err(|e| {
-        GribError::DecodeError(DecodeError::Unknown(format!("PNG decode error: {e}")))
-    })?;
+    let buf = read_image_buffer(target.sect7_payload())
+        .map_err(|e| GribError::DecodeError(DecodeError::from(format!("PNG decode error: {e}"))))?;
 
     if param.nbit == 0 {
         eprintln!(

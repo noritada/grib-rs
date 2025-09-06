@@ -20,7 +20,7 @@ impl<'a> SpatialDifferencingExtraDescriptors<'a> {
             extra_desc_num_octets,
         } = param;
         if *extra_desc_num_octets == 0 || *extra_desc_num_octets > 4 {
-            return Err(GribError::DecodeError(DecodeError::Unknown(
+            return Err(GribError::DecodeError(DecodeError::from(
                 format!("unexpected value for \"number of octets required in the data section to specify extra descriptors needed for spatial differencing\": {extra_desc_num_octets}")
             )));
         }

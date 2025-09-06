@@ -112,9 +112,7 @@ impl Codec {
     pub(crate) fn create(format: OPJ_CODEC_FORMAT) -> Result<Self, DecodeError> {
         NonNull::new(unsafe { opj::opj_create_decompress(format) })
             .map(Self)
-            .ok_or(DecodeError::Unknown(
-                "setup of j2k decoder failed".to_owned(),
-            ))
+            .ok_or(DecodeError::from("setup of j2k decoder failed"))
     }
 }
 

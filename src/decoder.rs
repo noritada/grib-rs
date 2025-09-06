@@ -296,7 +296,19 @@ where
 pub enum DecodeError {
     NotSupported(&'static str, u16),
     LengthMismatch,
-    Unknown(String),
+    UnclassifiedError(String),
+}
+
+impl From<String> for DecodeError {
+    fn from(value: String) -> Self {
+        Self::UnclassifiedError(value)
+    }
+}
+
+impl From<&str> for DecodeError {
+    fn from(value: &str) -> Self {
+        Self::UnclassifiedError(value.to_owned())
+    }
 }
 
 mod bitmap;

@@ -32,7 +32,7 @@ pub(crate) fn decode(
         );
         stream
             .decode(target.sect7_payload(), &mut decoded)
-            .map_err(|e| GribError::DecodeError(crate::DecodeError::Unknown(e.to_owned())))?;
+            .map_err(|e| GribError::DecodeError(crate::DecodeError::from(e)))?;
 
         let decoder = NBitwiseIterator::new(decoded.into_iter(), element_size_in_bytes * 8);
         let decoder = SimplePackingDecodeIterator::new(decoder, &simple_param);
