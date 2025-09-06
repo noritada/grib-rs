@@ -18,7 +18,6 @@ use crate::{
         stream::{BitStream, NBitwiseIterator},
         DecodeError, Grib2SubmessageDecoder,
     },
-    error::*,
     helpers::GribInt,
 };
 
@@ -26,24 +25,24 @@ pub(crate) fn decode_7_2(
     target: &Grib2SubmessageDecoder,
 ) -> Result<
     SimplePackingDecodeIteratorWrapper<impl Iterator<Item = DecodedValue<i32>> + '_>,
-    GribError,
+    DecodeError,
 > {
     let sect5_data = &target.sect5_bytes;
     let simple_param = SimplePackingParam::from_buf(&sect5_data[11..21])?;
     let complex_param = ComplexPackingParam::from_buf(&sect5_data[21..47]);
 
     if complex_param.group_splitting_method_used != 1 {
-        return Err(GribError::DecodeError(DecodeError::NotSupported(
+        return Err(DecodeError::NotSupported(
             "GRIB2 code table 5.4 (group splitting method)",
             complex_param.group_splitting_method_used.into(),
-        )));
+        ));
     }
 
     if complex_param.missing_value_management_used > 2 {
-        return Err(GribError::DecodeError(DecodeError::NotSupported(
+        return Err(DecodeError::NotSupported(
             "GRIB2 code table 5.5 (missing value management for complex packing)",
             complex_param.missing_value_management_used.into(),
-        )));
+        ));
     }
 
     let sect7_data = target.sect7_payload();
@@ -58,31 +57,31 @@ pub(crate) fn decode_7_3(
     target: &Grib2SubmessageDecoder,
 ) -> Result<
     SimplePackingDecodeIteratorWrapper<impl Iterator<Item = DecodedValue<i32>> + '_>,
-    GribError,
+    DecodeError,
 > {
     let sect5_data = &target.sect5_bytes;
     let simple_param = SimplePackingParam::from_buf(&sect5_data[11..21])?;
     let complex_param = ComplexPackingParam::from_buf(&sect5_data[21..47]);
     let spdiff_param = SpatialDifferencingParam::from_buf(&sect5_data[47..49]);
     let spdiff_order = Table5_6::try_from(spdiff_param.order).map_err(|e| {
-        GribError::DecodeError(DecodeError::NotSupported(
+        DecodeError::NotSupported(
             "GRIB2 code table 5.6 (order of spatial differencing)",
             e.number.into(),
-        ))
+        )
     })?;
 
     if complex_param.group_splitting_method_used != 1 {
-        return Err(GribError::DecodeError(DecodeError::NotSupported(
+        return Err(DecodeError::NotSupported(
             "GRIB2 code table 5.4 (group splitting method)",
             complex_param.group_splitting_method_used.into(),
-        )));
+        ));
     }
 
     if complex_param.missing_value_management_used > 2 {
-        return Err(GribError::DecodeError(DecodeError::NotSupported(
+        return Err(DecodeError::NotSupported(
             "GRIB2 code table 5.5 (missing value management for complex packing)",
             complex_param.missing_value_management_used.into(),
-        )));
+        ));
     }
 
     let sect7_data = target.sect7_payload();

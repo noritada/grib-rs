@@ -1,6 +1,6 @@
 use std::iter::Peekable;
 
-use crate::{decoder::DecodeError, error::GribError};
+use crate::decoder::DecodeError;
 
 pub(crate) struct BitmapDecodeIterator<B: Iterator, I> {
     bitmap: Peekable<B>,
@@ -13,10 +13,10 @@ impl<'b, B, I> BitmapDecodeIterator<B, I>
 where
     B: Iterator<Item = &'b u8>,
 {
-    pub(crate) fn new(bitmap: B, values: I, len: usize) -> Result<Self, GribError> {
+    pub(crate) fn new(bitmap: B, values: I, len: usize) -> Result<Self, DecodeError> {
         let (bitmap_len, _) = bitmap.size_hint();
         if bitmap_len * 8 < len {
-            return Err(GribError::DecodeError(DecodeError::LengthMismatch));
+            return Err(DecodeError::LengthMismatch);
         }
         Ok(Self {
             bitmap: bitmap.peekable(),

@@ -2,13 +2,12 @@ use crate::{
     decoder::{
         param::RunLengthPackingParam, stream::NBitwiseIterator, DecodeError, Grib2SubmessageDecoder,
     },
-    error::*,
     helpers::read_as,
 };
 
 pub(crate) fn decode(
     target: &Grib2SubmessageDecoder,
-) -> Result<std::vec::IntoIter<f32>, GribError> {
+) -> Result<std::vec::IntoIter<f32>, DecodeError> {
     let sect5_data = &target.sect5_bytes;
     let param = RunLengthPackingParam::from_buf(&sect5_data[11..17]);
 

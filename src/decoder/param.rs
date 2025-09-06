@@ -1,6 +1,6 @@
 use crate::{
     helpers::{read_as, GribInt},
-    GribError,
+    DecodeError,
 };
 
 pub(crate) struct Section5Param {
@@ -27,7 +27,7 @@ pub(crate) struct SimplePackingParam {
 }
 
 impl SimplePackingParam {
-    pub(crate) fn from_buf(buf: &[u8]) -> Result<Self, GribError> {
+    pub(crate) fn from_buf(buf: &[u8]) -> Result<Self, DecodeError> {
         let ref_val = read_as!(f32, buf, 0);
         let exp = read_as!(u16, buf, 4).as_grib_int();
         let dig = read_as!(u16, buf, 6).as_grib_int();
@@ -35,10 +35,10 @@ impl SimplePackingParam {
         let original_field_type_value = read_as!(u8, buf, 9);
 
         if original_field_type_value != 0 {
-            return Err(GribError::DecodeError(crate::DecodeError::NotSupported(
+            return Err(crate::DecodeError::NotSupported(
                 "GRIB2 code table 5.1 (type of original field values)",
                 original_field_type_value.into(),
-            )));
+            ));
         }
 
         Ok(Self {

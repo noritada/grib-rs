@@ -1,11 +1,8 @@
 use openjpeg_sys as opj;
 
-use crate::{
-    decoder::{
-        param::SimplePackingParam, simple::*, stream::FixedValueIterator, DecodeError,
-        Grib2SubmessageDecoder,
-    },
-    error::*,
+use crate::decoder::{
+    param::SimplePackingParam, simple::*, stream::FixedValueIterator, DecodeError,
+    Grib2SubmessageDecoder,
 };
 
 mod ext;
@@ -13,7 +10,7 @@ use ext::*;
 
 pub(crate) fn decode(
     target: &Grib2SubmessageDecoder,
-) -> Result<SimplePackingDecodeIteratorWrapper<impl Iterator<Item = i32>>, GribError> {
+) -> Result<SimplePackingDecodeIteratorWrapper<impl Iterator<Item = i32>>, DecodeError> {
     let sect5_data = &target.sect5_bytes;
     let simple_param = SimplePackingParam::from_buf(&sect5_data[11..21])?;
 
@@ -27,9 +24,8 @@ pub(crate) fn decode(
         return Ok(decoder);
     };
 
-    let stream =
-        Stream::from_bytes(target.sect7_payload()).map_err(|e| GribError::DecodeError(e))?;
-    let jp2_unpacked = decode_jp2(stream).map_err(|e| GribError::DecodeError(e))?;
+    let stream = Stream::from_bytes(target.sect7_payload())?;
+    let jp2_unpacked = decode_jp2(stream)?;
     let decoder = SimplePackingDecodeIterator::new(jp2_unpacked, &simple_param);
     let decoder = SimplePackingDecodeIteratorWrapper::SimplePacking(decoder);
     Ok(decoder)

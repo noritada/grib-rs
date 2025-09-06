@@ -4,17 +4,17 @@ use crate::{
         simple::{SimplePackingDecodeIterator, SimplePackingDecodeIteratorWrapper},
         stream::{FixedValueIterator, NBitwiseIterator},
     },
-    DecodeError, Grib2SubmessageDecoder, GribError,
+    DecodeError, Grib2SubmessageDecoder,
 };
 
 pub(crate) fn decode(
     target: &Grib2SubmessageDecoder,
-) -> Result<SimplePackingDecodeIteratorWrapper<impl Iterator<Item = u32> + '_>, GribError> {
+) -> Result<SimplePackingDecodeIteratorWrapper<impl Iterator<Item = u32> + '_>, DecodeError> {
     let sect5_data = &target.sect5_bytes;
     let param = SimplePackingParam::from_buf(&sect5_data[11..21])?;
 
     let buf = read_image_buffer(target.sect7_payload())
-        .map_err(|e| GribError::DecodeError(DecodeError::from(format!("PNG decode error: {e}"))))?;
+        .map_err(|e| DecodeError::from(format!("PNG decode error: {e}")))?;
 
     if param.nbit == 0 {
         eprintln!(
