@@ -40,8 +40,6 @@ where
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum SimplePackingDecodeError {
-    NotSupported,
-    OriginalFieldValueTypeNotSupported,
     LengthMismatch,
 }
 

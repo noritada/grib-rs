@@ -9,7 +9,6 @@ use crate::{
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum PngDecodeError {
-    NotSupported,
     PngError(String),
 }
 

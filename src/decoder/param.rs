@@ -35,11 +35,10 @@ impl SimplePackingParam {
         let original_field_type_value = read_as!(u8, buf, 9);
 
         if original_field_type_value != 0 {
-            return Err(GribError::DecodeError(
-                crate::DecodeError::SimplePackingDecodeError(
-                    super::simple::SimplePackingDecodeError::OriginalFieldValueTypeNotSupported,
-                ),
-            ));
+            return Err(GribError::DecodeError(crate::DecodeError::NotSupported(
+                "GRIB2 code table 5.1 (type of original field values)",
+                original_field_type_value.into(),
+            )));
         }
 
         Ok(Self {

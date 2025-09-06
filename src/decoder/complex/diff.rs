@@ -1,7 +1,4 @@
-use super::{
-    missing::DecodedValue::{self, Normal},
-    ComplexPackingDecodeError,
-};
+use super::missing::DecodedValue::{self, Normal};
 use crate::{
     decoder::{param::SpatialDifferencingParam, DecodeError},
     error::GribError,
@@ -23,9 +20,9 @@ impl<'a> SpatialDifferencingExtraDescriptors<'a> {
             extra_desc_num_octets,
         } = param;
         if *extra_desc_num_octets == 0 || *extra_desc_num_octets > 4 {
-            return Err(GribError::DecodeError(
-                DecodeError::ComplexPackingDecodeError(ComplexPackingDecodeError::NotSupported),
-            ));
+            return Err(GribError::DecodeError(DecodeError::Unknown(
+                format!("unexpected value for \"number of octets required in the data section to specify extra descriptors needed for spatial differencing\": {extra_desc_num_octets}")
+            )));
         }
         let num_octets = usize::from(*extra_desc_num_octets);
         let byte_length = usize::from(order + 1) * num_octets;

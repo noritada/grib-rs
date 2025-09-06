@@ -24,7 +24,6 @@ use crate::{
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum ComplexPackingDecodeError {
-    NotSupported,
     LengthMismatch,
 }
 
@@ -38,12 +37,18 @@ pub(crate) fn decode_7_2(
     let simple_param = SimplePackingParam::from_buf(&sect5_data[11..21])?;
     let complex_param = ComplexPackingParam::from_buf(&sect5_data[21..47]);
 
-    if complex_param.group_splitting_method_used != 1
-        || complex_param.missing_value_management_used > 2
-    {
-        return Err(GribError::DecodeError(
-            DecodeError::ComplexPackingDecodeError(ComplexPackingDecodeError::NotSupported),
-        ));
+    if complex_param.group_splitting_method_used != 1 {
+        return Err(GribError::DecodeError(DecodeError::NotSupported(
+            "GRIB2 code table 5.4 (group splitting method)",
+            complex_param.group_splitting_method_used.into(),
+        )));
+    }
+
+    if complex_param.missing_value_management_used > 2 {
+        return Err(GribError::DecodeError(DecodeError::NotSupported(
+            "GRIB2 code table 5.5 (missing value management for complex packing)",
+            complex_param.missing_value_management_used.into(),
+        )));
     }
 
     let sect7_data = target.sect7_payload();
@@ -65,17 +70,24 @@ pub(crate) fn decode_7_3(
     let complex_param = ComplexPackingParam::from_buf(&sect5_data[21..47]);
     let spdiff_param = SpatialDifferencingParam::from_buf(&sect5_data[47..49]);
     let spdiff_order = Table5_6::try_from(spdiff_param.order).map_err(|e| {
-        let number = e.number;
-        GribError::NotSupported(format!("Code Table 5.6 value '{number}' is not supported"))
+        GribError::DecodeError(DecodeError::NotSupported(
+            "GRIB2 code table 5.6 (order of spatial differencing)",
+            e.number.into(),
+        ))
     })?;
 
-    if complex_param.group_splitting_method_used != 1
-        || complex_param.missing_value_management_used > 2
-        || matches!(spdiff_order, Table5_6::Missing)
-    {
-        return Err(GribError::DecodeError(
-            DecodeError::ComplexPackingDecodeError(ComplexPackingDecodeError::NotSupported),
-        ));
+    if complex_param.group_splitting_method_used != 1 {
+        return Err(GribError::DecodeError(DecodeError::NotSupported(
+            "GRIB2 code table 5.4 (group splitting method)",
+            complex_param.group_splitting_method_used.into(),
+        )));
+    }
+
+    if complex_param.missing_value_management_used > 2 {
+        return Err(GribError::DecodeError(DecodeError::NotSupported(
+            "GRIB2 code table 5.5 (missing value management for complex packing)",
+            complex_param.missing_value_management_used.into(),
+        )));
     }
 
     let sect7_data = target.sect7_payload();

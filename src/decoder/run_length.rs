@@ -8,7 +8,6 @@ use crate::{
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum RunLengthEncodingDecodeError {
-    NotSupported,
     InvalidFirstValue,
     LengthMismatch,
     InvalidLevelValue(u16),

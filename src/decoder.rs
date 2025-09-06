@@ -113,10 +113,11 @@ impl Grib2SubmessageDecoder {
                 sect6_bytes.append(&mut dummy_bitmap_for_nonnullable_data(num_points_total));
                 sect6_bytes
             }
-            _ => {
-                return Err(GribError::DecodeError(
-                    DecodeError::BitMapIndicatorUnsupported,
-                ))
+            n => {
+                return Err(GribError::DecodeError(DecodeError::NotSupported(
+                    "GRIB2 code table 6.0 (bit map indicator)",
+                    n.into(),
+                )))
             }
         };
 
@@ -163,10 +164,11 @@ impl Grib2SubmessageDecoder {
             #[cfg(not(target_arch = "wasm32"))]
             42 => Grib2ValueIterator::Template42(ccsds::decode(self)?),
             200 => Grib2ValueIterator::Template200(run_length::decode(self)?),
-            _ => {
-                return Err(GribError::DecodeError(
-                    DecodeError::TemplateNumberUnsupported,
-                ))
+            n => {
+                return Err(GribError::DecodeError(DecodeError::NotSupported(
+                    "GRIB2 code table 5.0 (data representation template number)",
+                    n,
+                )))
             }
         };
         let decoder = BitmapDecodeIterator::new(
@@ -297,8 +299,7 @@ where
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum DecodeError {
-    TemplateNumberUnsupported,
-    BitMapIndicatorUnsupported,
+    NotSupported(&'static str, u16),
     SimplePackingDecodeError(SimplePackingDecodeError),
     ComplexPackingDecodeError(ComplexPackingDecodeError),
     #[cfg(not(target_arch = "wasm32"))]
