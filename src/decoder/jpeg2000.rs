@@ -16,7 +16,6 @@ pub enum Jpeg2000CodeStreamDecodeError {
     DecoderSetupError,
     MainHeaderReadError,
     BodyReadError,
-    LengthMismatch,
 }
 
 pub(crate) fn decode(

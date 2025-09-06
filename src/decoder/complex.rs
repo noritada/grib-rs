@@ -22,11 +22,6 @@ use crate::{
     helpers::GribInt,
 };
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub enum ComplexPackingDecodeError {
-    LengthMismatch,
-}
-
 pub(crate) fn decode_7_2(
     target: &Grib2SubmessageDecoder,
 ) -> Result<

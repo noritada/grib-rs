@@ -9,11 +9,10 @@ use crate::{
     context::{SectionBody, SubMessage},
     decoder::{
         bitmap::{dummy_bitmap_for_nonnullable_data, BitmapDecodeIterator},
-        complex::ComplexPackingDecodeError,
         param::Section5Param,
         png::PngDecodeError,
         run_length::RunLengthEncodingDecodeError,
-        simple::{SimplePackingDecodeError, SimplePackingDecodeIteratorWrapper},
+        simple::SimplePackingDecodeIteratorWrapper,
     },
     error::*,
     reader::Grib2Read,
@@ -300,26 +299,12 @@ where
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum DecodeError {
     NotSupported(&'static str, u16),
-    SimplePackingDecodeError(SimplePackingDecodeError),
-    ComplexPackingDecodeError(ComplexPackingDecodeError),
     #[cfg(not(target_arch = "wasm32"))]
     Jpeg2000CodeStreamDecodeError(Jpeg2000CodeStreamDecodeError),
     PngDecodeError(PngDecodeError),
     RunLengthEncodingDecodeError(RunLengthEncodingDecodeError),
     LengthMismatch,
     Unknown(String),
-}
-
-impl From<SimplePackingDecodeError> for DecodeError {
-    fn from(e: SimplePackingDecodeError) -> Self {
-        Self::SimplePackingDecodeError(e)
-    }
-}
-
-impl From<ComplexPackingDecodeError> for DecodeError {
-    fn from(e: ComplexPackingDecodeError) -> Self {
-        Self::ComplexPackingDecodeError(e)
-    }
 }
 
 #[cfg(not(target_arch = "wasm32"))]
