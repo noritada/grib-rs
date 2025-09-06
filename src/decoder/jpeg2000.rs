@@ -11,13 +11,6 @@ use crate::{
 mod ext;
 use ext::*;
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub enum Jpeg2000CodeStreamDecodeError {
-    DecoderSetupError,
-    MainHeaderReadError,
-    BodyReadError,
-}
-
 pub(crate) fn decode(
     target: &Grib2SubmessageDecoder,
 ) -> Result<SimplePackingDecodeIteratorWrapper<impl Iterator<Item = i32>>, GribError> {
@@ -34,8 +27,8 @@ pub(crate) fn decode(
         return Ok(decoder);
     };
 
-    let stream = Stream::from_bytes(target.sect7_payload())
-        .map_err(|e| GribError::DecodeError(DecodeError::Jpeg2000CodeStreamDecodeError(e)))?;
+    let stream =
+        Stream::from_bytes(target.sect7_payload()).map_err(|e| GribError::DecodeError(e))?;
     let jp2_unpacked = decode_jp2(stream).map_err(|e| GribError::DecodeError(e))?;
     let decoder = SimplePackingDecodeIterator::new(jp2_unpacked, &simple_param);
     let decoder = SimplePackingDecodeIteratorWrapper::SimplePacking(decoder);
@@ -49,22 +42,22 @@ fn decode_jp2(stream: Stream) -> Result<impl Iterator<Item = i32>, DecodeError> 
     unsafe { opj::opj_set_default_decoder_parameters(&mut decode_params as *mut _) };
 
     if unsafe { openjpeg_sys::opj_setup_decoder(codec.0.as_ptr(), &mut decode_params) } != 1 {
-        return Err(DecodeError::Jpeg2000CodeStreamDecodeError(
-            Jpeg2000CodeStreamDecodeError::DecoderSetupError,
+        return Err(DecodeError::Unknown(
+            "setup of openjpeg decoder failed".to_owned(),
         ));
     }
 
     let mut image = Image::new();
 
     if unsafe { opj::opj_read_header(stream.0, codec.0.as_ptr(), &mut image.0) } != 1 {
-        return Err(DecodeError::Jpeg2000CodeStreamDecodeError(
-            Jpeg2000CodeStreamDecodeError::MainHeaderReadError,
+        return Err(DecodeError::Unknown(
+            "decoding of JPEG 2000 image header failed".to_owned(),
         ));
     }
 
     if unsafe { opj::opj_decode(codec.0.as_ptr(), stream.0, image.0) } != 1 {
-        return Err(DecodeError::Jpeg2000CodeStreamDecodeError(
-            Jpeg2000CodeStreamDecodeError::BodyReadError,
+        return Err(DecodeError::Unknown(
+            "decoding of JPEG 2000 image failed".to_owned(),
         ));
     }
 

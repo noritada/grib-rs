@@ -6,12 +6,6 @@ use crate::{
     helpers::read_as,
 };
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub enum RunLengthEncodingDecodeError {
-    InvalidFirstValue,
-    InvalidLevelValue(u16),
-}
-
 pub(crate) fn decode(
     target: &Grib2SubmessageDecoder,
 ) -> Result<std::vec::IntoIter<f32>, GribError> {
@@ -43,9 +37,9 @@ pub(crate) fn decode(
         level_map
             .get(index)
             .copied()
-            .ok_or(DecodeError::RunLengthEncodingDecodeError(
-                RunLengthEncodingDecodeError::InvalidLevelValue(*level),
-            ))
+            .ok_or(DecodeError::Unknown(format!(
+                "invalid level value: {level}"
+            )))
     };
 
     let decoded: Result<Vec<_>, _> = (*decoded_levels).iter().map(level_to_value).collect();
@@ -77,7 +71,7 @@ fn rleunpack(
             cached = Some(value);
             exp = 1;
         } else {
-            let prev = cached.ok_or(RunLengthEncodingDecodeError::InvalidFirstValue)?;
+            let prev = cached.ok_or(DecodeError::Unknown("invalid first value".to_owned()))?;
             let length: usize = ((value - rlbase) as usize) * exp;
             out_buf.append(&mut vec![prev; length]);
             exp *= lngu;

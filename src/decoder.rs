@@ -3,15 +3,11 @@ use std::marker::PhantomData;
 
 use num::ToPrimitive;
 
-#[cfg(not(target_arch = "wasm32"))]
-use crate::decoder::jpeg2000::Jpeg2000CodeStreamDecodeError;
 use crate::{
     context::{SectionBody, SubMessage},
     decoder::{
         bitmap::{dummy_bitmap_for_nonnullable_data, BitmapDecodeIterator},
         param::Section5Param,
-        png::PngDecodeError,
-        run_length::RunLengthEncodingDecodeError,
         simple::SimplePackingDecodeIteratorWrapper,
     },
     error::*,
@@ -299,25 +295,8 @@ where
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum DecodeError {
     NotSupported(&'static str, u16),
-    #[cfg(not(target_arch = "wasm32"))]
-    Jpeg2000CodeStreamDecodeError(Jpeg2000CodeStreamDecodeError),
-    PngDecodeError(PngDecodeError),
-    RunLengthEncodingDecodeError(RunLengthEncodingDecodeError),
     LengthMismatch,
     Unknown(String),
-}
-
-#[cfg(not(target_arch = "wasm32"))]
-impl From<Jpeg2000CodeStreamDecodeError> for DecodeError {
-    fn from(e: Jpeg2000CodeStreamDecodeError) -> Self {
-        Self::Jpeg2000CodeStreamDecodeError(e)
-    }
-}
-
-impl From<RunLengthEncodingDecodeError> for DecodeError {
-    fn from(e: RunLengthEncodingDecodeError) -> Self {
-        Self::RunLengthEncodingDecodeError(e)
-    }
 }
 
 mod bitmap;

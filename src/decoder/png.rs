@@ -7,11 +7,6 @@ use crate::{
     DecodeError, Grib2SubmessageDecoder, GribError,
 };
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub enum PngDecodeError {
-    PngError(String),
-}
-
 pub(crate) fn decode(
     target: &Grib2SubmessageDecoder,
 ) -> Result<SimplePackingDecodeIteratorWrapper<impl Iterator<Item = u32> + '_>, GribError> {
@@ -19,7 +14,7 @@ pub(crate) fn decode(
     let param = SimplePackingParam::from_buf(&sect5_data[11..21])?;
 
     let buf = read_image_buffer(target.sect7_payload()).map_err(|e| {
-        GribError::DecodeError(DecodeError::PngDecodeError(PngDecodeError::PngError(e)))
+        GribError::DecodeError(DecodeError::Unknown(format!("PNG decode error: {e}")))
     })?;
 
     if param.nbit == 0 {
