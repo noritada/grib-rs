@@ -1,14 +1,8 @@
-#[cfg(target_arch = "wasm32")]
-use std::marker::PhantomData;
-
-use num::ToPrimitive;
-
 use crate::{
     context::{SectionBody, SubMessage},
     decoder::{
         bitmap::{dummy_bitmap_for_nonnullable_data, BitmapDecodeIterator},
         param::Section5Param,
-        simple::SimplePackingDecodeIteratorWrapper,
     },
     error::*,
     reader::Grib2Read,
@@ -222,38 +216,26 @@ type Grib2ValueIterator<T0, T2, T3, T40, T41, T42> =
     Grib2SubmessageDecoderIteratorWrapper<T0, T2, T3, T40, T41, T42>;
 
 enum Grib2SubmessageDecoderIteratorWrapper<T0, T2, T3, T40, T41, T42> {
-    Template0(SimplePackingDecodeIteratorWrapper<T0>),
-    Template2(SimplePackingDecodeIteratorWrapper<T2>),
-    Template3(SimplePackingDecodeIteratorWrapper<T3>),
+    Template0(T0),
+    Template2(T2),
+    Template3(T3),
     #[allow(dead_code)]
-    #[cfg(target_arch = "wasm32")]
-    Template40(PhantomData<T40>),
-    #[cfg(not(target_arch = "wasm32"))]
-    Template40(SimplePackingDecodeIteratorWrapper<T40>),
-    Template41(SimplePackingDecodeIteratorWrapper<T41>),
+    Template40(T40),
+    Template41(T41),
     #[allow(dead_code)]
-    #[cfg(target_arch = "wasm32")]
-    Template42(PhantomData<T42>),
-    #[cfg(not(target_arch = "wasm32"))]
-    Template42(SimplePackingDecodeIteratorWrapper<T42>),
+    Template42(T42),
     Template200(std::vec::IntoIter<f32>),
 }
 
 impl<T0, T2, T3, T40, T41, T42> Iterator
     for Grib2SubmessageDecoderIteratorWrapper<T0, T2, T3, T40, T41, T42>
 where
-    T0: Iterator,
-    <T0 as Iterator>::Item: ToPrimitive,
-    T2: Iterator,
-    <T2 as Iterator>::Item: ToPrimitive,
-    T3: Iterator,
-    <T3 as Iterator>::Item: ToPrimitive,
-    T40: Iterator,
-    <T40 as Iterator>::Item: ToPrimitive,
-    T41: Iterator,
-    <T41 as Iterator>::Item: ToPrimitive,
-    T42: Iterator,
-    <T42 as Iterator>::Item: ToPrimitive,
+    T0: Iterator<Item = f32>,
+    T2: Iterator<Item = f32>,
+    T3: Iterator<Item = f32>,
+    T40: Iterator<Item = f32>,
+    T41: Iterator<Item = f32>,
+    T42: Iterator<Item = f32>,
 {
     type Item = f32;
 
@@ -262,15 +244,9 @@ where
             Self::Template0(inner) => inner.next(),
             Self::Template2(inner) => inner.next(),
             Self::Template3(inner) => inner.next(),
-            #[cfg(not(target_arch = "wasm32"))]
             Self::Template40(inner) => inner.next(),
-            #[cfg(target_arch = "wasm32")]
-            Self::Template40(_) => unreachable!(),
             Self::Template41(inner) => inner.next(),
-            #[cfg(not(target_arch = "wasm32"))]
             Self::Template42(inner) => inner.next(),
-            #[cfg(target_arch = "wasm32")]
-            Self::Template42(_) => unreachable!(),
             Self::Template200(inner) => inner.next(),
         }
     }
@@ -280,15 +256,9 @@ where
             Self::Template0(inner) => inner.size_hint(),
             Self::Template2(inner) => inner.size_hint(),
             Self::Template3(inner) => inner.size_hint(),
-            #[cfg(not(target_arch = "wasm32"))]
             Self::Template40(inner) => inner.size_hint(),
-            #[cfg(target_arch = "wasm32")]
-            Self::Template40(_) => unreachable!(),
             Self::Template41(inner) => inner.size_hint(),
-            #[cfg(not(target_arch = "wasm32"))]
             Self::Template42(inner) => inner.size_hint(),
-            #[cfg(target_arch = "wasm32")]
-            Self::Template42(_) => unreachable!(),
             Self::Template200(inner) => inner.size_hint(),
         }
     }
