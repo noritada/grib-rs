@@ -1,3 +1,6 @@
+#[allow(dead_code)]
+use std::marker::PhantomData;
+
 use crate::{
     context::{SectionBody, SubMessage},
     decoder::{
@@ -145,14 +148,14 @@ impl Grib2SubmessageDecoder {
     pub fn dispatch(
         &self,
     ) -> Result<Grib2DecodedValues<'_, impl Iterator<Item = f32> + '_>, GribError> {
-        let decoder = match self.sect5_param.template_num {
+        let decoder: Grib2ValueIterator<_, _, _, _> = match self.sect5_param.template_num {
             0 => Grib2ValueIterator::Template0(simple::decode(self)?),
             2 => Grib2ValueIterator::Template2(complex::decode_7_2(self)?),
             3 => Grib2ValueIterator::Template3(complex::decode_7_3(self)?),
-            #[cfg(not(target_arch = "wasm32"))]
+            #[cfg(feature = "jpeg2000-support-openjpeg")]
             40 => Grib2ValueIterator::Template40(jpeg2000::decode(self)?),
             41 => Grib2ValueIterator::Template41(png::decode(self)?),
-            #[cfg(not(target_arch = "wasm32"))]
+            #[cfg(feature = "ccsdc-support-libaec")]
             42 => Grib2ValueIterator::Template42(ccsds::decode(self)?),
             200 => Grib2ValueIterator::Template200(run_length::decode(self)?),
             n => {
@@ -198,44 +201,26 @@ where
     }
 }
 
-// Rust does not allow modification of generics type parameters or where clauses
-// in conditonal compilation at this time. This is a trick to allow compilation
-// even when JPEG 2000 code stream format support is not available (there may be
-// a better way).
-#[cfg(target_arch = "wasm32")]
-type Grib2ValueIterator<T0, T2, T3, T41> = Grib2SubmessageDecoderIteratorWrapper<
-    T0,
-    T2,
-    T3,
-    std::vec::IntoIter<f32>,
-    T41,
-    std::vec::IntoIter<f32>,
->;
-#[cfg(not(target_arch = "wasm32"))]
-type Grib2ValueIterator<T0, T2, T3, T40, T41, T42> =
-    Grib2SubmessageDecoderIteratorWrapper<T0, T2, T3, T40, T41, T42>;
-
-enum Grib2SubmessageDecoderIteratorWrapper<T0, T2, T3, T40, T41, T42> {
+enum Grib2ValueIterator<T0, T2, T3, T41, T40 = (), T42 = ()> {
     Template0(T0),
     Template2(T2),
     Template3(T3),
     #[allow(dead_code)]
-    Template40(T40),
+    Template40(Jpeg2000Decoder<T40>),
     Template41(T41),
     #[allow(dead_code)]
-    Template42(T42),
+    Template42(CcsdcCompressionDecoder<T42>),
     Template200(std::vec::IntoIter<f32>),
 }
 
-impl<T0, T2, T3, T40, T41, T42> Iterator
-    for Grib2SubmessageDecoderIteratorWrapper<T0, T2, T3, T40, T41, T42>
+impl<T0, T2, T3, T41, T40, T42> Iterator for Grib2ValueIterator<T0, T2, T3, T41, T40, T42>
 where
     T0: Iterator<Item = f32>,
     T2: Iterator<Item = f32>,
     T3: Iterator<Item = f32>,
-    T40: Iterator<Item = f32>,
+    Jpeg2000Decoder<T40>: Iterator<Item = f32>,
     T41: Iterator<Item = f32>,
-    T42: Iterator<Item = f32>,
+    CcsdcCompressionDecoder<T42>: Iterator<Item = f32>,
 {
     type Item = f32;
 
@@ -261,6 +246,44 @@ where
             Self::Template42(inner) => inner.size_hint(),
             Self::Template200(inner) => inner.size_hint(),
         }
+    }
+}
+
+// Rust does not allow modification of generics type parameters or where clauses
+// in conditonal compilation at this time. Following is a trick to allow
+// compilation.
+
+#[cfg(feature = "jpeg2000-support-openjpeg")]
+type Jpeg2000Decoder<T> = SimplePackingDecodeIteratorWrapper<T>;
+#[cfg(not(feature = "jpeg2000-support-openjpeg"))]
+type Jpeg2000Decoder<T> = Jpeg2000DecoderDisabled<T>;
+
+#[cfg(not(feature = "jpeg2000-support-openjpeg"))]
+struct Jpeg2000DecoderDisabled<T>(PhantomData<T>);
+
+#[cfg(not(feature = "jpeg2000-support-openjpeg"))]
+impl<T> Iterator for Jpeg2000DecoderDisabled<T> {
+    type Item = f32;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        unreachable!("JPEG 2000 code stream format support is disabled")
+    }
+}
+
+#[cfg(feature = "ccsdc-support-libaec")]
+type CcsdcCompressionDecoder<T> = SimplePackingDecodeIteratorWrapper<T>;
+#[cfg(not(feature = "ccsdc-support-libaec"))]
+type CcsdcCompressionDecoder<T> = CcsdcCompressionDecoderDisabled<T>;
+
+#[cfg(not(feature = "ccsdc-support-libaec"))]
+struct CcsdcCompressionDecoderDisabled<T>(PhantomData<T>);
+
+#[cfg(not(feature = "ccsdc-support-libaec"))]
+impl<T> Iterator for CcsdcCompressionDecoderDisabled<T> {
+    type Item = f32;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        unreachable!("CCSDC recommended lossless compression support is disabled")
     }
 }
 
@@ -292,10 +315,10 @@ pub(crate) trait Grib2GpvUnpack {
 }
 
 mod bitmap;
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(feature = "ccsdc-support-libaec")]
 mod ccsds;
 mod complex;
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(feature = "jpeg2000-support-openjpeg")]
 mod jpeg2000;
 mod param;
 mod png;
