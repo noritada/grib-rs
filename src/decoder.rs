@@ -21,24 +21,25 @@ use crate::{
 /// use grib::Grib2SubmessageDecoder;
 ///
 /// fn main() -> Result<(), Box<dyn std::error::Error>> {
-///     let f =
-///         std::fs::File::open("testdata/CMC_glb_TMP_ISBL_1_latlon.24x.24_2021051800_P000.grib2")?;
+///     let f = std::fs::File::open(
+///         "testdata/Z__C_RJTD_20160822020000_NOWC_GPV_Ggis10km_Pphw10_FH0000-0100_grib2.bin",
+///     )?;
 ///     let f = std::io::BufReader::new(f);
 ///     let grib2 = grib::from_reader(f)?;
 ///     let (_index, first_submessage) = grib2.iter().next().unwrap();
 ///
 ///     let decoder = Grib2SubmessageDecoder::from(first_submessage)?;
 ///     let mut decoded = decoder.dispatch()?;
-///     assert_eq!(decoded.size_hint(), (1126500, Some(1126500)));
+///     assert_eq!(decoded.size_hint(), (86016, Some(86016)));
 ///
 ///     let first_value = decoded.next();
-///     assert_eq!(first_value.map(|f| f.round()), Some(236.0_f32));
+///     assert_eq!(first_value.map(|f| f.is_nan()), Some(true));
 ///
-///     let last_value = decoded.nth(1126498);
-///     assert_eq!(last_value.map(|f| f.round()), Some(286.0_f32));
+///     let non_nan_value = decoded.find(|f| !f.is_nan());
+///     assert_eq!(non_nan_value.map(|f| f.round()), Some(1.0_f32));
 ///
-///     let next_to_last_value = decoded.next();
-///     assert_eq!(next_to_last_value, None);
+///     let last_value = decoded.last();
+///     assert_eq!(last_value.map(|f| f.is_nan()), Some(true));
 ///     Ok(())
 /// }
 /// ```
@@ -55,29 +56,30 @@ use crate::{
 /// use grib::Grib2SubmessageDecoder;
 ///
 /// fn main() -> Result<(), Box<dyn std::error::Error>> {
-///     let f =
-///         std::fs::File::open("testdata/CMC_glb_TMP_ISBL_1_latlon.24x.24_2021051800_P000.grib2")?;
+///     let f = std::fs::File::open(
+///         "testdata/Z__C_RJTD_20160822020000_NOWC_GPV_Ggis10km_Pphw10_FH0000-0100_grib2.bin",
+///     )?;
 ///     let mut f = std::io::BufReader::new(f);
 ///     let mut buf = Vec::new();
 ///     f.read_to_end(&mut buf)?;
 ///
 ///     let decoder = Grib2SubmessageDecoder::new(
-///         1126500,
+///         86016,
 ///         buf[0x0000008f..0x000000a6].to_vec(),
 ///         buf[0x000000a6..0x000000ac].to_vec(),
-///         buf[0x000000ac..0x0003d6c7].to_vec(),
+///         buf[0x000000ac..0x0000061b].to_vec(),
 ///     )?;
 ///     let mut decoded = decoder.dispatch()?;
-///     assert_eq!(decoded.size_hint(), (1126500, Some(1126500)));
+///     assert_eq!(decoded.size_hint(), (86016, Some(86016)));
 ///
 ///     let first_value = decoded.next();
-///     assert_eq!(first_value.map(|f| f.round()), Some(236.0_f32));
+///     assert_eq!(first_value.map(|f| f.is_nan()), Some(true));
 ///
-///     let last_value = decoded.nth(1126498);
-///     assert_eq!(last_value.map(|f| f.round()), Some(286.0_f32));
+///     let non_nan_value = decoded.find(|f| !f.is_nan());
+///     assert_eq!(non_nan_value.map(|f| f.round()), Some(1.0_f32));
 ///
-///     let next_to_last_value = decoded.next();
-///     assert_eq!(next_to_last_value, None);
+///     let last_value = decoded.last();
+///     assert_eq!(last_value.map(|f| f.is_nan()), Some(true));
 ///     Ok(())
 /// }
 /// ```
