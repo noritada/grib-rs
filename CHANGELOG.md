@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.12.0] - 2025-09-08
+### Enhancements
+
+- `Grib2SubmessageDecoder::new()` is now available for decoding from byte sequences.
+  (#129, #131)
+
+### Breaking changes
+
+- Error types for the decoder is much simplified.
+  (#130)
+
+### Others
+
+- Updated dependencies on `png` and `proj` crates.
+
 ## [0.11.2] - 2025-08-05
 ### New supports
 
@@ -443,7 +458,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - inspect: display of information mainly for development purpose such as template numbers
     - list: display of a list of sections (the style is still tentative)
 
-[unreleased]: https://github.com/noritada/grib-rs/compare/v0.11.2...HEAD
+[unreleased]: https://github.com/noritada/grib-rs/compare/v0.12.0...HEAD
+[0.12.0]: https://github.com/noritada/grib-rs/compare/v0.11.2...v0.12.0
 [0.11.2]: https://github.com/noritada/grib-rs/compare/v0.11.1...v0.11.2
 [0.11.1]: https://github.com/noritada/grib-rs/compare/v0.11.0...v0.11.1
 [0.11.0]: https://github.com/noritada/grib-rs/compare/v0.10.2...v0.11.0
