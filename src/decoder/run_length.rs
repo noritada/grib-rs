@@ -3,44 +3,59 @@ use crate::{
         param::RunLengthPackingParam, stream::NBitwiseIterator, DecodeError, Grib2SubmessageDecoder,
     },
     helpers::read_as,
+    Grib2GpvUnpack,
 };
 
 pub(crate) fn decode(
     target: &Grib2SubmessageDecoder,
 ) -> Result<std::vec::IntoIter<f32>, DecodeError> {
-    let sect5_data = &target.sect5_bytes;
-    let param = RunLengthPackingParam::from_buf(&sect5_data[11..17]);
+    RunLength(target).iter()
+}
 
-    let mut level_map = Vec::with_capacity(param.max_level.into());
-    level_map.push(f32::NAN);
-    let mut pos = 17;
+pub(crate) struct RunLength<'d>(pub(crate) &'d Grib2SubmessageDecoder);
 
-    for _ in 0..param.max_level {
-        let val: f32 = read_as!(u16, sect5_data, pos).into();
-        let num_digits: i32 = param.num_digits.into();
-        let factor = 10_f32.powi(-num_digits);
-        let val = val * factor;
-        level_map.push(val);
-        pos += std::mem::size_of::<u16>();
+impl<'d> Grib2GpvUnpack for RunLength<'d> {
+    type Iter<'a>
+        = std::vec::IntoIter<f32>
+    where
+        Self: 'a;
+
+    fn iter<'a>(&'a self) -> Result<Self::Iter<'a>, DecodeError> {
+        let Self(target) = self;
+        let sect5_data = &target.sect5_bytes;
+        let param = RunLengthPackingParam::from_buf(&sect5_data[11..17]);
+
+        let mut level_map = Vec::with_capacity(param.max_level.into());
+        level_map.push(f32::NAN);
+        let mut pos = 17;
+
+        for _ in 0..param.max_level {
+            let val: f32 = read_as!(u16, sect5_data, pos).into();
+            let num_digits: i32 = param.num_digits.into();
+            let factor = 10_f32.powi(-num_digits);
+            let val = val * factor;
+            level_map.push(val);
+            pos += std::mem::size_of::<u16>();
+        }
+
+        let decoded_levels = rleunpack(
+            target.sect7_payload(),
+            param.nbit,
+            param.maxv,
+            Some(target.num_points_encoded()),
+        )?;
+
+        let level_to_value = |level: &u16| -> Result<f32, DecodeError> {
+            let index: usize = (*level).into();
+            level_map
+                .get(index)
+                .copied()
+                .ok_or(DecodeError::from(format!("invalid level value: {level}")))
+        };
+
+        let decoded: Result<Vec<_>, _> = (*decoded_levels).iter().map(level_to_value).collect();
+        Ok(decoded?.into_iter())
     }
-
-    let decoded_levels = rleunpack(
-        target.sect7_payload(),
-        param.nbit,
-        param.maxv,
-        Some(target.num_points_encoded()),
-    )?;
-
-    let level_to_value = |level: &u16| -> Result<f32, DecodeError> {
-        let index: usize = (*level).into();
-        level_map
-            .get(index)
-            .copied()
-            .ok_or(DecodeError::from(format!("invalid level value: {level}")))
-    };
-
-    let decoded: Result<Vec<_>, _> = (*decoded_levels).iter().map(level_to_value).collect();
-    Ok(decoded?.into_iter())
 }
 
 // Since maxv is represented as a 16-bit integer, values are 16 bits or less.

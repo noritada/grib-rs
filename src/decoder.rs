@@ -313,6 +313,14 @@ impl From<&str> for DecodeError {
     }
 }
 
+pub(crate) trait Grib2GpvUnpack {
+    type Iter<'a>: Iterator<Item = f32>
+    where
+        Self: 'a;
+
+    fn iter<'a>(&'a self) -> Result<Self::Iter<'a>, DecodeError>;
+}
+
 mod bitmap;
 #[cfg(not(target_arch = "wasm32"))]
 mod ccsds;

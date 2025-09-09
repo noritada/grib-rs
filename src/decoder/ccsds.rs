@@ -5,40 +5,54 @@ use crate::{
         stream::{FixedValueIterator, NBitwiseIterator},
         Grib2SubmessageDecoder,
     },
-    DecodeError,
+    DecodeError, Grib2GpvUnpack,
 };
 
 pub(crate) fn decode(
     target: &Grib2SubmessageDecoder,
 ) -> Result<SimplePackingDecodeIteratorWrapper<impl Iterator<Item = u32> + '_>, DecodeError> {
-    let sect5_data = &target.sect5_bytes;
-    let simple_param = SimplePackingParam::from_buf(&sect5_data[11..21])?;
-    let ccsds_param = CcsdsCompressionParam::from_buf(&sect5_data[21..25]);
+    Ccsds(target).iter()
+}
 
-    let decoder = if simple_param.nbit == 0 {
-        SimplePackingDecodeIteratorWrapper::FixedValue(FixedValueIterator::new(
-            simple_param.zero_bit_reference_value(),
-            target.num_points_encoded(),
-        ))
-    } else {
-        let element_size_in_bytes = usize::from(simple_param.nbit >> 3) + 1;
-        let size = element_size_in_bytes * target.num_points_encoded();
-        let mut decoded = vec![0; size];
-        let mut stream = aec::Stream::new(
-            simple_param.nbit.into(),
-            ccsds_param.block_size.into(),
-            ccsds_param.reference_sample_interval.into(),
-            ccsds_param.mask.into(),
-        );
-        stream
-            .decode(target.sect7_payload(), &mut decoded)
-            .map_err(DecodeError::from)?;
+pub(crate) struct Ccsds<'d>(pub(crate) &'d Grib2SubmessageDecoder);
 
-        let decoder = NBitwiseIterator::new(decoded.into_iter(), element_size_in_bytes * 8);
-        let decoder = SimplePackingDecodeIterator::new(decoder, &simple_param);
-        SimplePackingDecodeIteratorWrapper::SimplePacking(decoder)
-    };
-    Ok(decoder)
+impl<'d> Grib2GpvUnpack for Ccsds<'d> {
+    type Iter<'a>
+        = SimplePackingDecodeIteratorWrapper<NBitwiseIterator<std::vec::IntoIter<u8>>>
+    where
+        Self: 'a;
+
+    fn iter<'a>(&'a self) -> Result<Self::Iter<'a>, DecodeError> {
+        let Self(target) = self;
+        let sect5_data = &target.sect5_bytes;
+        let simple_param = SimplePackingParam::from_buf(&sect5_data[11..21])?;
+        let ccsds_param = CcsdsCompressionParam::from_buf(&sect5_data[21..25]);
+
+        let decoder = if simple_param.nbit == 0 {
+            SimplePackingDecodeIteratorWrapper::FixedValue(FixedValueIterator::new(
+                simple_param.zero_bit_reference_value(),
+                target.num_points_encoded(),
+            ))
+        } else {
+            let element_size_in_bytes = usize::from(simple_param.nbit >> 3) + 1;
+            let size = element_size_in_bytes * target.num_points_encoded();
+            let mut decoded = vec![0; size];
+            let mut stream = aec::Stream::new(
+                simple_param.nbit.into(),
+                ccsds_param.block_size.into(),
+                ccsds_param.reference_sample_interval.into(),
+                ccsds_param.mask.into(),
+            );
+            stream
+                .decode(target.sect7_payload(), &mut decoded)
+                .map_err(DecodeError::from)?;
+
+            let decoder = NBitwiseIterator::new(decoded.into_iter(), element_size_in_bytes * 8);
+            let decoder = SimplePackingDecodeIterator::new(decoder, &simple_param);
+            SimplePackingDecodeIteratorWrapper::SimplePacking(decoder)
+        };
+        Ok(decoder)
+    }
 }
 
 #[cfg(test)]
