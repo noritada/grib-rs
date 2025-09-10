@@ -11,7 +11,7 @@ homepage.workspace = true
 categories.workspace = true
 keywords.workspace = true
 exclude = ["/.github", "/testdata"]
-rust-version = "1.65"
+rust-version = "1.73"
 
 [package.metadata.docs.rs]
 all-features = true
