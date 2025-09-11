@@ -31,7 +31,7 @@ pager = "0.16"
 which = "8"
 
 [target.'cfg(not(unix))'.dependencies]
-grib = { path = "..", version = "=0.12.0" }
+grib = { path = "..", version = "=0.12.0", features = ["jpeg2000-unpack-with-openjpeg", "png-unpack-with-png-crate", "ccsds-unpack-with-libaec"] }
 
 [dev-dependencies]
 assert_cmd = "2"
