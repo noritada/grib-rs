@@ -154,11 +154,11 @@ impl Grib2SubmessageDecoder {
             0 => Grib2ValueIterator::SigSNS(simple::Simple(self).iter()?),
             2 => Grib2ValueIterator::SigSC(complex::Complex(self).iter()?),
             3 => Grib2ValueIterator::SigSSCI(complex::ComplexSpatial(self).iter()?),
-            #[cfg(feature = "jpeg2000-support-openjpeg")]
+            #[cfg(feature = "jpeg2000-unpack-with-openjpeg")]
             40 => Grib2ValueIterator::SigSI(jpeg2000::Jpeg2000(self).iter()?),
-            #[cfg(feature = "png-support-png-crate")]
+            #[cfg(feature = "png-unpack-with-png-crate")]
             41 => Grib2ValueIterator::SigSNV(png::Png(self).iter()?),
-            #[cfg(feature = "ccsds-support-libaec")]
+            #[cfg(feature = "ccsds-unpack-with-libaec")]
             42 => Grib2ValueIterator::SigSNV(ccsds::Ccsds(self).iter()?),
             200 => Grib2ValueIterator::SigI(run_length::RunLength(self).iter()?),
             n => {
@@ -273,13 +273,13 @@ pub(crate) trait Grib2GpvUnpack {
 }
 
 mod bitmap;
-#[cfg(feature = "ccsds-support-libaec")]
+#[cfg(feature = "ccsds-unpack-with-libaec")]
 mod ccsds;
 mod complex;
-#[cfg(feature = "jpeg2000-support-openjpeg")]
+#[cfg(feature = "jpeg2000-unpack-with-openjpeg")]
 mod jpeg2000;
 mod param;
-#[cfg(feature = "png-support-png-crate")]
+#[cfg(feature = "png-unpack-with-png-crate")]
 mod png;
 mod run_length;
 mod simple;

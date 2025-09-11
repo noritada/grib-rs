@@ -51,13 +51,13 @@ grib-build = { path = "gen", version = "0.4.3" }
 
 [features]
 # Enable JPEG 2000 code stream format support in the GPV decoder with the help of OpenJPEG written in C.
-jpeg2000-support-openjpeg = ["dep:openjpeg-sys"]
+jpeg2000-unpack-with-openjpeg = ["dep:openjpeg-sys"]
 
 # Enable Portable Network Graphics (PNG) support in the GPV decoder with the help of png crate.
-png-support-png-crate = ["dep:png"]
+png-unpack-with-png-crate = ["dep:png"]
 
 # Enable CCSDS recommended lossless compression support in the GPV decoder with the help of libaec written in C.
-ccsds-support-libaec = ["dep:libaec-sys"]
+ccsds-unpack-with-libaec = ["dep:libaec-sys"]
 
 # Enable computation of latitudes and longitudes of grid points points using
 # PROJ for some grid systems.
