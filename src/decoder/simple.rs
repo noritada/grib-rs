@@ -48,11 +48,11 @@ pub(crate) struct Simple<'d>(pub(crate) &'d Grib2SubmessageDecoder);
 
 impl<'d> Grib2GpvUnpack for Simple<'d> {
     type Iter<'a>
-        = SimplePackingDecodeIteratorWrapper<NBitwiseIterator<&'a [u8]>>
+        = SimplePackingDecodeIteratorWrapper<NBitwiseIterator<&'d [u8]>>
     where
         Self: 'a;
 
-    fn iter<'a>(&'a self) -> Result<Self::Iter<'a>, DecodeError> {
+    fn iter<'a>(&'a self) -> Result<Self::Iter<'d>, DecodeError> {
         let Self(target) = self;
         let sect5_data = &target.sect5_bytes;
         let param = SimplePackingParam::from_buf(&sect5_data[11..21])?;

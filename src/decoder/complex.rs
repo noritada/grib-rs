@@ -35,11 +35,11 @@ pub(crate) struct Complex<'d>(pub(crate) &'d Grib2SubmessageDecoder);
 
 impl<'d> Grib2GpvUnpack for Complex<'d> {
     type Iter<'a>
-        = SimplePackingDecodeIteratorWrapper<ComplexPackingDecoded<'a>>
+        = SimplePackingDecodeIteratorWrapper<ComplexPackingDecoded<'d>>
     where
         Self: 'a;
 
-    fn iter<'a>(&'a self) -> Result<Self::Iter<'a>, DecodeError> {
+    fn iter<'a>(&'a self) -> Result<Self::Iter<'d>, DecodeError> {
         let Self(target) = self;
         let sect5_data = &target.sect5_bytes;
         let simple_param = SimplePackingParam::from_buf(&sect5_data[11..21])?;
@@ -83,12 +83,12 @@ pub(crate) struct ComplexSpatial<'d>(pub(crate) &'d Grib2SubmessageDecoder);
 impl<'d> Grib2GpvUnpack for ComplexSpatial<'d> {
     type Iter<'a>
         = SimplePackingDecodeIteratorWrapper<
-        SpatialDifferencingDecodeIterator<ComplexPackingDecoded<'a>, std::vec::IntoIter<i32>>,
+        SpatialDifferencingDecodeIterator<ComplexPackingDecoded<'d>, std::vec::IntoIter<i32>>,
     >
     where
         Self: 'a;
 
-    fn iter<'a>(&'a self) -> Result<Self::Iter<'a>, DecodeError> {
+    fn iter<'a>(&'a self) -> Result<Self::Iter<'d>, DecodeError> {
         let Self(target) = self;
         let sect5_data = &target.sect5_bytes;
         let simple_param = SimplePackingParam::from_buf(&sect5_data[11..21])?;
@@ -219,7 +219,7 @@ fn decode_complex_packing(
 
 // Types of closures with captures cannot be denoted.
 // Waiting for `type_alias_impl_trait` (TAIT) getting into stable.
-struct WithOffset<T> {
+pub(crate) struct WithOffset<T> {
     stream: BitStream<T>,
     offset: u32,
     inc: u32,
@@ -251,7 +251,7 @@ where
 }
 
 #[derive(Clone)]
-struct ComplexPackingValueDecodeIterator<I, J, K> {
+pub(crate) struct ComplexPackingValueDecodeIterator<I, J, K> {
     ref_iter: I,
     width_iter: J,
     length_iter: K,
