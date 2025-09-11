@@ -42,7 +42,7 @@ jobs:
             with_test: true
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
-            features: --features gridpoints-proj
+            features: --features gridpoints-proj,jpeg2000-unpack-with-openjpeg,png-unpack-with-png-crate,ccsds-unpack-with-libaec
             with_test: true
           # - os: ubuntu-latest
           #   target: x86_64-unknown-linux-musl
@@ -56,11 +56,11 @@ jobs:
             with_test: true
           - os: macOS-latest
             target: x86_64-apple-darwin
-            features: --features gridpoints-proj
+            features: --features gridpoints-proj,jpeg2000-unpack-with-openjpeg,png-unpack-with-png-crate,ccsds-unpack-with-libaec
             with_test: true
           - os: macOS-latest
             target: aarch64-apple-darwin
-            features: --features gridpoints-proj
+            features: --features gridpoints-proj,jpeg2000-unpack-with-openjpeg,png-unpack-with-png-crate,ccsds-unpack-with-libaec
             with_test: false
 
     runs-on: ${{ matrix.os }}
