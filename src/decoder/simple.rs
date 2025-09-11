@@ -6,7 +6,7 @@ use crate::{
         stream::{FixedValueIterator, NBitwiseIterator},
         Grib2SubmessageDecoder,
     },
-    DecodeError,
+    DecodeError, Grib2GpvUnpack,
 };
 
 pub(crate) enum SimplePackingDecodeIteratorWrapper<I> {
@@ -41,20 +41,34 @@ where
 pub(crate) fn decode(
     target: &Grib2SubmessageDecoder,
 ) -> Result<SimplePackingDecodeIteratorWrapper<impl Iterator<Item = u32> + '_>, DecodeError> {
-    let sect5_data = &target.sect5_bytes;
-    let param = SimplePackingParam::from_buf(&sect5_data[11..21])?;
+    Simple(target).iter()
+}
 
-    let decoder = if param.nbit == 0 {
-        SimplePackingDecodeIteratorWrapper::FixedValue(FixedValueIterator::new(
-            param.zero_bit_reference_value(),
-            target.num_points_encoded(),
-        ))
-    } else {
-        let iter = NBitwiseIterator::new(target.sect7_payload(), usize::from(param.nbit));
-        let iter = SimplePackingDecodeIterator::new(iter, &param);
-        SimplePackingDecodeIteratorWrapper::SimplePacking(iter)
-    };
-    Ok(decoder)
+pub(crate) struct Simple<'d>(pub(crate) &'d Grib2SubmessageDecoder);
+
+impl<'d> Grib2GpvUnpack for Simple<'d> {
+    type Iter<'a>
+        = SimplePackingDecodeIteratorWrapper<NBitwiseIterator<&'d [u8]>>
+    where
+        Self: 'a;
+
+    fn iter<'a>(&'a self) -> Result<Self::Iter<'d>, DecodeError> {
+        let Self(target) = self;
+        let sect5_data = &target.sect5_bytes;
+        let param = SimplePackingParam::from_buf(&sect5_data[11..21])?;
+
+        let decoder = if param.nbit == 0 {
+            SimplePackingDecodeIteratorWrapper::FixedValue(FixedValueIterator::new(
+                param.zero_bit_reference_value(),
+                target.num_points_encoded(),
+            ))
+        } else {
+            let iter = NBitwiseIterator::new(target.sect7_payload(), usize::from(param.nbit));
+            let iter = SimplePackingDecodeIterator::new(iter, &param);
+            SimplePackingDecodeIteratorWrapper::SimplePacking(iter)
+        };
+        Ok(decoder)
+    }
 }
 
 pub(crate) struct SimplePackingDecodeIterator<I> {

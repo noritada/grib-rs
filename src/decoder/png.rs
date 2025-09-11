@@ -4,41 +4,55 @@ use crate::{
         simple::{SimplePackingDecodeIterator, SimplePackingDecodeIteratorWrapper},
         stream::{FixedValueIterator, NBitwiseIterator},
     },
-    DecodeError, Grib2SubmessageDecoder,
+    DecodeError, Grib2GpvUnpack, Grib2SubmessageDecoder,
 };
 
 pub(crate) fn decode(
     target: &Grib2SubmessageDecoder,
 ) -> Result<SimplePackingDecodeIteratorWrapper<impl Iterator<Item = u32> + '_>, DecodeError> {
-    let sect5_data = &target.sect5_bytes;
-    let param = SimplePackingParam::from_buf(&sect5_data[11..21])?;
+    Png(target).iter()
+}
 
-    let buf = read_image_buffer(target.sect7_payload())
-        .map_err(|e| DecodeError::from(format!("PNG decode error: {e}")))?;
+pub(crate) struct Png<'d>(pub(crate) &'d Grib2SubmessageDecoder);
 
-    if param.nbit == 0 {
-        eprintln!(
-            "WARNING: nbit = 0 for PNG decoder is not tested.
-            Please report your data and help us develop the library."
-        );
-        let decoder = SimplePackingDecodeIteratorWrapper::FixedValue(FixedValueIterator::new(
-            param.zero_bit_reference_value(),
-            target.num_points_encoded(),
-        ));
-        return Ok(decoder);
-    };
+impl<'d> Grib2GpvUnpack for Png<'d> {
+    type Iter<'a>
+        = SimplePackingDecodeIteratorWrapper<NBitwiseIterator<Vec<u8>>>
+    where
+        Self: 'a;
 
-    if param.nbit != 16 {
-        eprintln!(
-            "WARNING: nbit != 16 for PNG decoder is not tested.
-            Please report your data and help us develop the library."
-        );
+    fn iter<'a>(&'a self) -> Result<Self::Iter<'a>, DecodeError> {
+        let Self(target) = self;
+        let sect5_data = &target.sect5_bytes;
+        let param = SimplePackingParam::from_buf(&sect5_data[11..21])?;
+
+        let buf = read_image_buffer(target.sect7_payload())
+            .map_err(|e| DecodeError::from(format!("PNG decode error: {e}")))?;
+
+        if param.nbit == 0 {
+            eprintln!(
+                "WARNING: nbit = 0 for PNG decoder is not tested.
+                Please report your data and help us develop the library."
+            );
+            let decoder = SimplePackingDecodeIteratorWrapper::FixedValue(FixedValueIterator::new(
+                param.zero_bit_reference_value(),
+                target.num_points_encoded(),
+            ));
+            return Ok(decoder);
+        };
+
+        if param.nbit != 16 {
+            eprintln!(
+                "WARNING: nbit != 16 for PNG decoder is not tested.
+                Please report your data and help us develop the library."
+            );
+        }
+
+        let iter = NBitwiseIterator::new(buf, usize::from(param.nbit));
+        let iter = SimplePackingDecodeIterator::new(iter, &param);
+        let iter = SimplePackingDecodeIteratorWrapper::SimplePacking(iter);
+        Ok(iter)
     }
-
-    let iter = NBitwiseIterator::new(buf, usize::from(param.nbit));
-    let iter = SimplePackingDecodeIterator::new(iter, &param);
-    let iter = SimplePackingDecodeIteratorWrapper::SimplePacking(iter);
-    Ok(iter)
 }
 
 fn read_image_buffer(buf: &[u8]) -> Result<Vec<u8>, String> {

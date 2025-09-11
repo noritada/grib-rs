@@ -1,8 +1,13 @@
+use std::vec::IntoIter;
+
 use openjpeg_sys as opj;
 
-use crate::decoder::{
-    param::SimplePackingParam, simple::*, stream::FixedValueIterator, DecodeError,
-    Grib2SubmessageDecoder,
+use crate::{
+    decoder::{
+        param::SimplePackingParam, simple::*, stream::FixedValueIterator, DecodeError,
+        Grib2SubmessageDecoder,
+    },
+    Grib2GpvUnpack,
 };
 
 mod ext;
@@ -11,27 +16,41 @@ use ext::*;
 pub(crate) fn decode(
     target: &Grib2SubmessageDecoder,
 ) -> Result<SimplePackingDecodeIteratorWrapper<impl Iterator<Item = i32>>, DecodeError> {
-    let sect5_data = &target.sect5_bytes;
-    let simple_param = SimplePackingParam::from_buf(&sect5_data[11..21])?;
-
-    if simple_param.nbit == 0 {
-        // Tested with the World Aviation Forecast System (WAFS) GRIV files from the repo: https://aviationweather.gov/wifs/api.html
-        // See #111 and #113.
-        let decoder = SimplePackingDecodeIteratorWrapper::FixedValue(FixedValueIterator::new(
-            simple_param.zero_bit_reference_value(),
-            target.num_points_encoded(),
-        ));
-        return Ok(decoder);
-    };
-
-    let stream = Stream::from_bytes(target.sect7_payload())?;
-    let jp2_unpacked = decode_jp2(stream)?;
-    let decoder = SimplePackingDecodeIterator::new(jp2_unpacked, &simple_param);
-    let decoder = SimplePackingDecodeIteratorWrapper::SimplePacking(decoder);
-    Ok(decoder)
+    Jpeg2000(target).iter()
 }
 
-fn decode_jp2(stream: Stream) -> Result<impl Iterator<Item = i32>, DecodeError> {
+pub(crate) struct Jpeg2000<'d>(pub(crate) &'d Grib2SubmessageDecoder);
+
+impl<'d> Grib2GpvUnpack for Jpeg2000<'d> {
+    type Iter<'a>
+        = SimplePackingDecodeIteratorWrapper<IntoIter<i32>>
+    where
+        Self: 'a;
+
+    fn iter<'a>(&'a self) -> Result<Self::Iter<'a>, DecodeError> {
+        let Self(target) = self;
+        let sect5_data = &target.sect5_bytes;
+        let simple_param = SimplePackingParam::from_buf(&sect5_data[11..21])?;
+
+        if simple_param.nbit == 0 {
+            // Tested with the World Aviation Forecast System (WAFS) GRIV files from the repo: https://aviationweather.gov/wifs/api.html
+            // See #111 and #113.
+            let decoder = SimplePackingDecodeIteratorWrapper::FixedValue(FixedValueIterator::new(
+                simple_param.zero_bit_reference_value(),
+                target.num_points_encoded(),
+            ));
+            return Ok(decoder);
+        };
+
+        let stream = Stream::from_bytes(target.sect7_payload())?;
+        let jp2_unpacked = decode_jp2(stream)?;
+        let decoder = SimplePackingDecodeIterator::new(jp2_unpacked, &simple_param);
+        let decoder = SimplePackingDecodeIteratorWrapper::SimplePacking(decoder);
+        Ok(decoder)
+    }
+}
+
+fn decode_jp2(stream: Stream) -> Result<IntoIter<i32>, DecodeError> {
     let codec = Codec::j2k()?;
 
     let mut decode_params = unsafe { std::mem::zeroed::<opj::opj_dparameters>() };
