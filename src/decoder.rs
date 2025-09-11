@@ -1,11 +1,13 @@
-#[allow(dead_code)]
-use std::marker::PhantomData;
+use std::vec::IntoIter;
 
 use crate::{
     context::{SectionBody, SubMessage},
     decoder::{
         bitmap::{dummy_bitmap_for_nonnullable_data, BitmapDecodeIterator},
+        complex::ComplexPackingDecoded,
         param::Section5Param,
+        simple::SimplePackingDecodeIteratorWrapper,
+        stream::NBitwiseIterator,
     },
     error::*,
     reader::Grib2Read,
@@ -148,16 +150,17 @@ impl Grib2SubmessageDecoder {
     pub fn dispatch(
         &self,
     ) -> Result<Grib2DecodedValues<'_, impl Iterator<Item = f32> + '_>, GribError> {
-        let decoder: Grib2ValueIterator<_, _, _, _> = match self.sect5_param.template_num {
-            0 => Grib2ValueIterator::Template0(simple::decode(self)?),
-            2 => Grib2ValueIterator::Template2(complex::decode_7_2(self)?),
-            3 => Grib2ValueIterator::Template3(complex::decode_7_3(self)?),
+        let decoder = match self.sect5_param.template_num {
+            0 => Grib2ValueIterator::SigSNS(simple::Simple(self).iter()?),
+            2 => Grib2ValueIterator::SigSC(complex::Complex(self).iter()?),
+            3 => Grib2ValueIterator::SigSSCI(complex::ComplexSpatial(self).iter()?),
             #[cfg(feature = "jpeg2000-support-openjpeg")]
-            40 => Grib2ValueIterator::Template40(jpeg2000::decode(self)?),
-            41 => Grib2ValueIterator::Template41(png::decode(self)?),
-            #[cfg(feature = "ccsdc-support-libaec")]
-            42 => Grib2ValueIterator::Template42(ccsds::decode(self)?),
-            200 => Grib2ValueIterator::Template200(run_length::decode(self)?),
+            40 => Grib2ValueIterator::SigSI(jpeg2000::Jpeg2000(self).iter()?),
+            #[cfg(feature = "png-support-png-crate")]
+            41 => Grib2ValueIterator::SigSNV(png::Png(self).iter()?),
+            #[cfg(feature = "ccsds-support-libaec")]
+            42 => Grib2ValueIterator::SigSNV(ccsds::Ccsds(self).iter()?),
+            200 => Grib2ValueIterator::SigI(run_length::RunLength(self).iter()?),
             n => {
                 return Err(GribError::DecodeError(DecodeError::NotSupported(
                     "GRIB2 code table 5.0 (data representation template number)",
@@ -201,89 +204,44 @@ where
     }
 }
 
-enum Grib2ValueIterator<T0, T2, T3, T41, T40 = (), T42 = ()> {
-    Template0(T0),
-    Template2(T2),
-    Template3(T3),
+enum Grib2ValueIterator<'d> {
+    SigSNS(SimplePackingDecodeIteratorWrapper<NBitwiseIterator<&'d [u8]>>),
+    SigSC(SimplePackingDecodeIteratorWrapper<ComplexPackingDecoded<'d>>),
+    SigSSCI(
+        SimplePackingDecodeIteratorWrapper<
+            complex::SpatialDifferencingDecodeIterator<ComplexPackingDecoded<'d>, IntoIter<i32>>,
+        >,
+    ),
     #[allow(dead_code)]
-    Template40(Jpeg2000Decoder<T40>),
-    Template41(T41),
+    SigSI(SimplePackingDecodeIteratorWrapper<IntoIter<i32>>),
     #[allow(dead_code)]
-    Template42(CcsdcCompressionDecoder<T42>),
-    Template200(std::vec::IntoIter<f32>),
+    SigSNV(SimplePackingDecodeIteratorWrapper<NBitwiseIterator<Vec<u8>>>),
+    SigI(IntoIter<f32>),
 }
 
-impl<T0, T2, T3, T41, T40, T42> Iterator for Grib2ValueIterator<T0, T2, T3, T41, T40, T42>
-where
-    T0: Iterator<Item = f32>,
-    T2: Iterator<Item = f32>,
-    T3: Iterator<Item = f32>,
-    Jpeg2000Decoder<T40>: Iterator<Item = f32>,
-    T41: Iterator<Item = f32>,
-    CcsdcCompressionDecoder<T42>: Iterator<Item = f32>,
-{
+impl<'d> Iterator for Grib2ValueIterator<'d> {
     type Item = f32;
 
     fn next(&mut self) -> Option<Self::Item> {
         match self {
-            Self::Template0(inner) => inner.next(),
-            Self::Template2(inner) => inner.next(),
-            Self::Template3(inner) => inner.next(),
-            Self::Template40(inner) => inner.next(),
-            Self::Template41(inner) => inner.next(),
-            Self::Template42(inner) => inner.next(),
-            Self::Template200(inner) => inner.next(),
+            Self::SigSNS(inner) => inner.next(),
+            Self::SigSC(inner) => inner.next(),
+            Self::SigSSCI(inner) => inner.next(),
+            Self::SigSI(inner) => inner.next(),
+            Self::SigSNV(inner) => inner.next(),
+            Self::SigI(inner) => inner.next(),
         }
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
         match self {
-            Self::Template0(inner) => inner.size_hint(),
-            Self::Template2(inner) => inner.size_hint(),
-            Self::Template3(inner) => inner.size_hint(),
-            Self::Template40(inner) => inner.size_hint(),
-            Self::Template41(inner) => inner.size_hint(),
-            Self::Template42(inner) => inner.size_hint(),
-            Self::Template200(inner) => inner.size_hint(),
+            Self::SigSNS(inner) => inner.size_hint(),
+            Self::SigSC(inner) => inner.size_hint(),
+            Self::SigSSCI(inner) => inner.size_hint(),
+            Self::SigSI(inner) => inner.size_hint(),
+            Self::SigSNV(inner) => inner.size_hint(),
+            Self::SigI(inner) => inner.size_hint(),
         }
-    }
-}
-
-// Rust does not allow modification of generics type parameters or where clauses
-// in conditonal compilation at this time. Following is a trick to allow
-// compilation.
-
-#[cfg(feature = "jpeg2000-support-openjpeg")]
-type Jpeg2000Decoder<T> = SimplePackingDecodeIteratorWrapper<T>;
-#[cfg(not(feature = "jpeg2000-support-openjpeg"))]
-type Jpeg2000Decoder<T> = Jpeg2000DecoderDisabled<T>;
-
-#[cfg(not(feature = "jpeg2000-support-openjpeg"))]
-struct Jpeg2000DecoderDisabled<T>(PhantomData<T>);
-
-#[cfg(not(feature = "jpeg2000-support-openjpeg"))]
-impl<T> Iterator for Jpeg2000DecoderDisabled<T> {
-    type Item = f32;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        unreachable!("JPEG 2000 code stream format support is disabled")
-    }
-}
-
-#[cfg(feature = "ccsdc-support-libaec")]
-type CcsdcCompressionDecoder<T> = SimplePackingDecodeIteratorWrapper<T>;
-#[cfg(not(feature = "ccsdc-support-libaec"))]
-type CcsdcCompressionDecoder<T> = CcsdcCompressionDecoderDisabled<T>;
-
-#[cfg(not(feature = "ccsdc-support-libaec"))]
-struct CcsdcCompressionDecoderDisabled<T>(PhantomData<T>);
-
-#[cfg(not(feature = "ccsdc-support-libaec"))]
-impl<T> Iterator for CcsdcCompressionDecoderDisabled<T> {
-    type Item = f32;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        unreachable!("CCSDC recommended lossless compression support is disabled")
     }
 }
 
@@ -315,12 +273,13 @@ pub(crate) trait Grib2GpvUnpack {
 }
 
 mod bitmap;
-#[cfg(feature = "ccsdc-support-libaec")]
+#[cfg(feature = "ccsds-support-libaec")]
 mod ccsds;
 mod complex;
 #[cfg(feature = "jpeg2000-support-openjpeg")]
 mod jpeg2000;
 mod param;
+#[cfg(feature = "png-support-png-crate")]
 mod png;
 mod run_length;
 mod simple;

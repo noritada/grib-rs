@@ -107,14 +107,14 @@ impl SpatialDifferencingParam {
     }
 }
 
-#[cfg(feature = "ccsdc-support-libaec")]
+#[cfg(feature = "ccsds-support-libaec")]
 pub(crate) struct CcsdsCompressionParam {
     pub(crate) mask: u8,
     pub(crate) block_size: u8,
     pub(crate) reference_sample_interval: u16,
 }
 
-#[cfg(feature = "ccsdc-support-libaec")]
+#[cfg(feature = "ccsds-support-libaec")]
 impl CcsdsCompressionParam {
     pub(crate) fn from_buf(buf: &[u8]) -> Self {
         let mask = read_as!(u8, buf, 0);

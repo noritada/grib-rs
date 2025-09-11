@@ -13,12 +13,6 @@ use crate::{
 mod ext;
 use ext::*;
 
-pub(crate) fn decode(
-    target: &Grib2SubmessageDecoder,
-) -> Result<SimplePackingDecodeIteratorWrapper<impl Iterator<Item = i32>>, DecodeError> {
-    Jpeg2000(target).iter()
-}
-
 pub(crate) struct Jpeg2000<'d>(pub(crate) &'d Grib2SubmessageDecoder);
 
 impl<'d> Grib2GpvUnpack for Jpeg2000<'d> {

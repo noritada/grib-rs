@@ -7,12 +7,6 @@ use crate::{
     DecodeError, Grib2GpvUnpack, Grib2SubmessageDecoder,
 };
 
-pub(crate) fn decode(
-    target: &Grib2SubmessageDecoder,
-) -> Result<SimplePackingDecodeIteratorWrapper<impl Iterator<Item = u32> + '_>, DecodeError> {
-    Png(target).iter()
-}
-
 pub(crate) struct Png<'d>(pub(crate) &'d Grib2SubmessageDecoder);
 
 impl<'d> Grib2GpvUnpack for Png<'d> {
