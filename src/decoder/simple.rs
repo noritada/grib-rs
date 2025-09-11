@@ -9,14 +9,14 @@ use crate::{
     DecodeError, Grib2GpvUnpack,
 };
 
-pub(crate) enum SimplePackingDecodeIteratorWrapper<I> {
+pub(crate) enum SimplePackingDecoder<I> {
     // Based on the implementation of wgrib2, if nbits equals 0, return a constant
     // field where the data value at each grid point is the reference value.
-    FixedValue(FixedValueIterator<f32>),
-    SimplePacking(SimplePackingDecodeIterator<I>),
+    ZeroLength(FixedValueIterator<f32>),
+    NonZeroLength(NonZeroSimplePackingDecoder<I>),
 }
 
-impl<I, N> Iterator for SimplePackingDecodeIteratorWrapper<I>
+impl<I, N> Iterator for SimplePackingDecoder<I>
 where
     I: Iterator<Item = N>,
     N: ToPrimitive,
@@ -25,15 +25,15 @@ where
 
     fn next(&mut self) -> Option<Self::Item> {
         match self {
-            Self::FixedValue(inner) => inner.next(),
-            Self::SimplePacking(inner) => inner.next(),
+            Self::ZeroLength(inner) => inner.next(),
+            Self::NonZeroLength(inner) => inner.next(),
         }
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
         match self {
-            Self::FixedValue(inner) => inner.size_hint(),
-            Self::SimplePacking(inner) => inner.size_hint(),
+            Self::ZeroLength(inner) => inner.size_hint(),
+            Self::NonZeroLength(inner) => inner.size_hint(),
         }
     }
 }
@@ -42,7 +42,7 @@ pub(crate) struct Simple<'d>(pub(crate) &'d Grib2SubmessageDecoder);
 
 impl<'d> Grib2GpvUnpack for Simple<'d> {
     type Iter<'a>
-        = SimplePackingDecodeIteratorWrapper<NBitwiseIterator<&'d [u8]>>
+        = SimplePackingDecoder<NBitwiseIterator<&'d [u8]>>
     where
         Self: 'a;
 
@@ -52,27 +52,27 @@ impl<'d> Grib2GpvUnpack for Simple<'d> {
         let param = SimplePackingParam::from_buf(&sect5_data[11..21])?;
 
         let decoder = if param.nbit == 0 {
-            SimplePackingDecodeIteratorWrapper::FixedValue(FixedValueIterator::new(
+            SimplePackingDecoder::ZeroLength(FixedValueIterator::new(
                 param.zero_bit_reference_value(),
                 target.num_points_encoded(),
             ))
         } else {
             let iter = NBitwiseIterator::new(target.sect7_payload(), usize::from(param.nbit));
-            let iter = SimplePackingDecodeIterator::new(iter, &param);
-            SimplePackingDecodeIteratorWrapper::SimplePacking(iter)
+            let iter = NonZeroSimplePackingDecoder::new(iter, &param);
+            SimplePackingDecoder::NonZeroLength(iter)
         };
         Ok(decoder)
     }
 }
 
-pub(crate) struct SimplePackingDecodeIterator<I> {
+pub(crate) struct NonZeroSimplePackingDecoder<I> {
     iter: I,
     ref_val: f32,
     exp: i32,
     dig: i32,
 }
 
-impl<I> SimplePackingDecodeIterator<I> {
+impl<I> NonZeroSimplePackingDecoder<I> {
     pub(crate) fn new(iter: I, param: &SimplePackingParam) -> Self {
         Self {
             iter,
@@ -83,7 +83,7 @@ impl<I> SimplePackingDecodeIterator<I> {
     }
 }
 
-impl<I: Iterator<Item = N>, N: ToPrimitive> Iterator for SimplePackingDecodeIterator<I> {
+impl<I: Iterator<Item = N>, N: ToPrimitive> Iterator for NonZeroSimplePackingDecoder<I> {
     type Item = f32;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -117,7 +117,7 @@ mod tests {
         let expected: Vec<f32> = vec![7.987_831_6e-7, 9.030_913e-7];
 
         let iter = NBitwiseIterator::new(&input, usize::from(param.nbit));
-        let actual = SimplePackingDecodeIterator::new(iter, &param).collect::<Vec<_>>();
+        let actual = NonZeroSimplePackingDecoder::new(iter, &param).collect::<Vec<_>>();
 
         assert_eq!(actual.len(), expected.len());
         let mut i = 0;

@@ -1,7 +1,7 @@
 use crate::{
     decoder::{
         param::SimplePackingParam,
-        simple::{SimplePackingDecodeIterator, SimplePackingDecodeIteratorWrapper},
+        simple::{NonZeroSimplePackingDecoder, SimplePackingDecoder},
         stream::{FixedValueIterator, NBitwiseIterator},
     },
     DecodeError, Grib2GpvUnpack, Grib2SubmessageDecoder,
@@ -11,7 +11,7 @@ pub(crate) struct Png<'d>(pub(crate) &'d Grib2SubmessageDecoder);
 
 impl<'d> Grib2GpvUnpack for Png<'d> {
     type Iter<'a>
-        = SimplePackingDecodeIteratorWrapper<NBitwiseIterator<Vec<u8>>>
+        = SimplePackingDecoder<NBitwiseIterator<Vec<u8>>>
     where
         Self: 'a;
 
@@ -28,7 +28,7 @@ impl<'d> Grib2GpvUnpack for Png<'d> {
                 "WARNING: nbit = 0 for PNG decoder is not tested.
                 Please report your data and help us develop the library."
             );
-            let decoder = SimplePackingDecodeIteratorWrapper::FixedValue(FixedValueIterator::new(
+            let decoder = SimplePackingDecoder::ZeroLength(FixedValueIterator::new(
                 param.zero_bit_reference_value(),
                 target.num_points_encoded(),
             ));
@@ -43,8 +43,8 @@ impl<'d> Grib2GpvUnpack for Png<'d> {
         }
 
         let iter = NBitwiseIterator::new(buf, usize::from(param.nbit));
-        let iter = SimplePackingDecodeIterator::new(iter, &param);
-        let iter = SimplePackingDecodeIteratorWrapper::SimplePacking(iter);
+        let iter = NonZeroSimplePackingDecoder::new(iter, &param);
+        let iter = SimplePackingDecoder::NonZeroLength(iter);
         Ok(iter)
     }
 }

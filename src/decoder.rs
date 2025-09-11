@@ -6,7 +6,7 @@ use crate::{
         bitmap::{dummy_bitmap_for_nonnullable_data, BitmapDecodeIterator},
         complex::ComplexPackingDecoded,
         param::Section5Param,
-        simple::SimplePackingDecodeIteratorWrapper,
+        simple::SimplePackingDecoder,
         stream::NBitwiseIterator,
     },
     error::*,
@@ -205,17 +205,17 @@ where
 }
 
 enum Grib2ValueIterator<'d> {
-    SigSNS(SimplePackingDecodeIteratorWrapper<NBitwiseIterator<&'d [u8]>>),
-    SigSC(SimplePackingDecodeIteratorWrapper<ComplexPackingDecoded<'d>>),
+    SigSNS(SimplePackingDecoder<NBitwiseIterator<&'d [u8]>>),
+    SigSC(SimplePackingDecoder<ComplexPackingDecoded<'d>>),
     SigSSCI(
-        SimplePackingDecodeIteratorWrapper<
+        SimplePackingDecoder<
             complex::SpatialDifferencingDecodeIterator<ComplexPackingDecoded<'d>, IntoIter<i32>>,
         >,
     ),
     #[allow(dead_code)]
-    SigSI(SimplePackingDecodeIteratorWrapper<IntoIter<i32>>),
+    SigSI(SimplePackingDecoder<IntoIter<i32>>),
     #[allow(dead_code)]
-    SigSNV(SimplePackingDecodeIteratorWrapper<NBitwiseIterator<Vec<u8>>>),
+    SigSNV(SimplePackingDecoder<NBitwiseIterator<Vec<u8>>>),
     SigI(IntoIter<f32>),
 }
 

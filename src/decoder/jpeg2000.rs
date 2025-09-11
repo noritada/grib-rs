@@ -17,7 +17,7 @@ pub(crate) struct Jpeg2000<'d>(pub(crate) &'d Grib2SubmessageDecoder);
 
 impl<'d> Grib2GpvUnpack for Jpeg2000<'d> {
     type Iter<'a>
-        = SimplePackingDecodeIteratorWrapper<IntoIter<i32>>
+        = SimplePackingDecoder<IntoIter<i32>>
     where
         Self: 'a;
 
@@ -29,7 +29,7 @@ impl<'d> Grib2GpvUnpack for Jpeg2000<'d> {
         if simple_param.nbit == 0 {
             // Tested with the World Aviation Forecast System (WAFS) GRIV files from the repo: https://aviationweather.gov/wifs/api.html
             // See #111 and #113.
-            let decoder = SimplePackingDecodeIteratorWrapper::FixedValue(FixedValueIterator::new(
+            let decoder = SimplePackingDecoder::ZeroLength(FixedValueIterator::new(
                 simple_param.zero_bit_reference_value(),
                 target.num_points_encoded(),
             ));
@@ -38,8 +38,8 @@ impl<'d> Grib2GpvUnpack for Jpeg2000<'d> {
 
         let stream = Stream::from_bytes(target.sect7_payload())?;
         let jp2_unpacked = decode_jp2(stream)?;
-        let decoder = SimplePackingDecodeIterator::new(jp2_unpacked, &simple_param);
-        let decoder = SimplePackingDecodeIteratorWrapper::SimplePacking(decoder);
+        let decoder = NonZeroSimplePackingDecoder::new(jp2_unpacked, &simple_param);
+        let decoder = SimplePackingDecoder::NonZeroLength(decoder);
         Ok(decoder)
     }
 }
