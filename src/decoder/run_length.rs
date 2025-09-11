@@ -6,12 +6,6 @@ use crate::{
     Grib2GpvUnpack,
 };
 
-pub(crate) fn decode(
-    target: &Grib2SubmessageDecoder,
-) -> Result<std::vec::IntoIter<f32>, DecodeError> {
-    RunLength(target).iter()
-}
-
 pub(crate) struct RunLength<'d>(pub(crate) &'d Grib2SubmessageDecoder);
 
 impl<'d> Grib2GpvUnpack for RunLength<'d> {

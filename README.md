@@ -69,15 +69,15 @@ For data using the following grid systems, latitudes and longitudes of grid poin
 
 For data using the following encoding methods, grid point values can be extracted.
 
-| Template number | Encoding method |
-| --- | --- |
-| 5.0 | simple packing |
-| 5.2 | complex packing |
-| 5.3 | complex packing and spatial differencing |
-| 5.40 | JPEG 2000 code stream format |
-| 5.41 | Portable Network Graphics (PNG) |
-| 5.42 | CCSDS recommended lossless compression |
-| 5.200 | run length packing with level values |
+| Template number | Encoding method | Notes |
+| --- | --- | --- |
+| 5.0 | simple packing ||
+| 5.2 | complex packing ||
+| 5.3 | complex packing and spatial differencing ||
+| 5.40 | JPEG 2000 code stream format | enabling feature `jpeg2000-unpack-with-openjpeg` required |
+| 5.41 | Portable Network Graphics (PNG) | enabling feature `png-unpack-with-png-crate` required |
+| 5.42 | CCSDS recommended lossless compression | enabling feature `ccsds-unpack-with-libaec` required |
+| 5.200 | run length packing with level values ||
 
 ## Planned features
 

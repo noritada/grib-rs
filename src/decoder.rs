@@ -1,14 +1,13 @@
-#[cfg(target_arch = "wasm32")]
-use std::marker::PhantomData;
-
-use num::ToPrimitive;
+use std::vec::IntoIter;
 
 use crate::{
     context::{SectionBody, SubMessage},
     decoder::{
         bitmap::{dummy_bitmap_for_nonnullable_data, BitmapDecodeIterator},
+        complex::ComplexPackingDecoded,
         param::Section5Param,
         simple::SimplePackingDecodeIteratorWrapper,
+        stream::NBitwiseIterator,
     },
     error::*,
     reader::Grib2Read,
@@ -152,15 +151,16 @@ impl Grib2SubmessageDecoder {
         &self,
     ) -> Result<Grib2DecodedValues<'_, impl Iterator<Item = f32> + '_>, GribError> {
         let decoder = match self.sect5_param.template_num {
-            0 => Grib2ValueIterator::Template0(simple::decode(self)?),
-            2 => Grib2ValueIterator::Template2(complex::decode_7_2(self)?),
-            3 => Grib2ValueIterator::Template3(complex::decode_7_3(self)?),
-            #[cfg(not(target_arch = "wasm32"))]
-            40 => Grib2ValueIterator::Template40(jpeg2000::decode(self)?),
-            41 => Grib2ValueIterator::Template41(png::decode(self)?),
-            #[cfg(not(target_arch = "wasm32"))]
-            42 => Grib2ValueIterator::Template42(ccsds::decode(self)?),
-            200 => Grib2ValueIterator::Template200(run_length::decode(self)?),
+            0 => Grib2ValueIterator::SigSNS(simple::Simple(self).iter()?),
+            2 => Grib2ValueIterator::SigSC(complex::Complex(self).iter()?),
+            3 => Grib2ValueIterator::SigSSCI(complex::ComplexSpatial(self).iter()?),
+            #[cfg(feature = "jpeg2000-unpack-with-openjpeg")]
+            40 => Grib2ValueIterator::SigSI(jpeg2000::Jpeg2000(self).iter()?),
+            #[cfg(feature = "png-unpack-with-png-crate")]
+            41 => Grib2ValueIterator::SigSNV(png::Png(self).iter()?),
+            #[cfg(feature = "ccsds-unpack-with-libaec")]
+            42 => Grib2ValueIterator::SigSNV(ccsds::Ccsds(self).iter()?),
+            200 => Grib2ValueIterator::SigI(run_length::RunLength(self).iter()?),
             n => {
                 return Err(GribError::DecodeError(DecodeError::NotSupported(
                     "GRIB2 code table 5.0 (data representation template number)",
@@ -204,92 +204,43 @@ where
     }
 }
 
-// Rust does not allow modification of generics type parameters or where clauses
-// in conditonal compilation at this time. This is a trick to allow compilation
-// even when JPEG 2000 code stream format support is not available (there may be
-// a better way).
-#[cfg(target_arch = "wasm32")]
-type Grib2ValueIterator<T0, T2, T3, T41> = Grib2SubmessageDecoderIteratorWrapper<
-    T0,
-    T2,
-    T3,
-    std::vec::IntoIter<f32>,
-    T41,
-    std::vec::IntoIter<f32>,
->;
-#[cfg(not(target_arch = "wasm32"))]
-type Grib2ValueIterator<T0, T2, T3, T40, T41, T42> =
-    Grib2SubmessageDecoderIteratorWrapper<T0, T2, T3, T40, T41, T42>;
-
-enum Grib2SubmessageDecoderIteratorWrapper<T0, T2, T3, T40, T41, T42> {
-    Template0(SimplePackingDecodeIteratorWrapper<T0>),
-    Template2(SimplePackingDecodeIteratorWrapper<T2>),
-    Template3(SimplePackingDecodeIteratorWrapper<T3>),
+enum Grib2ValueIterator<'d> {
+    SigSNS(SimplePackingDecodeIteratorWrapper<NBitwiseIterator<&'d [u8]>>),
+    SigSC(SimplePackingDecodeIteratorWrapper<ComplexPackingDecoded<'d>>),
+    SigSSCI(
+        SimplePackingDecodeIteratorWrapper<
+            complex::SpatialDifferencingDecodeIterator<ComplexPackingDecoded<'d>, IntoIter<i32>>,
+        >,
+    ),
     #[allow(dead_code)]
-    #[cfg(target_arch = "wasm32")]
-    Template40(PhantomData<T40>),
-    #[cfg(not(target_arch = "wasm32"))]
-    Template40(SimplePackingDecodeIteratorWrapper<T40>),
-    Template41(SimplePackingDecodeIteratorWrapper<T41>),
+    SigSI(SimplePackingDecodeIteratorWrapper<IntoIter<i32>>),
     #[allow(dead_code)]
-    #[cfg(target_arch = "wasm32")]
-    Template42(PhantomData<T42>),
-    #[cfg(not(target_arch = "wasm32"))]
-    Template42(SimplePackingDecodeIteratorWrapper<T42>),
-    Template200(std::vec::IntoIter<f32>),
+    SigSNV(SimplePackingDecodeIteratorWrapper<NBitwiseIterator<Vec<u8>>>),
+    SigI(IntoIter<f32>),
 }
 
-impl<T0, T2, T3, T40, T41, T42> Iterator
-    for Grib2SubmessageDecoderIteratorWrapper<T0, T2, T3, T40, T41, T42>
-where
-    T0: Iterator,
-    <T0 as Iterator>::Item: ToPrimitive,
-    T2: Iterator,
-    <T2 as Iterator>::Item: ToPrimitive,
-    T3: Iterator,
-    <T3 as Iterator>::Item: ToPrimitive,
-    T40: Iterator,
-    <T40 as Iterator>::Item: ToPrimitive,
-    T41: Iterator,
-    <T41 as Iterator>::Item: ToPrimitive,
-    T42: Iterator,
-    <T42 as Iterator>::Item: ToPrimitive,
-{
+impl<'d> Iterator for Grib2ValueIterator<'d> {
     type Item = f32;
 
     fn next(&mut self) -> Option<Self::Item> {
         match self {
-            Self::Template0(inner) => inner.next(),
-            Self::Template2(inner) => inner.next(),
-            Self::Template3(inner) => inner.next(),
-            #[cfg(not(target_arch = "wasm32"))]
-            Self::Template40(inner) => inner.next(),
-            #[cfg(target_arch = "wasm32")]
-            Self::Template40(_) => unreachable!(),
-            Self::Template41(inner) => inner.next(),
-            #[cfg(not(target_arch = "wasm32"))]
-            Self::Template42(inner) => inner.next(),
-            #[cfg(target_arch = "wasm32")]
-            Self::Template42(_) => unreachable!(),
-            Self::Template200(inner) => inner.next(),
+            Self::SigSNS(inner) => inner.next(),
+            Self::SigSC(inner) => inner.next(),
+            Self::SigSSCI(inner) => inner.next(),
+            Self::SigSI(inner) => inner.next(),
+            Self::SigSNV(inner) => inner.next(),
+            Self::SigI(inner) => inner.next(),
         }
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
         match self {
-            Self::Template0(inner) => inner.size_hint(),
-            Self::Template2(inner) => inner.size_hint(),
-            Self::Template3(inner) => inner.size_hint(),
-            #[cfg(not(target_arch = "wasm32"))]
-            Self::Template40(inner) => inner.size_hint(),
-            #[cfg(target_arch = "wasm32")]
-            Self::Template40(_) => unreachable!(),
-            Self::Template41(inner) => inner.size_hint(),
-            #[cfg(not(target_arch = "wasm32"))]
-            Self::Template42(inner) => inner.size_hint(),
-            #[cfg(target_arch = "wasm32")]
-            Self::Template42(_) => unreachable!(),
-            Self::Template200(inner) => inner.size_hint(),
+            Self::SigSNS(inner) => inner.size_hint(),
+            Self::SigSC(inner) => inner.size_hint(),
+            Self::SigSSCI(inner) => inner.size_hint(),
+            Self::SigSI(inner) => inner.size_hint(),
+            Self::SigSNV(inner) => inner.size_hint(),
+            Self::SigI(inner) => inner.size_hint(),
         }
     }
 }
@@ -322,12 +273,13 @@ pub(crate) trait Grib2GpvUnpack {
 }
 
 mod bitmap;
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(feature = "ccsds-unpack-with-libaec")]
 mod ccsds;
 mod complex;
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(feature = "jpeg2000-unpack-with-openjpeg")]
 mod jpeg2000;
 mod param;
+#[cfg(feature = "png-unpack-with-png-crate")]
 mod png;
 mod run_length;
 mod simple;

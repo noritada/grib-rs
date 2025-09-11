@@ -8,17 +8,11 @@ use crate::{
     DecodeError, Grib2GpvUnpack,
 };
 
-pub(crate) fn decode(
-    target: &Grib2SubmessageDecoder,
-) -> Result<SimplePackingDecodeIteratorWrapper<impl Iterator<Item = u32> + '_>, DecodeError> {
-    Ccsds(target).iter()
-}
-
 pub(crate) struct Ccsds<'d>(pub(crate) &'d Grib2SubmessageDecoder);
 
 impl<'d> Grib2GpvUnpack for Ccsds<'d> {
     type Iter<'a>
-        = SimplePackingDecodeIteratorWrapper<NBitwiseIterator<std::vec::IntoIter<u8>>>
+        = SimplePackingDecodeIteratorWrapper<NBitwiseIterator<Vec<u8>>>
     where
         Self: 'a;
 
@@ -47,7 +41,7 @@ impl<'d> Grib2GpvUnpack for Ccsds<'d> {
                 .decode(target.sect7_payload(), &mut decoded)
                 .map_err(DecodeError::from)?;
 
-            let decoder = NBitwiseIterator::new(decoded.into_iter(), element_size_in_bytes * 8);
+            let decoder = NBitwiseIterator::new(decoded, element_size_in_bytes * 8);
             let decoder = SimplePackingDecodeIterator::new(decoder, &simple_param);
             SimplePackingDecodeIteratorWrapper::SimplePacking(decoder)
         };

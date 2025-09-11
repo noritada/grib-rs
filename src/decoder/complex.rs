@@ -2,10 +2,10 @@ use std::iter::{self, Take};
 
 use num::ToPrimitive;
 
+pub(crate) use self::diff::SpatialDifferencingDecodeIterator;
 use self::{
     diff::{
         FirstOrderSpatialDifferencingDecodeIterator, SecondOrderSpatialDifferencingDecodeIterator,
-        SpatialDifferencingDecodeIterator,
     },
     missing::DecodedValue::{self, Missing1, Missing2, Normal},
 };
@@ -21,15 +21,6 @@ use crate::{
     helpers::GribInt,
     Grib2GpvUnpack,
 };
-
-pub(crate) fn decode_7_2(
-    target: &Grib2SubmessageDecoder,
-) -> Result<
-    SimplePackingDecodeIteratorWrapper<impl Iterator<Item = DecodedValue<i32>> + '_>,
-    DecodeError,
-> {
-    Complex(target).iter()
-}
 
 pub(crate) struct Complex<'d>(pub(crate) &'d Grib2SubmessageDecoder);
 
@@ -67,15 +58,6 @@ impl<'d> Grib2GpvUnpack for Complex<'d> {
         let decoder = SimplePackingDecodeIteratorWrapper::SimplePacking(decoder);
         Ok(decoder)
     }
-}
-
-pub(crate) fn decode_7_3(
-    target: &Grib2SubmessageDecoder,
-) -> Result<
-    SimplePackingDecodeIteratorWrapper<impl Iterator<Item = DecodedValue<i32>> + '_>,
-    DecodeError,
-> {
-    ComplexSpatial(target).iter()
 }
 
 pub(crate) struct ComplexSpatial<'d>(pub(crate) &'d Grib2SubmessageDecoder);
@@ -147,7 +129,7 @@ impl<'d> Grib2GpvUnpack for ComplexSpatial<'d> {
     }
 }
 
-type ComplexPackingDecoded<'d> = iter::Flatten<
+pub(crate) type ComplexPackingDecoded<'d> = iter::Flatten<
     ComplexPackingValueDecodeIterator<
         Take<BitStream<&'d [u8]>>,
         Take<WithOffset<&'d [u8]>>,

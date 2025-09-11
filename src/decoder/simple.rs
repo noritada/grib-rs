@@ -38,12 +38,6 @@ where
     }
 }
 
-pub(crate) fn decode(
-    target: &Grib2SubmessageDecoder,
-) -> Result<SimplePackingDecodeIteratorWrapper<impl Iterator<Item = u32> + '_>, DecodeError> {
-    Simple(target).iter()
-}
-
 pub(crate) struct Simple<'d>(pub(crate) &'d Grib2SubmessageDecoder);
 
 impl<'d> Grib2GpvUnpack for Simple<'d> {
