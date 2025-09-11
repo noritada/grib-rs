@@ -12,7 +12,7 @@ pub(crate) struct Ccsds<'d>(pub(crate) &'d Grib2SubmessageDecoder);
 
 impl<'d> Grib2GpvUnpack for Ccsds<'d> {
     type Iter<'a>
-        = SimplePackingDecodeIteratorWrapper<NBitwiseIterator<Vec<u8>>>
+        = SimplePackingDecoder<NBitwiseIterator<Vec<u8>>>
     where
         Self: 'a;
 
@@ -23,7 +23,7 @@ impl<'d> Grib2GpvUnpack for Ccsds<'d> {
         let ccsds_param = CcsdsCompressionParam::from_buf(&sect5_data[21..25]);
 
         let decoder = if simple_param.nbit == 0 {
-            SimplePackingDecodeIteratorWrapper::FixedValue(FixedValueIterator::new(
+            SimplePackingDecoder::ZeroLength(FixedValueIterator::new(
                 simple_param.zero_bit_reference_value(),
                 target.num_points_encoded(),
             ))
@@ -42,8 +42,8 @@ impl<'d> Grib2GpvUnpack for Ccsds<'d> {
                 .map_err(DecodeError::from)?;
 
             let decoder = NBitwiseIterator::new(decoded, element_size_in_bytes * 8);
-            let decoder = SimplePackingDecodeIterator::new(decoder, &simple_param);
-            SimplePackingDecodeIteratorWrapper::SimplePacking(decoder)
+            let decoder = NonZeroSimplePackingDecoder::new(decoder, &simple_param);
+            SimplePackingDecoder::NonZeroLength(decoder)
         };
         Ok(decoder)
     }

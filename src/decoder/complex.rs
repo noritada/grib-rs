@@ -26,7 +26,7 @@ pub(crate) struct Complex<'d>(pub(crate) &'d Grib2SubmessageDecoder);
 
 impl<'d> Grib2GpvUnpack for Complex<'d> {
     type Iter<'a>
-        = SimplePackingDecodeIteratorWrapper<ComplexPackingDecoded<'d>>
+        = SimplePackingDecoder<ComplexPackingDecoded<'d>>
     where
         Self: 'a;
 
@@ -54,8 +54,8 @@ impl<'d> Grib2GpvUnpack for Complex<'d> {
 
         let unpacked_data =
             decode_complex_packing(complex_param, sect7_data, 0, simple_param.nbit, 0);
-        let decoder = SimplePackingDecodeIterator::new(unpacked_data, &simple_param);
-        let decoder = SimplePackingDecodeIteratorWrapper::SimplePacking(decoder);
+        let decoder = NonZeroSimplePackingDecoder::new(unpacked_data, &simple_param);
+        let decoder = SimplePackingDecoder::NonZeroLength(decoder);
         Ok(decoder)
     }
 }
@@ -64,7 +64,7 @@ pub(crate) struct ComplexSpatial<'d>(pub(crate) &'d Grib2SubmessageDecoder);
 
 impl<'d> Grib2GpvUnpack for ComplexSpatial<'d> {
     type Iter<'a>
-        = SimplePackingDecodeIteratorWrapper<
+        = SimplePackingDecoder<
         SpatialDifferencingDecodeIterator<ComplexPackingDecoded<'d>, std::vec::IntoIter<i32>>,
     >
     where
@@ -123,8 +123,8 @@ impl<'d> Grib2GpvUnpack for ComplexSpatial<'d> {
             }
             Table5_6::Missing => unreachable!(),
         };
-        let decoder = SimplePackingDecodeIterator::new(spdiff_unpacked, &simple_param);
-        let decoder = SimplePackingDecodeIteratorWrapper::SimplePacking(decoder);
+        let decoder = NonZeroSimplePackingDecoder::new(spdiff_unpacked, &simple_param);
+        let decoder = SimplePackingDecoder::NonZeroLength(decoder);
         Ok(decoder)
     }
 }
