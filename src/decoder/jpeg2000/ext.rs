@@ -132,14 +132,6 @@ impl Image {
         Image(ptr::null_mut())
     }
 
-    pub(crate) fn width(&self) -> u32 {
-        unsafe { (*self.0).x1 - (*self.0).x0 }
-    }
-
-    pub(crate) fn height(&self) -> u32 {
-        unsafe { (*self.0).y1 - (*self.0).y0 }
-    }
-
     pub(crate) fn num_components(&self) -> u32 {
         unsafe { (*self.0).numcomps }
     }
@@ -147,20 +139,5 @@ impl Image {
     pub(crate) fn components(&self) -> &[opj::opj_image_comp_t] {
         let comps_len = self.num_components();
         unsafe { std::slice::from_raw_parts((*self.0).comps, comps_len as usize) }
-    }
-
-    pub(crate) fn factor(&self) -> u32 {
-        unsafe { (*(*self.0).comps).factor }
-    }
-}
-
-pub(crate) fn value_for_discard_level(u: u32, discard_level: u32) -> u32 {
-    let div = 1 << discard_level;
-    let quot = u / div;
-    let rem = u % div;
-    if rem > 0 {
-        quot + 1
-    } else {
-        quot
     }
 }

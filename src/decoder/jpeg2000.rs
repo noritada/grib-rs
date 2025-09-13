@@ -69,17 +69,9 @@ fn decode_jp2(stream: Stream) -> Result<IntoIter<i32>, DecodeError> {
     drop(codec);
     drop(stream);
 
-    let width = image.width();
-    let height = image.height();
-    let factor = image.factor();
-
-    let width = value_for_discard_level(width, factor);
-    let height = value_for_discard_level(height, factor);
-
     if let [comp_gray] = image.components() {
-        let vec = unsafe {
-            std::slice::from_raw_parts(comp_gray.data, (width * height) as usize).to_vec()
-        };
+        let len = (comp_gray.w * comp_gray.h) as usize;
+        let vec = unsafe { std::slice::from_raw_parts(comp_gray.data, len).to_vec() };
         Ok(vec.into_iter())
     } else {
         Err(DecodeError::from(
