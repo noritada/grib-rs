@@ -80,4 +80,6 @@ fn decode_jp2(stream: Stream) -> Result<IntoIter<i32>, DecodeError> {
     }
 }
 
+mod decoder;
+mod image;
 mod stream;
