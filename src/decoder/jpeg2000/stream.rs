@@ -57,11 +57,13 @@ extern "C" fn buf_read_stream_read_fn(
     slice.read_into(out_buf).unwrap_or(usize::MAX)
 }
 
+#[cfg(feature = "jpeg2000-unpack-with-openjpeg-experimental")]
 extern "C" fn buf_read_stream_skip_fn(nb_bytes: i64, p_data: *mut c_void) -> i64 {
     let slice = unsafe { &mut *(p_data as *mut Slice) };
     slice.consume(nb_bytes as usize) as i64
 }
 
+#[cfg(feature = "jpeg2000-unpack-with-openjpeg-experimental")]
 extern "C" fn buf_read_stream_seek_fn(nb_bytes: i64, p_data: *mut c_void) -> i32 {
     let slice = unsafe { &mut *(p_data as *mut Slice) };
     let seek_offset = nb_bytes as usize;
@@ -93,7 +95,9 @@ impl Stream {
         unsafe {
             let stream = opj::opj_stream_default_create(1);
             opj::opj_stream_set_read_function(stream, Some(buf_read_stream_read_fn));
+            #[cfg(feature = "jpeg2000-unpack-with-openjpeg-experimental")]
             opj::opj_stream_set_skip_function(stream, Some(buf_read_stream_skip_fn));
+            #[cfg(feature = "jpeg2000-unpack-with-openjpeg-experimental")]
             opj::opj_stream_set_seek_function(stream, Some(buf_read_stream_seek_fn));
             opj::opj_stream_set_user_data_length(stream, len as u64);
             opj::opj_stream_set_user_data(

@@ -53,6 +53,9 @@ grib-build = { path = "gen", version = "0.4.3" }
 # Enable JPEG 2000 code stream format support in the GPV decoder with the help of OpenJPEG written in C.
 jpeg2000-unpack-with-openjpeg = ["dep:openjpeg-sys"]
 
+# Enable experimental performance improvements in the JPEG 2000 code stream format decoder.
+jpeg2000-unpack-with-openjpeg-experimental = ["jpeg2000-unpack-with-openjpeg"]
+
 # Enable Portable Network Graphics (PNG) support in the GPV decoder with the help of png crate.
 png-unpack-with-png-crate = ["dep:png"]
 
