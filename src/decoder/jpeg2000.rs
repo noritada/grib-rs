@@ -1,23 +1,18 @@
-use std::vec::IntoIter;
-
-use openjpeg_sys as opj;
-
+#[cfg(feature = "jpeg2000-unpack-with-openjpeg-experimental")]
+pub(crate) use self::image::ImageIntoIter;
 use crate::{
     decoder::{
-        param::SimplePackingParam, simple::*, stream::FixedValueIterator, DecodeError,
-        Grib2SubmessageDecoder,
+        jpeg2000::decoder::DecodeParams, param::SimplePackingParam, simple::*,
+        stream::FixedValueIterator, DecodeError, Grib2SubmessageDecoder,
     },
     Grib2GpvUnpack,
 };
-
-mod ext;
-use ext::*;
 
 pub(crate) struct Jpeg2000<'d>(pub(crate) &'d Grib2SubmessageDecoder);
 
 impl<'d> Grib2GpvUnpack for Jpeg2000<'d> {
     type Iter<'a>
-        = SimplePackingDecoder<IntoIter<i32>>
+        = SimplePackingDecoder<Jpeg2000Iter>
     where
         Self: 'a;
 
@@ -36,54 +31,37 @@ impl<'d> Grib2GpvUnpack for Jpeg2000<'d> {
             return Ok(decoder);
         };
 
-        let stream = Stream::from_bytes(target.sect7_payload())?;
-        let jp2_unpacked = decode_jp2(stream)?;
+        let jp2_unpacked = decode_j2k(target.sect7_payload())?;
         let decoder = NonZeroSimplePackingDecoder::new(jp2_unpacked, &simple_param);
         let decoder = SimplePackingDecoder::NonZeroLength(decoder);
         Ok(decoder)
     }
 }
 
-fn decode_jp2(stream: Stream) -> Result<IntoIter<i32>, DecodeError> {
-    let codec = Codec::j2k()?;
+#[cfg(feature = "jpeg2000-unpack-with-openjpeg-experimental")]
+type Jpeg2000Iter = ImageIntoIter;
+#[cfg(not(feature = "jpeg2000-unpack-with-openjpeg-experimental"))]
+type Jpeg2000Iter = std::vec::IntoIter<i32>;
 
-    let mut decode_params = unsafe { std::mem::zeroed::<opj::opj_dparameters>() };
-    unsafe { opj::opj_set_default_decoder_parameters(&mut decode_params as *mut _) };
+fn decode_j2k(bytes: &[u8]) -> Result<Jpeg2000Iter, DecodeError> {
+    let stream = stream::Stream::from_bytes(bytes)?;
+    let decoder = decoder::Decoder::new(stream)?;
+    decoder.setup(DecodeParams::default())?;
+    let image = decoder.read_header()?;
+    decoder.decode(&image)?;
 
-    if unsafe { openjpeg_sys::opj_setup_decoder(codec.0.as_ptr(), &mut decode_params) } != 1 {
-        return Err(DecodeError::from("setup of openjpeg decoder failed"));
-    }
-
-    let mut image = Image::new();
-
-    if unsafe { opj::opj_read_header(stream.0, codec.0.as_ptr(), &mut image.0) } != 1 {
-        return Err(DecodeError::from(
-            "decoding of JPEG 2000 image header failed",
-        ));
-    }
-
-    if unsafe { opj::opj_decode(codec.0.as_ptr(), stream.0, image.0) } != 1 {
-        return Err(DecodeError::from("decoding of JPEG 2000 image failed"));
-    }
-
-    drop(codec);
-    drop(stream);
-
-    let width = image.width();
-    let height = image.height();
-    let factor = image.factor();
-
-    let width = value_for_discard_level(width, factor);
-    let height = value_for_discard_level(height, factor);
-
+    #[cfg(not(feature = "jpeg2000-unpack-with-openjpeg-experimental"))]
     if let [comp_gray] = image.components() {
-        let vec = unsafe {
-            std::slice::from_raw_parts(comp_gray.data, (width * height) as usize).to_vec()
-        };
-        Ok(vec.into_iter())
+        Ok(comp_gray.data().to_vec().into_iter())
     } else {
         Err(DecodeError::from(
             "unexpected non-gray-scale image components",
         ))
     }
+    #[cfg(feature = "jpeg2000-unpack-with-openjpeg-experimental")]
+    image.try_into_iter()
 }
+
+mod decoder;
+mod image;
+mod stream;

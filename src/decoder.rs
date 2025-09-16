@@ -154,7 +154,15 @@ impl Grib2SubmessageDecoder {
             0 => Grib2ValueIterator::SigSNS(simple::Simple(self).iter()?),
             2 => Grib2ValueIterator::SigSC(complex::Complex(self).iter()?),
             3 => Grib2ValueIterator::SigSSCI(complex::ComplexSpatial(self).iter()?),
-            #[cfg(feature = "jpeg2000-unpack-with-openjpeg")]
+            #[cfg(all(
+                feature = "jpeg2000-unpack-with-openjpeg",
+                feature = "jpeg2000-unpack-with-openjpeg-experimental"
+            ))]
+            40 => Grib2ValueIterator::SigSIm(jpeg2000::Jpeg2000(self).iter()?),
+            #[cfg(all(
+                feature = "jpeg2000-unpack-with-openjpeg",
+                not(feature = "jpeg2000-unpack-with-openjpeg-experimental")
+            ))]
             40 => Grib2ValueIterator::SigSI(jpeg2000::Jpeg2000(self).iter()?),
             #[cfg(feature = "png-unpack-with-png-crate")]
             41 => Grib2ValueIterator::SigSNV(png::Png(self).iter()?),
@@ -214,6 +222,8 @@ enum Grib2ValueIterator<'d> {
     ),
     #[allow(dead_code)]
     SigSI(SimplePackingDecoder<IntoIter<i32>>),
+    #[cfg(feature = "jpeg2000-unpack-with-openjpeg-experimental")]
+    SigSIm(SimplePackingDecoder<self::jpeg2000::ImageIntoIter>),
     #[allow(dead_code)]
     SigSNV(SimplePackingDecoder<NBitwiseIterator<Vec<u8>>>),
     SigI(IntoIter<f32>),
@@ -228,6 +238,8 @@ impl<'d> Iterator for Grib2ValueIterator<'d> {
             Self::SigSC(inner) => inner.next(),
             Self::SigSSCI(inner) => inner.next(),
             Self::SigSI(inner) => inner.next(),
+            #[cfg(feature = "jpeg2000-unpack-with-openjpeg-experimental")]
+            Self::SigSIm(inner) => inner.next(),
             Self::SigSNV(inner) => inner.next(),
             Self::SigI(inner) => inner.next(),
         }
@@ -239,6 +251,8 @@ impl<'d> Iterator for Grib2ValueIterator<'d> {
             Self::SigSC(inner) => inner.size_hint(),
             Self::SigSSCI(inner) => inner.size_hint(),
             Self::SigSI(inner) => inner.size_hint(),
+            #[cfg(feature = "jpeg2000-unpack-with-openjpeg-experimental")]
+            Self::SigSIm(inner) => inner.size_hint(),
             Self::SigSNV(inner) => inner.size_hint(),
             Self::SigI(inner) => inner.size_hint(),
         }
