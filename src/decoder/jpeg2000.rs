@@ -1,5 +1,5 @@
-use std::vec::IntoIter;
-
+#[cfg(feature = "jpeg2000-unpack-with-openjpeg-experimental")]
+pub(crate) use self::image::ImageIntoIter;
 use crate::{
     decoder::{
         jpeg2000::decoder::DecodeParams, param::SimplePackingParam, simple::*,
@@ -12,7 +12,7 @@ pub(crate) struct Jpeg2000<'d>(pub(crate) &'d Grib2SubmessageDecoder);
 
 impl<'d> Grib2GpvUnpack for Jpeg2000<'d> {
     type Iter<'a>
-        = SimplePackingDecoder<IntoIter<i32>>
+        = SimplePackingDecoder<Jpeg2000Iter>
     where
         Self: 'a;
 
@@ -38,13 +38,19 @@ impl<'d> Grib2GpvUnpack for Jpeg2000<'d> {
     }
 }
 
-fn decode_j2k(bytes: &[u8]) -> Result<IntoIter<i32>, DecodeError> {
+#[cfg(feature = "jpeg2000-unpack-with-openjpeg-experimental")]
+type Jpeg2000Iter = ImageIntoIter;
+#[cfg(not(feature = "jpeg2000-unpack-with-openjpeg-experimental"))]
+type Jpeg2000Iter = std::vec::IntoIter<i32>;
+
+fn decode_j2k(bytes: &[u8]) -> Result<Jpeg2000Iter, DecodeError> {
     let stream = stream::Stream::from_bytes(bytes)?;
     let decoder = decoder::Decoder::new(stream)?;
     decoder.setup(DecodeParams::default())?;
     let image = decoder.read_header()?;
     decoder.decode(&image)?;
 
+    #[cfg(not(feature = "jpeg2000-unpack-with-openjpeg-experimental"))]
     if let [comp_gray] = image.components() {
         Ok(comp_gray.data().to_vec().into_iter())
     } else {
@@ -52,6 +58,8 @@ fn decode_j2k(bytes: &[u8]) -> Result<IntoIter<i32>, DecodeError> {
             "unexpected non-gray-scale image components",
         ))
     }
+    #[cfg(feature = "jpeg2000-unpack-with-openjpeg-experimental")]
+    image.try_into_iter()
 }
 
 mod decoder;

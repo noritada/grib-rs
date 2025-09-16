@@ -32,6 +32,26 @@ impl Image {
         unsafe { std::slice::from_raw_parts(img.comps as *mut ImageComponent, numcomps as usize) }
     }
 
+    #[cfg(feature = "jpeg2000-unpack-with-openjpeg-experimental")]
+    pub(crate) fn try_into_iter(self) -> Result<ImageIntoIter, DecodeError> {
+        let slice = if let [comp_gray] = self.components() {
+            comp_gray.data()
+        } else {
+            return Err(DecodeError::from(
+                "unexpected non-gray-scale image components",
+            ));
+        };
+        let data = slice.as_ptr();
+        let len = slice.len();
+
+        Ok(ImageIntoIter {
+            inner: self,
+            data,
+            len,
+            index: 0,
+        })
+    }
+
     pub(crate) fn as_ptr(&self) -> *mut opj::opj_image_t {
         self.0.as_ptr()
     }
@@ -43,5 +63,34 @@ impl ImageComponent {
     pub(crate) fn data(&self) -> &[i32] {
         let len = (self.0.w * self.0.h) as usize;
         unsafe { std::slice::from_raw_parts(self.0.data, len) }
+    }
+}
+
+#[cfg(feature = "jpeg2000-unpack-with-openjpeg-experimental")]
+pub(crate) struct ImageIntoIter {
+    #[allow(dead_code)]
+    inner: Image,
+    data: *const i32,
+    len: usize,
+    index: usize,
+}
+
+#[cfg(feature = "jpeg2000-unpack-with-openjpeg-experimental")]
+impl Iterator for ImageIntoIter {
+    type Item = i32;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.index < self.len {
+            let value = unsafe { *self.data.add(self.index) };
+            self.index += 1;
+            Some(value)
+        } else {
+            None
+        }
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        let remaining = self.len - self.index;
+        (remaining, Some(remaining))
     }
 }
