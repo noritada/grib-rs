@@ -79,7 +79,7 @@ extern "C" fn buf_read_stream_free_fn(p_data: *mut c_void) {
 
 pub(crate) struct Stream(*mut opj::opj_stream_t);
 
-impl<'a> Drop for Stream {
+impl Drop for Stream {
     fn drop(&mut self) {
         unsafe {
             opj::opj_stream_destroy(self.0);
