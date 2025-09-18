@@ -72,6 +72,7 @@ fn read_feature_docs() -> Result<String, Box<dyn std::error::Error>> {
 {features}
 ```"
     );
+    println!("cargo:rerun-if-changed=Cargo.toml");
 
     Ok(new_doc)
 }
