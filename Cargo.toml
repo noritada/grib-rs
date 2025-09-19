@@ -50,6 +50,13 @@ xz2 = "0.1"
 grib-build = { path = "gen", version = "0.4.3" }
 
 [features]
+default = [
+  "jpeg2000-unpack-with-openjpeg",
+  "png-unpack-with-png-crate",
+  "ccsds-unpack-with-libaec",
+  "gridpoints-proj",
+]
+
 # Enable JPEG 2000 code stream format support in the GPV decoder with the help
 # of OpenJPEG written in C.
 jpeg2000-unpack-with-openjpeg = ["dep:openjpeg-sys"]
