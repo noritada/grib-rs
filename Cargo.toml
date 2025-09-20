@@ -10,6 +10,7 @@ repository.workspace = true
 homepage.workspace = true
 categories.workspace = true
 keywords.workspace = true
+build = "build/main.rs"
 exclude = ["/.github", "/testdata"]
 
 [package.metadata.docs.rs]

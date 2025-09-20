@@ -45,7 +45,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let output_path = Path::new(&out_dir).join("features.txt");
     fs::write(output_path, format!("{manifest}"))?;
 
-    println!("cargo:rerun-if-changed=build.rs");
+    println!("cargo:rerun-if-changed=build/main.rs");
     Ok(())
 }
 
