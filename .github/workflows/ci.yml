@@ -35,10 +35,12 @@ jobs:
         include:
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
+            workspace: --workspace
             features: --no-default-features
             with_test: true
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
+            workspace: --workspace
             features: --features time-calculation
             with_test: true
           # - os: ubuntu-latest
@@ -47,22 +49,27 @@ jobs:
           #   with_test: false
           - os: windows-latest
             target: x86_64-pc-windows-msvc
+            # workspace: --workspace
             features: --no-default-features --features jpeg2000-unpack-with-openjpeg,png-unpack-with-png-crate,ccsds-unpack-with-libaec
             with_test: true
           - os: macOS-latest
             target: x86_64-apple-darwin
+            workspace: --workspace
             features: --no-default-features
             with_test: true
           - os: macOS-latest
             target: x86_64-apple-darwin
+            workspace: --workspace
             features: --features time-calculation
             with_test: true
           - os: macOS-latest
             target: aarch64-apple-darwin
+            workspace: --workspace
             features: --no-default-features
             with_test: false
           - os: macOS-latest
             target: aarch64-apple-darwin
+            workspace: --workspace
             features: --features time-calculation
             with_test: false
 
@@ -88,10 +95,10 @@ jobs:
       #     sudo apt -qq install build-essential g++-multilib
       #     sudo ln -s /usr/bin/g++ /usr/bin/musl-g++
       - name: Build
-        run: cargo build --target ${{ matrix.target }} --verbose --workspace ${{ matrix.features }}
+        run: cargo build --target ${{ matrix.target }} --verbose ${{ matrix.workspace }} ${{ matrix.features }}
       - name: Run tests
         if: matrix.with_test
-        run: cargo test --target ${{ matrix.target }} --verbose --workspace ${{ matrix.features }}
+        run: cargo test --target ${{ matrix.target }} --verbose ${{ matrix.workspace }} ${{ matrix.features }}
 
   build_wasm:
     name: Building library for wasm
