@@ -43,7 +43,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let doc = doc::generate()?;
     let output_path = Path::new(&out_dir).join("doc.txt");
-    fs::write(output_path, format!("{doc}"))?;
+    fs::write(output_path, doc.to_string())?;
 
     println!("cargo:rerun-if-changed=build/main.rs");
     println!("cargo:rerun-if-changed=build/doc.rs");
