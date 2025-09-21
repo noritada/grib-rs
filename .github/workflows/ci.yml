@@ -37,14 +37,13 @@ jobs:
         include:
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
+            workspace: --workspace
+            features: --no-default-features
             with_test: true
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
+            workspace: --workspace
             features: --features time-calculation
-            with_test: true
-          - os: ubuntu-latest
-            target: x86_64-unknown-linux-gnu
-            features: --features gridpoints-proj,jpeg2000-unpack-with-openjpeg,png-unpack-with-png-crate,ccsds-unpack-with-libaec
             with_test: true
           # - os: ubuntu-latest
           #   target: x86_64-unknown-linux-musl
@@ -52,18 +51,28 @@ jobs:
           #   with_test: false
           - os: windows-latest
             target: x86_64-pc-windows-msvc
-            features: --features jpeg2000-unpack-with-openjpeg,png-unpack-with-png-crate,ccsds-unpack-with-libaec
+            # workspace: --workspace
+            features: --no-default-features --features jpeg2000-unpack-with-openjpeg,png-unpack-with-png-crate,ccsds-unpack-with-libaec
             with_test: true
           - os: macOS-latest
             target: x86_64-apple-darwin
+            workspace: --workspace
+            features: --no-default-features
             with_test: true
           - os: macOS-latest
             target: x86_64-apple-darwin
-            features: --features gridpoints-proj,jpeg2000-unpack-with-openjpeg,png-unpack-with-png-crate,ccsds-unpack-with-libaec
+            workspace: --workspace
+            features: --features time-calculation
             with_test: true
           - os: macOS-latest
             target: aarch64-apple-darwin
-            features: --features gridpoints-proj,jpeg2000-unpack-with-openjpeg,png-unpack-with-png-crate,ccsds-unpack-with-libaec
+            workspace: --workspace
+            features: --no-default-features
+            with_test: false
+          - os: macOS-latest
+            target: aarch64-apple-darwin
+            workspace: --workspace
+            features: --features time-calculation
             with_test: false
 
     runs-on: ${{ matrix.os }}
@@ -91,10 +100,10 @@ jobs:
         run: sudo apt install libsqlite3-dev
         if: matrix.os == 'ubuntu-latest'
       - name: Build
-        run: cargo build --target ${{ matrix.target }} --verbose --workspace ${{ matrix.features }}
+        run: cargo build --target ${{ matrix.target }} --verbose ${{ matrix.workspace }} ${{ matrix.features }}
       - name: Run tests
         if: matrix.with_test
-        run: cargo test --target ${{ matrix.target }} --verbose --workspace ${{ matrix.features }}
+        run: cargo test --target ${{ matrix.target }} --verbose ${{ matrix.workspace }} ${{ matrix.features }}
 
   build_wasm:
     name: Building library for wasm
@@ -110,7 +119,7 @@ jobs:
         with:
           targets: wasm32-unknown-unknown
       - name: Build
-        run: cargo build --target wasm32-unknown-unknown --verbose
+        run: cargo build --target wasm32-unknown-unknown --verbose --no-default-features --features png-unpack-with-png-crate,time-calculation
 
   address_sanitizer:
     name: Address sanitizer
