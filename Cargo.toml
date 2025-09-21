@@ -10,6 +10,7 @@ repository.workspace = true
 homepage.workspace = true
 categories.workspace = true
 keywords.workspace = true
+build = "build/main.rs"
 exclude = ["/.github", "/testdata"]
 rust-version = "1.73"
 
@@ -48,6 +49,7 @@ xz2 = "0.1"
 
 [build-dependencies]
 grib-build = { path = "gen", version = "0.4.3" }
+toml_edit = "0.23"
 
 [features]
 default = [
