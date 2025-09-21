@@ -125,7 +125,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
-The [examples directory](examples) may help you understand the API.
+The [examples directory][examples] in the source repository may help you understand the API.
+
+[examples]: https://github.com/noritada/grib-rs/tree/master/examples
 
 ### Cargo features
 
