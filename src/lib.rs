@@ -1,8 +1,4 @@
-//! # Crate features
-//!
-//! Following crate features are available in this crate. These descriptions are
-//! extracted from the manifest of the crate.
-#![doc = include_str!(concat!(env!("OUT_DIR"), "/features.txt"))]
+#![doc = include_str!(concat!(env!("OUT_DIR"), "/doc.txt"))]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
 pub mod codetables;
