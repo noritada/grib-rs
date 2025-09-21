@@ -41,7 +41,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
     fs::write(output_path, format!("{db}"))?;
 
-    println!("cargo:rerun-if-changed=build.rs");
+    let doc = doc::generate()?;
+    let output_path = Path::new(&out_dir).join("doc.txt");
+    fs::write(output_path, &doc)?;
+
+    println!("cargo:rerun-if-changed=build/main.rs");
+    println!("cargo:rerun-if-changed=build/doc.rs");
     Ok(())
 }
 
@@ -54,3 +59,5 @@ fn check_nonemptiness(dir: &Path) -> Result<(), String> {
                 .map(|_| ())
         })
 }
+
+mod doc;

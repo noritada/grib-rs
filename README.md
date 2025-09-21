@@ -11,7 +11,7 @@ GRIB format parser for Rust
 
 ## About
 
-This is a GRIB format parser library written in [Rust](https://www.rust-lang.org/) programming language. This project aims to provide a set of library and tools which is simple-to-use, efficient, and educational.
+This is a GRIB format parser library written in Rust programming language. This project aims to provide a set of library and tools which is simple-to-use, efficient, and educational.
 
 GRIB is a concise data format commonly used in meteorology to store historical and forecast weather data. It is intended to be a container of a collection of records of 2D data. GRIB files are huge and binary and should be processed efficiently. Also, since GRIB is designed to support various grid types and data compression using parameters defined in external code tables and templates, some popular existing softwares cannot handle some GRIB data.
 
@@ -125,7 +125,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
-The [examples directory](examples) may help you understand the API.
+The [examples directory][examples] in the source repository may help you understand the API.
+
+[examples]: https://github.com/noritada/grib-rs/tree/master/examples
 
 ### Cargo features
 

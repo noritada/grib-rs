@@ -1,3 +1,4 @@
+#![doc = include_str!(concat!(env!("OUT_DIR"), "/doc.txt"))]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
 pub mod codetables;
