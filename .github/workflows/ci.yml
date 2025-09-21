@@ -50,7 +50,7 @@ jobs:
           #   with_test: false
           - os: windows-latest
             target: x86_64-pc-windows-msvc
-            features: --features jpeg2000-unpack-with-openjpeg,png-unpack-with-png-crate,ccsds-unpack-with-libaec
+            features: --no-default-features --features jpeg2000-unpack-with-openjpeg,png-unpack-with-png-crate,ccsds-unpack-with-libaec
             with_test: true
           - os: macOS-latest
             target: x86_64-apple-darwin
