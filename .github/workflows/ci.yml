@@ -105,7 +105,7 @@ jobs:
         with:
           targets: wasm32-unknown-unknown
       - name: Build
-        run: cargo build --target wasm32-unknown-unknown --verbose
+        run: cargo build --target wasm32-unknown-unknown --verbose --no-default-features --features png-unpack-with-png-crate
 
   address_sanitizer:
     name: Address sanitizer
