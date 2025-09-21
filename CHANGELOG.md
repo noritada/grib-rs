@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.12.1] - 2025-09-21
+### Documentation improvements
+
+- Crate-level documentation.
+  (#138)
+
 ## [0.12.0] - 2025-09-08
 ### Enhancements
 
@@ -458,7 +464,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - inspect: display of information mainly for development purpose such as template numbers
     - list: display of a list of sections (the style is still tentative)
 
-[unreleased]: https://github.com/noritada/grib-rs/compare/v0.12.0...HEAD
+[unreleased]: https://github.com/noritada/grib-rs/compare/v0.12.1...HEAD
+[0.12.1]: https://github.com/noritada/grib-rs/compare/v0.12.0...v0.12.1
 [0.12.0]: https://github.com/noritada/grib-rs/compare/v0.11.2...v0.12.0
 [0.11.2]: https://github.com/noritada/grib-rs/compare/v0.11.1...v0.11.2
 [0.11.1]: https://github.com/noritada/grib-rs/compare/v0.11.0...v0.11.1
