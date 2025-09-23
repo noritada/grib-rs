@@ -53,7 +53,7 @@ pub fn derive_dump(input: TokenStream) -> TokenStream {
     };
 
     let mut dumps = Vec::new();
-    let mut start_pos = quote! { 1usize }; // WMO documentation style octet representation
+    let mut start_pos = quote! { start };
 
     for field in fields {
         let ident = field.ident.as_ref().unwrap();
@@ -64,16 +64,12 @@ pub fn derive_dump(input: TokenStream) -> TokenStream {
             .map(|s| format!("  // {}", s.trim()))
             .unwrap_or(String::new());
         dumps.push(quote! {
-            let (start, end) = (#start_pos, #end_pos - 1);
-            if start == end {
-                write!(output, "{}", start)?;
-            } else {
-                write!(output, "{}-{}", start, end)?;
-            }
-            writeln!(output, ": {} = {}{}",
+            <#ty as grib_data_helpers::DumpField>::dump_field(
+                &self.#ident,
                 stringify!(#ident),
-                self.#ident,
                 #doc,
+                #start_pos,
+                output,
             )?;
         });
 
@@ -82,7 +78,11 @@ pub fn derive_dump(input: TokenStream) -> TokenStream {
 
     quote! {
         impl Dump for #name {
-            fn dump<W: std::io::Write>(&self, output: &mut W) -> Result<(), std::io::Error> {
+            fn dump<W: std::io::Write>(
+                &self,
+                start: usize,
+                output: &mut W,
+            ) -> Result<(), std::io::Error> {
                 #(#dumps)*;
                 Ok(())
             }
