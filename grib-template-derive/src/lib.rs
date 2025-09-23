@@ -67,6 +67,7 @@ pub fn derive_dump(input: TokenStream) -> TokenStream {
             <#ty as grib_data_helpers::DumpField>::dump_field(
                 &self.#ident,
                 stringify!(#ident),
+                parent,
                 #doc,
                 #start_pos,
                 output,
@@ -80,6 +81,7 @@ pub fn derive_dump(input: TokenStream) -> TokenStream {
         impl Dump for #name {
             fn dump<W: std::io::Write>(
                 &self,
+                parent: Option<&std::borrow::Cow<str>>,
                 start: usize,
                 output: &mut W,
             ) -> Result<(), std::io::Error> {

@@ -20,6 +20,14 @@ pub struct InnerParams {
     field1: u8,
     /// Field 5.2
     field2: u8,
+    /// Field 5.3
+    field3: InnerInnerParams,
+}
+
+#[derive(grib_template_derive::Dump)]
+pub struct InnerInnerParams {
+    /// Field 5.3.1
+    field1: u16,
 }
 
 fn main() {
@@ -31,11 +39,12 @@ fn main() {
         field5: InnerParams {
             field1: 51,
             field2: 52,
+            field3: InnerInnerParams { field1: 511 },
         },
     };
 
     let mut buf = std::io::Cursor::new(Vec::with_capacity(1024));
-    params.dump(1, &mut buf).unwrap();
+    params.dump(None, 1, &mut buf).unwrap();
     assert_eq!(
         String::from_utf8_lossy(buf.get_ref()),
         "\
@@ -43,8 +52,9 @@ fn main() {
 2-3: field2 = 2  // Field 2
 4-5: field3 = 3  // Field 3
 6-9: field4 = 4  // Field 4
-10: field1 = 51  // Field 5.1
-11: field2 = 52  // Field 5.2
+10: field5.field1 = 51  // Field 5.1
+11: field5.field2 = 52  // Field 5.2
+12-13: field5.field3.field1 = 511  // Field 5.3.1
 "
     )
 }
