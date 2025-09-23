@@ -64,9 +64,13 @@ pub fn derive_dump(input: TokenStream) -> TokenStream {
             .map(|s| format!("  // {}", s.trim()))
             .unwrap_or(String::new());
         dumps.push(quote! {
-            writeln!(output, "{}-{}: {} = {}{}",
-                #start_pos,
-                #end_pos - 1,
+            let (start, end) = (#start_pos, #end_pos - 1);
+            if start == end {
+                write!(output, "{}", start)?;
+            } else {
+                write!(output, "{}-{}", start, end)?;
+            }
+            writeln!(output, ": {} = {}{}",
                 stringify!(#ident),
                 self.#ident,
                 #doc,

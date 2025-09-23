@@ -25,7 +25,7 @@ fn main() {
     assert_eq!(
         String::from_utf8_lossy(buf.get_ref()),
         "\
-1-1: field1 = 1  // Field 1
+1: field1 = 1  // Field 1
 2-3: field2 = 2  // Field 2
 4-5: field3 = 3  // Field 3
 6-9: field4 = 4  // Field 4
