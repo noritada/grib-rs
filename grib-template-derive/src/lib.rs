@@ -40,12 +40,12 @@ pub fn derive_try_from_slice(input: TokenStream) -> TokenStream {
 }
 
 #[proc_macro_derive(Dump, attributes(doc))]
-pub fn derive(input: TokenStream) -> TokenStream {
+pub fn derive_dump(input: TokenStream) -> TokenStream {
     let input = syn::parse_macro_input!(input as syn::DeriveInput);
-    let ident = input.ident;
+    let name = input.ident;
 
     let fields = match input.data {
-        syn::Data::Struct(ref ds) => match &ds.fields {
+        syn::Data::Struct(ref s) => match &s.fields {
             syn::Fields::Named(fields) => &fields.named,
             _ => unimplemented!("`Dump` can only be derived for structs with named fields"),
         },
@@ -77,7 +77,7 @@ pub fn derive(input: TokenStream) -> TokenStream {
     }
 
     quote! {
-        impl Dump for #ident {
+        impl Dump for #name {
             fn dump<W: std::io::Write>(&self, output: &mut W) -> Result<(), std::io::Error> {
                 #(#dumps)*;
                 Ok(())
