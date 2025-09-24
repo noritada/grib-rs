@@ -78,7 +78,7 @@ pub fn derive_dump(input: TokenStream) -> TokenStream {
     }
 
     quote! {
-        impl Dump for #name {
+        impl grib_data_helpers::Dump for #name {
             fn dump<W: std::io::Write>(
                 &self,
                 parent: Option<&std::borrow::Cow<str>>,
