@@ -62,7 +62,7 @@ pub fn derive_dump(input: TokenStream) -> TokenStream {
 
         let doc = get_doc(&field.attrs)
             .map(|s| format!("  // {}", s.trim()))
-            .unwrap_or(String::new());
+            .unwrap_or_default();
         dumps.push(quote! {
             <#ty as grib_data_helpers::DumpField>::dump_field(
                 &self.#ident,
@@ -93,7 +93,7 @@ pub fn derive_dump(input: TokenStream) -> TokenStream {
     .into()
 }
 
-fn get_doc(attrs: &Vec<syn::Attribute>) -> Option<String> {
+fn get_doc(attrs: &[syn::Attribute]) -> Option<String> {
     let mut doc = String::new();
     for attr in attrs.iter() {
         match attr.meta {
