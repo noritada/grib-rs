@@ -84,10 +84,10 @@ fn rleunpack(
         }
     }
 
-    if let Some(len) = expected_len {
-        if len != out_buf.len() {
-            return Err(DecodeError::LengthMismatch);
-        }
+    if let Some(len) = expected_len
+        && len != out_buf.len()
+    {
+        return Err(DecodeError::LengthMismatch);
     }
 
     Ok(out_buf.into_boxed_slice())
