@@ -1,11 +1,11 @@
 use crate::{
+    DecodeError, Grib2GpvUnpack,
     decoder::{
+        Grib2SubmessageDecoder,
         param::{CcsdsCompressionParam, SimplePackingParam},
         simple::*,
         stream::{FixedValueIterator, NBitwiseIterator},
-        Grib2SubmessageDecoder,
     },
-    DecodeError, Grib2GpvUnpack,
 };
 
 pub(crate) struct Ccsds<'d>(pub(crate) &'d Grib2SubmessageDecoder);

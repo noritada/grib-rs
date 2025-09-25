@@ -11,15 +11,15 @@ use self::{
 };
 use super::param::SpatialDifferencingParam;
 use crate::{
+    Grib2GpvUnpack,
     codetables::grib2::Table5_6,
     decoder::{
+        DecodeError, Grib2SubmessageDecoder,
         param::{ComplexPackingParam, SimplePackingParam},
         simple::*,
         stream::{BitStream, NBitwiseIterator},
-        DecodeError, Grib2SubmessageDecoder,
     },
     helpers::GribInt,
-    Grib2GpvUnpack,
 };
 
 pub(crate) struct Complex<'d>(pub(crate) &'d Grib2SubmessageDecoder);

@@ -44,11 +44,7 @@ pub(crate) fn grib_int_from_bytes(bytes: &[u8]) -> i32 {
             let positive = first.leading_zeros() != 0;
             let rest = i32::from(read_as!(u16, bytes, 1));
             let abs = i32::from(first << 1 >> 1) * 0x10000 + rest;
-            if positive {
-                abs
-            } else {
-                -abs
-            }
+            if positive { abs } else { -abs }
         }
         4 => read_as!(u32, bytes, 0).as_grib_int(),
         _ => unimplemented!(),

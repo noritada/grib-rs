@@ -3,7 +3,7 @@ use std::vec::IntoIter;
 use crate::{
     context::{SectionBody, SubMessage},
     decoder::{
-        bitmap::{dummy_bitmap_for_nonnullable_data, BitmapDecodeIterator},
+        bitmap::{BitmapDecodeIterator, dummy_bitmap_for_nonnullable_data},
         complex::ComplexPackingDecoded,
         param::Section5Param,
         simple::SimplePackingDecoder,
@@ -113,7 +113,7 @@ impl Grib2SubmessageDecoder {
                 return Err(GribError::DecodeError(DecodeError::NotSupported(
                     "GRIB2 code table 6.0 (bit map indicator)",
                     n.into(),
-                )))
+                )));
             }
         };
 
@@ -173,7 +173,7 @@ impl Grib2SubmessageDecoder {
                 return Err(GribError::DecodeError(DecodeError::NotSupported(
                     "GRIB2 code table 5.0 (data representation template number)",
                     n,
-                )))
+                )));
             }
         };
         let decoder = BitmapDecodeIterator::new(

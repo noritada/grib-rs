@@ -5,7 +5,7 @@ use chrono::{DateTime, LocalResult, TimeDelta, TimeZone, Utc};
 
 #[cfg(feature = "time-calculation")]
 use crate::codetables::grib2::Table4_4;
-use crate::{codetables::grib2::Table1_2, Code, ForecastTime};
+use crate::{Code, ForecastTime, codetables::grib2::Table1_2};
 
 #[derive(Debug, PartialEq, Eq)]
 /// Time-related raw information.

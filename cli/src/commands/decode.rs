@@ -1,7 +1,7 @@
 use std::{fmt, path::PathBuf};
 
 use anyhow::Result;
-use clap::{arg, ArgMatches, Command};
+use clap::{ArgMatches, Command, arg};
 use console::Style;
 use grib::GribError;
 

@@ -4,7 +4,7 @@ use std::{
     slice::Iter,
 };
 
-use clap::{arg, ArgAction, ArgMatches, Command};
+use clap::{ArgAction, ArgMatches, Command, arg};
 use console::Style;
 use grib::{SectionInfo, SubMessageSection, SubmessageIterator, TemplateInfo};
 

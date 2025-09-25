@@ -1,4 +1,4 @@
-use libaec_sys::{aec_decode, aec_decode_end, aec_decode_init, aec_stream, AEC_FLUSH, AEC_OK};
+use libaec_sys::{AEC_FLUSH, AEC_OK, aec_decode, aec_decode_end, aec_decode_init, aec_stream};
 
 pub(crate) struct Stream(aec_stream);
 

@@ -1,12 +1,12 @@
 use num::ToPrimitive;
 
 use crate::{
+    DecodeError, Grib2GpvUnpack,
     decoder::{
+        Grib2SubmessageDecoder,
         param::SimplePackingParam,
         stream::{FixedValueIterator, NBitwiseIterator},
-        Grib2SubmessageDecoder,
     },
-    DecodeError, Grib2GpvUnpack,
 };
 
 pub(crate) enum SimplePackingDecoder<I> {

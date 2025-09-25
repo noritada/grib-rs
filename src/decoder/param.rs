@@ -1,6 +1,6 @@
 use crate::{
-    helpers::{read_as, GribInt},
     DecodeError,
+    helpers::{GribInt, read_as},
 };
 
 pub(crate) struct Section5Param {

@@ -1,15 +1,15 @@
 use std::slice::Iter;
 
 use crate::{
+    GridPointIndexIterator, PolarStereographicGridDefinition,
     codetables::SUPPORTED_PROD_DEF_TEMPLATE_NUMBERS,
     datatypes::*,
     error::*,
     grid::{
         GaussianGridDefinition, GridPointIterator, LambertGridDefinition, LatLonGridDefinition,
     },
-    helpers::{read_as, GribInt},
+    helpers::{GribInt, read_as},
     time::UtcDateTime,
-    GridPointIndexIterator, PolarStereographicGridDefinition,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -238,7 +238,7 @@ impl GridDefinitionTemplateValues {
                 return Err(GribError::NotSupported(
                     "lat/lon computation support for the template is dropped in this build"
                         .to_owned(),
-                ))
+                ));
             }
         };
         Ok(iter)

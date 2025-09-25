@@ -1,6 +1,6 @@
 use anyhow::Result;
-use clap::{arg, ArgAction, ArgMatches, Command};
-use clap_complete::{generate, Generator, Shell};
+use clap::{ArgAction, ArgMatches, Command, arg};
+use clap_complete::{Generator, Shell, generate};
 
 pub(crate) fn cli() -> Command {
     Command::new(crate::cli::module_component!())

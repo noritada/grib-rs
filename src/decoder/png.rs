@@ -1,10 +1,10 @@
 use crate::{
+    DecodeError, Grib2GpvUnpack, Grib2SubmessageDecoder,
     decoder::{
         param::SimplePackingParam,
         simple::{NonZeroSimplePackingDecoder, SimplePackingDecoder},
         stream::{FixedValueIterator, NBitwiseIterator},
     },
-    DecodeError, Grib2GpvUnpack, Grib2SubmessageDecoder,
 };
 
 pub(crate) struct Png<'d>(pub(crate) &'d Grib2SubmessageDecoder);

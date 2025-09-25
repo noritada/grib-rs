@@ -1,7 +1,7 @@
-use super::{earth::EarthShapeDefinition, GridPointIndexIterator, ScanningMode};
+use super::{GridPointIndexIterator, ScanningMode, earth::EarthShapeDefinition};
 use crate::{
     error::GribError,
-    helpers::{read_as, GribInt},
+    helpers::{GribInt, read_as},
 };
 
 #[derive(Debug, PartialEq, Eq)]

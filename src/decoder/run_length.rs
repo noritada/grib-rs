@@ -1,9 +1,9 @@
 use crate::{
+    Grib2GpvUnpack,
     decoder::{
-        param::RunLengthPackingParam, stream::NBitwiseIterator, DecodeError, Grib2SubmessageDecoder,
+        DecodeError, Grib2SubmessageDecoder, param::RunLengthPackingParam, stream::NBitwiseIterator,
     },
     helpers::read_as,
-    Grib2GpvUnpack,
 };
 
 pub(crate) struct RunLength<'d>(pub(crate) &'d Grib2SubmessageDecoder);

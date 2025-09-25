@@ -4,7 +4,7 @@ use assert_cmd::prelude::*;
 use predicates::prelude::*;
 use tempfile::TempDir;
 
-use crate::{utils, CMD_NAME};
+use crate::{CMD_NAME, utils};
 
 macro_rules! test_operation_with_no_options {
     ($(($name:ident, $input:expr, $message_index:expr),)*) => ($(

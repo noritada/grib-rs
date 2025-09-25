@@ -2,7 +2,7 @@ use helpers::RegularGridIterator;
 
 pub use self::{
     earth::EarthShapeDefinition,
-    gaussian::{compute_gaussian_latitudes, GaussianGridDefinition},
+    gaussian::{GaussianGridDefinition, compute_gaussian_latitudes},
     lambert::LambertGridDefinition,
     latlon::LatLonGridDefinition,
     polar_stereographic::PolarStereographicGridDefinition,

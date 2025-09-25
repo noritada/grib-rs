@@ -4,11 +4,11 @@ use std::{
     path::PathBuf,
 };
 
-use clap::{arg, ArgAction, ArgMatches, Command};
+use clap::{ArgAction, ArgMatches, Command, arg};
 use console::Style;
 use grib::{
-    codetables::{CodeTable4_2, CodeTable4_3, Lookup},
     SubmessageIterator,
+    codetables::{CodeTable4_2, CodeTable4_3, Lookup},
 };
 
 use crate::cli;

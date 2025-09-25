@@ -1,11 +1,11 @@
 #[cfg(feature = "jpeg2000-unpack-with-openjpeg-experimental")]
 pub(crate) use self::image::ImageIntoIter;
 use crate::{
-    decoder::{
-        jpeg2000::decoder::DecodeParams, param::SimplePackingParam, simple::*,
-        stream::FixedValueIterator, DecodeError, Grib2SubmessageDecoder,
-    },
     Grib2GpvUnpack,
+    decoder::{
+        DecodeError, Grib2SubmessageDecoder, jpeg2000::decoder::DecodeParams,
+        param::SimplePackingParam, simple::*, stream::FixedValueIterator,
+    },
 };
 
 pub(crate) struct Jpeg2000<'d>(pub(crate) &'d Grib2SubmessageDecoder);

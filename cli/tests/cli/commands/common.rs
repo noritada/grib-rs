@@ -4,7 +4,7 @@ use assert_cmd::prelude::*;
 use predicates::prelude::*;
 use tempfile::TempDir;
 
-use crate::{utils, CMD_NAME};
+use crate::{CMD_NAME, utils};
 
 macro_rules! test_subcommands_without_args {
     ($(($name:ident, $str:expr),)*) => ($(

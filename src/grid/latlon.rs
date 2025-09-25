@@ -1,10 +1,10 @@
 use super::{
-    helpers::{evenly_spaced_degrees, evenly_spaced_longitudes, RegularGridIterator},
     GridPointIndexIterator, ScanningMode,
+    helpers::{RegularGridIterator, evenly_spaced_degrees, evenly_spaced_longitudes},
 };
 use crate::{
     error::GribError,
-    helpers::{read_as, GribInt},
+    helpers::{GribInt, read_as},
 };
 
 #[derive(Debug, PartialEq, Eq)]
