@@ -27,7 +27,7 @@ impl<const N: usize> TryFromSlice for [u8; N] {
     }
 }
 
-macro_rules! add_impl_for_unsigned_integer_types {
+macro_rules! add_impl_for_unsigned_integer_and_float_types {
     ($($ty:ty,)*) => ($(
         impl TryFromSlice for $ty {
             fn try_from_slice(slice: &[u8]) -> TryFromSliceResult<$ty> {
@@ -38,7 +38,7 @@ macro_rules! add_impl_for_unsigned_integer_types {
     )*);
 }
 
-add_impl_for_unsigned_integer_types![u8, u16, u32, u64,];
+add_impl_for_unsigned_integer_and_float_types![u8, u16, u32, u64, f32, f64,];
 
 macro_rules! add_impl_for_signed_integer_types {
     ($(($ty_src:ty, $ty_dst:ty),)*) => ($(

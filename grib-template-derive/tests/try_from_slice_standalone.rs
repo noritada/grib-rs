@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-#[derive(Debug, PartialEq, Eq, grib_template_derive::TryFromSlice)]
+#[derive(Debug, PartialEq, grib_template_derive::TryFromSlice)]
 pub struct Params {
     /// Field 1
     field1: u8,
@@ -9,7 +9,7 @@ pub struct Params {
     /// Field 3
     field3: i16,
     /// Field 4
-    field4: u32,
+    field4: f32,
     /// Field 5
     field5: InnerParams,
 }
