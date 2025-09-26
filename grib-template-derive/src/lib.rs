@@ -107,9 +107,5 @@ fn get_doc(attrs: &[syn::Attribute]) -> Option<String> {
             _ => {}
         }
     }
-    if doc.is_empty() {
-        None
-    } else {
-        Some(doc)
-    }
+    if doc.is_empty() { None } else { Some(doc) }
 }
