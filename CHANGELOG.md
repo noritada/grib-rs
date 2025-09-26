@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.13.0] - 2025-09-26
+### Enhancements
+
+- The separation of optional dependencies into crate features is now complete.
+  Please enable or disable features as needed.
+  - Decoding implementations requiring other crates have been split into separate crate features,
+    allowing users who don't need them to disable them at build time.
+    (#132, #134, #135)
+  - As the number of crate features has increased, the `default` feature has been configured.
+    (#137)
+- Decoding performance improved for JPEG 2000 code stream format data.
+  This improvement is currently available only when an experimental feature called `jpeg2000-unpack-with-openjpeg-experimental` is enabled.
+  (#93, #136)
+
+### Others
+
+- Updated to the Rust 2024 Edition.
+  (#139)
+
 ## [0.12.1] - 2025-09-21
 ### Documentation improvements
 
@@ -464,7 +483,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - inspect: display of information mainly for development purpose such as template numbers
     - list: display of a list of sections (the style is still tentative)
 
-[unreleased]: https://github.com/noritada/grib-rs/compare/v0.12.1...HEAD
+[unreleased]: https://github.com/noritada/grib-rs/compare/v0.13.0...HEAD
+[0.13.0]: https://github.com/noritada/grib-rs/compare/v0.12.1...v0.13.0
 [0.12.1]: https://github.com/noritada/grib-rs/compare/v0.12.0...v0.12.1
 [0.12.0]: https://github.com/noritada/grib-rs/compare/v0.11.2...v0.12.0
 [0.11.2]: https://github.com/noritada/grib-rs/compare/v0.11.1...v0.11.2
