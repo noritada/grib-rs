@@ -1,0 +1,11 @@
+error: not an empty enum
+ --> tests/02-not-empty-enum.rs:4:10
+  |
+4 | pub enum FooCodes {
+  |          ^^^^^^^^
+
+error: expected `enum`
+  --> tests/02-not-empty-enum.rs:10:5
+   |
+10 | pub struct BarCodes;
+   |     ^^^^^^

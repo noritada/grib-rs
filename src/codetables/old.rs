@@ -2,6 +2,15 @@ use std::fmt::{self, Display, Formatter};
 
 pub struct LookupResult(Result<&'static &'static str, ConversionError>);
 
+impl LookupResult {
+    /// Returns WMO description of the code.
+    pub fn description(&self) -> Option<String> {
+        let Self(result) = self;
+        let s = result.as_ref().ok()?.to_string();
+        Some(s)
+    }
+}
+
 impl Display for LookupResult {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         let s = match &self.0 {
