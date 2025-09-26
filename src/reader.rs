@@ -1,6 +1,6 @@
 use std::io::{self, Read, Seek, SeekFrom};
 
-use crate::{datatypes::*, error::*, helpers::read_as, SectionBody, SectionInfo};
+use crate::{SectionBody, SectionInfo, datatypes::*, error::*, helpers::read_as};
 
 const SECT0_IS_MAGIC: &[u8] = b"GRIB";
 const SECT0_IS_MAGIC_SIZE: usize = SECT0_IS_MAGIC.len();
@@ -561,8 +561,8 @@ mod tests {
     }
 
     #[test]
-    fn read_grib2_message_starting_from_non_zero_position_after_seeking(
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    fn read_grib2_message_starting_from_non_zero_position_after_seeking()
+    -> Result<(), Box<dyn std::error::Error>> {
         let header_bytes_skipped = b"HEADER TO BE SKIPPED\n";
         let buf = create_grib2_message_starting_from_non_zero_position(header_bytes_skipped)?;
 

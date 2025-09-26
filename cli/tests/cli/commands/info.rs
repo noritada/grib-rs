@@ -3,7 +3,7 @@ use std::process::Command;
 use assert_cmd::prelude::*;
 use predicates::prelude::*;
 
-use crate::{utils, CMD_NAME};
+use crate::{CMD_NAME, utils};
 
 crate::commands::test_simple_display! {
     (

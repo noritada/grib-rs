@@ -1,10 +1,10 @@
 use super::{
-    helpers::{evenly_spaced_longitudes, RegularGridIterator},
     GridPointIndexIterator, ScanningMode,
+    helpers::{RegularGridIterator, evenly_spaced_longitudes},
 };
 use crate::{
     error::GribError,
-    helpers::{read_as, GribInt},
+    helpers::{GribInt, read_as},
 };
 
 #[derive(Debug, PartialEq, Eq)]
@@ -207,8 +207,8 @@ mod tests {
     use crate::grid::helpers::test_helpers::assert_almost_eq;
 
     #[test]
-    fn latlon_computation_for_real_world_gaussian_grid_compared_with_results_from_eccodes(
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    fn latlon_computation_for_real_world_gaussian_grid_compared_with_results_from_eccodes()
+    -> Result<(), Box<dyn std::error::Error>> {
         use std::io::Read;
 
         let mut buf = Vec::new();

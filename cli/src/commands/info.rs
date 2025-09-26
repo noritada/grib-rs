@@ -3,13 +3,13 @@ use std::{
     path::PathBuf,
 };
 
-use clap::{arg, ArgMatches, Command};
+use clap::{ArgMatches, Command, arg};
 use grib::{
+    Identification, Indicator, SectionBody,
     codetables::{
         CodeTable0_0, CodeTable1_1, CodeTable1_2, CodeTable1_3, CodeTable1_4, CommonCodeTable00,
         CommonCodeTable11, Lookup,
     },
-    Identification, Indicator, SectionBody,
 };
 
 use crate::cli;

@@ -3,8 +3,9 @@ mod param_codes;
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::{
+    ItemEnum, Lit, Result, Token,
     parse::{Parse, ParseStream},
-    parse_macro_input, ItemEnum, Lit, Result, Token,
+    parse_macro_input,
 };
 
 #[proc_macro_attribute]

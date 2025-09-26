@@ -12,7 +12,6 @@ categories.workspace = true
 keywords.workspace = true
 build = "build/main.rs"
 exclude = ["/.github", "/testdata"]
-rust-version = "1.73"
 
 [package.metadata.docs.rs]
 all-features = true
@@ -24,7 +23,7 @@ members = ["gen", "cli", "demo", "codegen"]
 [workspace.package]
 version = "0.12.1"
 authors = ["Noritada Kobayashi <noritada.kobayashi@gmail.com>"]
-edition = "2021"
+edition = "2024"
 license = "MIT OR Apache-2.0"
 readme = "README.md"
 repository = "https://github.com/noritada/grib-rs"

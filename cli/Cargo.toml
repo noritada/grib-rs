@@ -12,7 +12,6 @@ repository.workspace = true
 homepage.workspace = true
 categories.workspace = true
 keywords.workspace = true
-rust-version = "1.80"
 
 [[bin]]
 name = "gribber"

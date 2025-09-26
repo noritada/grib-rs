@@ -1,4 +1,4 @@
-use std::str::{from_utf8, FromStr};
+use std::str::{FromStr, from_utf8};
 
 pub mod cct_csv;
 pub mod grib2_codeflag_csv;
@@ -115,7 +115,7 @@ const {}: &[& str] = &{:#?};",
 
                     if count != range.start {
                         return Vec::new(); // Sparse code tables are not
-                                           // supported at the moment.
+                        // supported at the moment.
                     }
                     if range.size() == 1 {
                         output.push(string.to_string());

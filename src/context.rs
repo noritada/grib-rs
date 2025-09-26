@@ -8,6 +8,7 @@ use std::{
 #[cfg(feature = "time-calculation")]
 use crate::TemporalInfo;
 use crate::{
+    GridPointIndexIterator, TemporalRawInfo,
     codetables::{
         CodeTable3_1, CodeTable4_0, CodeTable4_1, CodeTable4_2, CodeTable4_3, CodeTable5_0, Lookup,
     },
@@ -15,8 +16,7 @@ use crate::{
     error::*,
     grid::GridPointIterator,
     parser::Grib2SubmessageIndexStream,
-    reader::{Grib2Read, Grib2SectionStream, SeekableGrib2Reader, SECT8_ES_SIZE},
-    GridPointIndexIterator, TemporalRawInfo,
+    reader::{Grib2Read, Grib2SectionStream, SECT8_ES_SIZE, SeekableGrib2Reader},
 };
 
 #[derive(Default, Debug, Clone, PartialEq, Eq)]
@@ -586,8 +586,8 @@ Data Representation:                    {}
     /// };
     ///
     /// use grib::{
-    ///     codetables::grib2::{Table1_2, Table4_4},
     ///     Code, ForecastTime, TemporalRawInfo, UtcDateTime,
+    ///     codetables::grib2::{Table1_2, Table4_4},
     /// };
     ///
     /// fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -652,8 +652,8 @@ Data Representation:                    {}
     ///
     /// use chrono::{TimeZone, Utc};
     /// use grib::{
-    ///     codetables::grib2::{Table1_2, Table4_4},
     ///     Code, ForecastTime, TemporalInfo, UtcDateTime,
+    ///     codetables::grib2::{Table1_2, Table4_4},
     /// };
     ///
     /// fn main() -> Result<(), Box<dyn std::error::Error>> {
