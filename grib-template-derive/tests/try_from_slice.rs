@@ -12,6 +12,12 @@ pub struct Params {
     field4: f32,
     /// Field 5
     field5: InnerParams,
+    /// Field 6
+    #[try_from_slice(len = 4)]
+    field6: Vec<i16>,
+    /// Field 7
+    #[try_from_slice(len = "field1")]
+    field7: Vec<i16>,
 }
 
 #[derive(Debug, PartialEq, Eq, grib_template_derive::TryFromSlice)]
@@ -24,7 +30,8 @@ pub struct InnerParams {
 
 fn main() {
     let buf = vec![
-        0x01_u8, 0xff, 0x00, 0xff, 0x00, 0x3f, 0x80, 0x00, 0x00, 0xf0, 0x0f,
+        0x01_u8, 0xff, 0x00, 0xff, 0x00, 0x3f, 0x80, 0x00, 0x00, 0xf0, 0x0f, 0xf0, 0xf1, 0xf2,
+        0xf3, 0xf4, 0xf5, 0xf6, 0xf7, 0xf0, 0xf1,
     ];
     let actual = Params::try_from_slice(&buf);
     let expected = Ok(Params {
@@ -36,6 +43,8 @@ fn main() {
             field1: 0xf0,
             field2: 0x0f,
         },
+        field6: vec![-0x70f1, -0x72f3, -0x74f5, -0x76f7],
+        field7: vec![-0x70f1],
     });
 
     assert_eq!(actual, expected)
