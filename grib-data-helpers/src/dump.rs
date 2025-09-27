@@ -45,7 +45,7 @@ macro_rules! add_impl_for_number_types {
                 } else {
                     write!(output, ": ")?;
                 }
-                writeln!(output, "{} = {}{}",
+                writeln!(output, "{} = {:?}{}",
                     name,
                     self,
                     doc,
