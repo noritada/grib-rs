@@ -98,10 +98,10 @@ fn get_doc(attrs: &[syn::Attribute]) -> Option<String> {
     for attr in attrs.iter() {
         match attr.meta {
             syn::Meta::NameValue(ref value) if value.path.is_ident("doc") => {
-                if let syn::Expr::Lit(lit) = &value.value {
-                    if let syn::Lit::Str(s) = &lit.lit {
-                        doc.push_str(&s.value());
-                    }
+                if let syn::Expr::Lit(lit) = &value.value
+                    && let syn::Lit::Str(s) = &lit.lit
+                {
+                    doc.push_str(&s.value());
                 }
             }
             _ => {}
