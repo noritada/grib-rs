@@ -12,7 +12,7 @@ pub trait Dump {
     ) -> Result<(), Error>;
 }
 
-pub trait DumpField {
+pub trait DumpField: OctetSize {
     fn dump_field<W: Write>(
         &self,
         name: &str,
@@ -23,7 +23,7 @@ pub trait DumpField {
     ) -> Result<(), Error>;
 }
 
-macro_rules! add_impl_for_number_types {
+macro_rules! add_impl_of_dump_field_for_number_types {
     ($($ty:ty,)*) => ($(
         impl DumpField for $ty {
             fn dump_field<W: Write>(
@@ -34,7 +34,7 @@ macro_rules! add_impl_for_number_types {
                 start: usize,
                 output: &mut W,
             ) -> Result<(), Error> {
-                let size = std::mem::size_of::<Self>();
+                let size = self.octet_size();
                 if size == 1 {
                     write!(output, "{}", start)?;
                 } else {
@@ -55,7 +55,28 @@ macro_rules! add_impl_for_number_types {
     )*);
 }
 
-add_impl_for_number_types![u8, u16, u32, u64, i8, i16, i32, i64, f32, f64,];
+add_impl_of_dump_field_for_number_types![
+    u8,
+    u16,
+    u32,
+    u64,
+    i8,
+    i16,
+    i32,
+    i64,
+    f32,
+    f64,
+    Vec<u8>,
+    Vec<u16>,
+    Vec<u32>,
+    Vec<u64>,
+    Vec<i8>,
+    Vec<i16>,
+    Vec<i32>,
+    Vec<i64>,
+    Vec<f32>,
+    Vec<f64>,
+];
 
 impl<T: Dump> DumpField for T {
     fn dump_field<W: Write>(
@@ -70,6 +91,40 @@ impl<T: Dump> DumpField for T {
             .map(|s| Cow::Owned(format!("{}.{}", s, name)))
             .unwrap_or(Cow::Borrowed(name));
         self.dump(Some(&parent), start, output)
+    }
+}
+
+pub trait OctetSize {
+    fn octet_size(&self) -> usize;
+}
+
+macro_rules! add_impl_of_octet_size_for_number_types {
+    ($($ty:ty,)*) => ($(
+        impl OctetSize for $ty {
+            fn octet_size(&self) -> usize {
+                std::mem::size_of::<Self>()
+            }
+        }
+    )*);
+}
+
+add_impl_of_octet_size_for_number_types![u8, u16, u32, u64, i8, i16, i32, i64, f32, f64,];
+
+macro_rules! add_impl_of_octet_size_for_number_vectors {
+    ($($ty:ty,)*) => ($(
+        impl OctetSize for Vec<$ty> {
+            fn octet_size(&self) -> usize {
+                std::mem::size_of::<$ty>() * self.len()
+            }
+        }
+    )*);
+}
+
+add_impl_of_octet_size_for_number_vectors![u8, u16, u32, u64, i8, i16, i32, i64, f32, f64,];
+
+impl<T: Dump> OctetSize for T {
+    fn octet_size(&self) -> usize {
+        0
     }
 }
 

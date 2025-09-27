@@ -12,6 +12,8 @@ pub struct Params {
     field4: f32,
     /// Field 5
     field5: InnerParams,
+    /// Field 6
+    field6: Vec<u16>,
 }
 
 #[derive(grib_template_derive::Dump)]

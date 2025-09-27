@@ -12,6 +12,8 @@ pub struct Params {
     field4: f32,
     /// Field 5
     field5: InnerParams,
+    /// Field 6
+    field6: Vec<u16>,
 }
 
 #[derive(grib_template_derive::Dump)]
@@ -41,6 +43,7 @@ fn main() {
             field2: 52,
             field3: InnerInnerParams { field1: 511 },
         },
+        field6: vec![1, 2, 3, 4],
     };
 
     let mut buf = std::io::Cursor::new(Vec::with_capacity(1024));
@@ -55,6 +58,7 @@ fn main() {
 10: field5.field1 = 51  // Field 5.1
 11: field5.field2 = 52  // Field 5.2
 12-13: field5.field3.field1 = 511  // Field 5.3.1
+14-21: field6 = [1, 2, 3, 4]  // Field 6
 "
     )
 }
