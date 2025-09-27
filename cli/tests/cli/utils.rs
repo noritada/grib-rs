@@ -1,82 +1,44 @@
 use std::{
-    convert::TryInto,
     fs::File,
     io::{self, BufReader, Read, Write},
     path::Path,
 };
 
 use tempfile::NamedTempFile;
-use xz2::bufread::XzDecoder;
 
 pub(crate) mod testdata;
 
-fn cat_to_tempfile<P>(file_path: P) -> Result<NamedTempFile, io::Error>
+fn write_uncompressed_to_tempfile<P>(file_path: P) -> Result<NamedTempFile, io::Error>
+where
+    P: AsRef<Path>,
+{
+    let mut out = NamedTempFile::new()?;
+    let buf = get_uncompressed(file_path)?;
+    out.write_all(&buf)?;
+    Ok(out)
+}
+
+pub(crate) fn get_uncompressed<P>(file_path: P) -> Result<Vec<u8>, io::Error>
 where
     P: AsRef<Path>,
 {
     let mut buf = Vec::new();
-    let mut out = NamedTempFile::new()?;
 
-    let f = File::open(file_path)?;
+    let f = File::open(&file_path)?;
     let mut f = BufReader::new(f);
-    f.read_to_end(&mut buf)?;
-    out.write_all(&buf)?;
-
-    Ok(out)
-}
-
-fn gzcat_to_tempfile<P>(file_path: P) -> Result<NamedTempFile, io::Error>
-where
-    P: AsRef<Path>,
-{
-    let mut buf = Vec::new();
-    let mut out = NamedTempFile::new()?;
-
-    let f = File::open(file_path)?;
-    let f = BufReader::new(f);
-    let mut f = flate2::read::GzDecoder::new(f);
-    f.read_to_end(&mut buf)?;
-    out.write_all(&buf)?;
-
-    Ok(out)
-}
-
-fn xzcat_to_tempfile<P>(file_path: P) -> Result<NamedTempFile, io::Error>
-where
-    P: AsRef<Path>,
-{
-    let mut buf = Vec::new();
-    let mut out = NamedTempFile::new()?;
-
-    let f = File::open(file_path)?;
-    let f = BufReader::new(f);
-    let mut f = XzDecoder::new(f);
-    f.read_to_end(&mut buf)?;
-    out.write_all(&buf)?;
-
-    Ok(out)
-}
-
-fn unxz_as_bytes<P>(file_path: P) -> Result<Vec<u8>, io::Error>
-where
-    P: AsRef<Path>,
-{
-    let mut buf = Vec::new();
-
-    let f = File::open(file_path)?;
-    let f = BufReader::new(f);
-    let mut f = XzDecoder::new(f);
-    f.read_to_end(&mut buf)?;
-
-    Ok(buf)
-}
-
-pub(crate) fn cat_as_bytes(file_name: &str) -> Result<Vec<u8>, io::Error> {
-    let mut buf = Vec::new();
-
-    let f = File::open(file_name)?;
-    let mut f = BufReader::new(f);
-    f.read_to_end(&mut buf)?;
+    match file_path.as_ref().extension().map(|s| s.as_encoded_bytes()) {
+        Some(b"gz") => {
+            let mut f = flate2::read::GzDecoder::new(f);
+            f.read_to_end(&mut buf)?;
+        }
+        Some(b"xz") => {
+            let mut f = xz2::bufread::XzDecoder::new(f);
+            f.read_to_end(&mut buf)?;
+        }
+        _ => {
+            f.read_to_end(&mut buf)?;
+        }
+    };
 
     Ok(buf)
 }

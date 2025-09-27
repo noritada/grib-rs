@@ -1,21 +1,13 @@
-#[cfg(target_arch = "wasm32")]
-use std::marker::PhantomData;
+use std::vec::IntoIter;
 
-use num::ToPrimitive;
-
-#[cfg(not(target_arch = "wasm32"))]
-use crate::decoder::jpeg2000::Jpeg2000CodeStreamDecodeError;
 use crate::{
     context::{SectionBody, SubMessage},
     decoder::{
-        bitmap::{create_bitmap_for_nonnullable_data, BitmapDecodeIterator},
-        complex::ComplexPackingDecodeError,
-        png::PngDecodeError,
-        run_length::RunLengthEncodingDecodeError,
-        simple::{
-            SimplePackingDecodeError, SimplePackingDecodeIterator,
-            SimplePackingDecodeIteratorWrapper,
-        },
+        bitmap::{BitmapDecodeIterator, dummy_bitmap_for_nonnullable_data},
+        complex::ComplexPackingDecoded,
+        param::Section5Param,
+        simple::SimplePackingDecoder,
+        stream::NBitwiseIterator,
     },
     error::*,
     reader::Grib2Read,
@@ -28,53 +20,110 @@ use crate::{
 /// use grib::Grib2SubmessageDecoder;
 ///
 /// fn main() -> Result<(), Box<dyn std::error::Error>> {
-///     let f =
-///         std::fs::File::open("testdata/CMC_glb_TMP_ISBL_1_latlon.24x.24_2021051800_P000.grib2")?;
+///     let f = std::fs::File::open(
+///         "testdata/Z__C_RJTD_20160822020000_NOWC_GPV_Ggis10km_Pphw10_FH0000-0100_grib2.bin",
+///     )?;
 ///     let f = std::io::BufReader::new(f);
 ///     let grib2 = grib::from_reader(f)?;
 ///     let (_index, first_submessage) = grib2.iter().next().unwrap();
 ///
 ///     let decoder = Grib2SubmessageDecoder::from(first_submessage)?;
 ///     let mut decoded = decoder.dispatch()?;
-///     assert_eq!(decoded.size_hint(), (1126500, Some(1126500)));
+///     assert_eq!(decoded.size_hint(), (86016, Some(86016)));
 ///
 ///     let first_value = decoded.next();
-///     assert_eq!(first_value.map(|f| f.round()), Some(236.0_f32));
+///     assert_eq!(first_value.map(|f| f.is_nan()), Some(true));
 ///
-///     let last_value = decoded.nth(1126498);
-///     assert_eq!(last_value.map(|f| f.round()), Some(286.0_f32));
+///     let non_nan_value = decoded.find(|f| !f.is_nan());
+///     assert_eq!(non_nan_value.map(|f| f.round()), Some(1.0_f32));
 ///
-///     let next_to_last_value = decoded.next();
-///     assert_eq!(next_to_last_value, None);
+///     let last_value = decoded.last();
+///     assert_eq!(last_value.map(|f| f.is_nan()), Some(true));
+///     Ok(())
+/// }
+/// ```
+///
+/// If the byte sequences for Sections 5, 6, and 7 of the GRIB2 data are known,
+/// and the number of grid points (described in Section 3) is also known, it is
+/// also possible to create a decoder instance by passing them to
+/// [`Grib2SubmessageDecoder::new`]. The example above is equivalent to the
+/// following:
+///
+/// ```
+/// use std::io::Read;
+///
+/// use grib::Grib2SubmessageDecoder;
+///
+/// fn main() -> Result<(), Box<dyn std::error::Error>> {
+///     let f = std::fs::File::open(
+///         "testdata/Z__C_RJTD_20160822020000_NOWC_GPV_Ggis10km_Pphw10_FH0000-0100_grib2.bin",
+///     )?;
+///     let mut f = std::io::BufReader::new(f);
+///     let mut buf = Vec::new();
+///     f.read_to_end(&mut buf)?;
+///
+///     let decoder = Grib2SubmessageDecoder::new(
+///         86016,
+///         buf[0x0000008f..0x000000a6].to_vec(),
+///         buf[0x000000a6..0x000000ac].to_vec(),
+///         buf[0x000000ac..0x0000061b].to_vec(),
+///     )?;
+///     let mut decoded = decoder.dispatch()?;
+///     assert_eq!(decoded.size_hint(), (86016, Some(86016)));
+///
+///     let first_value = decoded.next();
+///     assert_eq!(first_value.map(|f| f.is_nan()), Some(true));
+///
+///     let non_nan_value = decoded.find(|f| !f.is_nan());
+///     assert_eq!(non_nan_value.map(|f| f.round()), Some(1.0_f32));
+///
+///     let last_value = decoded.last();
+///     assert_eq!(last_value.map(|f| f.is_nan()), Some(true));
 ///     Ok(())
 /// }
 /// ```
 pub struct Grib2SubmessageDecoder {
     num_points_total: usize,
-    pub(crate) num_points_encoded: usize,
-    template_num: u16,
-    pub(crate) sect5_payload: Box<[u8]>,
-    bitmap: Vec<u8>,
-    pub(crate) sect7_payload: Box<[u8]>,
+    sect5_param: Section5Param,
+    pub(crate) sect5_bytes: Vec<u8>,
+    sect6_bytes: Vec<u8>,
+    sect7_bytes: Vec<u8>,
 }
 
 impl Grib2SubmessageDecoder {
-    fn new(
+    /// Creates an instance from the number of grid points (described in Section
+    /// 3) and byte sequences for Sections 5, 6, and 7 of the GRIB2 data.
+    ///
+    /// For code examples, refer to the description of this `struct`.
+    pub fn new(
         num_points_total: usize,
-        num_points_encoded: usize,
-        template_num: u16,
-        sect5_payload: Box<[u8]>,
-        bitmap: Vec<u8>,
-        sect7_payload: Box<[u8]>,
-    ) -> Self {
-        Self {
+        sect5_bytes: Vec<u8>,
+        sect6_bytes: Vec<u8>,
+        sect7_bytes: Vec<u8>,
+    ) -> Result<Self, GribError> {
+        let sect5_param = Section5Param::from_buf(&sect5_bytes[5..11]);
+        let sect6_bytes = match sect6_bytes[5] {
+            0x00 => sect6_bytes,
+            0xff => {
+                let mut sect6_bytes = sect6_bytes;
+                sect6_bytes.append(&mut dummy_bitmap_for_nonnullable_data(num_points_total));
+                sect6_bytes
+            }
+            n => {
+                return Err(GribError::DecodeError(DecodeError::NotSupported(
+                    "GRIB2 code table 6.0 (bit map indicator)",
+                    n.into(),
+                )));
+            }
+        };
+
+        Ok(Self {
             num_points_total,
-            num_points_encoded,
-            template_num,
-            sect5_payload,
-            bitmap,
-            sect7_payload,
-        }
+            sect5_param,
+            sect5_bytes,
+            sect6_bytes,
+            sect7_bytes,
+        })
     }
 
     /// Sets up a decoder for grid point values of `submessage`.
@@ -83,67 +132,64 @@ impl Grib2SubmessageDecoder {
         let sect5 = submessage.5.body;
         let sect6 = submessage.6.body;
         let sect7 = submessage.7.body;
-        let (sect3_body, sect5_body, sect6_body) = match (
-            submessage.3.body.body.as_ref(),
-            sect5.body.as_ref(),
-            sect6.body.as_ref(),
-        ) {
-            (
-                Some(SectionBody::Section3(b3)),
-                Some(SectionBody::Section5(b5)),
-                Some(SectionBody::Section6(b6)),
-            ) => (b3, b5, b6),
+        let sect3_body = match submessage.3.body.body.as_ref() {
+            Some(SectionBody::Section3(b3)) => b3,
             _ => return Err(GribError::InternalDataError),
         };
         let sect3_num_points = sect3_body.num_points() as usize;
 
-        let bitmap = match sect6_body.bitmap_indicator {
-            0x00 => {
-                let sect6_data = reader.read_sect_payload_as_slice(sect6)?;
-                sect6_data[1..].into()
-            }
-            0xff => {
-                let num_points = sect3_num_points;
-                create_bitmap_for_nonnullable_data(num_points)
-            }
-            _ => {
-                return Err(GribError::DecodeError(
-                    DecodeError::BitMapIndicatorUnsupported,
-                ));
-            }
-        };
-
-        Ok(Self::new(
+        Self::new(
             sect3_num_points,
-            sect5_body.num_points() as usize,
-            sect5_body.repr_tmpl_num(),
-            reader.read_sect_payload_as_slice(sect5)?,
-            bitmap,
-            reader.read_sect_payload_as_slice(sect7)?,
-        ))
+            reader.read_sect_as_slice(sect5)?,
+            reader.read_sect_as_slice(sect6)?,
+            reader.read_sect_as_slice(sect7)?,
+        )
     }
 
     /// Dispatches a decoding process and gets an iterator of decoded values.
     pub fn dispatch(
         &self,
-    ) -> Result<Grib2DecodedValues<impl Iterator<Item = f32> + '_>, GribError> {
-        let decoder = match self.template_num {
-            0 => Grib2ValueIterator::Template0(simple::decode(self)?),
-            2 => Grib2ValueIterator::Template2(complex::decode_7_2(self)?),
-            3 => Grib2ValueIterator::Template3(complex::decode_7_3(self)?),
-            #[cfg(not(target_arch = "wasm32"))]
-            40 => Grib2ValueIterator::Template40(jpeg2000::decode(self)?),
-            41 => Grib2ValueIterator::Template41(png::decode(self)?),
-            200 => Grib2ValueIterator::Template200(run_length::decode(self)?),
-            _ => {
-                return Err(GribError::DecodeError(
-                    DecodeError::TemplateNumberUnsupported,
-                ))
+    ) -> Result<Grib2DecodedValues<'_, impl Iterator<Item = f32> + '_>, GribError> {
+        let decoder = match self.sect5_param.template_num {
+            0 => Grib2ValueIterator::SigSNS(simple::Simple(self).iter()?),
+            2 => Grib2ValueIterator::SigSC(complex::Complex(self).iter()?),
+            3 => Grib2ValueIterator::SigSSCI(complex::ComplexSpatial(self).iter()?),
+            #[cfg(all(
+                feature = "jpeg2000-unpack-with-openjpeg",
+                feature = "jpeg2000-unpack-with-openjpeg-experimental"
+            ))]
+            40 => Grib2ValueIterator::SigSIm(jpeg2000::Jpeg2000(self).iter()?),
+            #[cfg(all(
+                feature = "jpeg2000-unpack-with-openjpeg",
+                not(feature = "jpeg2000-unpack-with-openjpeg-experimental")
+            ))]
+            40 => Grib2ValueIterator::SigSI(jpeg2000::Jpeg2000(self).iter()?),
+            #[cfg(feature = "png-unpack-with-png-crate")]
+            41 => Grib2ValueIterator::SigSNV(png::Png(self).iter()?),
+            #[cfg(feature = "ccsds-unpack-with-libaec")]
+            42 => Grib2ValueIterator::SigSNV(ccsds::Ccsds(self).iter()?),
+            200 => Grib2ValueIterator::SigI(run_length::RunLength(self).iter()?),
+            n => {
+                return Err(GribError::DecodeError(DecodeError::NotSupported(
+                    "GRIB2 code table 5.0 (data representation template number)",
+                    n,
+                )));
             }
         };
-        let decoder =
-            BitmapDecodeIterator::new(self.bitmap.iter(), decoder, self.num_points_total)?;
+        let decoder = BitmapDecodeIterator::new(
+            self.sect6_bytes[6..].iter(),
+            decoder,
+            self.num_points_total,
+        )?;
         Ok(Grib2DecodedValues(decoder))
+    }
+
+    pub(crate) fn num_points_encoded(&self) -> usize {
+        self.sect5_param.num_points_encoded as usize
+    }
+
+    pub(crate) fn sect7_payload(&self) -> &[u8] {
+        &self.sect7_bytes[5..]
     }
 }
 
@@ -166,117 +212,88 @@ where
     }
 }
 
-// Rust does not allow modification of generics type parameters or where clauses
-// in conditonal compilation at this time. This is a trick to allow compilation
-// even when JPEG 2000 code stream format support is not available (there may be
-// a better way).
-#[cfg(target_arch = "wasm32")]
-type Grib2ValueIterator<T0, T2, T3, T41> =
-    Grib2SubmessageDecoderIteratorWrapper<T0, T2, T3, std::vec::IntoIter<f32>, T41>;
-#[cfg(not(target_arch = "wasm32"))]
-type Grib2ValueIterator<T0, T2, T3, T40, T41> =
-    Grib2SubmessageDecoderIteratorWrapper<T0, T2, T3, T40, T41>;
-
-enum Grib2SubmessageDecoderIteratorWrapper<T0, T2, T3, T40, T41> {
-    Template0(SimplePackingDecodeIteratorWrapper<T0>),
-    Template2(SimplePackingDecodeIteratorWrapper<T2>),
-    Template3(SimplePackingDecodeIteratorWrapper<T3>),
+enum Grib2ValueIterator<'d> {
+    SigSNS(SimplePackingDecoder<NBitwiseIterator<&'d [u8]>>),
+    SigSC(SimplePackingDecoder<ComplexPackingDecoded<'d>>),
+    SigSSCI(
+        SimplePackingDecoder<
+            complex::SpatialDifferencingDecodeIterator<ComplexPackingDecoded<'d>, IntoIter<i32>>,
+        >,
+    ),
     #[allow(dead_code)]
-    #[cfg(target_arch = "wasm32")]
-    Template40(PhantomData<T40>),
-    #[cfg(not(target_arch = "wasm32"))]
-    Template40(SimplePackingDecodeIteratorWrapper<T40>),
-    Template41(SimplePackingDecodeIterator<T41>),
-    Template200(std::vec::IntoIter<f32>),
+    SigSI(SimplePackingDecoder<IntoIter<i32>>),
+    #[cfg(feature = "jpeg2000-unpack-with-openjpeg-experimental")]
+    SigSIm(SimplePackingDecoder<self::jpeg2000::ImageIntoIter>),
+    #[allow(dead_code)]
+    SigSNV(SimplePackingDecoder<NBitwiseIterator<Vec<u8>>>),
+    SigI(IntoIter<f32>),
 }
 
-impl<T0, T2, T3, T40, T41> Iterator for Grib2SubmessageDecoderIteratorWrapper<T0, T2, T3, T40, T41>
-where
-    T0: Iterator,
-    <T0 as Iterator>::Item: ToPrimitive,
-    T2: Iterator,
-    <T2 as Iterator>::Item: ToPrimitive,
-    T3: Iterator,
-    <T3 as Iterator>::Item: ToPrimitive,
-    T40: Iterator,
-    <T40 as Iterator>::Item: ToPrimitive,
-    T41: Iterator,
-    <T41 as Iterator>::Item: ToPrimitive,
-{
+impl<'d> Iterator for Grib2ValueIterator<'d> {
     type Item = f32;
 
     fn next(&mut self) -> Option<Self::Item> {
         match self {
-            Self::Template0(inner) => inner.next(),
-            Self::Template2(inner) => inner.next(),
-            Self::Template3(inner) => inner.next(),
-            #[cfg(not(target_arch = "wasm32"))]
-            Self::Template40(inner) => inner.next(),
-            #[cfg(target_arch = "wasm32")]
-            Self::Template40(_) => unreachable!(),
-            Self::Template41(inner) => inner.next(),
-            Self::Template200(inner) => inner.next(),
+            Self::SigSNS(inner) => inner.next(),
+            Self::SigSC(inner) => inner.next(),
+            Self::SigSSCI(inner) => inner.next(),
+            Self::SigSI(inner) => inner.next(),
+            #[cfg(feature = "jpeg2000-unpack-with-openjpeg-experimental")]
+            Self::SigSIm(inner) => inner.next(),
+            Self::SigSNV(inner) => inner.next(),
+            Self::SigI(inner) => inner.next(),
         }
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
         match self {
-            Self::Template0(inner) => inner.size_hint(),
-            Self::Template2(inner) => inner.size_hint(),
-            Self::Template3(inner) => inner.size_hint(),
-            #[cfg(not(target_arch = "wasm32"))]
-            Self::Template40(inner) => inner.size_hint(),
-            #[cfg(target_arch = "wasm32")]
-            Self::Template40(_) => unreachable!(),
-            Self::Template41(inner) => inner.size_hint(),
-            Self::Template200(inner) => inner.size_hint(),
+            Self::SigSNS(inner) => inner.size_hint(),
+            Self::SigSC(inner) => inner.size_hint(),
+            Self::SigSSCI(inner) => inner.size_hint(),
+            Self::SigSI(inner) => inner.size_hint(),
+            #[cfg(feature = "jpeg2000-unpack-with-openjpeg-experimental")]
+            Self::SigSIm(inner) => inner.size_hint(),
+            Self::SigSNV(inner) => inner.size_hint(),
+            Self::SigI(inner) => inner.size_hint(),
         }
     }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum DecodeError {
-    TemplateNumberUnsupported,
-    BitMapIndicatorUnsupported,
-    SimplePackingDecodeError(SimplePackingDecodeError),
-    ComplexPackingDecodeError(ComplexPackingDecodeError),
-    #[cfg(not(target_arch = "wasm32"))]
-    Jpeg2000CodeStreamDecodeError(Jpeg2000CodeStreamDecodeError),
-    PngDecodeError(PngDecodeError),
-    RunLengthEncodingDecodeError(RunLengthEncodingDecodeError),
+    NotSupported(&'static str, u16),
     LengthMismatch,
+    UnclassifiedError(String),
 }
 
-impl From<SimplePackingDecodeError> for DecodeError {
-    fn from(e: SimplePackingDecodeError) -> Self {
-        Self::SimplePackingDecodeError(e)
+impl From<String> for DecodeError {
+    fn from(value: String) -> Self {
+        Self::UnclassifiedError(value)
     }
 }
 
-impl From<ComplexPackingDecodeError> for DecodeError {
-    fn from(e: ComplexPackingDecodeError) -> Self {
-        Self::ComplexPackingDecodeError(e)
+impl From<&str> for DecodeError {
+    fn from(value: &str) -> Self {
+        Self::UnclassifiedError(value.to_owned())
     }
 }
 
-#[cfg(not(target_arch = "wasm32"))]
-impl From<Jpeg2000CodeStreamDecodeError> for DecodeError {
-    fn from(e: Jpeg2000CodeStreamDecodeError) -> Self {
-        Self::Jpeg2000CodeStreamDecodeError(e)
-    }
-}
+pub(crate) trait Grib2GpvUnpack {
+    type Iter<'a>: Iterator<Item = f32>
+    where
+        Self: 'a;
 
-impl From<RunLengthEncodingDecodeError> for DecodeError {
-    fn from(e: RunLengthEncodingDecodeError) -> Self {
-        Self::RunLengthEncodingDecodeError(e)
-    }
+    fn iter<'a>(&'a self) -> Result<Self::Iter<'a>, DecodeError>;
 }
 
 mod bitmap;
+#[cfg(feature = "ccsds-unpack-with-libaec")]
+mod ccsds;
 mod complex;
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(feature = "jpeg2000-unpack-with-openjpeg")]
 mod jpeg2000;
 mod param;
+#[cfg(feature = "png-unpack-with-png-crate")]
 mod png;
 mod run_length;
 mod simple;

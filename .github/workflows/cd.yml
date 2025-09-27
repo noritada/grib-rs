@@ -2,17 +2,19 @@ name: CD
 
 on:
   push:
-    branches: [ master, 'release/v[0-9].[0-9]' ]
+    branches: [master, "release/v[0-9].[0-9]"]
+
+  workflow_dispatch:
 
 jobs:
   deploy:
     strategy:
       matrix:
         include:
-          - os: ubuntu-latest
-            target: x86_64-unknown-linux-musl
-          - os: windows-latest
-            target: x86_64-pc-windows-msvc
+          # - os: ubuntu-latest
+          #   target: x86_64-unknown-linux-musl
+          # - os: windows-latest
+          #   target: x86_64-pc-windows-msvc
           - os: macOS-latest
             target: x86_64-apple-darwin
           - os: macOS-latest
@@ -21,38 +23,43 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-    - name: Checkout
-      uses: actions/checkout@v3
-      with:
-        submodules: recursive
-    - name: Install Rust
-      uses: dtolnay/rust-toolchain@stable
-      with:
-        targets: ${{ matrix.target }}
-    - name: Setup musl
-      if: matrix.os == 'ubuntu-latest'
-      run: |
-        rustup target add x86_64-unknown-linux-musl
-        sudo apt -qq install musl-tools
-    - name: Build
-      run: cargo build --release --target ${{ matrix.target }} --verbose --workspace
-    - name: Create an archive to maintain the file permission (in non-Windows environments)
-      if: matrix.target != 'x86_64-pc-windows-msvc'
-      run: |
-        tar -C target/${{ matrix.target }}/release -cvf gribber-${{ matrix.target }}.tar.xz gribber
-    - name: Create an archive to maintain the file permission (in Windows environments)
-      if: matrix.target == 'x86_64-pc-windows-msvc'
-      run: |
-        powershell Compress-Archive -Path target/${{ matrix.target }}/release/gribber.exe -DestinationPath gribber-${{ matrix.target }}.zip
-    - name: Upload artifacts (in non-Windows environments)
-      if: matrix.target != 'x86_64-pc-windows-msvc'
-      uses: actions/upload-artifact@v3
-      with:
-        name: gribber-${{ matrix.target }}
-        path: gribber-${{ matrix.target }}.tar.xz
-    - name: Upload artifacts (in Windows environments)
-      if: matrix.target == 'x86_64-pc-windows-msvc'
-      uses: actions/upload-artifact@v3
-      with:
-        name: gribber-${{ matrix.target }}
-        path: gribber-${{ matrix.target }}.zip
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      # - name: Set up musl
+      #   if: matrix.target == 'x86_64-unknown-linux-musl'
+      #   run: |
+      #     rustup target add x86_64-unknown-linux-musl
+      #     sudo apt -qq install musl-tools
+      # - name: Set up C++ build tools for building PROJ
+      #   if: matrix.target == 'x86_64-unknown-linux-musl'
+      #   run: |
+      #     sudo apt -qq install build-essential g++-multilib
+      #     sudo ln -s /usr/bin/g++ /usr/bin/musl-g++
+      - name: Build
+        run: cargo build --release --target ${{ matrix.target }} --verbose --workspace
+      - name: Create an archive to maintain the file permission (in non-Windows environments)
+        if: matrix.target != 'x86_64-pc-windows-msvc'
+        run: |
+          tar -C target/${{ matrix.target }}/release -cvf gribber-${{ matrix.target }}.tar.xz gribber
+      - name: Create an archive to maintain the file permission (in Windows environments)
+        if: matrix.target == 'x86_64-pc-windows-msvc'
+        run: |
+          powershell Compress-Archive -Path target/${{ matrix.target }}/release/gribber.exe -DestinationPath gribber-${{ matrix.target }}.zip
+      - name: Upload artifacts (in non-Windows environments)
+        if: matrix.target != 'x86_64-pc-windows-msvc'
+        uses: actions/upload-artifact@v4
+        with:
+          name: gribber-${{ matrix.target }}
+          path: gribber-${{ matrix.target }}.tar.xz
+      - name: Upload artifacts (in Windows environments)
+        if: matrix.target == 'x86_64-pc-windows-msvc'
+        uses: actions/upload-artifact@v4
+        with:
+          name: gribber-${{ matrix.target }}
+          path: gribber-${{ matrix.target }}.zip

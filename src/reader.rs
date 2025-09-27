@@ -1,10 +1,6 @@
-use std::{
-    convert::TryInto,
-    io::{self, Read, Seek, SeekFrom},
-    result::Result,
-};
+use std::io::{self, Read, Seek, SeekFrom};
 
-use crate::{datatypes::*, error::*, utils::read_as, SectionBody, SectionInfo};
+use crate::{SectionBody, SectionInfo, datatypes::*, error::*, helpers::read_as};
 
 const SECT0_IS_MAGIC: &[u8] = b"GRIB";
 const SECT0_IS_MAGIC_SIZE: usize = SECT0_IS_MAGIC.len();
@@ -182,9 +178,9 @@ pub trait Grib2Read: Read + Seek {
 
     /// Reads a common header for Sections 1-7 and returns the section
     /// size and number.
+    fn read_sect_as_slice(&mut self, sect: &SectionInfo) -> Result<Vec<u8>, ParseError>;
     fn read_sect_header(&mut self) -> Result<Option<SectHeader>, ParseError>;
     fn read_sect_payload(&mut self, header: &SectHeader) -> Result<SectionBody, ParseError>;
-    fn read_sect_payload_as_slice(&mut self, sect: &SectionInfo) -> Result<Box<[u8]>, ParseError>;
     fn read_sect6_payload(&mut self, size: usize) -> Result<SectionBody, ParseError>;
     fn skip_sect7_payload(&mut self, size: usize) -> Result<SectionBody, ParseError>;
     fn read_slice_without_offset_check(&mut self, size: usize) -> Result<Box<[u8]>, ParseError>;
@@ -270,6 +266,15 @@ impl<R: Read + Seek> Grib2Read for SeekableGrib2Reader<R> {
         Ok(Some(()))
     }
 
+    fn read_sect_as_slice(&mut self, sect: &SectionInfo) -> Result<Vec<u8>, ParseError> {
+        self.seek(SeekFrom::Start(sect.offset as u64))?;
+
+        let mut buf = vec![0; sect.size];
+        self.read_exact(buf.as_mut_slice())?;
+
+        Ok(buf)
+    }
+
     fn read_sect_header(&mut self) -> Result<Option<SectHeader>, ParseError> {
         let mut buf = [0; SECT_HEADER_SIZE];
         let size = self.read(&mut buf[..])?;
@@ -306,17 +311,6 @@ impl<R: Read + Seek> Grib2Read for SeekableGrib2Reader<R> {
         };
 
         Ok(body)
-    }
-
-    fn read_sect_payload_as_slice(&mut self, sect: &SectionInfo) -> Result<Box<[u8]>, ParseError> {
-        let body_offset = sect.offset + SECT_HEADER_SIZE;
-        self.seek(SeekFrom::Start(body_offset as u64))?;
-
-        let body_size = sect.size - SECT_HEADER_SIZE;
-        let mut buf = vec![0; body_size];
-        self.read_exact(buf.as_mut_slice())?;
-
-        Ok(buf.into_boxed_slice())
     }
 
     fn read_sect6_payload(&mut self, body_size: usize) -> Result<SectionBody, ParseError> {
@@ -567,8 +561,8 @@ mod tests {
     }
 
     #[test]
-    fn read_grib2_message_starting_from_non_zero_position_after_seeking(
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    fn read_grib2_message_starting_from_non_zero_position_after_seeking()
+    -> Result<(), Box<dyn std::error::Error>> {
         let header_bytes_skipped = b"HEADER TO BE SKIPPED\n";
         let buf = create_grib2_message_starting_from_non_zero_position(header_bytes_skipped)?;
 

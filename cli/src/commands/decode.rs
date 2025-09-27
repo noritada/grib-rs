@@ -1,22 +1,20 @@
-use std::{
-    fmt,
-    fs::File,
-    io::{BufWriter, Write},
-    path::PathBuf,
-};
+use std::{fmt, path::PathBuf};
 
 use anyhow::Result;
-use clap::{arg, ArgMatches, Command};
+use clap::{ArgMatches, Command, arg};
 use console::Style;
 use grib::GribError;
 
 use crate::cli;
 
 pub fn cli() -> Command {
-    Command::new("decode")
+    Command::new(crate::cli::module_component!())
         .about("Export decoded data with latitudes and longitudes")
-        .arg(arg!(<FILE> "Target file").value_parser(clap::value_parser!(PathBuf)))
-        .arg(arg!(<INDEX> "Submessage index"))
+        .arg(
+            arg!(<FILE> "Target file name (or a single dash (`-`) for standard input)")
+                .value_parser(clap::value_parser!(PathBuf)),
+        )
+        .arg(arg!(<INDEX> "Submessage index").value_parser(clap::value_parser!(cli::CliMessageIndex)))
         .arg(
             arg!(-b --"big-endian" <OUT_FILE> "Export (without lat/lon) as a big-endian flat binary file")
                 .required(false) // There is no syntax yet for optional options.
@@ -35,21 +33,18 @@ fn write_output(
     mut values: impl Iterator<Item = f32>,
     to_bytes: fn(&f32) -> [u8; 4],
 ) -> Result<()> {
-    File::create(out_path).and_then(|f| {
-        let mut stream = BufWriter::new(f);
-        values.try_for_each(|f| stream.write_all(&to_bytes(&f)))
-    })?;
+    let mut stream = crate::cli::WriteStream::new(out_path)?;
+    values.try_for_each(|f| stream.write_all(&to_bytes(&f)))?;
     Ok(())
 }
 
 pub fn exec(args: &ArgMatches) -> Result<()> {
     let file_name = args.get_one::<PathBuf>("FILE").unwrap();
     let grib = cli::grib(file_name)?;
-    let index = args.get_one::<String>("INDEX").unwrap();
-    let cli::CliMessageIndex(message_index) = index.parse()?;
+    let cli::CliMessageIndex(message_index) = args.get_one("INDEX").unwrap();
     let (_, submessage) = grib
         .iter()
-        .find(|(index, _)| *index == message_index)
+        .find(|(index, _)| index == message_index)
         .ok_or_else(|| anyhow::anyhow!("no such index: {}.{}", message_index.0, message_index.1))?;
     let latlons = submessage.latlons();
     let decoder = grib::Grib2SubmessageDecoder::from(submessage)?;
@@ -123,14 +118,15 @@ where
     I: Iterator<Item = ((f32, f32), f32)> + Clone,
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let header = format!("{:>9} {:>9} {:>9}", "Latitude", "Longitude", "Value",);
+        let header = format!("{:>10} {:>11} {:>9}", "Latitude", "Longitude", "Value",);
         let style = Style::new().bold();
         writeln!(f, "{}", style.apply_to(header.trim_end()))?;
 
         let Self(inner) = self;
         // cloning just to work around a mutability issue
         for ((lat, lon), value) in inner.clone() {
-            writeln!(f, "{lat:>9} {lon:>9} {value:>9}")?;
+            // lat/lons are formatted in "-?\d{2}.\d{6} -?\d{2}.\d{6}"
+            writeln!(f, "{lat:>10.6} {lon:>11.6} {value:>9}")?;
         }
         Ok(())
     }

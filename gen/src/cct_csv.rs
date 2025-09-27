@@ -2,7 +2,7 @@ use std::{collections::BTreeMap, error::Error, fmt, fs::File, path::Path};
 
 use serde::Deserialize;
 
-use crate::*;
+use crate::CodeTable;
 
 #[derive(Debug, Deserialize)]
 struct C00Record {
@@ -270,7 +270,9 @@ const COMMON_CODE_TABLE_11: &[& str] = &[
         );
         assert_eq!(
             db.get(11).unwrap().to_vec(),
-            vec!["A", "B", "", "C", "", "D", "", "E", "E", "E", "", "", "", "", "", "F",]
+            vec![
+                "A", "B", "", "C", "", "D", "", "E", "E", "E", "", "", "", "", "", "F",
+            ]
         );
     }
 }

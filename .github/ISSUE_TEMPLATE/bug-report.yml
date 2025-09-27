@@ -2,38 +2,38 @@ name: "Bug report \U0001F41B"
 description: Create a bug report to help us improve
 labels: [bug]
 body:
-- type: textarea
-  attributes:
-    label: Simple Description on the Bug
-    description: A clear and concise description on what is the problem for you.
-  validations:
-    required: true
-- type: textarea
-  attributes:
-    label: Steps to Reproduce
-    placeholder: |
-      Examples of steps in case you use the library:
-      1. Pass ... to ...
-      2. See error ...
+  - type: textarea
+    attributes:
+      label: Simple Description on the Bug
+      description: A clear and concise description on what is the problem for you.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Steps to Reproduce
+      placeholder: |
+        Examples of steps in case you use the library:
+        1. Pass ... to ...
+        2. See error ...
 
-      Examples of steps in case you use the CLI:
-      1. Run ... with command line arguments ... on OS ...
-      2. See error ...
-  validations:
-    required: true
-- type: textarea
-  attributes:
-    label: Expected Behavior
-    description: A clear and concise description of what you expected to happen.
-  validations:
-    required: true
-- type: textarea
-  attributes:
-    label: Actual Behavior
-    description: A clear and concise description of what you actually saw.
-  validations:
-    required: true
-- type: textarea
-  attributes:
-    label: Additional Context
-    description: Any other context about the problem.
+        Examples of steps in case you use the CLI:
+        1. Run ... with command line arguments ... on OS ...
+        2. See error ...
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Expected Behavior
+      description: A clear and concise description of what you expected to happen.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Actual Behavior
+      description: A clear and concise description of what you actually saw.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Additional Context
+      description: Any other context about the problem.

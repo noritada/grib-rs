@@ -1,6 +1,6 @@
 [package]
 name = "grib-build"
-version = "0.4.2"
+version = "0.4.4"
 description = "Data definition parsers for the grib crate, used internally as a build-dependency"
 authors.workspace = true
 edition.workspace = true

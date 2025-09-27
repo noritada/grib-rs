@@ -1,14 +1,15 @@
-use std::{convert::TryInto, slice::Iter};
-
-use chrono::{DateTime, LocalResult, TimeZone, Utc};
+use std::slice::Iter;
 
 use crate::{
+    GridPointIndexIterator, PolarStereographicGridDefinition,
     codetables::SUPPORTED_PROD_DEF_TEMPLATE_NUMBERS,
     datatypes::*,
     error::*,
-    grid::{GridPointIterator, LatLonGridDefinition},
-    utils::{read_as, GribInt},
-    GridPointIndexIterator,
+    grid::{
+        GaussianGridDefinition, GridPointIterator, LambertGridDefinition, LatLonGridDefinition,
+    },
+    helpers::{GribInt, read_as},
+    time::UtcDateTime,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -51,7 +52,7 @@ impl Identification {
         }
     }
 
-    pub fn iter(&self) -> Iter<u8> {
+    pub fn iter(&self) -> Iter<'_, u8> {
         self.payload.iter()
     }
 
@@ -89,16 +90,20 @@ impl Identification {
         self.payload[6]
     }
 
-    /// Reference time of data
-    pub fn ref_time(&self) -> Result<DateTime<Utc>, GribError> {
+    /// Unchecked reference time of the data.
+    ///
+    /// This method returns unchecked data, so for example, if the data contains
+    /// a "date and time" such as "2000-13-32 25:61:62", it will be returned as
+    /// is.
+    pub fn ref_time_unchecked(&self) -> UtcDateTime {
         let payload = &self.payload;
-        create_date_time(
-            read_as!(u16, payload, 7).into(),
-            self.payload[9].into(),
-            self.payload[10].into(),
-            self.payload[11].into(),
-            self.payload[12].into(),
-            self.payload[13].into(),
+        UtcDateTime::new(
+            read_as!(u16, payload, 7),
+            payload[9],
+            payload[10],
+            payload[11],
+            payload[12],
+            payload[13],
         )
     }
 
@@ -116,25 +121,6 @@ impl Identification {
     }
 }
 
-#[inline]
-fn create_date_time(
-    year: i32,
-    month: u32,
-    day: u32,
-    hour: u32,
-    minute: u32,
-    second: u32,
-) -> Result<DateTime<Utc>, GribError> {
-    let result = Utc.with_ymd_and_hms(year, month, day, hour, minute, second);
-    if let LocalResult::None = result {
-        Err(GribError::InvalidValueError(format!(
-            "invalid date time: {year:04}-{month:02}-{day:02} {hour:02}:{minute:02}:{second:02}"
-        )))
-    } else {
-        Ok(result.unwrap())
-    }
-}
-
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct LocalUse {
     payload: Box<[u8]>,
@@ -145,7 +131,7 @@ impl LocalUse {
         Self { payload: slice }
     }
 
-    pub fn iter(&self) -> Iter<u8> {
+    pub fn iter(&self) -> Iter<'_, u8> {
         self.payload.iter()
     }
 }
@@ -165,7 +151,7 @@ impl GridDefinition {
         }
     }
 
-    pub fn iter(&self) -> Iter<u8> {
+    pub fn iter(&self) -> Iter<'_, u8> {
         self.payload.iter()
     }
 
@@ -185,9 +171,40 @@ impl GridDefinition {
 #[derive(Debug, PartialEq, Eq)]
 pub enum GridDefinitionTemplateValues {
     Template0(LatLonGridDefinition),
+    Template20(PolarStereographicGridDefinition),
+    Template30(LambertGridDefinition),
+    Template40(GaussianGridDefinition),
 }
 
 impl GridDefinitionTemplateValues {
+    /// Returns the shape of the grid, i.e. a tuple of the number of grids in
+    /// the i and j directions.
+    pub fn grid_shape(&self) -> (usize, usize) {
+        match self {
+            Self::Template0(def) => def.grid_shape(),
+            Self::Template20(def) => def.grid_shape(),
+            Self::Template30(def) => def.grid_shape(),
+            Self::Template40(def) => def.grid_shape(),
+        }
+    }
+
+    /// Returns the grid type.
+    ///
+    /// The grid types are denoted as short strings based on `gridType` used in
+    /// ecCodes.
+    ///
+    /// This is provided primarily for debugging and simple notation purposes.
+    /// It is better to use enum variants instead of the string notation to
+    /// determine the grid type.
+    pub fn short_name(&self) -> &'static str {
+        match self {
+            Self::Template0(def) => def.short_name(),
+            Self::Template20(def) => def.short_name(),
+            Self::Template30(def) => def.short_name(),
+            Self::Template40(def) => def.short_name(),
+        }
+    }
+
     /// Returns an iterator over `(i, j)` of grid points.
     ///
     /// Note that this is a low-level API and it is not checked that the number
@@ -196,10 +213,14 @@ impl GridDefinitionTemplateValues {
     pub fn ij(&self) -> Result<GridPointIndexIterator, GribError> {
         match self {
             Self::Template0(def) => def.ij(),
+            Self::Template20(def) => def.ij(),
+            Self::Template30(def) => def.ij(),
+            Self::Template40(def) => def.ij(),
         }
     }
 
-    /// Returns an iterator over latitudes and longitudes of grid points.
+    /// Returns an iterator over latitudes and longitudes of grid points in
+    /// degrees.
     ///
     /// Note that this is a low-level API and it is not checked that the number
     /// of iterator iterations is consistent with the number of grid points
@@ -207,6 +228,18 @@ impl GridDefinitionTemplateValues {
     pub fn latlons(&self) -> Result<GridPointIterator, GribError> {
         let iter = match self {
             Self::Template0(def) => GridPointIterator::LatLon(def.latlons()?),
+            #[cfg(feature = "gridpoints-proj")]
+            Self::Template20(def) => GridPointIterator::Lambert(def.latlons()?),
+            #[cfg(feature = "gridpoints-proj")]
+            Self::Template30(def) => GridPointIterator::Lambert(def.latlons()?),
+            Self::Template40(def) => GridPointIterator::LatLon(def.latlons()?),
+            #[cfg(not(feature = "gridpoints-proj"))]
+            _ => {
+                return Err(GribError::NotSupported(
+                    "lat/lon computation support for the template is dropped in this build"
+                        .to_owned(),
+                ));
+            }
         };
         Ok(iter)
     }
@@ -220,8 +253,36 @@ impl TryFrom<&GridDefinition> for GridDefinitionTemplateValues {
         match num {
             0 => {
                 let buf = &value.payload;
+                if buf.len() > 67 {
+                    return Err(GribError::NotSupported(format!(
+                        "template {num} with list of number of points"
+                    )));
+                }
                 Ok(GridDefinitionTemplateValues::Template0(
                     LatLonGridDefinition::from_buf(&buf[25..]),
+                ))
+            }
+            20 => {
+                let buf = &value.payload;
+                Ok(GridDefinitionTemplateValues::Template20(
+                    PolarStereographicGridDefinition::from_buf(&buf[9..]),
+                ))
+            }
+            30 => {
+                let buf = &value.payload;
+                Ok(GridDefinitionTemplateValues::Template30(
+                    LambertGridDefinition::from_buf(&buf[9..]),
+                ))
+            }
+            40 => {
+                let buf = &value.payload;
+                if buf.len() > 67 {
+                    return Err(GribError::NotSupported(format!(
+                        "template {num} with list of number of points"
+                    )));
+                }
+                Ok(GridDefinitionTemplateValues::Template40(
+                    GaussianGridDefinition::from_buf(&buf[25..]),
                 ))
             }
             _ => Err(GribError::NotSupported(format!("template {num}"))),
@@ -246,7 +307,7 @@ impl ProdDefinition {
         }
     }
 
-    pub fn iter(&self) -> Iter<u8> {
+    pub fn iter(&self) -> Iter<'_, u8> {
         self.payload.iter()
     }
 
@@ -433,7 +494,7 @@ impl ReprDefinition {
         }
     }
 
-    pub fn iter(&self) -> Iter<u8> {
+    pub fn iter(&self) -> Iter<'_, u8> {
         self.payload.iter()
     }
 
@@ -462,42 +523,6 @@ pub struct BitMap {
 mod tests {
     use super::*;
 
-    macro_rules! test_date_time_creation {
-        ($((
-            $name:ident,
-            $year:expr,
-            $month:expr,
-            $day:expr,
-            $hour:expr,
-            $minute:expr,
-            $second:expr,
-            $ok_expected:expr
-        ),)*) => ($(
-            #[test]
-            fn $name() {
-                let result = create_date_time($year, $month, $day, $hour, $minute, $second);
-                assert_eq!(result.is_ok(), $ok_expected);
-            }
-        )*);
-    }
-
-    test_date_time_creation! {
-        (date_time_creation_for_valid_date_time, 2022, 1, 1, 0, 0, 0, true),
-        (date_time_creation_for_invalid_date, 2022, 11, 31, 0, 0, 0, false),
-        (date_time_creation_for_invalid_time, 2022, 1, 1, 0, 61, 0, false),
-    }
-
-    #[test]
-    fn error_in_date_time_creation() {
-        let result = create_date_time(2022, 11, 31, 0, 0, 0);
-        assert_eq!(
-            result,
-            Err(GribError::InvalidValueError(
-                "invalid date time: 2022-11-31 00:00:00".to_owned()
-            ))
-        );
-    }
-
     #[test]
     fn grid_definition_template_0() {
         // data taken from submessage #0.0 of
@@ -516,15 +541,15 @@ mod tests {
         .unwrap();
 
         let actual = GridDefinitionTemplateValues::try_from(&data).unwrap();
-        let expected = GridDefinitionTemplateValues::Template0(LatLonGridDefinition::new(
-            256,
-            336,
-            47958333,
-            118062500,
-            20041667,
-            149937500,
-            crate::grid::ScanningMode(0b00000000),
-        ));
+        let expected = GridDefinitionTemplateValues::Template0(LatLonGridDefinition {
+            ni: 256,
+            nj: 336,
+            first_point_lat: 47958333,
+            first_point_lon: 118062500,
+            last_point_lat: 20041667,
+            last_point_lon: 149937500,
+            scanning_mode: crate::grid::ScanningMode(0b00000000),
+        });
         assert_eq!(actual, expected);
     }
 

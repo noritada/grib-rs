@@ -6,7 +6,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     if let Err(e) =
         check_nonemptiness(Path::new("def/CCT")).and(check_nonemptiness(Path::new("def/GRIB2")))
     {
-        return Err(format!("{}; run `git submodule update --init`", e).into());
+        return Err(format!("{e}; run `git submodule update --init`").into());
     }
 
     let input_file_names = ["def/CCT/C00.csv", "def/CCT/C11.csv"];
@@ -41,7 +41,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
     fs::write(output_path, format!("{db}"))?;
 
-    println!("cargo:rerun-if-changed=build.rs");
+    let doc = doc::generate()?;
+    let output_path = Path::new(&out_dir).join("doc.txt");
+    fs::write(output_path, &doc)?;
+
+    println!("cargo:rerun-if-changed=build/main.rs");
+    println!("cargo:rerun-if-changed=build/doc.rs");
     Ok(())
 }
 
@@ -54,3 +59,5 @@ fn check_nonemptiness(dir: &Path) -> Result<(), String> {
                 .map(|_| ())
         })
 }
+
+mod doc;

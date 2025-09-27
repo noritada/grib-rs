@@ -1,6 +1,6 @@
 use std::iter::Peekable;
 
-use crate::{decoder::DecodeError, error::GribError};
+use crate::decoder::DecodeError;
 
 pub(crate) struct BitmapDecodeIterator<B: Iterator, I> {
     bitmap: Peekable<B>,
@@ -13,10 +13,10 @@ impl<'b, B, I> BitmapDecodeIterator<B, I>
 where
     B: Iterator<Item = &'b u8>,
 {
-    pub(crate) fn new(bitmap: B, values: I, len: usize) -> Result<Self, GribError> {
+    pub(crate) fn new(bitmap: B, values: I, len: usize) -> Result<Self, DecodeError> {
         let (bitmap_len, _) = bitmap.size_hint();
         if bitmap_len * 8 < len {
-            return Err(GribError::DecodeError(DecodeError::LengthMismatch));
+            return Err(DecodeError::LengthMismatch);
         }
         Ok(Self {
             bitmap: bitmap.peekable(),
@@ -67,13 +67,9 @@ fn has_zero_at_offset(byte: &u8, offset: &usize) -> bool {
     masked == 0
 }
 
-pub(crate) fn create_bitmap_for_nonnullable_data(num_points: usize) -> Vec<u8> {
-    let (div, mod_) = (num_points / 8, num_points % 8);
-    if mod_ == 0 {
-        vec![0b11111111u8; div]
-    } else {
-        vec![0b11111111u8; div + 1]
-    }
+pub(crate) fn dummy_bitmap_for_nonnullable_data(num_points: usize) -> Vec<u8> {
+    let size = num_points.div_ceil(8);
+    vec![0b11111111u8; size]
 }
 
 #[cfg(test)]
@@ -82,13 +78,13 @@ mod test {
 
     #[test]
     fn bitmap_iterator_works() {
-        let bitmap = vec![0b01001100u8, 0b01110000, 0b11110000];
+        let bitmap = [0b01001100u8, 0b01110000, 0b11110000];
         let values = (0..10).map(|n| n as f32).collect::<Vec<_>>();
         let values = values.into_iter();
 
         let iter = BitmapDecodeIterator::new(bitmap.iter(), values, 24).unwrap();
         let actual = iter.collect::<Vec<_>>();
-        let expected = vec![
+        let expected = [
             f32::NAN,
             0.0,
             f32::NAN,
@@ -123,7 +119,7 @@ mod test {
 
     #[test]
     fn bitmap_iterator_size_hint() {
-        let bitmap = vec![0b01001100u8, 0b01110000, 0b11110000];
+        let bitmap = [0b01001100u8, 0b01110000, 0b11110000];
         let values = (0..10).map(|n| n as f32).collect::<Vec<_>>();
         let values = values.into_iter();
 

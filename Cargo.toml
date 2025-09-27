@@ -10,15 +10,20 @@ repository.workspace = true
 homepage.workspace = true
 categories.workspace = true
 keywords.workspace = true
+build = "build/main.rs"
 exclude = ["/.github", "/testdata"]
 
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
 [workspace]
-members = ["grib-data-helpers", "grib-template-derive", "gen", "cli"]
+members = ["grib-data-helpers", "grib-template-derive", "gen", "cli", "demo"]
 
 [workspace.package]
-version = "0.8.0"
+version = "0.13.0"
 authors = ["Noritada Kobayashi <noritada.kobayashi@gmail.com>"]
-edition = "2021"
+edition = "2024"
 license = "MIT OR Apache-2.0"
 readme = "README.md"
 repository = "https://github.com/noritada/grib-rs"
@@ -27,20 +32,55 @@ categories = ["science"]
 keywords = ["GRIB", "weather", "meteorology"]
 
 [dependencies]
-chrono = "0.4.23" # `TimeZone::with_ymd_and_hms` needed
+chrono = { version = "0.4.34", optional = true }
 num = "0.4"
 num_enum = "0.7"
-png = "0.17"
+proj = { version = "0.31", optional = true }
 
-[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-openjpeg-sys = "1.0.5" # avoiding 1.0.2/1.0.4
+libaec-sys = { version = "0.1.1", optional = true }
+openjpeg-sys = { version = "1.0.5", optional = true }
+png = { version = "0.18", optional = true }
 
 [dev-dependencies]
+flate2 = "1.0"
 tempfile = "3"
 xz2 = "0.1"
 
 [build-dependencies]
-grib-build = { path = "gen", version = "0.4.2" }
+grib-build = { path = "gen", version = "0.4.4" }
+toml_edit = "0.23"
+
+[features]
+default = [
+  "jpeg2000-unpack-with-openjpeg",
+  "png-unpack-with-png-crate",
+  "ccsds-unpack-with-libaec",
+  "gridpoints-proj",
+]
+
+# Enable JPEG 2000 code stream format support in the GPV decoder with the help
+# of OpenJPEG written in C.
+jpeg2000-unpack-with-openjpeg = ["dep:openjpeg-sys"]
+
+# Enable experimental performance improvements in the JPEG 2000 code stream
+# format decoder.
+jpeg2000-unpack-with-openjpeg-experimental = ["jpeg2000-unpack-with-openjpeg"]
+
+# Enable Portable Network Graphics (PNG) support in the GPV decoder with the
+# help of png crate.
+png-unpack-with-png-crate = ["dep:png"]
+
+# Enable CCSDS recommended lossless compression support in the GPV decoder with
+# the help of libaec written in C.
+ccsds-unpack-with-libaec = ["dep:libaec-sys"]
+
+# Enable computation of latitudes and longitudes of grid points points using
+# PROJ for some grid systems.
+gridpoints-proj = ["dep:proj"]
+
+# Enable date and time validity checks and date and time calculations using
+# chrono crate.
+time-calculation = ["dep:chrono"]
 
 [profile.release]
 strip = true

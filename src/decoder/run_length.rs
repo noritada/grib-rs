@@ -1,61 +1,55 @@
-use std::convert::TryInto;
-
 use crate::{
-    decoder::{stream::NBitwiseIterator, DecodeError, Grib2SubmessageDecoder},
-    error::*,
-    utils::read_as,
+    Grib2GpvUnpack,
+    decoder::{
+        DecodeError, Grib2SubmessageDecoder, param::RunLengthPackingParam, stream::NBitwiseIterator,
+    },
+    helpers::read_as,
 };
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub enum RunLengthEncodingDecodeError {
-    NotSupported,
-    InvalidFirstValue,
-    LengthMismatch,
-    InvalidLevelValue(u16),
-}
+pub(crate) struct RunLength<'d>(pub(crate) &'d Grib2SubmessageDecoder);
 
-pub(crate) fn decode(
-    target: &Grib2SubmessageDecoder,
-) -> Result<std::vec::IntoIter<f32>, GribError> {
-    let sect5_data = &target.sect5_payload;
-    let nbit = read_as!(u8, sect5_data, 6);
-    let maxv = read_as!(u16, sect5_data, 7);
-    let max_level = read_as!(u16, sect5_data, 9);
-    let num_digits = read_as!(u8, sect5_data, 11);
+impl<'d> Grib2GpvUnpack for RunLength<'d> {
+    type Iter<'a>
+        = std::vec::IntoIter<f32>
+    where
+        Self: 'a;
 
-    let mut level_map = Vec::with_capacity(max_level.into());
-    level_map.push(f32::NAN);
-    let mut pos = 12;
+    fn iter<'a>(&'a self) -> Result<Self::Iter<'a>, DecodeError> {
+        let Self(target) = self;
+        let sect5_data = &target.sect5_bytes;
+        let param = RunLengthPackingParam::from_buf(&sect5_data[11..17]);
 
-    for _ in 0..max_level {
-        let val: f32 = read_as!(u16, sect5_data, pos).into();
-        let num_digits: i32 = num_digits.into();
-        let factor = 10_f32.powi(-num_digits);
-        let val = val * factor;
-        level_map.push(val);
-        pos += std::mem::size_of::<u16>();
+        let mut level_map = Vec::with_capacity(param.max_level.into());
+        level_map.push(f32::NAN);
+        let mut pos = 17;
+
+        for _ in 0..param.max_level {
+            let val: f32 = read_as!(u16, sect5_data, pos).into();
+            let num_digits: i32 = param.num_digits.into();
+            let factor = 10_f32.powi(-num_digits);
+            let val = val * factor;
+            level_map.push(val);
+            pos += std::mem::size_of::<u16>();
+        }
+
+        let decoded_levels = rleunpack(
+            target.sect7_payload(),
+            param.nbit,
+            param.maxv,
+            Some(target.num_points_encoded()),
+        )?;
+
+        let level_to_value = |level: &u16| -> Result<f32, DecodeError> {
+            let index: usize = (*level).into();
+            level_map
+                .get(index)
+                .copied()
+                .ok_or(DecodeError::from(format!("invalid level value: {level}")))
+        };
+
+        let decoded: Result<Vec<_>, _> = (*decoded_levels).iter().map(level_to_value).collect();
+        Ok(decoded?.into_iter())
     }
-
-    let decoded_levels = rleunpack(
-        &target.sect7_payload,
-        nbit,
-        maxv,
-        Some(target.num_points_encoded),
-    )
-    .map_err(DecodeError::RunLengthEncodingDecodeError)?;
-
-    let level_to_value = |level: &u16| -> Result<f32, DecodeError> {
-        let index: usize = (*level).into();
-        level_map
-            .get(index)
-            .copied()
-            .ok_or(DecodeError::RunLengthEncodingDecodeError(
-                RunLengthEncodingDecodeError::InvalidLevelValue(*level),
-            ))
-    };
-
-    let decoded: Result<Vec<_>, _> = (*decoded_levels).iter().map(level_to_value).collect();
-    Ok(decoded?.into_iter())
 }
 
 // Since maxv is represented as a 16-bit integer, values are 16 bits or less.
@@ -64,7 +58,7 @@ fn rleunpack(
     nbit: u8,
     maxv: u16,
     expected_len: Option<usize>,
-) -> Result<Box<[u16]>, RunLengthEncodingDecodeError> {
+) -> Result<Box<[u16]>, DecodeError> {
     let mut out_buf = match expected_len {
         Some(sz) => Vec::with_capacity(sz),
         None => Vec::new(),
@@ -83,17 +77,17 @@ fn rleunpack(
             cached = Some(value);
             exp = 1;
         } else {
-            let prev = cached.ok_or(RunLengthEncodingDecodeError::InvalidFirstValue)?;
+            let prev = cached.ok_or(DecodeError::from("invalid first value"))?;
             let length: usize = ((value - rlbase) as usize) * exp;
             out_buf.append(&mut vec![prev; length]);
             exp *= lngu;
         }
     }
 
-    if let Some(len) = expected_len {
-        if len != out_buf.len() {
-            return Err(RunLengthEncodingDecodeError::LengthMismatch);
-        }
+    if let Some(len) = expected_len
+        && len != out_buf.len()
+    {
+        return Err(DecodeError::LengthMismatch);
     }
 
     Ok(out_buf.into_boxed_slice())

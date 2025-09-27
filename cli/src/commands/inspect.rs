@@ -4,14 +4,14 @@ use std::{
     slice::Iter,
 };
 
-use clap::{arg, ArgAction, ArgMatches, Command};
+use clap::{ArgAction, ArgMatches, Command, arg};
 use console::Style;
 use grib::{SectionInfo, SubMessageSection, SubmessageIterator, TemplateInfo};
 
 use crate::cli;
 
 pub fn cli() -> Command {
-    Command::new("inspect")
+    Command::new(crate::cli::module_component!())
         .about("Inspect and describes the data structure")
         .arg(
             arg!(-s --sections "Print sections constructing the GRIB message")
@@ -25,7 +25,10 @@ pub fn cli() -> Command {
             arg!(-t --templates "Print templates used in the GRIB message")
                 .action(ArgAction::SetTrue),
         )
-        .arg(arg!(<FILE> "Target file").value_parser(clap::value_parser!(PathBuf)))
+        .arg(
+            arg!(<FILE> "Target file name (or a single dash (`-`) for standard input)")
+                .value_parser(clap::value_parser!(PathBuf)),
+        )
         .after_help(
             "\
 This subcommand is mainly targeted at (possible) developers and

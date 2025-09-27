@@ -1,94 +1,141 @@
-use std::{convert::TryInto, iter};
+use std::iter::{self, Take};
 
 use num::ToPrimitive;
 
-use self::missing::DecodedValue::{self, Missing1, Missing2, Normal};
+pub(crate) use self::diff::SpatialDifferencingDecodeIterator;
+use self::{
+    diff::{
+        FirstOrderSpatialDifferencingDecodeIterator, SecondOrderSpatialDifferencingDecodeIterator,
+    },
+    missing::DecodedValue::{self, Missing1, Missing2, Normal},
+};
+use super::param::SpatialDifferencingParam;
 use crate::{
+    Grib2GpvUnpack,
+    codetables::grib2::Table5_6,
     decoder::{
+        DecodeError, Grib2SubmessageDecoder,
         param::{ComplexPackingParam, SimplePackingParam},
         simple::*,
         stream::{BitStream, NBitwiseIterator},
-        DecodeError, Grib2SubmessageDecoder,
     },
-    error::*,
-    utils::{read_as, GribInt},
+    helpers::GribInt,
 };
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub enum ComplexPackingDecodeError {
-    NotSupported,
-    LengthMismatch,
-}
+pub(crate) struct Complex<'d>(pub(crate) &'d Grib2SubmessageDecoder);
 
-pub(crate) fn decode_7_2(
-    target: &Grib2SubmessageDecoder,
-) -> Result<
-    SimplePackingDecodeIteratorWrapper<impl Iterator<Item = DecodedValue<i32>> + '_>,
-    GribError,
-> {
-    let sect5_data = &target.sect5_payload;
-    let simple_param = SimplePackingParam::from_buf(&sect5_data[6..15]);
-    let complex_param = ComplexPackingParam::from_buf(&sect5_data[16..42]);
+impl<'d> Grib2GpvUnpack for Complex<'d> {
+    type Iter<'a>
+        = SimplePackingDecoder<ComplexPackingDecoded<'d>>
+    where
+        Self: 'a;
 
-    if complex_param.group_splitting_method_used != 1
-        || complex_param.missing_value_management_used > 2
-    {
-        return Err(GribError::DecodeError(
-            DecodeError::ComplexPackingDecodeError(ComplexPackingDecodeError::NotSupported),
-        ));
+    fn iter<'a>(&'a self) -> Result<Self::Iter<'d>, DecodeError> {
+        let Self(target) = self;
+        let sect5_data = &target.sect5_bytes;
+        let simple_param = SimplePackingParam::from_buf(&sect5_data[11..21])?;
+        let complex_param = ComplexPackingParam::from_buf(&sect5_data[21..47]);
+
+        if complex_param.group_splitting_method_used != 1 {
+            return Err(DecodeError::NotSupported(
+                "GRIB2 code table 5.4 (group splitting method)",
+                complex_param.group_splitting_method_used.into(),
+            ));
+        }
+
+        if complex_param.missing_value_management_used > 2 {
+            return Err(DecodeError::NotSupported(
+                "GRIB2 code table 5.5 (missing value management for complex packing)",
+                complex_param.missing_value_management_used.into(),
+            ));
+        }
+
+        let sect7_data = target.sect7_payload();
+
+        let unpacked_data =
+            decode_complex_packing(complex_param, sect7_data, 0, simple_param.nbit, 0);
+        let decoder = NonZeroSimplePackingDecoder::new(unpacked_data, &simple_param);
+        let decoder = SimplePackingDecoder::NonZeroLength(decoder);
+        Ok(decoder)
     }
-
-    let sect7_data = &target.sect7_payload;
-
-    let unpacked_data = decode_complex_packing(complex_param, sect7_data, 0, simple_param.nbit, 0);
-    let decoder = SimplePackingDecodeIterator::new(unpacked_data, &simple_param);
-    let decoder = SimplePackingDecodeIteratorWrapper::SimplePacking(decoder);
-    Ok(decoder)
 }
 
-pub(crate) fn decode_7_3(
-    target: &Grib2SubmessageDecoder,
-) -> Result<
-    SimplePackingDecodeIteratorWrapper<impl Iterator<Item = DecodedValue<i32>> + '_>,
-    GribError,
-> {
-    let sect5_data = &target.sect5_payload;
-    let simple_param = SimplePackingParam::from_buf(&sect5_data[6..15]);
-    let complex_param = ComplexPackingParam::from_buf(&sect5_data[16..42]);
-    let spdiff_level = read_as!(u8, sect5_data, 42);
-    let spdiff_param_octet = read_as!(u8, sect5_data, 43);
+pub(crate) struct ComplexSpatial<'d>(pub(crate) &'d Grib2SubmessageDecoder);
 
-    if complex_param.group_splitting_method_used != 1
-        || complex_param.missing_value_management_used > 2
-    {
-        return Err(GribError::DecodeError(
-            DecodeError::ComplexPackingDecodeError(ComplexPackingDecodeError::NotSupported),
-        ));
+impl<'d> Grib2GpvUnpack for ComplexSpatial<'d> {
+    type Iter<'a>
+        = SimplePackingDecoder<
+        SpatialDifferencingDecodeIterator<ComplexPackingDecoded<'d>, std::vec::IntoIter<i32>>,
+    >
+    where
+        Self: 'a;
+
+    fn iter<'a>(&'a self) -> Result<Self::Iter<'d>, DecodeError> {
+        let Self(target) = self;
+        let sect5_data = &target.sect5_bytes;
+        let simple_param = SimplePackingParam::from_buf(&sect5_data[11..21])?;
+        let complex_param = ComplexPackingParam::from_buf(&sect5_data[21..47]);
+        let spdiff_param = SpatialDifferencingParam::from_buf(&sect5_data[47..49]);
+        let spdiff_order = Table5_6::try_from(spdiff_param.order).map_err(|e| {
+            DecodeError::NotSupported(
+                "GRIB2 code table 5.6 (order of spatial differencing)",
+                e.number.into(),
+            )
+        })?;
+
+        if complex_param.group_splitting_method_used != 1 {
+            return Err(DecodeError::NotSupported(
+                "GRIB2 code table 5.4 (group splitting method)",
+                complex_param.group_splitting_method_used.into(),
+            ));
+        }
+
+        if complex_param.missing_value_management_used > 2 {
+            return Err(DecodeError::NotSupported(
+                "GRIB2 code table 5.5 (missing value management for complex packing)",
+                complex_param.missing_value_management_used.into(),
+            ));
+        }
+
+        let sect7_data = target.sect7_payload();
+        let sect7_params =
+            diff::SpatialDifferencingExtraDescriptors::new(&spdiff_param, sect7_data)?;
+
+        let unpacked_data = decode_complex_packing(
+            complex_param,
+            sect7_data,
+            sect7_params.len(),
+            simple_param.nbit,
+            sect7_params.minimum(),
+        );
+        let first_values = sect7_params.first_values();
+        let first_values = first_values.collect::<Vec<_>>().into_iter();
+        let spdiff_unpacked = match spdiff_order {
+            Table5_6::FirstOrderSpatialDifferencing => {
+                SpatialDifferencingDecodeIterator::FirstOrder(
+                    FirstOrderSpatialDifferencingDecodeIterator::new(unpacked_data, first_values),
+                )
+            }
+            Table5_6::SecondOrderSpatialDifferencing => {
+                SpatialDifferencingDecodeIterator::SecondOrder(
+                    SecondOrderSpatialDifferencingDecodeIterator::new(unpacked_data, first_values),
+                )
+            }
+            Table5_6::Missing => unreachable!(),
+        };
+        let decoder = NonZeroSimplePackingDecoder::new(spdiff_unpacked, &simple_param);
+        let decoder = SimplePackingDecoder::NonZeroLength(decoder);
+        Ok(decoder)
     }
-
-    let sect7_data = &target.sect7_payload;
-    let sect7_params = diff::SpatialDifferencingExtraDescriptors::new(
-        sect7_data,
-        spdiff_level,
-        spdiff_param_octet,
-    )?;
-
-    let unpacked_data = decode_complex_packing(
-        complex_param,
-        sect7_data,
-        sect7_params.len(),
-        simple_param.nbit,
-        sect7_params.minimum(),
-    );
-    let first_values = sect7_params.first_values();
-    let spdiff_unpacked = SpatialDiff2ndOrderDecodeIterator::new(
-        unpacked_data,
-        first_values.collect::<Vec<_>>().into_iter(),
-    );
-    let decoder = SimplePackingDecodeIterator::new(spdiff_unpacked, &simple_param);
-    let decoder = SimplePackingDecodeIteratorWrapper::SimplePacking(decoder);
-    Ok(decoder)
 }
+
+pub(crate) type ComplexPackingDecoded<'d> = iter::Flatten<
+    ComplexPackingValueDecodeIterator<
+        Take<BitStream<&'d [u8]>>,
+        Take<WithOffset<&'d [u8]>>,
+        iter::Chain<Take<WithOffset<&'d [u8]>>, iter::Once<u32>>,
+    >,
+>;
 
 fn decode_complex_packing(
     complex_param: ComplexPackingParam,
@@ -96,7 +143,7 @@ fn decode_complex_packing(
     sect7_offset: usize,
     nbit: u8,
     z_min: i32,
-) -> impl Iterator<Item = DecodedValue<i32>> + '_ {
+) -> ComplexPackingDecoded<'_> {
     fn get_octet_length(nbit: u8, ngroup: u32) -> usize {
         let total_bit: u32 = ngroup * u32::from(nbit);
         let total_octet = (total_bit + 0b111) >> 3;
@@ -117,24 +164,28 @@ fn decode_complex_packing(
     );
     let group_refs_iter = group_refs_iter.take(complex_param.ngroup as usize);
 
-    let group_widths_iter = BitStream::new(
-        &sect7_data[group_refs_end_octet..group_widths_end_octet],
-        usize::from(complex_param.group_width_nbit),
-        complex_param.ngroup as usize,
-    );
-    let group_widths_iter = group_widths_iter
-        .take(complex_param.ngroup as usize)
-        .map(move |v| u32::from(complex_param.group_width_ref) + v);
+    let group_widths_iter = WithOffset::new(
+        BitStream::new(
+            &sect7_data[group_refs_end_octet..group_widths_end_octet],
+            usize::from(complex_param.group_width_nbit),
+            complex_param.ngroup as usize,
+        ),
+        u32::from(complex_param.group_width_ref),
+        1,
+    )
+    .take(complex_param.ngroup as usize);
 
-    let group_lens_iter = BitStream::new(
-        &sect7_data[group_widths_end_octet..group_lens_end_octet],
-        usize::from(complex_param.group_len_nbit),
-        (complex_param.ngroup - 1) as usize,
-    );
-    let group_lens_iter = group_lens_iter
-        .take((complex_param.ngroup - 1) as usize)
-        .map(move |v| complex_param.group_len_ref + u32::from(complex_param.group_len_inc) * v)
-        .chain(iter::once(complex_param.group_len_last));
+    let group_lens_iter = WithOffset::new(
+        BitStream::new(
+            &sect7_data[group_widths_end_octet..group_lens_end_octet],
+            usize::from(complex_param.group_len_nbit),
+            (complex_param.ngroup - 1) as usize,
+        ),
+        complex_param.group_len_ref,
+        u32::from(complex_param.group_len_inc),
+    )
+    .take((complex_param.ngroup - 1) as usize)
+    .chain(iter::once(complex_param.group_len_last));
 
     ComplexPackingValueDecodeIterator::new(
         group_refs_iter,
@@ -148,8 +199,41 @@ fn decode_complex_packing(
     .flatten()
 }
 
+// Types of closures with captures cannot be denoted.
+// Waiting for `type_alias_impl_trait` (TAIT) getting into stable.
+pub(crate) struct WithOffset<T> {
+    stream: BitStream<T>,
+    offset: u32,
+    inc: u32,
+}
+
+impl<T> WithOffset<T> {
+    fn new(stream: BitStream<T>, offset: u32, inc: u32) -> Self {
+        Self {
+            stream,
+            offset,
+            inc,
+        }
+    }
+}
+
+impl<T> Iterator for WithOffset<T>
+where
+    T: AsRef<[u8]>,
+{
+    type Item = u32;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.stream.next().map(|v| v * self.inc + self.offset)
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.stream.size_hint()
+    }
+}
+
 #[derive(Clone)]
-struct ComplexPackingValueDecodeIterator<I, J, K> {
+pub(crate) struct ComplexPackingValueDecodeIterator<I, J, K> {
     ref_iter: I,
     width_iter: J,
     length_iter: K,
@@ -248,59 +332,6 @@ where
                 Some(group_values)
             }
             _ => None,
-        }
-    }
-}
-
-struct SpatialDiff2ndOrderDecodeIterator<I, J> {
-    iter: I,
-    first_values: J,
-    count: u32,
-    prev1: i32,
-    prev2: i32,
-}
-
-impl<I, J> SpatialDiff2ndOrderDecodeIterator<I, J> {
-    fn new(iter: I, first_values: J) -> Self {
-        Self {
-            iter,
-            first_values,
-            count: 0,
-            prev1: 0,
-            prev2: 0,
-        }
-    }
-}
-
-impl<I, J> Iterator for SpatialDiff2ndOrderDecodeIterator<I, J>
-where
-    I: Iterator<Item = DecodedValue<i32>>,
-    J: Iterator<Item = i32>,
-{
-    type Item = DecodedValue<i32>;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        match self.iter.next() {
-            None => None,
-            Some(Normal(v)) => match self.count {
-                0 => {
-                    self.prev2 = self.first_values.next().unwrap();
-                    self.count += 1;
-                    Some(Normal(self.prev2))
-                }
-                1 => {
-                    self.prev1 = self.first_values.next().unwrap();
-                    self.count += 1;
-                    Some(Normal(self.prev1))
-                }
-                _ => {
-                    let v = v + 2 * self.prev1 - self.prev2;
-                    self.prev2 = self.prev1;
-                    self.prev1 = v;
-                    Some(Normal(v))
-                }
-            },
-            Some(missing) => Some(missing),
         }
     }
 }

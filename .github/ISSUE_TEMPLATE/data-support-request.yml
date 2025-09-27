@@ -2,21 +2,15 @@ name: "Data support request \U0001F4E1"
 description: Suggest a support of specific data
 labels: [data-support]
 body:
-- type: textarea
-  attributes:
-    label: Motivation
-    description: A clear and concise description of what the motivation for the new data support, if any.
-  validations:
-    required: true
-- type: textarea
-  attributes:
-    label: Detailed Information on the Data
-    placeholder: |
-      - A URL of available sample data, which can be included in this project without concerns about license and size if possible.
-      - A URL of specification or other resources concerning that format, if any.
-  validations:
-    required: true
-- type: textarea
-  attributes:
-    label: Additional Context
-    description: Any other context about the data support request.
+  - type: textarea
+    attributes:
+      label: Detailed Information on the Data
+      placeholder: |
+        - A URL of available sample data, which can be included in this project without concerns about license and size if possible.
+        - A URL of specification or other resources concerning that format, if any.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Additional Context
+      description: Any other context about the data support request.

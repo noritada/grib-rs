@@ -1,0 +1,13 @@
+// Copy this file to 'settings.json' or merge the contents of this file into
+// your existing settings.
+{
+  "lsp": {
+    "rust-analyzer": {
+      "initialization_options": {
+        "cargo": {
+          "features": ["time-calculation"]
+        }
+      }
+    }
+  }
+}

@@ -1,20 +1,32 @@
-use std::{fs::File, io::BufReader, path::Path};
+use std::{
+    fs::File,
+    io::{BufReader, BufWriter, Read, Write},
+    path::Path,
+    sync::LazyLock,
+};
 
 use grib::{Grib2, SeekableGrib2Reader};
-use once_cell::sync::Lazy;
 #[cfg(unix)]
 use pager::Pager;
 use regex::Regex;
 #[cfg(unix)]
 use which::which;
 
-pub fn grib<P>(path: P) -> anyhow::Result<Grib2<SeekableGrib2Reader<BufReader<File>>>>
+pub fn grib<P>(path: P) -> anyhow::Result<Grib2<SeekableGrib2Reader<std::io::Cursor<Vec<u8>>>>>
 where
     P: AsRef<Path>,
 {
-    let f = File::open(&path)?;
-    let f = BufReader::new(f);
-    let grib = grib::from_reader(f)?;
+    let mut buf = Vec::with_capacity(4096);
+    if is_dash(&path) {
+        let mut stdin = std::io::stdin();
+        let _size = stdin.read_to_end(&mut buf);
+    } else {
+        let f = File::open(path)?;
+        let mut f = BufReader::new(f);
+        let _size = f.read_to_end(&mut buf);
+    };
+    let grib = grib::from_bytes(buf)?;
+
     if grib.is_empty() {
         anyhow::bail!("empty GRIB2 data")
     }
@@ -63,7 +75,7 @@ impl std::str::FromStr for CliMessageIndex {
     type Err = anyhow::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        static RE: Lazy<Regex> = Lazy::new(|| {
+        static RE: LazyLock<Regex> = LazyLock::new(|| {
             Regex::new(
                 r"(?x)      # insignificant whitespace mode
                 ^
@@ -87,6 +99,45 @@ impl std::str::FromStr for CliMessageIndex {
         Ok(Self(inner))
     }
 }
+
+pub(crate) enum WriteStream {
+    File(BufWriter<std::fs::File>),
+    Stdout(std::io::Stdout),
+}
+
+impl WriteStream {
+    pub(crate) fn new<P>(out_path: P) -> std::io::Result<Self>
+    where
+        P: AsRef<Path>,
+    {
+        let stream = if is_dash(&out_path) {
+            Self::Stdout(std::io::stdout())
+        } else {
+            let f = File::create(out_path)?;
+            let f = BufWriter::new(f);
+            Self::File(f)
+        };
+        Ok(stream)
+    }
+
+    pub(crate) fn write_all(&mut self, buf: &[u8]) -> std::io::Result<()> {
+        match self {
+            Self::File(file) => file.write_all(buf),
+            Self::Stdout(stdout) => stdout.write_all(buf),
+        }
+    }
+}
+
+fn is_dash<P: AsRef<Path>>(path: P) -> bool {
+    matches!(path.as_ref().to_str(), Some("-"))
+}
+
+macro_rules! module_component {
+    () => {
+        module_path!().split("::").last().unwrap_or("")
+    };
+}
+pub(crate) use module_component;
 
 #[cfg(test)]
 mod tests {

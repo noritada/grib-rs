@@ -40,8 +40,12 @@ where
         return Err("empty GRIB2 data".into());
     }
 
-    for (_index, submessage) in grib.iter() {
-        eprintln!("  {}.{}", &_index.0, &_index.1);
+    let len = grib.len();
+    for (index, (message_index, submessage)) in grib.iter().enumerate() {
+        eprintln!(
+            "  {}.{} ({}/{})",
+            &message_index.0, &message_index.1, index, len
+        );
         let decoder = grib::Grib2SubmessageDecoder::from(submessage)?;
         let _values = decoder.dispatch()?.collect::<Vec<_>>();
     }

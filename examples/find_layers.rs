@@ -1,6 +1,6 @@
 use std::{env, error::Error, fs::File, io::BufReader, path::Path};
 
-use grib::{codetables::grib2::*, ForecastTime, Name};
+use grib::{ForecastTime, Name, codetables::grib2::*};
 
 fn main() -> Result<(), Box<dyn Error>> {
     // This example shows how to find layers in a GRIB2 message.

@@ -3,10 +3,12 @@ use std::{
     collections::HashSet,
     fmt::{self, Display, Formatter},
     io::{Cursor, Read, Seek},
-    result::Result,
 };
 
+#[cfg(feature = "time-calculation")]
+use crate::TemporalInfo;
 use crate::{
+    GridPointIndexIterator, TemporalRawInfo,
     codetables::{
         CodeTable3_1, CodeTable4_0, CodeTable4_1, CodeTable4_2, CodeTable4_3, CodeTable5_0, Lookup,
     },
@@ -14,8 +16,7 @@ use crate::{
     error::*,
     grid::GridPointIterator,
     parser::Grib2SubmessageIndexStream,
-    reader::{Grib2Read, Grib2SectionStream, SeekableGrib2Reader, SECT8_ES_SIZE},
-    GridPointIndexIterator,
+    reader::{Grib2Read, Grib2SectionStream, SECT8_ES_SIZE, SeekableGrib2Reader},
 };
 
 #[derive(Default, Debug, Clone, PartialEq, Eq)]
@@ -113,6 +114,9 @@ pub fn from_reader<SR: Read + Seek>(
 ///
 /// # Examples
 ///
+/// You can use this method to create a reader from a slice, i.e., a borrowed
+/// sequence of bytes:
+///
 /// ```
 /// use std::io::Read;
 ///
@@ -123,7 +127,7 @@ pub fn from_reader<SR: Read + Seek>(
 ///     let mut f = std::io::BufReader::new(f);
 ///     let mut buf = Vec::new();
 ///     f.read_to_end(&mut buf).unwrap();
-///     let result = grib::from_slice(&buf);
+///     let result = grib::from_bytes(&buf);
 ///
 ///     assert!(result.is_ok());
 ///     let grib2 = result?;
@@ -131,9 +135,34 @@ pub fn from_reader<SR: Read + Seek>(
 ///     Ok(())
 /// }
 /// ```
-pub fn from_slice(bytes: &[u8]) -> Result<Grib2<SeekableGrib2Reader<Cursor<&[u8]>>>, GribError> {
+///
+/// Also, you can use this method to create a reader from an owned sequence of
+/// bytes:
+///
+/// ```
+/// use std::io::Read;
+///
+/// fn main() -> Result<(), Box<dyn std::error::Error>> {
+///     let f = std::fs::File::open(
+///         "testdata/icon_global_icosahedral_single-level_2021112018_000_TOT_PREC.grib2",
+///     )?;
+///     let mut f = std::io::BufReader::new(f);
+///     let mut buf = Vec::new();
+///     f.read_to_end(&mut buf).unwrap();
+///     let result = grib::from_bytes(buf);
+///
+///     assert!(result.is_ok());
+///     let grib2 = result?;
+///     assert_eq!(grib2.len(), 1);
+///     Ok(())
+/// }
+/// ```
+pub fn from_bytes<T>(bytes: T) -> Result<Grib2<SeekableGrib2Reader<Cursor<T>>>, GribError>
+where
+    T: AsRef<[u8]>,
+{
     let reader = Cursor::new(bytes);
-    Grib2::<SeekableGrib2Reader<Cursor<&[u8]>>>::read_with_seekable(reader)
+    Grib2::<SeekableGrib2Reader<Cursor<T>>>::read_with_seekable(reader)
 }
 
 pub struct Grib2<R> {
@@ -195,15 +224,15 @@ impl<R> Grib2<R> {
     /// }
     /// ```
     #[inline]
-    pub fn iter(&self) -> SubmessageIterator<R> {
-        self.submessages()
+    pub fn iter(&self) -> SubmessageIterator<'_, R> {
+        self.into_iter()
     }
 
     /// Returns an iterator over submessages in the data.
     ///
     /// This is an alias to [`Grib2::iter()`].
-    pub fn submessages(&self) -> SubmessageIterator<R> {
-        SubmessageIterator::new(self)
+    pub fn submessages(&self) -> SubmessageIterator<'_, R> {
+        self.into_iter()
     }
 
     /// Returns an iterator over sections in the data.
@@ -230,7 +259,7 @@ impl<R> Grib2<R> {
     ///     Ok(())
     /// }
     /// ```
-    pub fn sections(&self) -> std::slice::Iter<SectionInfo> {
+    pub fn sections(&self) -> std::slice::Iter<'_, SectionInfo> {
         self.sections.iter()
     }
 }
@@ -257,6 +286,15 @@ impl<R: Grib2Read> Grib2<R> {
 
     pub fn list_templates(&self) -> Vec<TemplateInfo> {
         get_templates(&self.sections)
+    }
+}
+
+impl<'a, R: 'a> IntoIterator for &'a Grib2<R> {
+    type Item = (MessageIndex, SubMessage<'a, R>);
+    type IntoIter = SubmessageIterator<'a, R>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        Self::IntoIter::new(self)
     }
 }
 
@@ -363,6 +401,14 @@ impl<'a, R> SubMessage<'a, R> {
         }
     }
 
+    pub fn identification(&self) -> &Identification {
+        // panics should not happen if data is correct
+        match self.1.body.body.as_ref().unwrap() {
+            SectionBody::Section1(data) => data,
+            _ => panic!("something unexpected happened"),
+        }
+    }
+
     pub fn grid_def(&self) -> &GridDefinition {
         // panics should not happen if data is correct
         match self.3.body.body.as_ref().unwrap() {
@@ -457,6 +503,160 @@ Data Representation:                    {}
             self.5.describe().unwrap_or_default(),
             self.repr_def().num_points(),
         )
+    }
+
+    /// Returns time-related raw information associated with the submessage.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use std::{
+    ///     fs::File,
+    ///     io::{BufReader, Read},
+    /// };
+    ///
+    /// use grib::{
+    ///     Code, ForecastTime, TemporalRawInfo, UtcDateTime,
+    ///     codetables::grib2::{Table1_2, Table4_4},
+    /// };
+    ///
+    /// fn main() -> Result<(), Box<dyn std::error::Error>> {
+    ///     let f = File::open(
+    ///         "testdata/Z__C_RJTD_20160822020000_NOWC_GPV_Ggis10km_Pphw10_FH0000-0100_grib2.bin",
+    ///     )?;
+    ///     let f = BufReader::new(f);
+    ///     let grib2 = grib::from_reader(f)?;
+    ///
+    ///     let mut iter = grib2.iter();
+    ///
+    ///     {
+    ///         let (_, message) = iter.next().ok_or_else(|| "first message is not found")?;
+    ///         let actual = message.temporal_raw_info();
+    ///         let expected = TemporalRawInfo {
+    ///             ref_time_significance: Code::Name(Table1_2::Analysis),
+    ///             ref_time_unchecked: UtcDateTime::new(2016, 8, 22, 2, 0, 0),
+    ///             forecast_time_diff: Some(ForecastTime {
+    ///                 unit: Code::Name(Table4_4::Minute),
+    ///                 value: 0,
+    ///             }),
+    ///         };
+    ///         assert_eq!(actual, expected);
+    ///     }
+    ///
+    ///     {
+    ///         let (_, message) = iter.next().ok_or_else(|| "second message is not found")?;
+    ///         let actual = message.temporal_raw_info();
+    ///         let expected = TemporalRawInfo {
+    ///             ref_time_significance: Code::Name(Table1_2::Analysis),
+    ///             ref_time_unchecked: UtcDateTime::new(2016, 8, 22, 2, 0, 0),
+    ///             forecast_time_diff: Some(ForecastTime {
+    ///                 unit: Code::Name(Table4_4::Minute),
+    ///                 value: 10,
+    ///             }),
+    ///         };
+    ///         assert_eq!(actual, expected);
+    ///     }
+    ///
+    ///     Ok(())
+    /// }
+    /// ```
+    pub fn temporal_raw_info(&self) -> TemporalRawInfo {
+        let ref_time_significance = self.identification().ref_time_significance();
+        let ref_time_unchecked = self.identification().ref_time_unchecked();
+        let forecast_time = self.prod_def().forecast_time();
+        TemporalRawInfo::new(ref_time_significance, ref_time_unchecked, forecast_time)
+    }
+
+    #[cfg(feature = "time-calculation")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "time-calculation")))]
+    /// Returns time-related calculated information associated with the
+    /// submessage.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use std::{
+    ///     fs::File,
+    ///     io::{BufReader, Read},
+    /// };
+    ///
+    /// use chrono::{TimeZone, Utc};
+    /// use grib::{
+    ///     Code, ForecastTime, TemporalInfo, UtcDateTime,
+    ///     codetables::grib2::{Table1_2, Table4_4},
+    /// };
+    ///
+    /// fn main() -> Result<(), Box<dyn std::error::Error>> {
+    ///     let f = File::open(
+    ///         "testdata/Z__C_RJTD_20160822020000_NOWC_GPV_Ggis10km_Pphw10_FH0000-0100_grib2.bin",
+    ///     )?;
+    ///     let f = BufReader::new(f);
+    ///     let grib2 = grib::from_reader(f)?;
+    ///
+    ///     let mut iter = grib2.iter();
+    ///
+    ///     {
+    ///         let (_, message) = iter.next().ok_or_else(|| "first message is not found")?;
+    ///         let actual = message.temporal_info();
+    ///         let expected = TemporalInfo {
+    ///             ref_time: Some(Utc.with_ymd_and_hms(2016, 8, 22, 2, 0, 0).unwrap()),
+    ///             forecast_time_target: Some(Utc.with_ymd_and_hms(2016, 8, 22, 2, 0, 0).unwrap()),
+    ///         };
+    ///         assert_eq!(actual, expected);
+    ///     }
+    ///
+    ///     {
+    ///         let (_, message) = iter.next().ok_or_else(|| "second message is not found")?;
+    ///         let actual = message.temporal_info();
+    ///         let expected = TemporalInfo {
+    ///             ref_time: Some(Utc.with_ymd_and_hms(2016, 8, 22, 2, 0, 0).unwrap()),
+    ///             forecast_time_target: Some(Utc.with_ymd_and_hms(2016, 8, 22, 2, 10, 0).unwrap()),
+    ///         };
+    ///         assert_eq!(actual, expected);
+    ///     }
+    ///
+    ///     Ok(())
+    /// }
+    /// ```
+    pub fn temporal_info(&self) -> TemporalInfo {
+        let raw_info = self.temporal_raw_info();
+        TemporalInfo::from(&raw_info)
+    }
+
+    /// Returns the shape of the grid, i.e. a tuple of the number of grids in
+    /// the i and j directions.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use std::{
+    ///     fs::File,
+    ///     io::{BufReader, Read},
+    /// };
+    ///
+    /// fn main() -> Result<(), Box<dyn std::error::Error>> {
+    ///     let mut buf = Vec::new();
+    ///
+    ///     let f = File::open("testdata/gdas.t12z.pgrb2.0p25.f000.0-10.xz")?;
+    ///     let f = BufReader::new(f);
+    ///     let mut f = xz2::bufread::XzDecoder::new(f);
+    ///     f.read_to_end(&mut buf)?;
+    ///
+    ///     let f = std::io::Cursor::new(buf);
+    ///     let grib2 = grib::from_reader(f)?;
+    ///
+    ///     let mut iter = grib2.iter();
+    ///     let (_, message) = iter.next().ok_or_else(|| "first message is not found")?;
+    ///
+    ///     let shape = message.grid_shape()?;
+    ///     assert_eq!(shape, (1440, 721));
+    ///     Ok(())
+    /// }
+    /// ```
+    pub fn grid_shape(&self) -> Result<(usize, usize), GribError> {
+        let grid_def = self.grid_def();
+        let shape = GridDefinitionTemplateValues::try_from(grid_def)?.grid_shape();
+        Ok(shape)
     }
 
     /// Computes and returns an iterator over `(i, j)` of grid points.
@@ -597,7 +797,7 @@ mod tests {
     }
 
     #[test]
-    fn from_buf_reader() {
+    fn context_from_buf_reader() {
         let f = File::open(
             "testdata/icon_global_icosahedral_single-level_2021112018_000_TOT_PREC.grib2",
         )
@@ -608,7 +808,7 @@ mod tests {
     }
 
     #[test]
-    fn from_bytes() {
+    fn context_from_bytes() {
         let f = File::open(
             "testdata/icon_global_icosahedral_single-level_2021112018_000_TOT_PREC.grib2",
         )
@@ -616,7 +816,7 @@ mod tests {
         let mut f = BufReader::new(f);
         let mut buf = Vec::new();
         f.read_to_end(&mut buf).unwrap();
-        let result = from_slice(&buf);
+        let result = from_bytes(&buf);
         assert!(result.is_ok())
     }
 
@@ -746,14 +946,14 @@ mod tests {
     test_submessage_iterator! {
         (
             item_0_from_submessage_iterator_for_single_message_data_with_multiple_submessages,
-            "testdata/Z__C_RJTD_20160822020000_NOWC_GPV_Ggis10km_Pphw10_FH0000-0100_grib2.bin.xz",
+            "testdata/Z__C_RJTD_20190304000000_MSM_GUID_Rjp_P-all_FH03-39_Toorg_grib2.bin.xz",
             0,
             (0, 0),
             (0, 1, None, 2, 3, 4, 5, 6, 0),
         ),
         (
             item_1_from_submessage_iterator_for_single_message_data_with_multiple_submessages,
-            "testdata/Z__C_RJTD_20160822020000_NOWC_GPV_Ggis10km_Pphw10_FH0000-0100_grib2.bin.xz",
+            "testdata/Z__C_RJTD_20190304000000_MSM_GUID_Rjp_P-all_FH03-39_Toorg_grib2.bin.xz",
             1,
             (0, 1),
             (0, 1, None, 2, 7, 8, 9, 10, 0),

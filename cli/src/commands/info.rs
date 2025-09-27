@@ -3,22 +3,24 @@ use std::{
     path::PathBuf,
 };
 
-use chrono::{DateTime, Utc};
-use clap::{arg, ArgMatches, Command};
+use clap::{ArgMatches, Command, arg};
 use grib::{
+    Identification, Indicator, SectionBody,
     codetables::{
         CodeTable0_0, CodeTable1_1, CodeTable1_2, CodeTable1_3, CodeTable1_4, CommonCodeTable00,
         CommonCodeTable11, Lookup,
     },
-    Identification, Indicator, SectionBody,
 };
 
 use crate::cli;
 
 pub fn cli() -> Command {
-    Command::new("info")
+    Command::new(crate::cli::module_component!())
         .about("Show identification information")
-        .arg(arg!(<FILE> "Target file").value_parser(clap::value_parser!(PathBuf)))
+        .arg(
+            arg!(<FILE> "Target file name (or a single dash (`-`) for standard input)")
+                .value_parser(clap::value_parser!(PathBuf)),
+        )
 }
 
 pub fn exec(args: &ArgMatches) -> anyhow::Result<()> {
@@ -37,7 +39,7 @@ pub fn exec(args: &ArgMatches) -> anyhow::Result<()> {
                     message_index.0,
                     sect0_body,
                     sect1_body,
-                    sect1_body.ref_time()?
+                    sect1_body.ref_time_unchecked()
                 )
             );
         }
@@ -45,7 +47,7 @@ pub fn exec(args: &ArgMatches) -> anyhow::Result<()> {
     Ok(())
 }
 
-struct InfoView<'i>(usize, &'i Indicator, &'i Identification, DateTime<Utc>);
+struct InfoView<'i>(usize, &'i Indicator, &'i Identification, grib::UtcDateTime);
 
 impl<'i> Display for InfoView<'i> {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {

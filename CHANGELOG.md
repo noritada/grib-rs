@@ -7,6 +7,202 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.13.0] - 2025-09-26
+### Enhancements
+
+- The separation of optional dependencies into crate features is now complete.
+  Please enable or disable features as needed.
+  - Decoding implementations requiring other crates have been split into separate crate features,
+    allowing users who don't need them to disable them at build time.
+    (#132, #134, #135)
+  - As the number of crate features has increased, the `default` feature has been configured.
+    (#137)
+- Decoding performance improved for JPEG 2000 code stream format data.
+  This improvement is currently available only when an experimental feature called `jpeg2000-unpack-with-openjpeg-experimental` is enabled.
+  (#93, #136)
+
+### Others
+
+- Updated to the Rust 2024 Edition.
+  (#139)
+
+## [0.12.1] - 2025-09-21
+### Documentation improvements
+
+- Crate-level documentation.
+  (#138)
+
+## [0.12.0] - 2025-09-08
+### Enhancements
+
+- `Grib2SubmessageDecoder::new()` is now available for decoding from byte sequences.
+  (#129, #131)
+
+### Breaking changes
+
+- Error types for the decoder is much simplified.
+  (#130)
+
+### Others
+
+- Updated dependencies on `png` and `proj` crates.
+
+## [0.11.2] - 2025-08-05
+### New supports
+
+- Templates
+  - Template 5.42/7.42 (CCSDS recommended lossless compression)
+    (#94; #125)
+
+### Others
+
+- Fixed API documentation build failure on docs.rs
+  (#124)
+
+## [0.11.1] - 2025-07-14
+### Documentation improvements
+
+- Descriptions on features are now included in Cargo.toml and linked from README.md.
+  (#121)
+- API documentation on docs.rs and GitHub Pages now includes descriptions on feature-specific APIs.
+  (#122)
+
+### Fixes
+
+- Correct the dependency on chrono to fix a build failure
+  (#123)
+
+## [0.11.0] - 2025-07-12
+### New supports
+
+- Code Tables
+  - Code Table 1.2 (significance of reference time)
+    (#119)
+
+### Enhancements
+
+- Now `IntoIter` trait is implemented for `&Grib2`.
+  (#107)
+- `Grib2` struct can now be created from an owned sequence of bytes as well using `from_bytes()`,
+  which replaces `from_slice()` that only takes a borrowed sequence.
+  (#117)
+- 3 enhancements have been made to the time-related information APIs.
+  (#119)
+  - Introduction of the "time-calculation" feature and reduction of dependency on chrono crate.
+    This crate no longer depends on chrono unless the "time-calculation" feature is explicitly enabled.
+    This reduces the number of dependencies needed to build the code in cases where time calculations are not required.
+  - Accessors to time-related information of a submessage.
+    `SubMessage::temporal_raw_info()` and `SubMessage::temporal_info()`,
+    which return reference time, forecast time, etc. in batches, are now available.
+    The latter is available only when the "time-calculation" feature is enabled.
+  - New feature to calculate forecast time.
+    The new method `SubMessage::temporal_info()` mentioned above can be used to get the calculated forecast time.
+    This forecast time is calculated from the reference time, the time elapsed from it and its units.
+- An accessor, `SubMessage::identification()`, is newly introduced to return `Identification`.
+  (#110 (thanks @ejd); #120)
+
+### Enhancements for CLI application `gribber`
+
+- CLI now uses `std::sync::LazyLock` and requires Rust 1.80 or higher for builds.
+  Instead, it no longer depends on `once_cell` crate.
+- Now that CLI can handle standard input/output, data can be exchanged with external commands through pipes.
+  (#118)
+
+### Others
+
+- Suppressed warnings about untested JPEG 2000 code stream format decoding since it has passed plenty of operational testing.
+  (#111 (thanks @agasparovic); #113 (thanks @jodavaho))
+- As usual, followed the latest lint warnings.
+  (e.g. #115 (thanks @ejd))
+- As usual, updated dependencies.
+  (e.g. #116 (thanks @ejd))
+
+## [0.10.2] - 2024-10-02
+### Fixed
+
+- Library `grib`
+  - Fixed longitude computation failures in the regular lat/lon and Gaussian grids when start/end latitudes are inconsistent with scanning mode. (#51, #103, #104)
+
+## [0.10.1] - 2024-08-12
+### Changed
+
+- Library `grib`
+  - Complex packing decoder now strictly checks that original field values are floating-points. (#95)
+
+### Fixed
+
+- Library `grib`
+  - Fixed a possible issue that decoders returned wrong values when nbit is 0 and D is not 0, although no such data have been found so far. (#96)
+
+## [0.10.0] - 2024-07-04
+### Added
+
+- Library `grib`
+  - Support for regular Gaussian grids (Template 3.40). (#85, #90)
+  - New method `SubMessage::grid_shape()` to access the grid shape without iteration. (#80)
+  - New method `FixedSurface::unit()` to access the unit string defined for the type of the surface, if any. (#81)
+  - New method `GridDefinitionTemplateValues::short_name()` to return the short name defined for the grid, based on ecCodes `gridType` strings. (#87)
+  - New utility function `grib::utils::compute_gaussian_latitudes()` to compute Gaussian latitudes. (#92)
+- Others
+  - GRIB2 viewer web app for demo using the crate is now available. (#79, #83, #84)
+  - Now that example code in README.md has been subject to testing, we can know any update omissions. (#89)
+
+### Changed
+
+- Library `grib`
+  - `SubMessage::latlons()` now strictly returns an error for quasi-regular latitude/longitude grids as unsupported. (#86)
+  - `LatLonGridIterator` has been renamed to `RegularGridIterator`. (#88)
+
+### Contributors
+
+- Thanks for sharing the data that cannot be processed.
+  - @BruAPAHE (#85)
+
+## [0.9.2] - 2024-05-24
+### Added
+
+- Library `grib`
+  - Support for first-order spatial differencing in the complex packing decoder. (#78)
+  - Support for Code Table 5.6 (order of spatial differencing). (#78)
+
+### Contributors
+
+- Thanks for sharing the data that cannot be processed.
+  - @animus27 (#77)
+
+## [0.9.1] - 2024-04-03
+### Fixed
+
+- Library `grib`
+  - Fix `FixedValueIterator` crash after iteration completion. (#75, #76)
+
+### Contributors
+
+- Thanks for reporting a bug and providing its fix.
+  - @shastro (#75, #76)
+
+## [0.9.0] - 2024-02-04
+
+### Added
+
+- Library `grib`
+  - New feature `gridpoints-proj` to compute coordinates of grid points using `proj` crate. (#69)
+  - Support for Code Table 3.2 (shape of the reference system). (#70)
+  - Support for Code Table 3.5 (projection centre). (#73)
+  - Support for Template 3.20 (polar stereographic). (#73)
+    - Feature `gridpoints-proj` needs to be enabled to use this support.
+  - Support for Template 3.30 (Lambert conformal). (#69, #71, #72)
+    - Feature `gridpoints-proj` needs to be enabled to use this support.
+  - Grid point index iterator API to allow users to use grid point indices. (#67)
+  - Support for building WASM. (#65)
+
+### Changed
+
+- Library `grib`
+  - Improved the module structure to make the source code a little more readable and easier to contribute. (#66)
+- Others
+  - Improved descriptions on template support in README. (#74)
+
 ## [0.8.0] - 2023-11-11
 ### Added
 
@@ -287,7 +483,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - inspect: display of information mainly for development purpose such as template numbers
     - list: display of a list of sections (the style is still tentative)
 
-[unreleased]: https://github.com/noritada/grib-rs/compare/v0.8.0...HEAD
+[unreleased]: https://github.com/noritada/grib-rs/compare/v0.13.0...HEAD
+[0.13.0]: https://github.com/noritada/grib-rs/compare/v0.12.1...v0.13.0
+[0.12.1]: https://github.com/noritada/grib-rs/compare/v0.12.0...v0.12.1
+[0.12.0]: https://github.com/noritada/grib-rs/compare/v0.11.2...v0.12.0
+[0.11.2]: https://github.com/noritada/grib-rs/compare/v0.11.1...v0.11.2
+[0.11.1]: https://github.com/noritada/grib-rs/compare/v0.11.0...v0.11.1
+[0.11.0]: https://github.com/noritada/grib-rs/compare/v0.10.2...v0.11.0
+[0.10.2]: https://github.com/noritada/grib-rs/compare/v0.10.1...v0.10.2
+[0.10.1]: https://github.com/noritada/grib-rs/compare/v0.10.0...v0.10.1
+[0.10.0]: https://github.com/noritada/grib-rs/compare/v0.9.2...v0.10.0
+[0.9.2]: https://github.com/noritada/grib-rs/compare/v0.9.1...v0.9.2
+[0.9.1]: https://github.com/noritada/grib-rs/compare/v0.9.0...v0.9.1
+[0.9.0]: https://github.com/noritada/grib-rs/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/noritada/grib-rs/compare/v0.7.1...v0.8.0
 [0.7.1]: https://github.com/noritada/grib-rs/compare/v0.7.0...v0.7.1
 [0.7.0]: https://github.com/noritada/grib-rs/compare/v0.6.1...v0.7.0
