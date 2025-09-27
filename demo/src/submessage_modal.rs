@@ -29,11 +29,11 @@ pub(crate) fn submessage_modal(
         });
     }
 
-    if let Some((context, width, height)) = context_.as_ref() {
-        if let Some(image_data) = image_data {
-            context.clear_rect(0., 0., *width as f64, *height as f64);
-            let _ = context.put_image_data(image_data, 0., 0.);
-        }
+    if let Some((context, width, height)) = context_.as_ref()
+        && let Some(image_data) = image_data
+    {
+        context.clear_rect(0., 0., *width as f64, *height as f64);
+        let _ = context.put_image_data(image_data, 0., 0.);
     }
 
     html! {
