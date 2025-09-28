@@ -233,12 +233,10 @@ fn impl_dump_for_struct(
     };
 
     let mut dumps = Vec::new();
-    let mut start_pos = quote! { start };
 
     for field in fields {
         let ident = field.ident.as_ref().unwrap();
         let ty = &field.ty;
-        let end_pos = quote! { #start_pos + std::mem::size_of::<#ty>() };
 
         let doc = get_doc(&field.attrs)
             .map(|s| format!("  // {}", s.trim()))
@@ -249,12 +247,10 @@ fn impl_dump_for_struct(
                 stringify!(#ident),
                 parent,
                 #doc,
-                #start_pos,
+                pos,
                 output,
             )?;
         });
-
-        start_pos = end_pos;
     }
 
     quote! {
@@ -262,7 +258,7 @@ fn impl_dump_for_struct(
             fn dump<W: std::io::Write>(
                 &self,
                 parent: Option<&std::borrow::Cow<str>>,
-                start: usize,
+                pos: &mut usize,
                 output: &mut W,
             ) -> Result<(), std::io::Error> {
                 #(#dumps)*;
@@ -289,7 +285,7 @@ fn impl_dump_for_enum(input: &syn::DeriveInput, data: &syn::DataEnum) -> proc_ma
                 #name::#variant_ident(inner) => <#inner_ty as grib_data_helpers::Dump>::dump(
                     inner,
                     parent,
-                    start,
+                    pos,
                     output
                 )
             });
@@ -303,7 +299,7 @@ fn impl_dump_for_enum(input: &syn::DeriveInput, data: &syn::DataEnum) -> proc_ma
             fn dump<W: std::io::Write>(
                 &self,
                 parent: Option<&std::borrow::Cow<str>>,
-                start: usize,
+                pos: &mut usize,
                 output: &mut W,
             ) -> Result<(), std::io::Error> {
                 match self {
