@@ -1,12 +1,5 @@
 use as_grib_int::AsGribInt;
 
-pub fn read_from_slice<N>(slice: &[u8], pos: &mut usize) -> TryFromSliceResult<N>
-where
-    N: TryFromSlice,
-{
-    TryFromSlice::try_from_slice(slice, pos)
-}
-
 pub trait TryFromSlice {
     fn try_from_slice(slice: &[u8], pos: &mut usize) -> TryFromSliceResult<Self>
     where
