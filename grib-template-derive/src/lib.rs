@@ -213,14 +213,23 @@ fn extract_vec_inner(type_path: &syn::TypePath) -> Option<syn::Type> {
 #[proc_macro_derive(Dump, attributes(doc))]
 pub fn derive_dump(input: TokenStream) -> TokenStream {
     let input = syn::parse_macro_input!(input as syn::DeriveInput);
-    let name = input.ident;
 
-    let fields = match input.data {
-        syn::Data::Struct(ref s) => match &s.fields {
-            syn::Fields::Named(fields) => &fields.named,
-            _ => unimplemented!("`Dump` can only be derived for structs with named fields"),
-        },
-        _ => unimplemented!("`Dump` can only be derived for structs"),
+    match &input.data {
+        syn::Data::Struct(data) => impl_dump_for_struct(&input, data),
+        syn::Data::Enum(data) => impl_dump_for_enum(&input, data),
+        _ => unimplemented!("`Dump` can only be derived for structs/enums"),
+    }
+    .into()
+}
+
+fn impl_dump_for_struct(
+    input: &syn::DeriveInput,
+    data: &syn::DataStruct,
+) -> proc_macro2::TokenStream {
+    let name = &input.ident;
+    let fields = match &data.fields {
+        syn::Fields::Named(fields) => &fields.named,
+        _ => unimplemented!("`Dump` can only be derived for structs with named fields"),
     };
 
     let mut dumps = Vec::new();
@@ -262,6 +271,47 @@ pub fn derive_dump(input: TokenStream) -> TokenStream {
         }
     }
     .into()
+}
+
+fn impl_dump_for_enum(input: &syn::DeriveInput, data: &syn::DataEnum) -> proc_macro2::TokenStream {
+    let name = &input.ident;
+
+    let mut arms = Vec::new();
+
+    for variant in &data.variants {
+        let variant_ident = &variant.ident;
+
+        if let syn::Fields::Unnamed(fields) = &variant.fields
+            && fields.unnamed.len() == 1
+        {
+            let inner_ty = &fields.unnamed.first().unwrap().ty;
+            arms.push(quote! {
+                #name::#variant_ident(inner) => <#inner_ty as grib_data_helpers::Dump>::dump(
+                    inner,
+                    parent,
+                    start,
+                    output
+                )
+            });
+        } else {
+            unimplemented!("`Dump` only supports single-field tuple variants");
+        }
+    }
+
+    quote! {
+        impl grib_data_helpers::Dump for #name {
+            fn dump<W: std::io::Write>(
+                &self,
+                parent: Option<&std::borrow::Cow<str>>,
+                start: usize,
+                output: &mut W,
+            ) -> Result<(), std::io::Error> {
+                match self {
+                    #(#arms),*,
+                }
+            }
+        }
+    }
 }
 
 fn get_doc(attrs: &[syn::Attribute]) -> Option<String> {
