@@ -53,4 +53,14 @@ macro_rules! add_impl_for_signed_integer_types {
 
 add_impl_for_signed_integer_types![(u8, i8), (u16, i16), (u32, i32), (u64, i64),];
 
+pub trait TryEnumFromSlice {
+    fn try_enum_from_slice(
+        discriminant: impl Into<u64>,
+        slice: &[u8],
+        pos: &mut usize,
+    ) -> TryFromSliceResult<Self>
+    where
+        Self: Sized;
+}
+
 mod as_grib_int;

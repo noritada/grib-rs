@@ -4,14 +4,23 @@ use quote::quote;
 #[proc_macro_derive(TryFromSlice, attributes(try_from_slice))]
 pub fn derive_try_from_slice(input: TokenStream) -> TokenStream {
     let input = syn::parse_macro_input!(input as syn::DeriveInput);
-    let name = input.ident;
 
-    let fields = match input.data {
-        syn::Data::Struct(ref s) => match &s.fields {
-            syn::Fields::Named(fields) => &fields.named,
-            _ => unimplemented!("`TryFromSlice` can only be derived for structs with named fields"),
-        },
-        _ => unimplemented!("`TryFromSlice` can only be derived for structs"),
+    match &input.data {
+        syn::Data::Struct(data) => impl_try_from_slice_for_struct(&input, data),
+        syn::Data::Enum(data) => impl_try_from_slice_for_enum(&input, data),
+        _ => unimplemented!("`TryFromSlice` can only be derived for structs/enums"),
+    }
+    .into()
+}
+
+fn impl_try_from_slice_for_struct(
+    input: &syn::DeriveInput,
+    data: &syn::DataStruct,
+) -> proc_macro2::TokenStream {
+    let name = &input.ident;
+    let fields = match &data.fields {
+        syn::Fields::Named(fields) => &fields.named,
+        _ => unimplemented!("`TryFromSlice` can only be derived for structs with named fields"),
     };
 
     let mut field_reads = Vec::new();
@@ -21,7 +30,10 @@ pub fn derive_try_from_slice(input: TokenStream) -> TokenStream {
         let ident = field.ident.as_ref().unwrap();
         let ty = &field.ty;
 
-        let len_attr = field.attrs.iter().find_map(|attr| parse_len_attr(attr));
+        let len_attr = field
+            .attrs
+            .iter()
+            .find_map(|attr| attr_value(attr, "len").map(|v| parse_len_attr(&v)));
         if let Some(len) = len_attr {
             if let syn::Type::Path(type_path) = ty {
                 if let Some(inner_ty) = extract_vec_inner(type_path) {
@@ -40,6 +52,22 @@ pub fn derive_try_from_slice(input: TokenStream) -> TokenStream {
             unimplemented!("`#[try_from_slice(len = N)]` is only available for `Vec<T>");
         }
 
+        let enum_attr = field
+            .attrs
+            .iter()
+            .find_map(|attr| attr_value(attr, "variant").map(|v| parse_variant_attr(&v)));
+        if let Some(enum_ident) = enum_attr {
+            field_reads.push(quote! {
+                let #ident = <#ty as grib_data_helpers::TryEnumFromSlice>::try_enum_from_slice(
+                    #enum_ident,
+                    slice,
+                    &mut pos,
+                )?;
+            });
+            idents.push(ident);
+            continue;
+        }
+
         field_reads.push(quote! {
             let #ident = grib_data_helpers::read_from_slice::<#ty>(slice, &mut pos)?;
         });
@@ -55,7 +83,54 @@ pub fn derive_try_from_slice(input: TokenStream) -> TokenStream {
             }
         }
     }
-    .into()
+}
+
+fn impl_try_from_slice_for_enum(
+    input: &syn::DeriveInput,
+    data: &syn::DataEnum,
+) -> proc_macro2::TokenStream {
+    let name = &input.ident;
+
+    let mut arms = Vec::new();
+
+    for variant in &data.variants {
+        let variant_ident = &variant.ident;
+        let disc_expr = variant
+            .discriminant
+            .as_ref()
+            .expect("`TryFromSlice` requires the enum to have explicit discriminant")
+            .1
+            .clone();
+
+        if let syn::Fields::Unnamed(fields) = &variant.fields
+            && fields.unnamed.len() == 1
+        {
+            let inner_ty = &fields.unnamed.first().unwrap().ty;
+            arms.push(quote! {
+                #disc_expr => {
+                    let inner = grib_data_helpers::read_from_slice::<#inner_ty>(slice, pos)?;
+                    Ok(#name::#variant_ident(inner))
+                }
+            });
+        } else {
+            unimplemented!("`TryFromSlice` only supports single-field tuple variants");
+        }
+    }
+
+    quote! {
+        impl grib_data_helpers::TryEnumFromSlice for #name {
+            fn try_enum_from_slice(
+                discriminant: impl Into<u64>,
+                slice: &[u8],
+                pos: &mut usize,
+            ) -> grib_data_helpers::TryFromSliceResult<Self> {
+                match discriminant.into() {
+                    #(#arms),*,
+                    _ => panic!("unknown variant for {}", stringify!(#name)),
+                }
+            }
+        }
+    }
 }
 
 enum LenKind {
@@ -76,31 +151,45 @@ impl quote::ToTokens for LenKind {
     }
 }
 
-fn parse_len_attr(attr: &syn::Attribute) -> Option<LenKind> {
+fn attr_value(attr: &syn::Attribute, ident: &str) -> Option<syn::Expr> {
     if !attr.path().is_ident("try_from_slice") {
         return None;
     }
     let meta = attr.parse_args::<syn::Meta>().ok()?;
     if let syn::Meta::NameValue(nv) = meta {
-        if !nv.path.is_ident("len") {
+        if !nv.path.is_ident(ident) {
             return None;
         }
-        match nv.value {
-            syn::Expr::Lit(syn::ExprLit {
-                lit: syn::Lit::Int(lit_int),
-                ..
-            }) => Some(LenKind::Literal(lit_int.base10_parse::<usize>().unwrap())),
-            syn::Expr::Lit(syn::ExprLit {
-                lit: syn::Lit::Str(lit_str),
-                ..
-            }) => Some(LenKind::Ident(syn::Ident::new(
-                &lit_str.value(),
-                lit_str.span(),
-            ))),
-            _ => None,
-        }
+        Some(nv.value)
     } else {
         None
+    }
+}
+
+fn parse_len_attr(attr_value: &syn::Expr) -> Option<LenKind> {
+    match attr_value {
+        syn::Expr::Lit(syn::ExprLit {
+            lit: syn::Lit::Int(lit_int),
+            ..
+        }) => Some(LenKind::Literal(lit_int.base10_parse::<usize>().unwrap())),
+        syn::Expr::Lit(syn::ExprLit {
+            lit: syn::Lit::Str(lit_str),
+            ..
+        }) => Some(LenKind::Ident(syn::Ident::new(
+            &lit_str.value(),
+            lit_str.span(),
+        ))),
+        _ => None,
+    }
+}
+
+fn parse_variant_attr(attr_value: &syn::Expr) -> Option<syn::Ident> {
+    match attr_value {
+        syn::Expr::Lit(syn::ExprLit {
+            lit: syn::Lit::Str(lit_str),
+            ..
+        }) => Some(syn::Ident::new(&lit_str.value(), lit_str.span())),
+        _ => None,
     }
 }
 

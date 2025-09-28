@@ -11,21 +11,39 @@ pub struct Params {
     /// Field 4
     field4: f32,
     /// Field 5
-    field5: InnerParams,
+    field5: InnerParams0,
     /// Field 6
-    #[try_from_slice(len = 4)]
-    field6: Vec<u16>,
+    #[try_from_slice(variant = "field1")]
+    field6: Enum,
     /// Field 7
+    #[try_from_slice(len = 4)]
+    field7: Vec<i16>,
+    /// Field 8
     #[try_from_slice(len = "field1")]
-    field7: Vec<u16>,
+    field8: Vec<i16>,
 }
 
 #[derive(Debug, PartialEq, Eq, grib_template_derive::TryFromSlice)]
-pub struct InnerParams {
+#[repr(u8)]
+pub enum Enum {
+    /// Field 1
+    Type0(InnerParams0) = 0,
+    /// Field 2
+    Type1(InnerParams1) = 1,
+}
+
+#[derive(Debug, PartialEq, Eq, grib_template_derive::TryFromSlice)]
+pub struct InnerParams0 {
     /// Field 1
     field1: u8,
     /// Field 2
     field2: u8,
+}
+
+#[derive(Debug, PartialEq, Eq, grib_template_derive::TryFromSlice)]
+pub struct InnerParams1 {
+    /// Field 1
+    field1: u8,
 }
 
 fn main() {}
