@@ -40,8 +40,7 @@ fn impl_try_from_slice_for_struct(
                     field_reads.push(quote! {
                         let mut #ident = Vec::with_capacity(#len);
                         for _ in 0..#len {
-                            let item =
-                                grib_data_helpers::read_from_slice::<#inner_ty>(slice, &mut pos)?;
+                            let item = grib_data_helpers::read_from_slice::<#inner_ty>(slice, pos)?;
                             #ident.push(item);
                         }
                     });
@@ -61,7 +60,7 @@ fn impl_try_from_slice_for_struct(
                 let #ident = <#ty as grib_data_helpers::TryEnumFromSlice>::try_enum_from_slice(
                     #enum_ident,
                     slice,
-                    &mut pos,
+                    pos,
                 )?;
             });
             idents.push(ident);
@@ -69,15 +68,17 @@ fn impl_try_from_slice_for_struct(
         }
 
         field_reads.push(quote! {
-            let #ident = grib_data_helpers::read_from_slice::<#ty>(slice, &mut pos)?;
+            let #ident = grib_data_helpers::read_from_slice::<#ty>(slice, pos)?;
         });
         idents.push(ident);
     }
 
     quote! {
         impl grib_data_helpers::TryFromSlice for #name {
-            fn try_from_slice(slice: &[u8]) -> grib_data_helpers::TryFromSliceResult<Self> {
-                let mut pos = 0;
+            fn try_from_slice(
+                slice: &[u8],
+                pos: &mut usize,
+            ) -> grib_data_helpers::TryFromSliceResult<Self> {
                 #(#field_reads)*
                 Ok(Self { #(#idents),* })
             }
