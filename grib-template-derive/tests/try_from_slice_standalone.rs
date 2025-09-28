@@ -13,13 +13,13 @@ pub struct Params {
     /// Field 5
     field5: InnerParams0,
     /// Field 6
-    #[try_from_slice(variant = "field1")]
+    #[grib_template(variant = "field1")]
     field6: Enum,
     /// Field 7
-    #[try_from_slice(len = 4)]
+    #[grib_template(len = 4)]
     field7: Vec<i16>,
     /// Field 8
-    #[try_from_slice(len = "field1")]
+    #[grib_template(len = "field1")]
     field8: Vec<i16>,
 }
 

@@ -1,7 +1,7 @@
 use proc_macro::TokenStream;
 use quote::quote;
 
-#[proc_macro_derive(TryFromSlice, attributes(try_from_slice))]
+#[proc_macro_derive(TryFromSlice, attributes(grib_template))]
 pub fn derive_try_from_slice(input: TokenStream) -> TokenStream {
     let input = syn::parse_macro_input!(input as syn::DeriveInput);
 
@@ -52,7 +52,7 @@ fn impl_try_from_slice_for_struct(
                     continue;
                 }
             }
-            unimplemented!("`#[try_from_slice(len = N)]` is only available for `Vec<T>");
+            unimplemented!("`#[grib_template(len = N)]` is only available for `Vec<T>");
         }
 
         let enum_attr = field
@@ -158,7 +158,7 @@ impl quote::ToTokens for LenKind {
 }
 
 fn attr_value(attr: &syn::Attribute, ident: &str) -> Option<syn::Expr> {
-    if !attr.path().is_ident("try_from_slice") {
+    if !attr.path().is_ident("grib_template") {
         return None;
     }
     let meta = attr.parse_args::<syn::Meta>().ok()?;
