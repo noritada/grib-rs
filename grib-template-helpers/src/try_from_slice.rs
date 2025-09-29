@@ -1,4 +1,4 @@
-use as_grib_int::AsGribInt;
+use as_grib_signed::AsGribSigned;
 
 pub trait TryFromSlice {
     fn try_from_slice(slice: &[u8], pos: &mut usize) -> TryFromSliceResult<Self>
@@ -38,7 +38,7 @@ macro_rules! add_impl_for_signed_integer_types {
         impl TryFromSlice for $ty_dst {
             fn try_from_slice(slice: &[u8], pos: &mut usize) -> TryFromSliceResult<$ty_dst> {
                 let n = <$ty_src>::from_be_bytes(TryFromSlice::try_from_slice(slice, pos)?)
-                    .as_grib_int();
+                    .as_grib_signed();
                 Ok(n)
             }
         }
@@ -57,4 +57,4 @@ pub trait TryEnumFromSlice {
         Self: Sized;
 }
 
-mod as_grib_int;
+mod as_grib_signed;

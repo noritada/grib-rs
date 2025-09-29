@@ -1,11 +1,11 @@
-pub(crate) trait AsGribInt<I> {
-    fn as_grib_int(&self) -> I;
+pub(crate) trait AsGribSigned<I> {
+    fn as_grib_signed(&self) -> I;
 }
 
 macro_rules! add_impl_for_integer_types {
     ($(($ty_src:ty, $ty_dst:ty),)*) => ($(
-        impl AsGribInt<$ty_dst> for $ty_src {
-            fn as_grib_int(&self) -> $ty_dst {
+        impl AsGribSigned<$ty_dst> for $ty_src {
+            fn as_grib_signed(&self) -> $ty_dst {
                 if self.leading_zeros() == 0 {
                     let abs = (self << 1 >> 1) as $ty_dst;
                     -abs
@@ -40,7 +40,7 @@ mod tests {
         while pos < input.len() {
             let val = u8::from_be_bytes(input[pos..pos + 1].try_into().unwrap());
             pos += 1;
-            let val = val.as_grib_int();
+            let val = val.as_grib_signed();
             actual.push(val);
         }
 
@@ -60,7 +60,7 @@ mod tests {
         while pos < input.len() {
             let val = u16::from_be_bytes(input[pos..pos + 2].try_into().unwrap());
             pos += 2;
-            let val = val.as_grib_int();
+            let val = val.as_grib_signed();
             actual.push(val);
         }
 
