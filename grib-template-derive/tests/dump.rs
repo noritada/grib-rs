@@ -1,4 +1,4 @@
-use grib_data_helpers::Dump;
+use grib_template_helpers::Dump;
 
 #[derive(grib_template_derive::Dump)]
 pub struct Params {

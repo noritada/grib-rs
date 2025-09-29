@@ -1,4 +1,4 @@
-use grib_data_helpers::TryFromSlice;
+use grib_template_helpers::TryFromSlice;
 
 #[derive(Debug, PartialEq, grib_template_derive::TryFromSlice)]
 pub struct Params {

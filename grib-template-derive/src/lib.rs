@@ -41,7 +41,7 @@ fn impl_try_from_slice_for_struct(
                         let mut #ident = Vec::with_capacity(#len);
                         for _ in 0..#len {
                             let item =
-                                <#inner_ty as grib_data_helpers::TryFromSlice>::try_from_slice(
+                                <#inner_ty as grib_template_helpers::TryFromSlice>::try_from_slice(
                                     slice,
                                     pos,
                                 )?;
@@ -61,7 +61,7 @@ fn impl_try_from_slice_for_struct(
             .find_map(|attr| attr_value(attr, "variant").map(|v| parse_variant_attr(&v)));
         if let Some(enum_ident) = enum_attr {
             field_reads.push(quote! {
-                let #ident = <#ty as grib_data_helpers::TryEnumFromSlice>::try_enum_from_slice(
+                let #ident = <#ty as grib_template_helpers::TryEnumFromSlice>::try_enum_from_slice(
                     #enum_ident,
                     slice,
                     pos,
@@ -72,17 +72,17 @@ fn impl_try_from_slice_for_struct(
         }
 
         field_reads.push(quote! {
-            let #ident = <#ty as grib_data_helpers::TryFromSlice>::try_from_slice(slice, pos)?;
+            let #ident = <#ty as grib_template_helpers::TryFromSlice>::try_from_slice(slice, pos)?;
         });
         idents.push(ident);
     }
 
     quote! {
-        impl grib_data_helpers::TryFromSlice for #name {
+        impl grib_template_helpers::TryFromSlice for #name {
             fn try_from_slice(
                 slice: &[u8],
                 pos: &mut usize,
-            ) -> grib_data_helpers::TryFromSliceResult<Self> {
+            ) -> grib_template_helpers::TryFromSliceResult<Self> {
                 #(#field_reads)*
                 Ok(Self { #(#idents),* })
             }
@@ -113,8 +113,10 @@ fn impl_try_from_slice_for_enum(
             let inner_ty = &fields.unnamed.first().unwrap().ty;
             arms.push(quote! {
                 #disc_expr => {
-                    let inner =
-                        <#inner_ty as grib_data_helpers::TryFromSlice>::try_from_slice(slice, pos)?;
+                    let inner = <#inner_ty as grib_template_helpers::TryFromSlice>::try_from_slice(
+                        slice,
+                        pos
+                    )?;
                     Ok(#name::#variant_ident(inner))
                 }
             });
@@ -124,12 +126,12 @@ fn impl_try_from_slice_for_enum(
     }
 
     quote! {
-        impl grib_data_helpers::TryEnumFromSlice for #name {
+        impl grib_template_helpers::TryEnumFromSlice for #name {
             fn try_enum_from_slice(
                 discriminant: impl Into<u64>,
                 slice: &[u8],
                 pos: &mut usize,
-            ) -> grib_data_helpers::TryFromSliceResult<Self> {
+            ) -> grib_template_helpers::TryFromSliceResult<Self> {
                 match discriminant.into() {
                     #(#arms),*,
                     _ => panic!("unknown variant for {}", stringify!(#name)),
@@ -242,7 +244,7 @@ fn impl_dump_for_struct(
             .map(|s| format!("  // {}", s.trim()))
             .unwrap_or_default();
         dumps.push(quote! {
-            <#ty as grib_data_helpers::DumpField>::dump_field(
+            <#ty as grib_template_helpers::DumpField>::dump_field(
                 &self.#ident,
                 stringify!(#ident),
                 parent,
@@ -254,7 +256,7 @@ fn impl_dump_for_struct(
     }
 
     quote! {
-        impl grib_data_helpers::Dump for #name {
+        impl grib_template_helpers::Dump for #name {
             fn dump<W: std::io::Write>(
                 &self,
                 parent: Option<&std::borrow::Cow<str>>,
@@ -282,7 +284,7 @@ fn impl_dump_for_enum(input: &syn::DeriveInput, data: &syn::DataEnum) -> proc_ma
         {
             let inner_ty = &fields.unnamed.first().unwrap().ty;
             arms.push(quote! {
-                #name::#variant_ident(inner) => <#inner_ty as grib_data_helpers::Dump>::dump(
+                #name::#variant_ident(inner) => <#inner_ty as grib_template_helpers::Dump>::dump(
                     inner,
                     parent,
                     pos,
@@ -295,7 +297,7 @@ fn impl_dump_for_enum(input: &syn::DeriveInput, data: &syn::DataEnum) -> proc_ma
     }
 
     quote! {
-        impl grib_data_helpers::Dump for #name {
+        impl grib_template_helpers::Dump for #name {
             fn dump<W: std::io::Write>(
                 &self,
                 parent: Option<&std::borrow::Cow<str>>,
