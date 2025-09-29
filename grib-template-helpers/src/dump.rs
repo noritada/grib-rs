@@ -35,17 +35,9 @@ macro_rules! add_impl_of_dump_field_for_number_types {
                 output: &mut W,
             ) -> Result<(), Error> {
                 let size = self.octet_size();
-                let start = *pos;
-                *pos += size;
-                if size == 1 {
-                    write!(output, "{}", start)?;
-                } else {
-                    write!(output, "{}-{}", start, *pos - 1)?;
-                }
+                write_position_column(output, pos, size)?;
                 if let Some(parent) = parent {
-                    write!(output, ": {}.", parent)?;
-                } else {
-                    write!(output, ": ")?;
+                    write!(output, "{}.", parent)?;
                 }
                 writeln!(output, "{} = {:?}{}",
                     name,
@@ -130,6 +122,38 @@ impl<T: Dump> OctetSize for T {
     }
 }
 
+fn write_position_column<W: Write>(
+    output: &mut W,
+    pos: &mut usize,
+    size: usize,
+) -> Result<(), Error> {
+    let str_len = |i: usize| -> usize {
+        let mut i = i;
+        let mut len = 1;
+        while i >= 10 {
+            i /= 10;
+            len += 1;
+        }
+        len
+    };
+
+    const COLUMN_WIDTH: usize = 10;
+    let mut pad_width = COLUMN_WIDTH;
+    let pad = |size| " ".repeat(size);
+
+    let start = *pos;
+    *pos += size;
+    pad_width -= str_len(start);
+    if size == 1 {
+        write!(output, "{}{}", start, pad(pad_width))?;
+    } else {
+        let end = *pos - 1;
+        pad_width -= str_len(end) + 1;
+        write!(output, "{}-{}{}", start, end, pad(pad_width))?;
+    }
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -164,6 +188,48 @@ mod tests {
             String::from_utf8_lossy(buf.get_ref()),
             "member1: 1\nmember2: 2\n"
         );
+        Ok(())
+    }
+
+    fn write_position_column_with_newline<W: Write>(
+        output: &mut W,
+        pos: &mut usize,
+        size: usize,
+    ) -> Result<(), Error> {
+        write_position_column(output, pos, size)?;
+        write!(output, "$\n")
+    }
+
+    #[test]
+    fn writing_position_columns() -> Result<(), Box<dyn std::error::Error>> {
+        let mut buf = std::io::Cursor::new(Vec::with_capacity(1024));
+        let mut pos = 1;
+        write_position_column_with_newline(&mut buf, &mut pos, 1)?;
+        write_position_column_with_newline(&mut buf, &mut pos, 8)?;
+        pos = 3;
+        write_position_column_with_newline(&mut buf, &mut pos, 8)?;
+        write_position_column_with_newline(&mut buf, &mut pos, 1)?;
+        write_position_column_with_newline(&mut buf, &mut pos, 8)?;
+        pos = 92;
+        write_position_column_with_newline(&mut buf, &mut pos, 8)?;
+        pos = 93;
+        write_position_column_with_newline(&mut buf, &mut pos, 8)?;
+        pos = 100;
+        write_position_column_with_newline(&mut buf, &mut pos, 1)?;
+        write_position_column_with_newline(&mut buf, &mut pos, 8)?;
+
+        let expected = "\
+1         $
+2-9       $
+3-10      $
+11        $
+12-19     $
+92-99     $
+93-100    $
+100       $
+101-108   $
+";
+        assert_eq!(String::from_utf8_lossy(buf.get_ref()), expected);
         Ok(())
     }
 }

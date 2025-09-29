@@ -73,16 +73,16 @@ fn main() {
     assert_eq!(
         String::from_utf8_lossy(buf.get_ref()),
         "\
-1: field1 = 1  // Field 1
-2-3: field2 = 2  // Field 2
-4-5: field3 = 3  // Field 3
-6-9: field4 = 4.0  // Field 4
-10: field5.field1 = 51  // Field 5.1
-11: field5.field2 = 52  // Field 5.2
-12-13: field5.field3.field1 = 511  // Field 5.3.1
-14: field6.field1 = 61  // Field 1
-15-22: field7 = [1, 2, 3, 4]  // Field 7
-23-24: field8 = [1]  // Field 8
+1         field1 = 1  // Field 1
+2-3       field2 = 2  // Field 2
+4-5       field3 = 3  // Field 3
+6-9       field4 = 4.0  // Field 4
+10        field5.field1 = 51  // Field 5.1
+11        field5.field2 = 52  // Field 5.2
+12-13     field5.field3.field1 = 511  // Field 5.3.1
+14        field6.field1 = 61  // Field 1
+15-22     field7 = [1, 2, 3, 4]  // Field 7
+23-24     field8 = [1]  // Field 8
 "
     )
 }
