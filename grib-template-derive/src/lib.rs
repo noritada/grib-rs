@@ -35,22 +35,22 @@ fn impl_try_from_slice_for_struct(
             .iter()
             .find_map(|attr| attr_value(attr, "len").map(|v| parse_len_attr(&v)));
         if let Some(len) = len_attr {
-            if let syn::Type::Path(type_path) = ty {
-                if let Some(inner_ty) = extract_vec_inner(type_path) {
-                    field_reads.push(quote! {
-                        let mut #ident = Vec::with_capacity(#len);
-                        for _ in 0..#len {
-                            let item =
-                                <#inner_ty as grib_template_helpers::TryFromSlice>::try_from_slice(
-                                    slice,
-                                    pos,
-                                )?;
-                            #ident.push(item);
-                        }
-                    });
-                    idents.push(ident);
-                    continue;
-                }
+            if let syn::Type::Path(type_path) = ty
+                && let Some(inner_ty) = extract_vec_inner(type_path)
+            {
+                field_reads.push(quote! {
+                    let mut #ident = Vec::with_capacity(#len);
+                    for _ in 0..#len {
+                        let item =
+                            <#inner_ty as grib_template_helpers::TryFromSlice>::try_from_slice(
+                                slice,
+                                pos,
+                            )?;
+                        #ident.push(item);
+                    }
+                });
+                idents.push(ident);
+                continue;
             }
             unimplemented!("`#[grib_template(len = N)]` is only available for `Vec<T>");
         }
@@ -202,12 +202,12 @@ fn parse_variant_attr(attr_value: &syn::Expr) -> Option<syn::Ident> {
 }
 
 fn extract_vec_inner(type_path: &syn::TypePath) -> Option<syn::Type> {
-    if type_path.path.segments.len() == 1 && type_path.path.segments[0].ident == "Vec" {
-        if let syn::PathArguments::AngleBracketed(ref args) = type_path.path.segments[0].arguments {
-            if let Some(syn::GenericArgument::Type(inner_ty)) = args.args.first() {
-                return Some(inner_ty.clone());
-            }
-        }
+    if type_path.path.segments.len() == 1
+        && type_path.path.segments[0].ident == "Vec"
+        && let syn::PathArguments::AngleBracketed(ref args) = type_path.path.segments[0].arguments
+        && let Some(syn::GenericArgument::Type(inner_ty)) = args.args.first()
+    {
+        return Some(inner_ty.clone());
     }
     None
 }
@@ -268,7 +268,6 @@ fn impl_dump_for_struct(
             }
         }
     }
-    .into()
 }
 
 fn impl_dump_for_enum(input: &syn::DeriveInput, data: &syn::DataEnum) -> proc_macro2::TokenStream {
