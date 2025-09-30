@@ -3,9 +3,9 @@ use crate::{
     helpers::{GribInt, read_as},
 };
 
-pub(crate) struct Section5Param {
-    pub(crate) num_points_encoded: u32,
-    pub(crate) template_num: u16,
+pub struct Section5Param {
+    pub num_points_encoded: u32,
+    pub template_num: u16,
 }
 
 impl Section5Param {
@@ -19,11 +19,11 @@ impl Section5Param {
     }
 }
 
-pub(crate) struct SimplePackingParam {
-    pub(crate) ref_val: f32,
-    pub(crate) exp: i16,
-    pub(crate) dig: i16,
-    pub(crate) nbit: u8,
+pub struct SimplePackingParam {
+    pub ref_val: f32,
+    pub exp: i16,
+    pub dig: i16,
+    pub nbit: u8,
 }
 
 impl SimplePackingParam {
@@ -55,15 +55,15 @@ impl SimplePackingParam {
 }
 
 pub(crate) struct ComplexPackingParam {
-    pub(crate) group_splitting_method_used: u8,
-    pub(crate) missing_value_management_used: u8,
-    pub(crate) ngroup: u32,
-    pub(crate) group_width_ref: u8,
-    pub(crate) group_width_nbit: u8,
-    pub(crate) group_len_ref: u32,
-    pub(crate) group_len_inc: u8,
-    pub(crate) group_len_last: u32,
-    pub(crate) group_len_nbit: u8,
+    pub group_splitting_method_used: u8,
+    pub missing_value_management_used: u8,
+    pub ngroup: u32,
+    pub group_width_ref: u8,
+    pub group_width_nbit: u8,
+    pub group_len_ref: u32,
+    pub group_len_inc: u8,
+    pub group_len_last: u32,
+    pub group_len_nbit: u8,
 }
 
 impl ComplexPackingParam {
@@ -92,8 +92,8 @@ impl ComplexPackingParam {
 }
 
 pub(crate) struct SpatialDifferencingParam {
-    pub(crate) order: u8,
-    pub(crate) extra_desc_num_octets: u8,
+    pub order: u8,
+    pub extra_desc_num_octets: u8,
 }
 
 impl SpatialDifferencingParam {
@@ -109,9 +109,9 @@ impl SpatialDifferencingParam {
 
 #[cfg(feature = "ccsds-unpack-with-libaec")]
 pub(crate) struct CcsdsCompressionParam {
-    pub(crate) mask: u8,
-    pub(crate) block_size: u8,
-    pub(crate) reference_sample_interval: u16,
+    pub mask: u8,
+    pub block_size: u8,
+    pub reference_sample_interval: u16,
 }
 
 #[cfg(feature = "ccsds-unpack-with-libaec")]
@@ -129,10 +129,10 @@ impl CcsdsCompressionParam {
 }
 
 pub(crate) struct RunLengthPackingParam {
-    pub(crate) nbit: u8,
-    pub(crate) maxv: u16,
-    pub(crate) max_level: u16,
-    pub(crate) num_digits: u8,
+    pub nbit: u8,
+    pub maxv: u16,
+    pub max_level: u16,
+    pub num_digits: u8,
 }
 
 impl RunLengthPackingParam {
