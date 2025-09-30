@@ -19,7 +19,7 @@ impl<'d> Grib2GpvUnpack for RunLength<'d> {
         let sect5_data = &target.sect5_bytes;
         let param = RunLengthPackingParam::from_buf(&sect5_data[11..17]);
 
-        let mut level_map = Vec::with_capacity(param.max_level.into());
+        let mut level_map = Vec::with_capacity(usize::from(param.max_level + 1));
         level_map.push(f32::NAN);
         let mut pos = 17;
 
