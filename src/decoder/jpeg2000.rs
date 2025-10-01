@@ -3,8 +3,8 @@ pub(crate) use self::image::ImageIntoIter;
 use crate::{
     Grib2GpvUnpack,
     decoder::{
-        DecodeError, Grib2SubmessageDecoder, jpeg2000::decoder::DecodeParams,
-        param::SimplePackingParam, simple::*, stream::FixedValueIterator,
+        DecodeError, Grib2SubmessageDecoder, jpeg2000::decoder::DecodeParams, simple::*,
+        stream::FixedValueIterator,
     },
 };
 
@@ -18,21 +18,24 @@ impl<'d> Grib2GpvUnpack for Jpeg2000<'d> {
 
     fn iter<'a>(&'a self) -> Result<Self::Iter<'a>, DecodeError> {
         let Self(target) = self;
-        let sect5_data = &target.sect5_bytes;
-        let simple_param = SimplePackingParam::from_buf(&sect5_data[11..21])?;
+        let super::param::Template::Jpeg2000(ref template) = target.sect5_param.payload.template
+        else {
+            unreachable!();
+        };
+        template.simple.is_supported()?;
 
-        if simple_param.nbit == 0 {
+        if template.simple.nbit == 0 {
             // Tested with the World Aviation Forecast System (WAFS) GRIV files from the repo: https://aviationweather.gov/wifs/api.html
             // See #111 and #113.
             let decoder = SimplePackingDecoder::ZeroLength(FixedValueIterator::new(
-                simple_param.zero_bit_reference_value(),
+                template.simple.zero_bit_reference_value(),
                 target.num_points_encoded(),
             ));
             return Ok(decoder);
         };
 
         let jp2_unpacked = decode_j2k(target.sect7_payload())?;
-        let decoder = NonZeroSimplePackingDecoder::new(jp2_unpacked, &simple_param);
+        let decoder = NonZeroSimplePackingDecoder::new(jp2_unpacked, &template.simple);
         let decoder = SimplePackingDecoder::NonZeroLength(decoder);
         Ok(decoder)
     }

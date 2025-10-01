@@ -9,13 +9,12 @@ use self::{
     },
     missing::DecodedValue::{self, Missing1, Missing2, Normal},
 };
-use super::param::SpatialDifferencingParam;
 use crate::{
     Grib2GpvUnpack,
     codetables::grib2::Table5_6,
     decoder::{
         DecodeError, Grib2SubmessageDecoder,
-        param::{ComplexPackingParam, SimplePackingParam},
+        param::ComplexPackingParam,
         simple::*,
         stream::{BitStream, NBitwiseIterator},
     },
@@ -32,29 +31,31 @@ impl<'d> Grib2GpvUnpack for Complex<'d> {
 
     fn iter<'a>(&'a self) -> Result<Self::Iter<'d>, DecodeError> {
         let Self(target) = self;
-        let sect5_data = &target.sect5_bytes;
-        let simple_param = SimplePackingParam::from_buf(&sect5_data[11..21])?;
-        let complex_param = ComplexPackingParam::from_buf(&sect5_data[21..47]);
+        let super::param::Template::Complex(ref template) = target.sect5_param.payload.template
+        else {
+            unreachable!();
+        };
+        template.simple.is_supported()?;
 
-        if complex_param.group_splitting_method_used != 1 {
+        if template.complex.group_splitting_method_used != 1 {
             return Err(DecodeError::NotSupported(
                 "GRIB2 code table 5.4 (group splitting method)",
-                complex_param.group_splitting_method_used.into(),
+                template.complex.group_splitting_method_used.into(),
             ));
         }
 
-        if complex_param.missing_value_management_used > 2 {
+        if template.complex.missing_value_management_used > 2 {
             return Err(DecodeError::NotSupported(
                 "GRIB2 code table 5.5 (missing value management for complex packing)",
-                complex_param.missing_value_management_used.into(),
+                template.complex.missing_value_management_used.into(),
             ));
         }
 
         let sect7_data = target.sect7_payload();
 
         let unpacked_data =
-            decode_complex_packing(complex_param, sect7_data, 0, simple_param.nbit, 0);
-        let decoder = NonZeroSimplePackingDecoder::new(unpacked_data, &simple_param);
+            decode_complex_packing(&template.complex, sect7_data, 0, template.simple.nbit, 0);
+        let decoder = NonZeroSimplePackingDecoder::new(unpacked_data, &template.simple);
         let decoder = SimplePackingDecoder::NonZeroLength(decoder);
         Ok(decoder)
     }
@@ -72,40 +73,43 @@ impl<'d> Grib2GpvUnpack for ComplexSpatial<'d> {
 
     fn iter<'a>(&'a self) -> Result<Self::Iter<'d>, DecodeError> {
         let Self(target) = self;
-        let sect5_data = &target.sect5_bytes;
-        let simple_param = SimplePackingParam::from_buf(&sect5_data[11..21])?;
-        let complex_param = ComplexPackingParam::from_buf(&sect5_data[21..47]);
-        let spdiff_param = SpatialDifferencingParam::from_buf(&sect5_data[47..49]);
-        let spdiff_order = Table5_6::try_from(spdiff_param.order).map_err(|e| {
+        let super::param::Template::ComplexSpatial(ref template) =
+            target.sect5_param.payload.template
+        else {
+            unreachable!();
+        };
+        template.simple.is_supported()?;
+
+        let spdiff_order = Table5_6::try_from(template.spatial.order).map_err(|e| {
             DecodeError::NotSupported(
                 "GRIB2 code table 5.6 (order of spatial differencing)",
                 e.number.into(),
             )
         })?;
 
-        if complex_param.group_splitting_method_used != 1 {
+        if template.complex.group_splitting_method_used != 1 {
             return Err(DecodeError::NotSupported(
                 "GRIB2 code table 5.4 (group splitting method)",
-                complex_param.group_splitting_method_used.into(),
+                template.complex.group_splitting_method_used.into(),
             ));
         }
 
-        if complex_param.missing_value_management_used > 2 {
+        if template.complex.missing_value_management_used > 2 {
             return Err(DecodeError::NotSupported(
                 "GRIB2 code table 5.5 (missing value management for complex packing)",
-                complex_param.missing_value_management_used.into(),
+                template.complex.missing_value_management_used.into(),
             ));
         }
 
         let sect7_data = target.sect7_payload();
         let sect7_params =
-            diff::SpatialDifferencingExtraDescriptors::new(&spdiff_param, sect7_data)?;
+            diff::SpatialDifferencingExtraDescriptors::new(&template.spatial, sect7_data)?;
 
         let unpacked_data = decode_complex_packing(
-            complex_param,
+            &template.complex,
             sect7_data,
             sect7_params.len(),
-            simple_param.nbit,
+            template.simple.nbit,
             sect7_params.minimum(),
         );
         let first_values = sect7_params.first_values();
@@ -123,7 +127,7 @@ impl<'d> Grib2GpvUnpack for ComplexSpatial<'d> {
             }
             Table5_6::Missing => unreachable!(),
         };
-        let decoder = NonZeroSimplePackingDecoder::new(spdiff_unpacked, &simple_param);
+        let decoder = NonZeroSimplePackingDecoder::new(spdiff_unpacked, &template.simple);
         let decoder = SimplePackingDecoder::NonZeroLength(decoder);
         Ok(decoder)
     }
@@ -137,13 +141,13 @@ pub(crate) type ComplexPackingDecoded<'d> = iter::Flatten<
     >,
 >;
 
-fn decode_complex_packing(
-    complex_param: ComplexPackingParam,
-    sect7_data: &[u8],
+fn decode_complex_packing<'a>(
+    complex_param: &'a ComplexPackingParam,
+    sect7_data: &'a [u8],
     sect7_offset: usize,
     nbit: u8,
     z_min: i32,
-) -> ComplexPackingDecoded<'_> {
+) -> ComplexPackingDecoded<'a> {
     fn get_octet_length(nbit: u8, ngroup: u32) -> usize {
         let total_bit: u32 = ngroup * u32::from(nbit);
         let total_octet = (total_bit + 0b111) >> 3;

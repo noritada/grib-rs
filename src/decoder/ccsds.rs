@@ -2,7 +2,6 @@ use crate::{
     DecodeError, Grib2GpvUnpack,
     decoder::{
         Grib2SubmessageDecoder,
-        param::{CcsdsCompressionParam, SimplePackingParam},
         simple::*,
         stream::{FixedValueIterator, NBitwiseIterator},
     },
@@ -18,31 +17,33 @@ impl<'d> Grib2GpvUnpack for Ccsds<'d> {
 
     fn iter<'a>(&'a self) -> Result<Self::Iter<'a>, DecodeError> {
         let Self(target) = self;
-        let sect5_data = &target.sect5_bytes;
-        let simple_param = SimplePackingParam::from_buf(&sect5_data[11..21])?;
-        let ccsds_param = CcsdsCompressionParam::from_buf(&sect5_data[21..25]);
+        let super::param::Template::Ccsds(ref template) = target.sect5_param.payload.template
+        else {
+            unreachable!();
+        };
+        template.simple.is_supported()?;
 
-        let decoder = if simple_param.nbit == 0 {
+        let decoder = if template.simple.nbit == 0 {
             SimplePackingDecoder::ZeroLength(FixedValueIterator::new(
-                simple_param.zero_bit_reference_value(),
+                template.simple.zero_bit_reference_value(),
                 target.num_points_encoded(),
             ))
         } else {
-            let element_size_in_bytes = usize::from(simple_param.nbit >> 3) + 1;
+            let element_size_in_bytes = usize::from(template.simple.nbit >> 3) + 1;
             let size = element_size_in_bytes * target.num_points_encoded();
             let mut decoded = vec![0; size];
             let mut stream = aec::Stream::new(
-                simple_param.nbit.into(),
-                ccsds_param.block_size.into(),
-                ccsds_param.reference_sample_interval.into(),
-                ccsds_param.mask.into(),
+                template.simple.nbit.into(),
+                template.ccsds.block_size.into(),
+                template.ccsds.reference_sample_interval.into(),
+                template.ccsds.mask.into(),
             );
             stream
                 .decode(target.sect7_payload(), &mut decoded)
                 .map_err(DecodeError::from)?;
 
             let decoder = NBitwiseIterator::new(decoded, element_size_in_bytes * 8);
-            let decoder = NonZeroSimplePackingDecoder::new(decoder, &simple_param);
+            let decoder = NonZeroSimplePackingDecoder::new(decoder, &template.simple);
             SimplePackingDecoder::NonZeroLength(decoder)
         };
         Ok(decoder)

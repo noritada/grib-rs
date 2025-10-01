@@ -1,5 +1,7 @@
 use std::vec::IntoIter;
 
+use grib_template_helpers::TryFromSlice as _;
+
 use crate::{
     context::{SectionBody, SubMessage},
     decoder::{
@@ -85,7 +87,6 @@ use crate::{
 pub struct Grib2SubmessageDecoder {
     num_points_total: usize,
     sect5_param: Section5Param,
-    pub(crate) sect5_bytes: Vec<u8>,
     sect6_bytes: Vec<u8>,
     sect7_bytes: Vec<u8>,
 }
@@ -101,7 +102,9 @@ impl Grib2SubmessageDecoder {
         sect6_bytes: Vec<u8>,
         sect7_bytes: Vec<u8>,
     ) -> Result<Self, GribError> {
-        let sect5_param = Section5Param::from_buf(&sect5_bytes[5..11]);
+        let mut pos = 0;
+        let sect5_param = Section5Param::try_from_slice(&sect5_bytes, &mut pos)
+            .map_err(|e| GribError::DecodeError(DecodeError::from(e)))?;
         let sect6_bytes = match sect6_bytes[5] {
             0x00 => sect6_bytes,
             0xff => {
@@ -120,7 +123,6 @@ impl Grib2SubmessageDecoder {
         Ok(Self {
             num_points_total,
             sect5_param,
-            sect5_bytes,
             sect6_bytes,
             sect7_bytes,
         })
@@ -150,7 +152,7 @@ impl Grib2SubmessageDecoder {
     pub fn dispatch(
         &self,
     ) -> Result<Grib2DecodedValues<'_, impl Iterator<Item = f32> + '_>, GribError> {
-        let decoder = match self.sect5_param.template_num {
+        let decoder = match self.sect5_param.payload.template_num {
             0 => Grib2ValueIterator::SigSNS(simple::Simple(self).iter()?),
             2 => Grib2ValueIterator::SigSC(complex::Complex(self).iter()?),
             3 => Grib2ValueIterator::SigSSCI(complex::ComplexSpatial(self).iter()?),
@@ -185,7 +187,7 @@ impl Grib2SubmessageDecoder {
     }
 
     pub(crate) fn num_points_encoded(&self) -> usize {
-        self.sect5_param.num_points_encoded as usize
+        self.sect5_param.payload.num_points_encoded as usize
     }
 
     pub(crate) fn sect7_payload(&self) -> &[u8] {

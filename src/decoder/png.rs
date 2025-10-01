@@ -1,7 +1,6 @@
 use crate::{
     DecodeError, Grib2GpvUnpack, Grib2SubmessageDecoder,
     decoder::{
-        param::SimplePackingParam,
         simple::{NonZeroSimplePackingDecoder, SimplePackingDecoder},
         stream::{FixedValueIterator, NBitwiseIterator},
     },
@@ -17,33 +16,35 @@ impl<'d> Grib2GpvUnpack for Png<'d> {
 
     fn iter<'a>(&'a self) -> Result<Self::Iter<'a>, DecodeError> {
         let Self(target) = self;
-        let sect5_data = &target.sect5_bytes;
-        let param = SimplePackingParam::from_buf(&sect5_data[11..21])?;
+        let super::param::Template::Png(ref template) = target.sect5_param.payload.template else {
+            unreachable!();
+        };
+        template.simple.is_supported()?;
 
         let buf = read_image_buffer(target.sect7_payload())
             .map_err(|e| DecodeError::from(format!("PNG decode error: {e}")))?;
 
-        if param.nbit == 0 {
+        if template.simple.nbit == 0 {
             eprintln!(
                 "WARNING: nbit = 0 for PNG decoder is not tested.
                 Please report your data and help us develop the library."
             );
             let decoder = SimplePackingDecoder::ZeroLength(FixedValueIterator::new(
-                param.zero_bit_reference_value(),
+                template.simple.zero_bit_reference_value(),
                 target.num_points_encoded(),
             ));
             return Ok(decoder);
         };
 
-        if param.nbit != 16 {
+        if template.simple.nbit != 16 {
             eprintln!(
                 "WARNING: nbit != 16 for PNG decoder is not tested.
                 Please report your data and help us develop the library."
             );
         }
 
-        let iter = NBitwiseIterator::new(buf, usize::from(param.nbit));
-        let iter = NonZeroSimplePackingDecoder::new(iter, &param);
+        let iter = NBitwiseIterator::new(buf, usize::from(template.simple.nbit));
+        let iter = NonZeroSimplePackingDecoder::new(iter, &template.simple);
         let iter = SimplePackingDecoder::NonZeroLength(iter);
         Ok(iter)
     }

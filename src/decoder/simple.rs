@@ -48,17 +48,21 @@ impl<'d> Grib2GpvUnpack for Simple<'d> {
 
     fn iter<'a>(&'a self) -> Result<Self::Iter<'d>, DecodeError> {
         let Self(target) = self;
-        let sect5_data = &target.sect5_bytes;
-        let param = SimplePackingParam::from_buf(&sect5_data[11..21])?;
+        let super::param::Template::Simple(ref template) = target.sect5_param.payload.template
+        else {
+            unreachable!();
+        };
+        template.simple.is_supported()?;
 
-        let decoder = if param.nbit == 0 {
+        let decoder = if template.simple.nbit == 0 {
             SimplePackingDecoder::ZeroLength(FixedValueIterator::new(
-                param.zero_bit_reference_value(),
+                template.simple.zero_bit_reference_value(),
                 target.num_points_encoded(),
             ))
         } else {
-            let iter = NBitwiseIterator::new(target.sect7_payload(), usize::from(param.nbit));
-            let iter = NonZeroSimplePackingDecoder::new(iter, &param);
+            let iter =
+                NBitwiseIterator::new(target.sect7_payload(), usize::from(template.simple.nbit));
+            let iter = NonZeroSimplePackingDecoder::new(iter, &template.simple);
             SimplePackingDecoder::NonZeroLength(iter)
         };
         Ok(decoder)
@@ -107,12 +111,15 @@ mod tests {
         io::{BufReader, Read},
     };
 
+    use grib_template_helpers::TryFromSlice as _;
+
     use super::*;
 
     #[test]
     fn decode_simple_packing() {
         let buf = vec![0x35, 0x3e, 0x6b, 0xf6, 0x80, 0x1a, 0x00, 0x00, 0x10, 0x00];
-        let param = SimplePackingParam::from_buf(&buf).unwrap();
+        let mut pos = 0;
+        let param = SimplePackingParam::try_from_slice(&buf, &mut pos).unwrap();
         let input: Vec<u8> = vec![0x00, 0x06, 0x00, 0x0d];
         let expected: Vec<f32> = vec![7.987_831_6e-7, 9.030_913e-7];
 

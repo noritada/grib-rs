@@ -1,9 +1,6 @@
 use crate::{
     Grib2GpvUnpack,
-    decoder::{
-        DecodeError, Grib2SubmessageDecoder, param::RunLengthPackingParam, stream::NBitwiseIterator,
-    },
-    helpers::read_as,
+    decoder::{DecodeError, Grib2SubmessageDecoder, stream::NBitwiseIterator},
 };
 
 pub(crate) struct RunLength<'d>(pub(crate) &'d Grib2SubmessageDecoder);
@@ -16,26 +13,26 @@ impl<'d> Grib2GpvUnpack for RunLength<'d> {
 
     fn iter<'a>(&'a self) -> Result<Self::Iter<'a>, DecodeError> {
         let Self(target) = self;
-        let sect5_data = &target.sect5_bytes;
-        let param = RunLengthPackingParam::from_buf(&sect5_data[11..17]);
+        let super::param::Template::RunLength(ref template) = target.sect5_param.payload.template
+        else {
+            unreachable!();
+        };
 
-        let mut level_map = Vec::with_capacity(usize::from(param.max_level + 1));
+        let mut level_map = Vec::with_capacity(template.run_length.leval_values.len() + 1);
         level_map.push(f32::NAN);
-        let mut pos = 17;
-
-        for _ in 0..param.max_level {
-            let val: f32 = read_as!(u16, sect5_data, pos).into();
-            let num_digits: i32 = param.num_digits.into();
-            let factor = 10_f32.powi(-num_digits);
-            let val = val * factor;
-            level_map.push(val);
-            pos += std::mem::size_of::<u16>();
-        }
+        let factor = 10_f32.powi(-i32::from(template.run_length.num_digits));
+        level_map.extend(
+            template
+                .run_length
+                .leval_values
+                .iter()
+                .map(|val| f32::from(*val) * factor),
+        );
 
         let decoded_levels = rleunpack(
             target.sect7_payload(),
-            param.nbit,
-            param.maxv,
+            template.run_length.nbit,
+            template.run_length.maxv,
             Some(target.num_points_encoded()),
         )?;
 
