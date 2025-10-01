@@ -3,7 +3,10 @@ use crate::{
     decoder::{DecodeError, Grib2SubmessageDecoder, stream::NBitwiseIterator},
 };
 
-pub(crate) struct RunLength<'d>(pub(crate) &'d Grib2SubmessageDecoder);
+pub(crate) struct RunLength<'d>(
+    pub(crate) &'d Grib2SubmessageDecoder,
+    pub(crate) &'d super::param::RunLengthPackingTemplate,
+);
 
 impl<'d> Grib2GpvUnpack for RunLength<'d> {
     type Iter<'a>
@@ -12,11 +15,7 @@ impl<'d> Grib2GpvUnpack for RunLength<'d> {
         Self: 'a;
 
     fn iter<'a>(&'a self) -> Result<Self::Iter<'a>, DecodeError> {
-        let Self(target) = self;
-        let super::param::Template::RunLength(ref template) = target.sect5_param.payload.template
-        else {
-            unreachable!();
-        };
+        let Self(target, template) = self;
 
         let mut level_map = Vec::with_capacity(template.run_length.leval_values.len() + 1);
         level_map.push(f32::NAN);

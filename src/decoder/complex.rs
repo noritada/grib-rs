@@ -21,7 +21,10 @@ use crate::{
     helpers::GribInt,
 };
 
-pub(crate) struct Complex<'d>(pub(crate) &'d Grib2SubmessageDecoder);
+pub(crate) struct Complex<'d>(
+    pub(crate) &'d Grib2SubmessageDecoder,
+    pub(crate) &'d super::param::ComplexTemplate,
+);
 
 impl<'d> Grib2GpvUnpack for Complex<'d> {
     type Iter<'a>
@@ -30,11 +33,7 @@ impl<'d> Grib2GpvUnpack for Complex<'d> {
         Self: 'a;
 
     fn iter<'a>(&'a self) -> Result<Self::Iter<'d>, DecodeError> {
-        let Self(target) = self;
-        let super::param::Template::Complex(ref template) = target.sect5_param.payload.template
-        else {
-            unreachable!();
-        };
+        let Self(target, template) = self;
         template.simple.is_supported()?;
 
         if template.complex.group_splitting_method_used != 1 {
@@ -61,7 +60,10 @@ impl<'d> Grib2GpvUnpack for Complex<'d> {
     }
 }
 
-pub(crate) struct ComplexSpatial<'d>(pub(crate) &'d Grib2SubmessageDecoder);
+pub(crate) struct ComplexSpatial<'d>(
+    pub(crate) &'d Grib2SubmessageDecoder,
+    pub(crate) &'d super::param::ComplexSpatialTemplate,
+);
 
 impl<'d> Grib2GpvUnpack for ComplexSpatial<'d> {
     type Iter<'a>
@@ -72,12 +74,7 @@ impl<'d> Grib2GpvUnpack for ComplexSpatial<'d> {
         Self: 'a;
 
     fn iter<'a>(&'a self) -> Result<Self::Iter<'d>, DecodeError> {
-        let Self(target) = self;
-        let super::param::Template::ComplexSpatial(ref template) =
-            target.sect5_param.payload.template
-        else {
-            unreachable!();
-        };
+        let Self(target, template) = self;
         template.simple.is_supported()?;
 
         let spdiff_order = Table5_6::try_from(template.spatial.order).map_err(|e| {

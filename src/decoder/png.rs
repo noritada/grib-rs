@@ -6,7 +6,10 @@ use crate::{
     },
 };
 
-pub(crate) struct Png<'d>(pub(crate) &'d Grib2SubmessageDecoder);
+pub(crate) struct Png<'d>(
+    pub(crate) &'d Grib2SubmessageDecoder,
+    pub(crate) &'d super::param::PngTemplate,
+);
 
 impl<'d> Grib2GpvUnpack for Png<'d> {
     type Iter<'a>
@@ -15,10 +18,7 @@ impl<'d> Grib2GpvUnpack for Png<'d> {
         Self: 'a;
 
     fn iter<'a>(&'a self) -> Result<Self::Iter<'a>, DecodeError> {
-        let Self(target) = self;
-        let super::param::Template::Png(ref template) = target.sect5_param.payload.template else {
-            unreachable!();
-        };
+        let Self(target, template) = self;
         template.simple.is_supported()?;
 
         let buf = read_image_buffer(target.sect7_payload())

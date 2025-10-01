@@ -7,7 +7,7 @@ use crate::{
     decoder::{
         bitmap::{BitmapDecodeIterator, dummy_bitmap_for_nonnullable_data},
         complex::ComplexPackingDecoded,
-        param::Section5Param,
+        param::{Section5Param, Template},
         simple::SimplePackingDecoder,
         stream::NBitwiseIterator,
     },
@@ -152,29 +152,44 @@ impl Grib2SubmessageDecoder {
     pub fn dispatch(
         &self,
     ) -> Result<Grib2DecodedValues<'_, impl Iterator<Item = f32> + '_>, GribError> {
-        let decoder = match self.sect5_param.payload.template_num {
-            0 => Grib2ValueIterator::SigSNS(simple::Simple(self).iter()?),
-            2 => Grib2ValueIterator::SigSC(complex::Complex(self).iter()?),
-            3 => Grib2ValueIterator::SigSSCI(complex::ComplexSpatial(self).iter()?),
+        let decoder = match &self.sect5_param.payload.template {
+            Template::Simple(template) => {
+                Grib2ValueIterator::SigSNS(simple::Simple(self, template).iter()?)
+            }
+            Template::Complex(template) => {
+                Grib2ValueIterator::SigSC(complex::Complex(self, template).iter()?)
+            }
+            Template::ComplexSpatial(template) => {
+                Grib2ValueIterator::SigSSCI(complex::ComplexSpatial(self, template).iter()?)
+            }
             #[cfg(all(
                 feature = "jpeg2000-unpack-with-openjpeg",
                 feature = "jpeg2000-unpack-with-openjpeg-experimental"
             ))]
-            40 => Grib2ValueIterator::SigSIm(jpeg2000::Jpeg2000(self).iter()?),
+            Template::Jpeg2000(template) => {
+                Grib2ValueIterator::SigSIm(jpeg2000::Jpeg2000(self, template).iter()?)
+            }
             #[cfg(all(
                 feature = "jpeg2000-unpack-with-openjpeg",
                 not(feature = "jpeg2000-unpack-with-openjpeg-experimental")
             ))]
-            40 => Grib2ValueIterator::SigSI(jpeg2000::Jpeg2000(self).iter()?),
+            Template::Jpeg2000(template) => {
+                Grib2ValueIterator::SigSI(jpeg2000::Jpeg2000(self, template).iter()?)
+            }
             #[cfg(feature = "png-unpack-with-png-crate")]
-            41 => Grib2ValueIterator::SigSNV(png::Png(self).iter()?),
+            Template::Png(template) => Grib2ValueIterator::SigSNV(png::Png(self, template).iter()?),
             #[cfg(feature = "ccsds-unpack-with-libaec")]
-            42 => Grib2ValueIterator::SigSNV(ccsds::Ccsds(self).iter()?),
-            200 => Grib2ValueIterator::SigI(run_length::RunLength(self).iter()?),
-            n => {
+            Template::Ccsds(template) => {
+                Grib2ValueIterator::SigSNV(ccsds::Ccsds(self, template).iter()?)
+            }
+            Template::RunLength(template) => {
+                Grib2ValueIterator::SigI(run_length::RunLength(self, template).iter()?)
+            }
+            #[allow(unreachable_patterns)]
+            _ => {
                 return Err(GribError::DecodeError(DecodeError::NotSupported(
                     "GRIB2 code table 5.0 (data representation template number)",
-                    n,
+                    self.sect5_param.payload.template_num,
                 )));
             }
         };

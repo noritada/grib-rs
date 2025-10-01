@@ -8,7 +8,10 @@ use crate::{
     },
 };
 
-pub(crate) struct Jpeg2000<'d>(pub(crate) &'d Grib2SubmessageDecoder);
+pub(crate) struct Jpeg2000<'d>(
+    pub(crate) &'d Grib2SubmessageDecoder,
+    pub(crate) &'d super::param::Jpeg2000Template,
+);
 
 impl<'d> Grib2GpvUnpack for Jpeg2000<'d> {
     type Iter<'a>
@@ -17,11 +20,7 @@ impl<'d> Grib2GpvUnpack for Jpeg2000<'d> {
         Self: 'a;
 
     fn iter<'a>(&'a self) -> Result<Self::Iter<'a>, DecodeError> {
-        let Self(target) = self;
-        let super::param::Template::Jpeg2000(ref template) = target.sect5_param.payload.template
-        else {
-            unreachable!();
-        };
+        let Self(target, template) = self;
         template.simple.is_supported()?;
 
         if template.simple.nbit == 0 {

@@ -7,7 +7,10 @@ use crate::{
     },
 };
 
-pub(crate) struct Ccsds<'d>(pub(crate) &'d Grib2SubmessageDecoder);
+pub(crate) struct Ccsds<'d>(
+    pub(crate) &'d Grib2SubmessageDecoder,
+    pub(crate) &'d super::param::CcsdsCompressionTemplate,
+);
 
 impl<'d> Grib2GpvUnpack for Ccsds<'d> {
     type Iter<'a>
@@ -16,11 +19,7 @@ impl<'d> Grib2GpvUnpack for Ccsds<'d> {
         Self: 'a;
 
     fn iter<'a>(&'a self) -> Result<Self::Iter<'a>, DecodeError> {
-        let Self(target) = self;
-        let super::param::Template::Ccsds(ref template) = target.sect5_param.payload.template
-        else {
-            unreachable!();
-        };
+        let Self(target, template) = self;
         template.simple.is_supported()?;
 
         let decoder = if template.simple.nbit == 0 {

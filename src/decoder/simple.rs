@@ -38,7 +38,10 @@ where
     }
 }
 
-pub(crate) struct Simple<'d>(pub(crate) &'d Grib2SubmessageDecoder);
+pub(crate) struct Simple<'d>(
+    pub(crate) &'d Grib2SubmessageDecoder,
+    pub(crate) &'d super::param::SimpleTemplate,
+);
 
 impl<'d> Grib2GpvUnpack for Simple<'d> {
     type Iter<'a>
@@ -47,11 +50,7 @@ impl<'d> Grib2GpvUnpack for Simple<'d> {
         Self: 'a;
 
     fn iter<'a>(&'a self) -> Result<Self::Iter<'d>, DecodeError> {
-        let Self(target) = self;
-        let super::param::Template::Simple(ref template) = target.sect5_param.payload.template
-        else {
-            unreachable!();
-        };
+        let Self(target, template) = self;
         template.simple.is_supported()?;
 
         let decoder = if template.simple.nbit == 0 {
