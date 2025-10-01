@@ -209,6 +209,50 @@ impl Grib2SubmessageDecoder {
         &self.sect7_bytes[5..]
     }
 
+    /// Provides access to the parameters in Section 5.
+    ///
+    /// # Examples
+    /// ```
+    /// use grib::Grib2SubmessageDecoder;
+    ///
+    /// fn main() -> Result<(), Box<dyn std::error::Error>> {
+    ///     let f = std::fs::File::open(
+    ///         "testdata/Z__C_RJTD_20160822020000_NOWC_GPV_Ggis10km_Pphw10_FH0000-0100_grib2.bin",
+    ///     )?;
+    ///     let f = std::io::BufReader::new(f);
+    ///     let grib2 = grib::from_reader(f)?;
+    ///     let (_index, first_submessage) = grib2.iter().next().unwrap();
+    ///
+    ///     let decoder = Grib2SubmessageDecoder::from(first_submessage)?;
+    ///     let actual = decoder.section5();
+    ///     let expected = grib::param::Section5Param {
+    ///         header: grib::param::SectionHeader {
+    ///             len: 23,
+    ///             sect_num: 5,
+    ///         },
+    ///         payload: grib::param::Section5Payload {
+    ///             num_points_encoded: 86016,
+    ///             template_num: 200,
+    ///             template: grib::param::Template::RunLength(grib::param::RunLengthPackingTemplate {
+    ///                 run_length: grib::param::RunLengthPackingParam {
+    ///                     nbit: 8,
+    ///                     maxv: 3,
+    ///                     max_level: 3,
+    ///                     num_digits: 0,
+    ///                     leval_values: vec![1, 2, 3],
+    ///                 },
+    ///             }),
+    ///         },
+    ///     };
+    ///     assert_eq!(actual, &expected);
+    ///
+    ///     Ok(())
+    /// }
+    /// ```
+    pub fn section5(&self) -> &Section5Param {
+        &self.sect5_param
+    }
+
     /// Dumps the GRIB2 submessage.
     ///
     /// # Examples
@@ -347,7 +391,7 @@ mod ccsds;
 mod complex;
 #[cfg(feature = "jpeg2000-unpack-with-openjpeg")]
 mod jpeg2000;
-mod param;
+pub mod param;
 #[cfg(feature = "png-unpack-with-png-crate")]
 mod png;
 mod run_length;
