@@ -1,6 +1,6 @@
 use std::vec::IntoIter;
 
-use grib_template_helpers::TryFromSlice as _;
+use grib_template_helpers::{Dump as _, TryFromSlice as _};
 
 use crate::{
     context::{SectionBody, SubMessage},
@@ -207,6 +207,44 @@ impl Grib2SubmessageDecoder {
 
     pub(crate) fn sect7_payload(&self) -> &[u8] {
         &self.sect7_bytes[5..]
+    }
+
+    /// Dumps the GRIB2 submessage.
+    ///
+    /// # Examples
+    /// ```
+    /// use grib::Grib2SubmessageDecoder;
+    ///
+    /// fn main() -> Result<(), Box<dyn std::error::Error>> {
+    ///     let f = std::fs::File::open(
+    ///         "testdata/Z__C_RJTD_20160822020000_NOWC_GPV_Ggis10km_Pphw10_FH0000-0100_grib2.bin",
+    ///     )?;
+    ///     let f = std::io::BufReader::new(f);
+    ///     let grib2 = grib::from_reader(f)?;
+    ///     let (_index, first_submessage) = grib2.iter().next().unwrap();
+    ///
+    ///     let decoder = Grib2SubmessageDecoder::from(first_submessage)?;
+    ///     let mut buf = std::io::Cursor::new(Vec::with_capacity(1024));
+    ///     decoder.dump(&mut buf)?;
+    ///     let expected = "\
+    /// 1-4       header.len = 23
+    /// 5         header.sect_num = 5
+    /// 6-9       payload.num_points_encoded = 86016
+    /// 10-11     payload.template_num = 200
+    /// 12        payload.template.run_length.nbit = 8
+    /// 13-14     payload.template.run_length.maxv = 3
+    /// 15-16     payload.template.run_length.max_level = 3
+    /// 17        payload.template.run_length.num_digits = 0
+    /// 18-23     payload.template.run_length.leval_values = [1, 2, 3]
+    /// ";
+    ///     assert_eq!(String::from_utf8_lossy(buf.get_ref()), expected);
+    ///
+    ///     Ok(())
+    /// }
+    /// ```
+    pub fn dump<W: std::io::Write>(&self, writer: &mut W) -> Result<(), std::io::Error> {
+        let mut pos = 1;
+        self.sect5_param.dump(None, &mut pos, writer)
     }
 }
 
