@@ -271,15 +271,15 @@ impl Grib2SubmessageDecoder {
     ///     let mut buf = std::io::Cursor::new(Vec::with_capacity(1024));
     ///     decoder.dump(&mut buf)?;
     ///     let expected = "\
-    /// 1-4       header.len = 23
-    /// 5         header.sect_num = 5
-    /// 6-9       payload.num_points_encoded = 86016
-    /// 10-11     payload.template_num = 200
-    /// 12        payload.template.run_length.nbit = 8
-    /// 13-14     payload.template.run_length.maxv = 3
-    /// 15-16     payload.template.run_length.max_level = 3
-    /// 17        payload.template.run_length.num_digits = 0
-    /// 18-23     payload.template.run_length.leval_values = [1, 2, 3]
+    /// 1-4       header.len = 23  // Length of section in octets (nn).
+    /// 5         header.sect_num = 5  // Number of section (5).
+    /// 6-9       payload.num_points_encoded = 86016  // Number of data points where one or more values are specified in Section 7 when a bit map is present, total number of data points when a bit map is absent.
+    /// 10-11     payload.template_num = 200  // Data representation template number (see Code table 5.0).
+    /// 12        payload.template.run_length.nbit = 8  // Number of bits used for each packed value in the run length packing with level value.
+    /// 13-14     payload.template.run_length.maxv = 3  // MV - maximum value within the levels that are used in the packing.
+    /// 15-16     payload.template.run_length.max_level = 3  // MVL - maximum value of level (predefined).
+    /// 17        payload.template.run_length.num_digits = 0  // Decimal scale factor of representative value of each level.
+    /// 18-23     payload.template.run_length.leval_values = [1, 2, 3]  // List of MVL scaled representative values of each level from lv=1 to MVL.
     /// ";
     ///     assert_eq!(String::from_utf8_lossy(buf.get_ref()), expected);
     ///

@@ -8,14 +8,22 @@ pub struct Section5Param {
 
 #[derive(Debug, PartialEq, TryFromSlice, Dump)]
 pub struct SectionHeader {
+    /// Length of section in octets (nn).
     pub len: u32,
+    /// Number of section (5).
     pub sect_num: u8,
 }
 
 #[derive(Debug, PartialEq, TryFromSlice, Dump)]
 pub struct Section5Payload {
+    /// Number of data points where one or more values are specified in Section
+    /// 7 when a bit map is present, total number of data points when a bit map
+    /// is absent.
     pub num_points_encoded: u32,
+    /// Data representation template number (see Code table 5.0).
     pub template_num: u16,
+    /// Data representation template (see template 5.X, where X is the data
+    /// representation template number given in octets 10–11).
     #[grib_template(variant = "template_num")]
     pub template: Template,
 }
@@ -73,10 +81,16 @@ pub struct RunLengthPackingTemplate {
 
 #[derive(Debug, PartialEq, TryFromSlice, Dump)]
 pub struct SimplePackingParam {
+    /// Reference value (R) (IEEE 32-bit floating-point value).
     pub ref_val: f32,
+    /// Binary scale factor (E).
     pub exp: i16,
+    /// Decimal scale factor (D).
     pub dig: i16,
+    /// Number of bits used for each packed value for simple packing, or for
+    /// each group reference value for complex packing or spatial differencing.
     pub nbit: u8,
+    /// Type of original field values (see Code table 5.1).
     pub original_field_type_value: u8,
 }
 
@@ -98,38 +112,65 @@ impl SimplePackingParam {
 
 #[derive(Debug, PartialEq, Eq, TryFromSlice, Dump)]
 pub struct ComplexPackingParam {
+    /// Group splitting method used (see Code table 5.4).
     pub group_splitting_method_used: u8,
+    /// Missing value management used (see Code table 5.5).
     pub missing_value_management_used: u8,
+    /// Primary missing value substitute.
     pub primary_missing_value: u32,
+    /// Secondary missing value substitute.
     pub secondary_missing_value: u32,
+    /// NG - number of groups of data values into which field is split.
     pub ngroup: u32,
+    /// Reference for group widths (see Note 12).
     pub group_width_ref: u8,
+    /// Number of bits used for the group widths (after the reference value in
+    /// octet 36 has been removed).
     pub group_width_nbit: u8,
+    /// Reference for group lengths (see Note 13).
     pub group_len_ref: u32,
+    /// Length increment for the group lengths (see Note 14).
     pub group_len_inc: u8,
+    /// True length of last group.
     pub group_len_last: u32,
+    /// Number of bits used for the scaled group lengths (after subtraction of
+    /// the reference value given in octets 38-41 and division by the length
+    /// increment given in octet 42).
     pub group_len_nbit: u8,
 }
 
 #[derive(Debug, PartialEq, Eq, TryFromSlice, Dump)]
 pub struct SpatialDifferencingParam {
+    /// Order of spatial differencing (see Code table 5.6).
     pub order: u8,
+    /// Number of octets required in the data section to specify extra
+    /// descriptors needed for spatial differencing (octets 6-ww in data
+    /// template 7.3).
     pub extra_desc_num_octets: u8,
 }
 
 #[derive(Debug, PartialEq, Eq, TryFromSlice, Dump)]
 pub struct CcsdsCompressionParam {
+    /// CCSDS compression options mask (see Note 3).
     pub mask: u8,
+    /// Block size.
     pub block_size: u8,
+    /// Reference sample interval.
     pub reference_sample_interval: u16,
 }
 
 #[derive(Debug, PartialEq, Eq, TryFromSlice, Dump)]
 pub struct RunLengthPackingParam {
+    /// Number of bits used for each packed value in the run length packing with
+    /// level value.
     pub nbit: u8,
+    /// MV - maximum value within the levels that are used in the packing.
     pub maxv: u16,
+    /// MVL - maximum value of level (predefined).
     pub max_level: u16,
+    /// Decimal scale factor of representative value of each level.
     pub num_digits: u8,
+    /// List of MVL scaled representative values of each level from lv=1 to MVL.
     #[grib_template(len = "max_level")]
     pub leval_values: Vec<u16>,
 }
