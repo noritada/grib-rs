@@ -5,6 +5,8 @@ use std::{
     io::{Cursor, Read, Seek},
 };
 
+use grib_template_helpers::TryFromSlice as _;
+
 #[cfg(feature = "time-calculation")]
 use crate::TemporalInfo;
 use crate::{
@@ -13,6 +15,7 @@ use crate::{
         CodeTable3_1, CodeTable4_0, CodeTable4_1, CodeTable4_2, CodeTable4_3, CodeTable5_0, Lookup,
     },
     datatypes::*,
+    def::grib2::{Section5Param, SectionHeader},
     error::*,
     grid::GridPointIterator,
     parser::Grib2SubmessageIndexStream,
@@ -503,6 +506,61 @@ Data Representation:                    {}
             self.5.describe().unwrap_or_default(),
             self.repr_def().num_points(),
         )
+    }
+
+    /// Provides access to the parameters in Section 5.
+    ///
+    /// # Examples
+    /// ```
+    /// fn main() -> Result<(), Box<dyn std::error::Error>> {
+    ///     let f = std::fs::File::open(
+    ///         "testdata/Z__C_RJTD_20160822020000_NOWC_GPV_Ggis10km_Pphw10_FH0000-0100_grib2.bin",
+    ///     )?;
+    ///     let f = std::io::BufReader::new(f);
+    ///     let grib2 = grib::from_reader(f)?;
+    ///     let (_index, first_submessage) = grib2.iter().next().unwrap();
+    ///
+    ///     let actual = first_submessage.section5();
+    ///     let expected = Ok(grib::def::grib2::Section5Param {
+    ///         header: grib::def::grib2::SectionHeader {
+    ///             len: 23,
+    ///             sect_num: 5,
+    ///         },
+    ///         payload: grib::def::grib2::Section5Payload {
+    ///             num_points_encoded: 86016,
+    ///             template_num: 200,
+    ///             template: grib::def::grib2::Template::RunLength(
+    ///                 grib::def::grib2::RunLengthPackingTemplate {
+    ///                     run_length: grib::def::grib2::RunLengthPackingParam {
+    ///                         nbit: 8,
+    ///                         maxv: 3,
+    ///                         max_level: 3,
+    ///                         num_digits: 0,
+    ///                         leval_values: vec![1, 2, 3],
+    ///                     },
+    ///                 },
+    ///             ),
+    ///         },
+    ///     });
+    ///     assert_eq!(actual, expected);
+    ///
+    ///     Ok(())
+    /// }
+    /// ```
+    pub fn section5(&self) -> Result<Section5Param, GribError> {
+        let ReprDefinition { payload } = self.repr_def();
+        let mut pos = 0;
+        let payload = crate::def::grib2::Section5Payload::try_from_slice(payload, &mut pos)
+            .map_err(|e| GribError::Unknown(e.to_owned()))?;
+
+        let SectionInfo { num, size, .. } = self.5.body;
+        Ok(Section5Param {
+            header: SectionHeader {
+                len: *size as u32,
+                sect_num: *num,
+            },
+            payload,
+        })
     }
 
     /// Returns time-related raw information associated with the submessage.
