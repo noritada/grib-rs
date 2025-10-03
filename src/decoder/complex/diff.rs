@@ -1,7 +1,6 @@
 use super::missing::DecodedValue::{self, Normal};
 use crate::{
-    decoder::{DecodeError, param::SpatialDifferencingParam},
-    helpers::grib_int_from_bytes,
+    decoder::DecodeError, def::grib2::SpatialDifferencingParam, helpers::grib_int_from_bytes,
 };
 
 pub(crate) struct SpatialDifferencingExtraDescriptors<'a> {

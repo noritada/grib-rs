@@ -7,10 +7,10 @@ use crate::{
     decoder::{
         bitmap::{BitmapDecodeIterator, dummy_bitmap_for_nonnullable_data},
         complex::ComplexPackingDecoded,
-        param::{Section5Param, Template},
         simple::SimplePackingDecoder,
         stream::NBitwiseIterator,
     },
+    def::grib2::{Section5Param, Template},
     error::*,
     reader::Grib2Read,
 };
@@ -225,23 +225,25 @@ impl Grib2SubmessageDecoder {
     ///
     ///     let decoder = Grib2SubmessageDecoder::from(first_submessage)?;
     ///     let actual = decoder.section5();
-    ///     let expected = grib::param::Section5Param {
-    ///         header: grib::param::SectionHeader {
+    ///     let expected = grib::def::grib2::Section5Param {
+    ///         header: grib::def::grib2::SectionHeader {
     ///             len: 23,
     ///             sect_num: 5,
     ///         },
-    ///         payload: grib::param::Section5Payload {
+    ///         payload: grib::def::grib2::Section5Payload {
     ///             num_points_encoded: 86016,
     ///             template_num: 200,
-    ///             template: grib::param::Template::RunLength(grib::param::RunLengthPackingTemplate {
-    ///                 run_length: grib::param::RunLengthPackingParam {
-    ///                     nbit: 8,
-    ///                     maxv: 3,
-    ///                     max_level: 3,
-    ///                     num_digits: 0,
-    ///                     leval_values: vec![1, 2, 3],
+    ///             template: grib::def::grib2::Template::RunLength(
+    ///                 grib::def::grib2::RunLengthPackingTemplate {
+    ///                     run_length: grib::def::grib2::RunLengthPackingParam {
+    ///                         nbit: 8,
+    ///                         maxv: 3,
+    ///                         max_level: 3,
+    ///                         num_digits: 0,
+    ///                         leval_values: vec![1, 2, 3],
+    ///                     },
     ///                 },
-    ///             }),
+    ///             ),
     ///         },
     ///     };
     ///     assert_eq!(actual, &expected);
@@ -391,7 +393,6 @@ mod ccsds;
 mod complex;
 #[cfg(feature = "jpeg2000-unpack-with-openjpeg")]
 mod jpeg2000;
-pub mod param;
 #[cfg(feature = "png-unpack-with-png-crate")]
 mod png;
 mod run_length;

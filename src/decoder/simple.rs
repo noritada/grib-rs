@@ -4,9 +4,9 @@ use crate::{
     DecodeError, Grib2GpvUnpack,
     decoder::{
         Grib2SubmessageDecoder,
-        param::SimplePackingParam,
         stream::{FixedValueIterator, NBitwiseIterator},
     },
+    def::grib2::SimplePackingParam,
 };
 
 pub(crate) enum SimplePackingDecoder<I> {
@@ -40,7 +40,7 @@ where
 
 pub(crate) struct Simple<'d>(
     pub(crate) &'d Grib2SubmessageDecoder,
-    pub(crate) &'d super::param::SimpleTemplate,
+    pub(crate) &'d crate::def::grib2::SimpleTemplate,
 );
 
 impl<'d> Grib2GpvUnpack for Simple<'d> {

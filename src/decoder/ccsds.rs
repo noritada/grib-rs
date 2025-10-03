@@ -9,7 +9,7 @@ use crate::{
 
 pub(crate) struct Ccsds<'d>(
     pub(crate) &'d Grib2SubmessageDecoder,
-    pub(crate) &'d super::param::CcsdsCompressionTemplate,
+    pub(crate) &'d crate::def::grib2::CcsdsCompressionTemplate,
 );
 
 impl<'d> Grib2GpvUnpack for Ccsds<'d> {

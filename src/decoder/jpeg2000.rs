@@ -10,7 +10,7 @@ use crate::{
 
 pub(crate) struct Jpeg2000<'d>(
     pub(crate) &'d Grib2SubmessageDecoder,
-    pub(crate) &'d super::param::Jpeg2000Template,
+    pub(crate) &'d crate::def::grib2::Jpeg2000Template,
 );
 
 impl<'d> Grib2GpvUnpack for Jpeg2000<'d> {

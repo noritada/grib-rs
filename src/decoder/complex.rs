@@ -14,16 +14,16 @@ use crate::{
     codetables::grib2::Table5_6,
     decoder::{
         DecodeError, Grib2SubmessageDecoder,
-        param::ComplexPackingParam,
         simple::*,
         stream::{BitStream, NBitwiseIterator},
     },
+    def::grib2::ComplexPackingParam,
     helpers::GribInt,
 };
 
 pub(crate) struct Complex<'d>(
     pub(crate) &'d Grib2SubmessageDecoder,
-    pub(crate) &'d super::param::ComplexTemplate,
+    pub(crate) &'d crate::def::grib2::ComplexTemplate,
 );
 
 impl<'d> Grib2GpvUnpack for Complex<'d> {
@@ -62,7 +62,7 @@ impl<'d> Grib2GpvUnpack for Complex<'d> {
 
 pub(crate) struct ComplexSpatial<'d>(
     pub(crate) &'d Grib2SubmessageDecoder,
-    pub(crate) &'d super::param::ComplexSpatialTemplate,
+    pub(crate) &'d crate::def::grib2::ComplexSpatialTemplate,
 );
 
 impl<'d> Grib2GpvUnpack for ComplexSpatial<'d> {
