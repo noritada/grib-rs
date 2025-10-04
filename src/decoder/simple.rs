@@ -56,7 +56,7 @@ impl<'d> Grib2GpvUnpack for Simple<'d> {
         let decoder = if template.simple.num_bits == 0 {
             SimplePackingDecoder::ZeroLength(FixedValueIterator::new(
                 template.simple.zero_bit_reference_value(),
-                target.num_points_encoded(),
+                target.num_encoded_points(),
             ))
         } else {
             let iter = NBitwiseIterator::new(

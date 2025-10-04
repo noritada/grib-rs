@@ -28,7 +28,7 @@ impl<'d> Grib2GpvUnpack for Jpeg2000<'d> {
             // See #111 and #113.
             let decoder = SimplePackingDecoder::ZeroLength(FixedValueIterator::new(
                 template.simple.zero_bit_reference_value(),
-                target.num_points_encoded(),
+                target.num_encoded_points(),
             ));
             return Ok(decoder);
         };

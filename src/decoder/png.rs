@@ -31,7 +31,7 @@ impl<'d> Grib2GpvUnpack for Png<'d> {
             );
             let decoder = SimplePackingDecoder::ZeroLength(FixedValueIterator::new(
                 template.simple.zero_bit_reference_value(),
-                target.num_points_encoded(),
+                target.num_encoded_points(),
             ));
             return Ok(decoder);
         };

@@ -201,8 +201,8 @@ impl Grib2SubmessageDecoder {
         Ok(Grib2DecodedValues(decoder))
     }
 
-    pub(crate) fn num_points_encoded(&self) -> usize {
-        self.sect5_param.payload.num_points_encoded as usize
+    pub(crate) fn num_encoded_points(&self) -> usize {
+        self.sect5_param.payload.num_encoded_points as usize
     }
 
     pub(crate) fn sect7_payload(&self) -> &[u8] {
@@ -231,16 +231,16 @@ impl Grib2SubmessageDecoder {
     ///             sect_num: 5,
     ///         },
     ///         payload: grib::def::grib2::Section5Payload {
-    ///             num_points_encoded: 86016,
+    ///             num_encoded_points: 86016,
     ///             template_num: 200,
     ///             template: grib::def::grib2::Template::RunLength(
     ///                 grib::def::grib2::RunLengthPackingTemplate {
     ///                     run_length: grib::def::grib2::RunLengthPackingParam {
-    ///                         nbit: 8,
-    ///                         maxv: 3,
+    ///                         num_bits: 8,
+    ///                         max_val: 3,
     ///                         max_level: 3,
-    ///                         num_digits: 0,
-    ///                         leval_values: vec![1, 2, 3],
+    ///                         dec: 0,
+    ///                         level_vals: vec![1, 2, 3],
     ///                     },
     ///                 },
     ///             ),

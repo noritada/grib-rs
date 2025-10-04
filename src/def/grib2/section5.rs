@@ -19,7 +19,7 @@ pub struct Section5Payload {
     /// Number of data points where one or more values are specified in Section
     /// 7 when a bit map is present, total number of data points when a bit map
     /// is absent.
-    pub num_points_encoded: u32,
+    pub num_encoded_points: u32,
     /// Data representation template number (see Code table 5.0).
     pub template_num: u16,
     /// Data representation template (see template 5.X, where X is the data
@@ -156,21 +156,21 @@ pub struct CcsdsCompressionParam {
     /// Block size.
     pub block_size: u8,
     /// Reference sample interval.
-    pub reference_sample_interval: u16,
+    pub ref_sample_interval: u16,
 }
 
 #[derive(Debug, PartialEq, Eq, TryFromSlice, Dump)]
 pub struct RunLengthPackingParam {
     /// Number of bits used for each packed value in the run length packing with
     /// level value.
-    pub nbit: u8,
+    pub num_bits: u8,
     /// MV - maximum value within the levels that are used in the packing.
-    pub maxv: u16,
+    pub max_val: u16,
     /// MVL - maximum value of level (predefined).
     pub max_level: u16,
     /// Decimal scale factor of representative value of each level.
-    pub num_digits: u8,
+    pub dec: u8,
     /// List of MVL scaled representative values of each level from lv=1 to MVL.
     #[grib_template(len = "max_level")]
-    pub leval_values: Vec<u16>,
+    pub level_vals: Vec<u16>,
 }

@@ -17,22 +17,22 @@ impl<'d> Grib2GpvUnpack for RunLength<'d> {
     fn iter<'a>(&'a self) -> Result<Self::Iter<'a>, DecodeError> {
         let Self(target, template) = self;
 
-        let mut level_map = Vec::with_capacity(template.run_length.leval_values.len() + 1);
+        let mut level_map = Vec::with_capacity(template.run_length.level_vals.len() + 1);
         level_map.push(f32::NAN);
-        let factor = 10_f32.powi(-i32::from(template.run_length.num_digits));
+        let factor = 10_f32.powi(-i32::from(template.run_length.dec));
         level_map.extend(
             template
                 .run_length
-                .leval_values
+                .level_vals
                 .iter()
                 .map(|val| f32::from(*val) * factor),
         );
 
         let decoded_levels = rleunpack(
             target.sect7_payload(),
-            template.run_length.nbit,
-            template.run_length.maxv,
-            Some(target.num_points_encoded()),
+            template.run_length.num_bits,
+            template.run_length.max_val,
+            Some(target.num_encoded_points()),
         )?;
 
         let level_to_value = |level: &u16| -> Result<f32, DecodeError> {
@@ -51,8 +51,8 @@ impl<'d> Grib2GpvUnpack for RunLength<'d> {
 // Since maxv is represented as a 16-bit integer, values are 16 bits or less.
 fn rleunpack(
     input: &[u8],
-    nbit: u8,
-    maxv: u16,
+    num_bits: u8,
+    max_val: u16,
     expected_len: Option<usize>,
 ) -> Result<Box<[u16]>, DecodeError> {
     let mut out_buf = match expected_len {
@@ -60,11 +60,11 @@ fn rleunpack(
         None => Vec::new(),
     };
 
-    let rlbase = maxv + 1;
-    let lngu: usize = ((1u16 << nbit) - rlbase).into();
+    let rlbase = max_val + 1;
+    let lngu: usize = ((1u16 << num_bits) - rlbase).into();
     let mut cached = None;
     let mut exp: usize = 1;
-    let iter = NBitwiseIterator::new(input, usize::from(nbit));
+    let iter = NBitwiseIterator::new(input, usize::from(num_bits));
 
     for value in iter {
         let value = value as u16;
