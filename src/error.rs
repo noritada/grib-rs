@@ -22,6 +22,12 @@ impl Error for GribError {
     }
 }
 
+impl From<io::Error> for GribError {
+    fn from(e: io::Error) -> Self {
+        Self::Unknown(e.to_string())
+    }
+}
+
 impl From<ParseError> for GribError {
     fn from(e: ParseError) -> Self {
         Self::ParseError(e)
