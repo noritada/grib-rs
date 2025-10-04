@@ -52,8 +52,13 @@ impl<'d> Grib2GpvUnpack for Complex<'d> {
 
         let sect7_data = target.sect7_payload();
 
-        let unpacked_data =
-            decode_complex_packing(&template.complex, sect7_data, 0, template.simple.nbit, 0);
+        let unpacked_data = decode_complex_packing(
+            &template.complex,
+            sect7_data,
+            0,
+            template.simple.num_bits,
+            0,
+        );
         let decoder = NonZeroSimplePackingDecoder::new(unpacked_data, &template.simple);
         let decoder = SimplePackingDecoder::NonZeroLength(decoder);
         Ok(decoder)
@@ -106,7 +111,7 @@ impl<'d> Grib2GpvUnpack for ComplexSpatial<'d> {
             &template.complex,
             sect7_data,
             sect7_params.len(),
-            template.simple.nbit,
+            template.simple.num_bits,
             sect7_params.minimum(),
         );
         let first_values = sect7_params.first_values();
@@ -142,17 +147,17 @@ fn decode_complex_packing<'a>(
     complex_param: &'a ComplexPackingParam,
     sect7_data: &'a [u8],
     sect7_offset: usize,
-    nbit: u8,
+    num_bits: u8,
     z_min: i32,
 ) -> ComplexPackingDecoded<'a> {
-    fn get_octet_length(nbit: u8, ngroup: u32) -> usize {
-        let total_bit: u32 = ngroup * u32::from(nbit);
+    fn get_octet_length(num_bits: u8, ngroup: u32) -> usize {
+        let total_bit: u32 = ngroup * u32::from(num_bits);
         let total_octet = (total_bit + 0b111) >> 3;
         total_octet as usize
     }
 
     let params_end_octet = sect7_offset;
-    let group_refs_end_octet = params_end_octet + get_octet_length(nbit, complex_param.ngroup);
+    let group_refs_end_octet = params_end_octet + get_octet_length(num_bits, complex_param.ngroup);
     let group_widths_end_octet = group_refs_end_octet
         + get_octet_length(complex_param.group_width_nbit, complex_param.ngroup);
     let group_lens_end_octet = group_widths_end_octet
@@ -160,7 +165,7 @@ fn decode_complex_packing<'a>(
 
     let group_refs_iter = BitStream::new(
         &sect7_data[params_end_octet..group_refs_end_octet],
-        usize::from(nbit),
+        usize::from(num_bits),
         complex_param.ngroup as usize,
     );
     let group_refs_iter = group_refs_iter.take(complex_param.ngroup as usize);
@@ -193,7 +198,7 @@ fn decode_complex_packing<'a>(
         group_widths_iter,
         group_lens_iter,
         complex_param.missing_value_management_used,
-        nbit,
+        num_bits,
         z_min,
         sect7_data[group_lens_end_octet..].to_vec(),
     )
@@ -239,7 +244,7 @@ pub(crate) struct ComplexPackingValueDecodeIterator<I, J, K> {
     width_iter: J,
     length_iter: K,
     missing_value_management: u8,
-    nbit: u8,
+    num_bits: u8,
     z_min: i32,
     data: Vec<u8>,
     pos: usize,
@@ -252,7 +257,7 @@ impl<I, J, K> ComplexPackingValueDecodeIterator<I, J, K> {
         width_iter: J,
         length_iter: K,
         missing_value_management: u8,
-        nbit: u8,
+        num_bits: u8,
         z_min: i32,
         data: Vec<u8>,
     ) -> Self {
@@ -261,7 +266,7 @@ impl<I, J, K> ComplexPackingValueDecodeIterator<I, J, K> {
             width_iter,
             length_iter,
             missing_value_management,
-            nbit,
+            num_bits,
             z_min,
             data,
             pos: 0,
@@ -292,7 +297,7 @@ where
                 // associated field width is 0, and no incremental data are physically present."
                 let _ref = _ref.to_i32().unwrap();
                 let length = length.to_usize().unwrap();
-                let missing1 = (1 << self.nbit) - 1;
+                let missing1 = (1 << self.num_bits) - 1;
                 let missing2 = missing1 - 1;
 
                 if self.missing_value_management > 0 && _ref == missing1 {

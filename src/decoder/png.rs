@@ -24,7 +24,7 @@ impl<'d> Grib2GpvUnpack for Png<'d> {
         let buf = read_image_buffer(target.sect7_payload())
             .map_err(|e| DecodeError::from(format!("PNG decode error: {e}")))?;
 
-        if template.simple.nbit == 0 {
+        if template.simple.num_bits == 0 {
             eprintln!(
                 "WARNING: nbit = 0 for PNG decoder is not tested.
                 Please report your data and help us develop the library."
@@ -36,14 +36,14 @@ impl<'d> Grib2GpvUnpack for Png<'d> {
             return Ok(decoder);
         };
 
-        if template.simple.nbit != 16 {
+        if template.simple.num_bits != 16 {
             eprintln!(
                 "WARNING: nbit != 16 for PNG decoder is not tested.
                 Please report your data and help us develop the library."
             );
         }
 
-        let iter = NBitwiseIterator::new(buf, usize::from(template.simple.nbit));
+        let iter = NBitwiseIterator::new(buf, usize::from(template.simple.num_bits));
         let iter = NonZeroSimplePackingDecoder::new(iter, &template.simple);
         let iter = SimplePackingDecoder::NonZeroLength(iter);
         Ok(iter)

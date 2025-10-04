@@ -86,27 +86,27 @@ pub struct SimplePackingParam {
     /// Binary scale factor (E).
     pub exp: i16,
     /// Decimal scale factor (D).
-    pub dig: i16,
+    pub dec: i16,
     /// Number of bits used for each packed value for simple packing, or for
     /// each group reference value for complex packing or spatial differencing.
-    pub nbit: u8,
+    pub num_bits: u8,
     /// Type of original field values (see Code table 5.1).
-    pub original_field_type_value: u8,
+    pub orig_field_type: u8,
 }
 
 impl SimplePackingParam {
     pub(crate) fn is_supported(&self) -> Result<(), crate::DecodeError> {
-        if self.original_field_type_value != 0 {
+        if self.orig_field_type != 0 {
             return Err(crate::DecodeError::NotSupported(
                 "GRIB2 code table 5.1 (type of original field values)",
-                self.original_field_type_value.into(),
+                self.orig_field_type.into(),
             ));
         }
         Ok(())
     }
 
     pub(crate) fn zero_bit_reference_value(&self) -> f32 {
-        self.ref_val * 10_f32.powi(-i32::from(self.dig))
+        self.ref_val * 10_f32.powi(-i32::from(self.dec))
     }
 }
 

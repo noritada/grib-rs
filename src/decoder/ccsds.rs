@@ -22,17 +22,17 @@ impl<'d> Grib2GpvUnpack for Ccsds<'d> {
         let Self(target, template) = self;
         template.simple.is_supported()?;
 
-        let decoder = if template.simple.nbit == 0 {
+        let decoder = if template.simple.num_bits == 0 {
             SimplePackingDecoder::ZeroLength(FixedValueIterator::new(
                 template.simple.zero_bit_reference_value(),
                 target.num_points_encoded(),
             ))
         } else {
-            let element_size_in_bytes = usize::from(template.simple.nbit >> 3) + 1;
+            let element_size_in_bytes = usize::from(template.simple.num_bits >> 3) + 1;
             let size = element_size_in_bytes * target.num_points_encoded();
             let mut decoded = vec![0; size];
             let mut stream = aec::Stream::new(
-                template.simple.nbit.into(),
+                template.simple.num_bits.into(),
                 template.ccsds.block_size.into(),
                 template.ccsds.reference_sample_interval.into(),
                 template.ccsds.mask.into(),

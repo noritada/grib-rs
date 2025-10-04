@@ -23,7 +23,7 @@ impl<'d> Grib2GpvUnpack for Jpeg2000<'d> {
         let Self(target, template) = self;
         template.simple.is_supported()?;
 
-        if template.simple.nbit == 0 {
+        if template.simple.num_bits == 0 {
             // Tested with the World Aviation Forecast System (WAFS) GRIV files from the repo: https://aviationweather.gov/wifs/api.html
             // See #111 and #113.
             let decoder = SimplePackingDecoder::ZeroLength(FixedValueIterator::new(

@@ -53,14 +53,16 @@ impl<'d> Grib2GpvUnpack for Simple<'d> {
         let Self(target, template) = self;
         template.simple.is_supported()?;
 
-        let decoder = if template.simple.nbit == 0 {
+        let decoder = if template.simple.num_bits == 0 {
             SimplePackingDecoder::ZeroLength(FixedValueIterator::new(
                 template.simple.zero_bit_reference_value(),
                 target.num_points_encoded(),
             ))
         } else {
-            let iter =
-                NBitwiseIterator::new(target.sect7_payload(), usize::from(template.simple.nbit));
+            let iter = NBitwiseIterator::new(
+                target.sect7_payload(),
+                usize::from(template.simple.num_bits),
+            );
             let iter = NonZeroSimplePackingDecoder::new(iter, &template.simple);
             SimplePackingDecoder::NonZeroLength(iter)
         };
@@ -72,7 +74,7 @@ pub(crate) struct NonZeroSimplePackingDecoder<I> {
     iter: I,
     ref_val: f32,
     exp: i32,
-    dig: i32,
+    dec: i32,
 }
 
 impl<I> NonZeroSimplePackingDecoder<I> {
@@ -81,7 +83,7 @@ impl<I> NonZeroSimplePackingDecoder<I> {
             iter,
             ref_val: param.ref_val,
             exp: param.exp.into(),
-            dig: param.dig.into(),
+            dec: param.dec.into(),
         }
     }
 }
@@ -94,7 +96,7 @@ impl<I: Iterator<Item = N>, N: ToPrimitive> Iterator for NonZeroSimplePackingDec
             Some(encoded) => {
                 let encoded = encoded.to_f32().unwrap();
                 let diff = encoded * 2_f32.powi(self.exp);
-                let dig_factor = 10_f32.powi(-self.dig);
+                let dig_factor = 10_f32.powi(-self.dec);
                 let value: f32 = (self.ref_val + diff) * dig_factor;
                 Some(value)
             }
@@ -122,7 +124,7 @@ mod tests {
         let input: Vec<u8> = vec![0x00, 0x06, 0x00, 0x0d];
         let expected: Vec<f32> = vec![7.987_831_6e-7, 9.030_913e-7];
 
-        let iter = NBitwiseIterator::new(&input, usize::from(param.nbit));
+        let iter = NBitwiseIterator::new(&input, usize::from(param.num_bits));
         let actual = NonZeroSimplePackingDecoder::new(iter, &param).collect::<Vec<_>>();
 
         assert_eq!(actual.len(), expected.len());
