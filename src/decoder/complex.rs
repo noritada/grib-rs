@@ -36,17 +36,17 @@ impl<'d> Grib2GpvUnpack for Complex<'d> {
         let Self(target, template) = self;
         template.simple.is_supported()?;
 
-        if template.complex.group_splitting_method_used != 1 {
+        if template.complex.group_splitting_method != 1 {
             return Err(DecodeError::NotSupported(
                 "GRIB2 code table 5.4 (group splitting method)",
-                template.complex.group_splitting_method_used.into(),
+                template.complex.group_splitting_method.into(),
             ));
         }
 
-        if template.complex.missing_value_management_used > 2 {
+        if template.complex.missing_value_management > 2 {
             return Err(DecodeError::NotSupported(
                 "GRIB2 code table 5.5 (missing value management for complex packing)",
-                template.complex.missing_value_management_used.into(),
+                template.complex.missing_value_management.into(),
             ));
         }
 
@@ -89,17 +89,17 @@ impl<'d> Grib2GpvUnpack for ComplexSpatial<'d> {
             )
         })?;
 
-        if template.complex.group_splitting_method_used != 1 {
+        if template.complex.group_splitting_method != 1 {
             return Err(DecodeError::NotSupported(
                 "GRIB2 code table 5.4 (group splitting method)",
-                template.complex.group_splitting_method_used.into(),
+                template.complex.group_splitting_method.into(),
             ));
         }
 
-        if template.complex.missing_value_management_used > 2 {
+        if template.complex.missing_value_management > 2 {
             return Err(DecodeError::NotSupported(
                 "GRIB2 code table 5.5 (missing value management for complex packing)",
-                template.complex.missing_value_management_used.into(),
+                template.complex.missing_value_management.into(),
             ));
         }
 
@@ -150,54 +150,55 @@ fn decode_complex_packing<'a>(
     num_bits: u8,
     z_min: i32,
 ) -> ComplexPackingDecoded<'a> {
-    fn get_octet_length(num_bits: u8, ngroup: u32) -> usize {
-        let total_bit: u32 = ngroup * u32::from(num_bits);
-        let total_octet = (total_bit + 0b111) >> 3;
-        total_octet as usize
+    fn get_octet_length(num_bits: u8, num_groups: u32) -> usize {
+        let total_num_bits: u32 = num_groups * u32::from(num_bits);
+        let total_num_octets = (total_num_bits + 0b111) >> 3;
+        total_num_octets as usize
     }
 
     let params_end_octet = sect7_offset;
-    let group_refs_end_octet = params_end_octet + get_octet_length(num_bits, complex_param.ngroup);
+    let group_refs_end_octet =
+        params_end_octet + get_octet_length(num_bits, complex_param.num_groups);
     let group_widths_end_octet = group_refs_end_octet
-        + get_octet_length(complex_param.group_width_nbit, complex_param.ngroup);
+        + get_octet_length(complex_param.num_group_width_bits, complex_param.num_groups);
     let group_lens_end_octet = group_widths_end_octet
-        + get_octet_length(complex_param.group_len_nbit, complex_param.ngroup);
+        + get_octet_length(complex_param.num_group_len_bits, complex_param.num_groups);
 
     let group_refs_iter = BitStream::new(
         &sect7_data[params_end_octet..group_refs_end_octet],
         usize::from(num_bits),
-        complex_param.ngroup as usize,
+        complex_param.num_groups as usize,
     );
-    let group_refs_iter = group_refs_iter.take(complex_param.ngroup as usize);
+    let group_refs_iter = group_refs_iter.take(complex_param.num_groups as usize);
 
     let group_widths_iter = WithOffset::new(
         BitStream::new(
             &sect7_data[group_refs_end_octet..group_widths_end_octet],
-            usize::from(complex_param.group_width_nbit),
-            complex_param.ngroup as usize,
+            usize::from(complex_param.num_group_width_bits),
+            complex_param.num_groups as usize,
         ),
         u32::from(complex_param.group_width_ref),
         1,
     )
-    .take(complex_param.ngroup as usize);
+    .take(complex_param.num_groups as usize);
 
     let group_lens_iter = WithOffset::new(
         BitStream::new(
             &sect7_data[group_widths_end_octet..group_lens_end_octet],
-            usize::from(complex_param.group_len_nbit),
-            (complex_param.ngroup - 1) as usize,
+            usize::from(complex_param.num_group_len_bits),
+            (complex_param.num_groups - 1) as usize,
         ),
         complex_param.group_len_ref,
         u32::from(complex_param.group_len_inc),
     )
-    .take((complex_param.ngroup - 1) as usize)
+    .take((complex_param.num_groups - 1) as usize)
     .chain(iter::once(complex_param.group_len_last));
 
     ComplexPackingValueDecodeIterator::new(
         group_refs_iter,
         group_widths_iter,
         group_lens_iter,
-        complex_param.missing_value_management_used,
+        complex_param.missing_value_management,
         num_bits,
         z_min,
         sect7_data[group_lens_end_octet..].to_vec(),

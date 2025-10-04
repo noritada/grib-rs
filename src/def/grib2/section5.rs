@@ -113,20 +113,20 @@ impl SimplePackingParam {
 #[derive(Debug, PartialEq, Eq, TryFromSlice, Dump)]
 pub struct ComplexPackingParam {
     /// Group splitting method used (see Code table 5.4).
-    pub group_splitting_method_used: u8,
+    pub group_splitting_method: u8,
     /// Missing value management used (see Code table 5.5).
-    pub missing_value_management_used: u8,
+    pub missing_value_management: u8,
     /// Primary missing value substitute.
     pub primary_missing_value: u32,
     /// Secondary missing value substitute.
     pub secondary_missing_value: u32,
     /// NG - number of groups of data values into which field is split.
-    pub ngroup: u32,
+    pub num_groups: u32,
     /// Reference for group widths (see Note 12).
     pub group_width_ref: u8,
     /// Number of bits used for the group widths (after the reference value in
     /// octet 36 has been removed).
-    pub group_width_nbit: u8,
+    pub num_group_width_bits: u8,
     /// Reference for group lengths (see Note 13).
     pub group_len_ref: u32,
     /// Length increment for the group lengths (see Note 14).
@@ -136,7 +136,7 @@ pub struct ComplexPackingParam {
     /// Number of bits used for the scaled group lengths (after subtraction of
     /// the reference value given in octets 38-41 and division by the length
     /// increment given in octet 42).
-    pub group_len_nbit: u8,
+    pub num_group_len_bits: u8,
 }
 
 #[derive(Debug, PartialEq, Eq, TryFromSlice, Dump)]
@@ -146,7 +146,7 @@ pub struct SpatialDifferencingParam {
     /// Number of octets required in the data section to specify extra
     /// descriptors needed for spatial differencing (octets 6-ww in data
     /// template 7.3).
-    pub extra_desc_num_octets: u8,
+    pub num_extra_desc_octets: u8,
 }
 
 #[derive(Debug, PartialEq, Eq, TryFromSlice, Dump)]
