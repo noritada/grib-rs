@@ -120,6 +120,12 @@ pub struct Jpeg2000Template {
     pub simple: SimplePackingParam,
     /// Type of original field values (see Code table 5.1).
     pub orig_field_type: u8,
+    /// Type of compression used (see Code table 5.40).
+    pub compression_type: u8,
+    /// Target compression ratio, M:1 (with respect to the bit-depth specified
+    /// in octet 20), when octet 22 indicates lossy compression. Otherwise, set
+    /// to missing (see Note 3).
+    pub compression_ratio: u8,
 }
 
 #[derive(Debug, PartialEq, TryFromSlice, Dump)]
