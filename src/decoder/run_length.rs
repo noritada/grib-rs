@@ -17,12 +17,11 @@ impl<'d> Grib2GpvUnpack for RunLength<'d> {
     fn iter<'a>(&'a self) -> Result<Self::Iter<'a>, DecodeError> {
         let Self(target, template) = self;
 
-        let mut level_map = Vec::with_capacity(template.run_length.level_vals.len() + 1);
+        let mut level_map = Vec::with_capacity(template.level_vals.len() + 1);
         level_map.push(f32::NAN);
-        let factor = 10_f32.powi(-i32::from(template.run_length.dec));
+        let factor = 10_f32.powi(-i32::from(template.dec));
         level_map.extend(
             template
-                .run_length
                 .level_vals
                 .iter()
                 .map(|val| f32::from(*val) * factor),
@@ -30,8 +29,8 @@ impl<'d> Grib2GpvUnpack for RunLength<'d> {
 
         let decoded_levels = rleunpack(
             target.sect7_payload(),
-            template.run_length.num_bits,
-            template.run_length.max_val,
+            template.num_bits,
+            template.max_val,
             Some(target.num_encoded_points()),
         )?;
 

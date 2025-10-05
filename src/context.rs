@@ -531,13 +531,11 @@ Data Representation:                    {}
     ///             template_num: 200,
     ///             template: grib::def::grib2::Template::RunLength(
     ///                 grib::def::grib2::RunLengthPackingTemplate {
-    ///                     run_length: grib::def::grib2::RunLengthPackingParam {
-    ///                         num_bits: 8,
-    ///                         max_val: 3,
-    ///                         max_level: 3,
-    ///                         dec: 0,
-    ///                         level_vals: vec![1, 2, 3],
-    ///                     },
+    ///                     num_bits: 8,
+    ///                     max_val: 3,
+    ///                     max_level: 3,
+    ///                     dec: 0,
+    ///                     level_vals: vec![1, 2, 3],
     ///                 },
     ///             ),
     ///         },
@@ -588,11 +586,11 @@ Data Representation:                    {}
     /// 5         header.sect_num = 5  // Number of section (5).
     /// 6-9       payload.num_encoded_points = 86016  // Number of data points where one or more values are specified in Section 7 when a bit map is present, total number of data points when a bit map is absent.
     /// 10-11     payload.template_num = 200  // Data representation template number (see Code table 5.0).
-    /// 12        payload.template.run_length.num_bits = 8  // Number of bits used for each packed value in the run length packing with level value.
-    /// 13-14     payload.template.run_length.max_val = 3  // MV - maximum value within the levels that are used in the packing.
-    /// 15-16     payload.template.run_length.max_level = 3  // MVL - maximum value of level (predefined).
-    /// 17        payload.template.run_length.dec = 0  // Decimal scale factor of representative value of each level.
-    /// 18-23     payload.template.run_length.level_vals = [1, 2, 3]  // List of MVL scaled representative values of each level from lv=1 to MVL.
+    /// 12        payload.template.num_bits = 8  // Number of bits used for each packed value in the run length packing with level value.
+    /// 13-14     payload.template.max_val = 3  // MV - maximum value within the levels that are used in the packing.
+    /// 15-16     payload.template.max_level = 3  // MVL - maximum value of level (predefined).
+    /// 17        payload.template.dec = 0  // Decimal scale factor of representative value of each level.
+    /// 18-23     payload.template.level_vals = [1, 2, 3]  // List of MVL scaled representative values of each level from lv=1 to MVL.
     /// ###  SECTION 6: BIT-MAP SECTION (length = 6)
     /// ###  SECTION 7: DATA SECTION (length = 1391)
     /// ###  SECTION 8: END SECTION (length = 4)

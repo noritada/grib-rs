@@ -106,7 +106,12 @@ pub struct ComplexSpatialTemplate {
     /// Type of original field values (see Code table 5.1).
     pub orig_field_type: u8,
     pub complex: ComplexPackingParam,
-    pub spatial: SpatialDifferencingParam,
+    /// Order of spatial differencing (see Code table 5.6).
+    pub spatial_diff_order: u8,
+    /// Number of octets required in the data section to specify extra
+    /// descriptors needed for spatial differencing (octets 6-ww in data
+    /// template 7.3).
+    pub num_extra_desc_octets: u8,
 }
 
 #[derive(Debug, PartialEq, TryFromSlice, Dump)]
@@ -140,7 +145,12 @@ pub struct CcsdsCompressionTemplate {
     pub simple: SimplePackingParam,
     /// Type of original field values (see Code table 5.1).
     pub orig_field_type: u8,
-    pub ccsds: CcsdsCompressionParam,
+    /// CCSDS compression options mask (see Note 3).
+    pub mask: u8,
+    /// Block size.
+    pub block_size: u8,
+    /// Reference sample interval.
+    pub ref_sample_interval: u16,
 }
 
 #[derive(Debug, PartialEq, TryFromSlice, Dump)]
@@ -200,7 +210,18 @@ pub struct SimpleLogarithmPreprocessingTemplate {
 
 #[derive(Debug, PartialEq, Eq, TryFromSlice, Dump)]
 pub struct RunLengthPackingTemplate {
-    pub run_length: RunLengthPackingParam,
+    /// Number of bits used for each packed value in the run length packing with
+    /// level value.
+    pub num_bits: u8,
+    /// MV - maximum value within the levels that are used in the packing.
+    pub max_val: u16,
+    /// MVL - maximum value of level (predefined).
+    pub max_level: u16,
+    /// Decimal scale factor of representative value of each level.
+    pub dec: u8,
+    /// List of MVL scaled representative values of each level from lv=1 to MVL.
+    #[grib_template(len = "max_level")]
+    pub level_vals: Vec<u16>,
 }
 
 #[derive(Debug, PartialEq, TryFromSlice, Dump)]
@@ -249,40 +270,4 @@ pub struct ComplexPackingParam {
     /// the reference value given in octets 38-41 and division by the length
     /// increment given in octet 42).
     pub num_group_len_bits: u8,
-}
-
-#[derive(Debug, PartialEq, Eq, TryFromSlice, Dump)]
-pub struct SpatialDifferencingParam {
-    /// Order of spatial differencing (see Code table 5.6).
-    pub order: u8,
-    /// Number of octets required in the data section to specify extra
-    /// descriptors needed for spatial differencing (octets 6-ww in data
-    /// template 7.3).
-    pub num_extra_desc_octets: u8,
-}
-
-#[derive(Debug, PartialEq, Eq, TryFromSlice, Dump)]
-pub struct CcsdsCompressionParam {
-    /// CCSDS compression options mask (see Note 3).
-    pub mask: u8,
-    /// Block size.
-    pub block_size: u8,
-    /// Reference sample interval.
-    pub ref_sample_interval: u16,
-}
-
-#[derive(Debug, PartialEq, Eq, TryFromSlice, Dump)]
-pub struct RunLengthPackingParam {
-    /// Number of bits used for each packed value in the run length packing with
-    /// level value.
-    pub num_bits: u8,
-    /// MV - maximum value within the levels that are used in the packing.
-    pub max_val: u16,
-    /// MVL - maximum value of level (predefined).
-    pub max_level: u16,
-    /// Decimal scale factor of representative value of each level.
-    pub dec: u8,
-    /// List of MVL scaled representative values of each level from lv=1 to MVL.
-    #[grib_template(len = "max_level")]
-    pub level_vals: Vec<u16>,
 }

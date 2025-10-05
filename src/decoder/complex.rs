@@ -82,7 +82,7 @@ impl<'d> Grib2GpvUnpack for ComplexSpatial<'d> {
         let Self(target, template) = self;
         super::orig_field_type_is_supported(template.orig_field_type)?;
 
-        let spdiff_order = Table5_6::try_from(template.spatial.order).map_err(|e| {
+        let spdiff_order = Table5_6::try_from(template.spatial_diff_order).map_err(|e| {
             DecodeError::NotSupported(
                 "GRIB2 code table 5.6 (order of spatial differencing)",
                 e.number.into(),
@@ -104,8 +104,11 @@ impl<'d> Grib2GpvUnpack for ComplexSpatial<'d> {
         }
 
         let sect7_data = target.sect7_payload();
-        let sect7_params =
-            diff::SpatialDifferencingExtraDescriptors::new(&template.spatial, sect7_data)?;
+        let sect7_params = diff::SpatialDifferencingExtraDescriptors::new(
+            template.spatial_diff_order,
+            template.num_extra_desc_octets,
+            sect7_data,
+        )?;
 
         let unpacked_data = decode_complex_packing(
             &template.complex,

@@ -235,13 +235,11 @@ impl Grib2SubmessageDecoder {
     ///             template_num: 200,
     ///             template: grib::def::grib2::Template::RunLength(
     ///                 grib::def::grib2::RunLengthPackingTemplate {
-    ///                     run_length: grib::def::grib2::RunLengthPackingParam {
-    ///                         num_bits: 8,
-    ///                         max_val: 3,
-    ///                         max_level: 3,
-    ///                         dec: 0,
-    ///                         level_vals: vec![1, 2, 3],
-    ///                     },
+    ///                     num_bits: 8,
+    ///                     max_val: 3,
+    ///                     max_level: 3,
+    ///                     dec: 0,
+    ///                     level_vals: vec![1, 2, 3],
     ///                 },
     ///             ),
     ///         },

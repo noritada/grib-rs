@@ -33,9 +33,9 @@ impl<'d> Grib2GpvUnpack for Ccsds<'d> {
             let mut decoded = vec![0; size];
             let mut stream = aec::Stream::new(
                 template.simple.num_bits.into(),
-                template.ccsds.block_size.into(),
-                template.ccsds.ref_sample_interval.into(),
-                template.ccsds.mask.into(),
+                template.block_size.into(),
+                template.ref_sample_interval.into(),
+                template.mask.into(),
             );
             stream
                 .decode(target.sect7_payload(), &mut decoded)
