@@ -34,7 +34,7 @@ impl<'d> Grib2GpvUnpack for Complex<'d> {
 
     fn iter<'a>(&'a self) -> Result<Self::Iter<'d>, DecodeError> {
         let Self(target, template) = self;
-        template.simple.is_supported()?;
+        super::orig_field_type_is_supported(template.orig_field_type)?;
 
         if template.complex.group_splitting_method != 1 {
             return Err(DecodeError::NotSupported(
@@ -80,7 +80,7 @@ impl<'d> Grib2GpvUnpack for ComplexSpatial<'d> {
 
     fn iter<'a>(&'a self) -> Result<Self::Iter<'d>, DecodeError> {
         let Self(target, template) = self;
-        template.simple.is_supported()?;
+        super::orig_field_type_is_supported(template.orig_field_type)?;
 
         let spdiff_order = Table5_6::try_from(template.spatial.order).map_err(|e| {
             DecodeError::NotSupported(

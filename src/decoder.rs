@@ -256,6 +256,16 @@ impl Grib2SubmessageDecoder {
     }
 }
 
+pub(crate) fn orig_field_type_is_supported(orig_field_type: u8) -> Result<(), DecodeError> {
+    if orig_field_type != 0 {
+        return Err(DecodeError::NotSupported(
+            "GRIB2 code table 5.1 (type of original field values)",
+            orig_field_type.into(),
+        ));
+    }
+    Ok(())
+}
+
 pub struct Grib2DecodedValues<'b, I>(BitmapDecodeIterator<std::slice::Iter<'b, u8>, I>);
 
 impl<'a, I> Iterator for Grib2DecodedValues<'a, I>

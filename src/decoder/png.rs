@@ -19,7 +19,7 @@ impl<'d> Grib2GpvUnpack for Png<'d> {
 
     fn iter<'a>(&'a self) -> Result<Self::Iter<'a>, DecodeError> {
         let Self(target, template) = self;
-        template.simple.is_supported()?;
+        super::orig_field_type_is_supported(template.orig_field_type)?;
 
         let buf = read_image_buffer(target.sect7_payload())
             .map_err(|e| DecodeError::from(format!("PNG decode error: {e}")))?;

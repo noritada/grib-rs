@@ -32,46 +32,164 @@ pub struct Section5Payload {
 #[repr(u16)]
 pub enum Template {
     Simple(SimpleTemplate) = 0,
+    SimpleMatrix(SimpleMatrixTemplate) = 1,
     Complex(ComplexTemplate) = 2,
     ComplexSpatial(ComplexSpatialTemplate) = 3,
+    IeeeFloatingPoint(IeeeFloatingPointTemplate) = 4,
     Jpeg2000(Jpeg2000Template) = 40,
     Png(PngTemplate) = 41,
     Ccsds(CcsdsCompressionTemplate) = 42,
+    SimpleSpectral(SimpleSpectralTemplate) = 50,
+    ComplexSphericalHarmonics(ComplexSphericalHarmonicsTemplate) = 51,
+    ComplexSpectralAreaModels(ComplexSpectralAreaModelsTemplate) = 53,
+    SimpleLogarithmPreprocessing(SimpleLogarithmPreprocessingTemplate) = 61,
     RunLength(RunLengthPackingTemplate) = 200,
 }
 
 #[derive(Debug, PartialEq, TryFromSlice, Dump)]
 pub struct SimpleTemplate {
     pub simple: SimplePackingParam,
+    /// Type of original field values (see Code table 5.1).
+    pub orig_field_type: u8,
+}
+
+#[derive(Debug, PartialEq, TryFromSlice, Dump)]
+pub struct SimpleMatrixTemplate {
+    pub simple: SimplePackingParam,
+    /// Type of original field values (see Code table 5.1).
+    pub orig_field_type: u8,
+    /// 0, no matrix bit maps present; 1-matrix bit maps present.
+    pub matrix_bitmap_present: u8,
+    /// Number of data values encoded in Section 7.
+    pub num_encoded_vals: u32,
+    /// NR - first dimension (rows) of each matrix.
+    pub num_dim_1: u16,
+    /// NC - second dimension (columns) of each matrix.
+    pub num_dim_2: u16,
+    /// First dimension coordinate value definition (Code table 5.2).
+    pub dim_1_coord_def: u8,
+    /// NC1 - number of coefficients or values used to specify first dimension
+    /// coordinate function.
+    pub num_dim_1_coeffs: u8,
+    /// Second dimension coordinate value definition (Code table 5.2).
+    pub dim_2_coord_def: u8,
+    /// NC2 - number of coefficients or values used to specify second dimension
+    /// coordinate function.
+    pub num_dim_2_coeffs: u8,
+    /// First dimension physical significance (Code table 5.3).
+    pub dim_1_significance: u8,
+    /// Second dimension physical significance (Code table 5.3).
+    pub dim_2_significance: u8,
+    /// Coefficients to define first dimension coordinate values in functional
+    /// form, or the explicit coordinate values (IEEE 32-bit floating-point
+    /// value).
+    #[grib_template(len = "num_dim_1_coeffs")]
+    pub dim_1_coeffs: Vec<f32>,
+    /// Coefficients to define second dimension coordinate values in functional
+    /// form, or the explicit coordinate values (IEEE 32-bit floating-point
+    /// value).
+    #[grib_template(len = "num_dim_2_coeffs")]
+    pub dim_2_coeffs: Vec<f32>,
 }
 
 #[derive(Debug, PartialEq, TryFromSlice, Dump)]
 pub struct ComplexTemplate {
     pub simple: SimplePackingParam,
+    /// Type of original field values (see Code table 5.1).
+    pub orig_field_type: u8,
     pub complex: ComplexPackingParam,
 }
 
 #[derive(Debug, PartialEq, TryFromSlice, Dump)]
 pub struct ComplexSpatialTemplate {
     pub simple: SimplePackingParam,
+    /// Type of original field values (see Code table 5.1).
+    pub orig_field_type: u8,
     pub complex: ComplexPackingParam,
     pub spatial: SpatialDifferencingParam,
 }
 
 #[derive(Debug, PartialEq, TryFromSlice, Dump)]
+pub struct IeeeFloatingPointTemplate {
+    /// Precision (see Code table 5.7).
+    pub precision: u8,
+}
+
+#[derive(Debug, PartialEq, TryFromSlice, Dump)]
 pub struct Jpeg2000Template {
     pub simple: SimplePackingParam,
+    /// Type of original field values (see Code table 5.1).
+    pub orig_field_type: u8,
 }
 
 #[derive(Debug, PartialEq, TryFromSlice, Dump)]
 pub struct PngTemplate {
     pub simple: SimplePackingParam,
+    /// Type of original field values (see Code table 5.1).
+    pub orig_field_type: u8,
 }
 
 #[derive(Debug, PartialEq, TryFromSlice, Dump)]
 pub struct CcsdsCompressionTemplate {
     pub simple: SimplePackingParam,
+    /// Type of original field values (see Code table 5.1).
+    pub orig_field_type: u8,
     pub ccsds: CcsdsCompressionParam,
+}
+
+#[derive(Debug, PartialEq, TryFromSlice, Dump)]
+pub struct SimpleSpectralTemplate {
+    pub simple: SimplePackingParam,
+    /// Real part of (0.0) coefficient (IEEE 32-bit floating-point value).
+    pub real_part_zero: f32,
+}
+
+#[derive(Debug, PartialEq, TryFromSlice, Dump)]
+pub struct ComplexSphericalHarmonicsTemplate {
+    pub simple: SimplePackingParam,
+    /// P - Laplacian scaling factor (expressed in 10-6 units).
+    pub p: i32,
+    /// JS - pentagonal resolution parameter of the unpacked subset (see Note
+    /// 1).
+    pub js: u16,
+    /// KS - pentagonal resolution parameter of the unpacked subset (see Note
+    /// 1).
+    pub ks: u16,
+    /// MS - pentagonal resolution parameter of the unpacked subset (see Note
+    /// 1).
+    pub ms: u16,
+    /// TS - total number of values in the unpacked subset (see Note 1).
+    pub ts: u32,
+    /// Precision of the unpacked subset (see Code table 5.7).
+    pub precision: u8,
+}
+
+#[derive(Debug, PartialEq, TryFromSlice, Dump)]
+pub struct ComplexSpectralAreaModelsTemplate {
+    pub simple: SimplePackingParam,
+    /// Bi-Fourier sub-truncation type (see Code table 5.25).
+    pub bi_fourier_subtrunc_type: u8,
+    /// Packing mode for axes (see Code table 5.26).
+    pub bi_fourier_pack_mode: u8,
+    /// P - Laplacian scaling factor (expressed in 10-6 units).
+    pub p: i32,
+    /// NS - bi-Fourier resolution parameter of the unpacked subset (see Note
+    /// 1).
+    pub ns: u16,
+    /// MS - bi-Fourier resolution parameter of the unpacked subset (see Note
+    /// 1).
+    pub ms: u16,
+    /// TS - total number of values in the unpacked subset (see Note 1).
+    pub ts: u32,
+    /// Precision of the unpacked subset (see Code table 5.7).
+    pub precision: u8,
+}
+
+#[derive(Debug, PartialEq, TryFromSlice, Dump)]
+pub struct SimpleLogarithmPreprocessingTemplate {
+    pub simple: SimplePackingParam,
+    /// Pre-processing parameter (B) (IEEE 32-bit floating-point value).
+    pub preprocess_param: f32,
 }
 
 #[derive(Debug, PartialEq, Eq, TryFromSlice, Dump)]
@@ -90,21 +208,9 @@ pub struct SimplePackingParam {
     /// Number of bits used for each packed value for simple packing, or for
     /// each group reference value for complex packing or spatial differencing.
     pub num_bits: u8,
-    /// Type of original field values (see Code table 5.1).
-    pub orig_field_type: u8,
 }
 
 impl SimplePackingParam {
-    pub(crate) fn is_supported(&self) -> Result<(), crate::DecodeError> {
-        if self.orig_field_type != 0 {
-            return Err(crate::DecodeError::NotSupported(
-                "GRIB2 code table 5.1 (type of original field values)",
-                self.orig_field_type.into(),
-            ));
-        }
-        Ok(())
-    }
-
     pub(crate) fn zero_bit_reference_value(&self) -> f32 {
         self.ref_val * 10_f32.powi(-i32::from(self.dec))
     }

@@ -21,7 +21,7 @@ impl<'d> Grib2GpvUnpack for Jpeg2000<'d> {
 
     fn iter<'a>(&'a self) -> Result<Self::Iter<'a>, DecodeError> {
         let Self(target, template) = self;
-        template.simple.is_supported()?;
+        super::orig_field_type_is_supported(template.orig_field_type)?;
 
         if template.simple.num_bits == 0 {
             // Tested with the World Aviation Forecast System (WAFS) GRIV files from the repo: https://aviationweather.gov/wifs/api.html
