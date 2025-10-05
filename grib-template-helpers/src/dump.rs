@@ -3,7 +3,53 @@ use std::{
     io::{Error, Write},
 };
 
+/// A functionality to dump the contents of a struct to the output destination.
+///
+/// # Examples
+///
+/// ```
+/// use grib_template_helpers::Dump;
+///
+/// struct VariableLength {
+///     len: u8,
+///     seq: Vec<u8>,
+/// }
+///
+/// impl Dump for VariableLength {
+///     fn dump<W: std::io::Write>(
+///         &self,
+///         parent: Option<&std::borrow::Cow<str>>,
+///         pos: &mut usize,
+///         output: &mut W,
+///     ) -> Result<(), std::io::Error> {
+///         writeln!(
+///             output,
+///             "variable-length array (length = {}, content = {:?})",
+///             self.len, self.seq
+///         )
+///     }
+/// }
+///
+/// fn main() -> Result<(), Box<dyn std::error::Error>> {
+///     let var = VariableLength {
+///         len: 3,
+///         seq: vec![1, 2, 3],
+///     };
+///     let mut buf = std::io::Cursor::new(Vec::with_capacity(1024));
+///     let mut pos = 0;
+///     var.dump(None, &mut pos, &mut buf)?;
+///     assert_eq!(
+///         String::from_utf8_lossy(buf.get_ref()),
+///         "variable-length array (length = 3, content = [1, 2, 3])\n"
+///     );
+///     Ok(())
+/// }
+/// ```
 pub trait Dump {
+    /// Perform dumping to `output`.
+    ///
+    /// Users can use the `pos` argument to output the current byte offset, and
+    /// `parent` to output information about nested structures.
     fn dump<W: Write>(
         &self,
         parent: Option<&Cow<str>>,

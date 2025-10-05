@@ -1,6 +1,57 @@
 use as_grib_signed::AsGribSigned;
 
+/// A deserializer that reads a slice and stores output data in a struct.
+///
+/// # Examples
+///
+/// ```
+/// use grib_template_helpers::{TryFromSlice, TryFromSliceResult};
+///
+/// #[derive(Debug, PartialEq, Eq)]
+/// struct VariableLength {
+///     len: u8,
+///     seq: Vec<u8>,
+/// }
+///
+/// impl TryFromSlice for VariableLength {
+///     fn try_from_slice(slice: &[u8], pos: &mut usize) -> TryFromSliceResult<Self> {
+///         if slice.len() == 0 {
+///             return Err("too short slice");
+///         }
+///         let len = slice[*pos];
+///         *pos += 1;
+///
+///         let end = *pos + usize::from(len);
+///         if slice.len() < end {
+///             return Err("too short slice");
+///         }
+///         let seq = slice[*pos..end].to_vec();
+///         Ok(Self { len, seq })
+///     }
+/// }
+///
+/// let mut pos = 0;
+/// let actual = VariableLength::try_from_slice(&[0], &mut pos);
+/// let expected = Ok(VariableLength {
+///     len: 0,
+///     seq: Vec::new(),
+/// });
+/// assert_eq!(actual, expected);
+///
+/// let mut pos = 0;
+/// let actual = VariableLength::try_from_slice(&[3, 1, 2, 3], &mut pos);
+/// let expected = Ok(VariableLength {
+///     len: 3,
+///     seq: vec![1, 2, 3],
+/// });
+/// assert_eq!(actual, expected);
+/// ```
 pub trait TryFromSlice {
+    /// Performs reading. The `pos` argument is a variable storing the starting
+    /// position for reading within the slice.
+    ///
+    /// As reading proceeds, this `pos` changes, allowing the user to track how
+    /// far they have read.
     fn try_from_slice(slice: &[u8], pos: &mut usize) -> TryFromSliceResult<Self>
     where
         Self: Sized;
