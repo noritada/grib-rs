@@ -1,6 +1,8 @@
 use proc_macro::TokenStream;
 use quote::quote;
 
+/// Derive macro generating an impl of the trait
+/// `grib_template_helpers::TryFromSlice`.
 #[proc_macro_derive(TryFromSlice, attributes(grib_template))]
 pub fn derive_try_from_slice(input: TokenStream) -> TokenStream {
     let input = syn::parse_macro_input!(input as syn::DeriveInput);
@@ -212,6 +214,7 @@ fn extract_vec_inner(type_path: &syn::TypePath) -> Option<syn::Type> {
     None
 }
 
+/// Derive macro generating an impl of the trait `grib_template_helpers::Dump`.
 #[proc_macro_derive(Dump, attributes(doc))]
 pub fn derive_dump(input: TokenStream) -> TokenStream {
     let input = syn::parse_macro_input!(input as syn::DeriveInput);
