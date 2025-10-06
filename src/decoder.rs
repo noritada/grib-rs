@@ -153,36 +153,38 @@ impl Grib2SubmessageDecoder {
         &self,
     ) -> Result<Grib2DecodedValues<'_, impl Iterator<Item = f32> + '_>, GribError> {
         let decoder = match &self.sect5_param.payload.template {
-            Template::SimplePacking(template) => {
+            Template::_5_0(template) => {
                 Grib2ValueIterator::SigSNS(simple::Simple(self, template).iter()?)
             }
-            Template::ComplexPacking(template) => {
+            Template::_5_2(template) => {
                 Grib2ValueIterator::SigSC(complex::Complex(self, template).iter()?)
             }
-            Template::ComplexPackingWithSpatialDiff(template) => {
+            Template::_5_3(template) => {
                 Grib2ValueIterator::SigSSCI(complex::ComplexSpatial(self, template).iter()?)
             }
             #[cfg(all(
                 feature = "jpeg2000-unpack-with-openjpeg",
                 feature = "jpeg2000-unpack-with-openjpeg-experimental"
             ))]
-            Template::Jpeg2000CodeStream(template) => {
+            Template::_5_40(template) => {
                 Grib2ValueIterator::SigSIm(jpeg2000::Jpeg2000(self, template).iter()?)
             }
             #[cfg(all(
                 feature = "jpeg2000-unpack-with-openjpeg",
                 not(feature = "jpeg2000-unpack-with-openjpeg-experimental")
             ))]
-            Template::Jpeg2000CodeStream(template) => {
+            Template::_5_40(template) => {
                 Grib2ValueIterator::SigSI(jpeg2000::Jpeg2000(self, template).iter()?)
             }
             #[cfg(feature = "png-unpack-with-png-crate")]
-            Template::Png(template) => Grib2ValueIterator::SigSNV(png::Png(self, template).iter()?),
+            Template::_5_41(template) => {
+                Grib2ValueIterator::SigSNV(png::Png(self, template).iter()?)
+            }
             #[cfg(feature = "ccsds-unpack-with-libaec")]
-            Template::CcsdsLosslessPacking(template) => {
+            Template::_5_42(template) => {
                 Grib2ValueIterator::SigSNV(ccsds::Ccsds(self, template).iter()?)
             }
-            Template::RunLengthPacking(template) => {
+            Template::_5_200(template) => {
                 Grib2ValueIterator::SigI(run_length::RunLength(self, template).iter()?)
             }
             #[allow(unreachable_patterns)]
@@ -233,8 +235,8 @@ impl Grib2SubmessageDecoder {
     ///         payload: grib::def::grib2::Section5Payload {
     ///             num_encoded_points: 86016,
     ///             template_num: 200,
-    ///             template: grib::def::grib2::Template::RunLengthPacking(
-    ///                 grib::def::grib2::template5::RunLengthPacking {
+    ///             template: grib::def::grib2::Template::_5_200(
+    ///                 grib::def::grib2::template::Template5_200 {
     ///                     num_bits: 8,
     ///                     max_val: 3,
     ///                     max_level: 3,

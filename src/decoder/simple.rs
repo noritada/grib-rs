@@ -6,7 +6,7 @@ use crate::{
         Grib2SubmessageDecoder,
         stream::{FixedValueIterator, NBitwiseIterator},
     },
-    def::grib2::template5::param_set,
+    def::grib2::template::param_set,
 };
 
 pub(crate) enum SimplePackingDecoder<I> {
@@ -40,7 +40,7 @@ where
 
 pub(crate) struct Simple<'d>(
     pub(crate) &'d Grib2SubmessageDecoder,
-    pub(crate) &'d crate::def::grib2::template5::SimplePacking,
+    pub(crate) &'d crate::def::grib2::template::Template5_0,
 );
 
 impl<'d> Grib2GpvUnpack for Simple<'d> {

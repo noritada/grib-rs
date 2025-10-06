@@ -2,7 +2,7 @@ use grib_template_derive::{Dump, TryFromSlice};
 
 /// Data representation template 5.0 - Grid point data - simple packing.
 #[derive(Debug, PartialEq, TryFromSlice, Dump)]
-pub struct SimplePacking {
+pub struct Template5_0 {
     pub simple: param_set::SimplePacking,
     /// Type of original field values (see Code table 5.1).
     pub orig_field_type: u8,
@@ -11,7 +11,7 @@ pub struct SimplePacking {
 /// Data representation template 5.1 - Matrix value at grid point - simple
 /// packing.
 #[derive(Debug, PartialEq, TryFromSlice, Dump)]
-pub struct SimplePackingForMatrix {
+pub struct Template5_1 {
     pub simple: param_set::SimplePacking,
     /// Type of original field values (see Code table 5.1).
     pub orig_field_type: u8,
@@ -51,7 +51,7 @@ pub struct SimplePackingForMatrix {
 
 /// Data representation template 5.2 - Grid point data - complex packing.
 #[derive(Debug, PartialEq, TryFromSlice, Dump)]
-pub struct ComplexPacking {
+pub struct Template5_2 {
     pub simple: param_set::SimplePacking,
     /// Type of original field values (see Code table 5.1).
     pub orig_field_type: u8,
@@ -61,7 +61,7 @@ pub struct ComplexPacking {
 /// Data representation template 5.3 - Grid point data - complex packing and
 /// spatial differencing.
 #[derive(Debug, PartialEq, TryFromSlice, Dump)]
-pub struct ComplexPackingWithSpatialDiff {
+pub struct Template5_3 {
     pub simple: param_set::SimplePacking,
     /// Type of original field values (see Code table 5.1).
     pub orig_field_type: u8,
@@ -77,7 +77,7 @@ pub struct ComplexPackingWithSpatialDiff {
 /// Data representation template 5.4 - Grid point data - IEEE floating point
 /// data.
 #[derive(Debug, PartialEq, TryFromSlice, Dump)]
-pub struct IeeeFloatingPoints {
+pub struct Template5_4 {
     /// Precision (see Code table 5.7).
     pub precision: u8,
 }
@@ -85,7 +85,7 @@ pub struct IeeeFloatingPoints {
 /// Data representation template 5.40 - Grid point data - JPEG 2000 code stream
 /// format.
 #[derive(Debug, PartialEq, TryFromSlice, Dump)]
-pub struct Jpeg2000CodeStream {
+pub struct Template5_40 {
     pub simple: param_set::SimplePacking,
     /// Type of original field values (see Code table 5.1).
     pub orig_field_type: u8,
@@ -100,7 +100,7 @@ pub struct Jpeg2000CodeStream {
 /// Data representation template 5.41 - Grid point data - Portable Network
 /// Graphics (PNG).
 #[derive(Debug, PartialEq, TryFromSlice, Dump)]
-pub struct Png {
+pub struct Template5_41 {
     pub simple: param_set::SimplePacking,
     /// Type of original field values (see Code table 5.1).
     pub orig_field_type: u8,
@@ -109,7 +109,7 @@ pub struct Png {
 /// Data representation template 5.42 - Grid point data - CCSDS recommended
 /// lossless compression.
 #[derive(Debug, PartialEq, TryFromSlice, Dump)]
-pub struct CcsdsLosslessPacking {
+pub struct Template5_42 {
     pub simple: param_set::SimplePacking,
     /// Type of original field values (see Code table 5.1).
     pub orig_field_type: u8,
@@ -123,7 +123,7 @@ pub struct CcsdsLosslessPacking {
 
 /// Data representation template 5.50 - Spectral data - simple packing.
 #[derive(Debug, PartialEq, TryFromSlice, Dump)]
-pub struct SimplePackingForSpectral {
+pub struct Template5_50 {
     pub simple: param_set::SimplePacking,
     /// Real part of (0.0) coefficient (IEEE 32-bit floating-point value).
     pub real_part_zero: f32,
@@ -132,7 +132,7 @@ pub struct SimplePackingForSpectral {
 /// Data representation template 5.51 - Spherical harmonics data - complex
 /// packing.
 #[derive(Debug, PartialEq, TryFromSlice, Dump)]
-pub struct ComplexPackingForSphericalHarmonics {
+pub struct Template5_51 {
     pub simple: param_set::SimplePacking,
     /// P - Laplacian scaling factor (expressed in 10-6 units).
     pub p: i32,
@@ -154,7 +154,7 @@ pub struct ComplexPackingForSphericalHarmonics {
 /// Data representation template 5.53 - Spectral data for limited area models -
 /// complex packing.
 #[derive(Debug, PartialEq, TryFromSlice, Dump)]
-pub struct ComplexPackingForAreaModelsSpectral {
+pub struct Template5_53 {
     pub simple: param_set::SimplePacking,
     /// Bi-Fourier sub-truncation type (see Code table 5.25).
     pub bi_fourier_subtrunc_type: u8,
@@ -177,7 +177,7 @@ pub struct ComplexPackingForAreaModelsSpectral {
 /// Data representation template 5.61 - Grid point data - simple packing with
 /// logarithm pre-processing.
 #[derive(Debug, PartialEq, TryFromSlice, Dump)]
-pub struct SimplePackingWithLogarithmPreprocessing {
+pub struct Template5_61 {
     pub simple: param_set::SimplePacking,
     /// Pre-processing parameter (B) (IEEE 32-bit floating-point value).
     pub preprocess_param: f32,
@@ -185,7 +185,7 @@ pub struct SimplePackingWithLogarithmPreprocessing {
 
 /// Data representation template 5.200 - Run length packing with level values.
 #[derive(Debug, PartialEq, Eq, TryFromSlice, Dump)]
-pub struct RunLengthPacking {
+pub struct Template5_200 {
     /// Number of bits used for each packed value in the run length packing with
     /// level value.
     pub num_bits: u8,

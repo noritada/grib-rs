@@ -33,18 +33,17 @@ pub struct Section5Payload {
 #[derive(Debug, PartialEq, TryFromSlice, Dump)]
 #[repr(u16)]
 pub enum Template {
-    SimplePacking(template5::SimplePacking) = 0,
-    SimplePackingForMatrix(template5::SimplePackingForMatrix) = 1,
-    ComplexPacking(template5::ComplexPacking) = 2,
-    ComplexPackingWithSpatialDiff(template5::ComplexPackingWithSpatialDiff) = 3,
-    IeeeFloatingPoints(template5::IeeeFloatingPoints) = 4,
-    Jpeg2000CodeStream(template5::Jpeg2000CodeStream) = 40,
-    Png(template5::Png) = 41,
-    CcsdsLosslessPacking(template5::CcsdsLosslessPacking) = 42,
-    SimplePackingForSpectral(template5::SimplePackingForSpectral) = 50,
-    ComplexPackingForSphericalHarmonics(template5::ComplexPackingForSphericalHarmonics) = 51,
-    ComplexPackingForAreaModelsSpectral(template5::ComplexPackingForAreaModelsSpectral) = 53,
-    SimplePackingWithLogarithmPreprocessing(template5::SimplePackingWithLogarithmPreprocessing) =
-        61,
-    RunLengthPacking(template5::RunLengthPacking) = 200,
+    _5_0(template5::Template5_0) = 0,
+    _5_1(template5::Template5_1) = 1,
+    _5_2(template5::Template5_2) = 2,
+    _5_3(template5::Template5_3) = 3,
+    _5_4(template5::Template5_4) = 4,
+    _5_40(template5::Template5_40) = 40,
+    _5_41(template5::Template5_41) = 41,
+    _5_42(template5::Template5_42) = 42,
+    _5_50(template5::Template5_50) = 50,
+    _5_51(template5::Template5_51) = 51,
+    _5_53(template5::Template5_53) = 53,
+    _5_61(template5::Template5_61) = 61,
+    _5_200(template5::Template5_200) = 200,
 }
