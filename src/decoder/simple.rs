@@ -6,7 +6,7 @@ use crate::{
         Grib2SubmessageDecoder,
         stream::{FixedValueIterator, NBitwiseIterator},
     },
-    def::grib2::SimplePackingParam,
+    def::grib2::template5::param_set,
 };
 
 pub(crate) enum SimplePackingDecoder<I> {
@@ -40,7 +40,7 @@ where
 
 pub(crate) struct Simple<'d>(
     pub(crate) &'d Grib2SubmessageDecoder,
-    pub(crate) &'d crate::def::grib2::SimpleTemplate,
+    pub(crate) &'d crate::def::grib2::template5::SimplePacking,
 );
 
 impl<'d> Grib2GpvUnpack for Simple<'d> {
@@ -78,7 +78,7 @@ pub(crate) struct NonZeroSimplePackingDecoder<I> {
 }
 
 impl<I> NonZeroSimplePackingDecoder<I> {
-    pub(crate) fn new(iter: I, param: &SimplePackingParam) -> Self {
+    pub(crate) fn new(iter: I, param: &param_set::SimplePacking) -> Self {
         Self {
             iter,
             ref_val: param.ref_val,
@@ -120,7 +120,7 @@ mod tests {
     fn decode_simple_packing() {
         let buf = vec![0x35, 0x3e, 0x6b, 0xf6, 0x80, 0x1a, 0x00, 0x00, 0x10, 0x00];
         let mut pos = 0;
-        let param = SimplePackingParam::try_from_slice(&buf, &mut pos).unwrap();
+        let param = param_set::SimplePacking::try_from_slice(&buf, &mut pos).unwrap();
         let input: Vec<u8> = vec![0x00, 0x06, 0x00, 0x0d];
         let expected: Vec<f32> = vec![7.987_831_6e-7, 9.030_913e-7];
 

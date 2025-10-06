@@ -5,7 +5,7 @@ use crate::{
 
 pub(crate) struct RunLength<'d>(
     pub(crate) &'d Grib2SubmessageDecoder,
-    pub(crate) &'d crate::def::grib2::RunLengthPackingTemplate,
+    pub(crate) &'d crate::def::grib2::template5::RunLengthPacking,
 );
 
 impl<'d> Grib2GpvUnpack for RunLength<'d> {

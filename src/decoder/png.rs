@@ -8,7 +8,7 @@ use crate::{
 
 pub(crate) struct Png<'d>(
     pub(crate) &'d Grib2SubmessageDecoder,
-    pub(crate) &'d crate::def::grib2::PngTemplate,
+    pub(crate) &'d crate::def::grib2::template5::Png,
 );
 
 impl<'d> Grib2GpvUnpack for Png<'d> {

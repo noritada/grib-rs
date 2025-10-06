@@ -529,8 +529,8 @@ Data Representation:                    {}
     ///         payload: grib::def::grib2::Section5Payload {
     ///             num_encoded_points: 86016,
     ///             template_num: 200,
-    ///             template: grib::def::grib2::Template::RunLength(
-    ///                 grib::def::grib2::RunLengthPackingTemplate {
+    ///             template: grib::def::grib2::Template::RunLengthPacking(
+    ///                 grib::def::grib2::template5::RunLengthPacking {
     ///                     num_bits: 8,
     ///                     max_val: 3,
     ///                     max_level: 3,

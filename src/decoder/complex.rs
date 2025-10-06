@@ -17,13 +17,13 @@ use crate::{
         simple::*,
         stream::{BitStream, NBitwiseIterator},
     },
-    def::grib2::ComplexPackingParam,
+    def::grib2::template5::param_set,
     helpers::GribInt,
 };
 
 pub(crate) struct Complex<'d>(
     pub(crate) &'d Grib2SubmessageDecoder,
-    pub(crate) &'d crate::def::grib2::ComplexTemplate,
+    pub(crate) &'d crate::def::grib2::template5::ComplexPacking,
 );
 
 impl<'d> Grib2GpvUnpack for Complex<'d> {
@@ -67,7 +67,7 @@ impl<'d> Grib2GpvUnpack for Complex<'d> {
 
 pub(crate) struct ComplexSpatial<'d>(
     pub(crate) &'d Grib2SubmessageDecoder,
-    pub(crate) &'d crate::def::grib2::ComplexSpatialTemplate,
+    pub(crate) &'d crate::def::grib2::template5::ComplexPackingWithSpatialDiff,
 );
 
 impl<'d> Grib2GpvUnpack for ComplexSpatial<'d> {
@@ -147,7 +147,7 @@ pub(crate) type ComplexPackingDecoded<'d> = iter::Flatten<
 >;
 
 fn decode_complex_packing<'a>(
-    complex_param: &'a ComplexPackingParam,
+    complex_param: &'a param_set::ComplexPacking,
     sect7_data: &'a [u8],
     sect7_offset: usize,
     num_bits: u8,
