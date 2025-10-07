@@ -1,8 +1,5 @@
 use super::missing::DecodedValue::{self, Normal};
-use crate::{
-    decoder::{DecodeError, param::SpatialDifferencingParam},
-    helpers::grib_int_from_bytes,
-};
+use crate::{decoder::DecodeError, helpers::grib_int_from_bytes};
 
 pub(crate) struct SpatialDifferencingExtraDescriptors<'a> {
     slice: &'a [u8],
@@ -11,19 +8,16 @@ pub(crate) struct SpatialDifferencingExtraDescriptors<'a> {
 
 impl<'a> SpatialDifferencingExtraDescriptors<'a> {
     pub(crate) fn new(
-        param: &SpatialDifferencingParam,
+        order: u8,
+        num_extra_desc_octets: u8,
         parent_slice: &'a [u8],
     ) -> Result<Self, DecodeError> {
-        let SpatialDifferencingParam {
-            order,
-            extra_desc_num_octets,
-        } = param;
-        if *extra_desc_num_octets == 0 || *extra_desc_num_octets > 4 {
+        if num_extra_desc_octets == 0 || num_extra_desc_octets > 4 {
             return Err(DecodeError::from(format!(
-                "unexpected value for \"number of octets required in the data section to specify extra descriptors needed for spatial differencing\": {extra_desc_num_octets}"
+                "unexpected value for \"number of octets required in the data section to specify extra descriptors needed for spatial differencing\": {num_extra_desc_octets}"
             )));
         }
-        let num_octets = usize::from(*extra_desc_num_octets);
+        let num_octets = usize::from(num_extra_desc_octets);
         let byte_length = usize::from(order + 1) * num_octets;
 
         Ok(Self {
@@ -211,13 +205,14 @@ mod tests {
         ($(($name:ident, $num_octets:expr, $expected:expr),)*) => ($(
             #[test]
             fn $name() {
-                let spdiff_param = SpatialDifferencingParam {
-                    order: 2,
-                    extra_desc_num_octets: $num_octets,
-                };
+                let order = 2;
+                let num_extra_desc_octets = $num_octets;
                 let octets = (0x00..0x10).collect::<Vec<_>>();
-                let spdiff_params =
-                    SpatialDifferencingExtraDescriptors::new(&spdiff_param, &octets).unwrap();
+                let spdiff_params = SpatialDifferencingExtraDescriptors::new(
+                    order,
+                    num_extra_desc_octets,
+                    &octets,
+                ).unwrap();
                 let actual = spdiff_params.minimum();
                 assert_eq!(actual, $expected);
             }
@@ -235,13 +230,14 @@ mod tests {
         ($(($name:ident, $num_octets:expr, $expected:expr),)*) => ($(
             #[test]
             fn $name() {
-                let spdiff_param = SpatialDifferencingParam {
-                    order: 2,
-                    extra_desc_num_octets: $num_octets,
-                };
+                let order = 2;
+                let num_extra_desc_octets = $num_octets;
                 let octets = (0x00..0x10).collect::<Vec<_>>();
-                let spdiff_params =
-                    SpatialDifferencingExtraDescriptors::new(&spdiff_param, &octets).unwrap();
+                let spdiff_params = SpatialDifferencingExtraDescriptors::new(
+                    order,
+                    num_extra_desc_octets,
+                    &octets,
+                ).unwrap();
                 let actual = spdiff_params.first_values().collect::<Vec<_>>();
                 assert_eq!(actual, $expected);
             }

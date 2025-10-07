@@ -481,7 +481,7 @@ impl ProdDefinition {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ReprDefinition {
-    payload: Box<[u8]>,
+    pub(crate) payload: Box<[u8]>,
 }
 
 impl ReprDefinition {

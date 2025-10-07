@@ -3,12 +3,15 @@ pub(crate) use self::image::ImageIntoIter;
 use crate::{
     Grib2GpvUnpack,
     decoder::{
-        DecodeError, Grib2SubmessageDecoder, jpeg2000::decoder::DecodeParams,
-        param::SimplePackingParam, simple::*, stream::FixedValueIterator,
+        DecodeError, Grib2SubmessageDecoder, jpeg2000::decoder::DecodeParams, simple::*,
+        stream::FixedValueIterator,
     },
 };
 
-pub(crate) struct Jpeg2000<'d>(pub(crate) &'d Grib2SubmessageDecoder);
+pub(crate) struct Jpeg2000<'d>(
+    pub(crate) &'d Grib2SubmessageDecoder,
+    pub(crate) &'d crate::def::grib2::template::Template5_40,
+);
 
 impl<'d> Grib2GpvUnpack for Jpeg2000<'d> {
     type Iter<'a>
@@ -17,22 +20,21 @@ impl<'d> Grib2GpvUnpack for Jpeg2000<'d> {
         Self: 'a;
 
     fn iter<'a>(&'a self) -> Result<Self::Iter<'a>, DecodeError> {
-        let Self(target) = self;
-        let sect5_data = &target.sect5_bytes;
-        let simple_param = SimplePackingParam::from_buf(&sect5_data[11..21])?;
+        let Self(target, template) = self;
+        super::orig_field_type_is_supported(template.orig_field_type)?;
 
-        if simple_param.nbit == 0 {
+        if template.simple.num_bits == 0 {
             // Tested with the World Aviation Forecast System (WAFS) GRIV files from the repo: https://aviationweather.gov/wifs/api.html
             // See #111 and #113.
             let decoder = SimplePackingDecoder::ZeroLength(FixedValueIterator::new(
-                simple_param.zero_bit_reference_value(),
-                target.num_points_encoded(),
+                template.simple.zero_bit_reference_value(),
+                target.num_encoded_points(),
             ));
             return Ok(decoder);
         };
 
         let jp2_unpacked = decode_j2k(target.sect7_payload())?;
-        let decoder = NonZeroSimplePackingDecoder::new(jp2_unpacked, &simple_param);
+        let decoder = NonZeroSimplePackingDecoder::new(jp2_unpacked, &template.simple);
         let decoder = SimplePackingDecoder::NonZeroLength(decoder);
         Ok(decoder)
     }

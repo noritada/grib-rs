@@ -9,20 +9,22 @@ use self::{
     },
     missing::DecodedValue::{self, Missing1, Missing2, Normal},
 };
-use super::param::SpatialDifferencingParam;
 use crate::{
     Grib2GpvUnpack,
     codetables::grib2::Table5_6,
     decoder::{
         DecodeError, Grib2SubmessageDecoder,
-        param::{ComplexPackingParam, SimplePackingParam},
         simple::*,
         stream::{BitStream, NBitwiseIterator},
     },
+    def::grib2::template::param_set,
     helpers::GribInt,
 };
 
-pub(crate) struct Complex<'d>(pub(crate) &'d Grib2SubmessageDecoder);
+pub(crate) struct Complex<'d>(
+    pub(crate) &'d Grib2SubmessageDecoder,
+    pub(crate) &'d crate::def::grib2::template::Template5_2,
+);
 
 impl<'d> Grib2GpvUnpack for Complex<'d> {
     type Iter<'a>
@@ -31,36 +33,42 @@ impl<'d> Grib2GpvUnpack for Complex<'d> {
         Self: 'a;
 
     fn iter<'a>(&'a self) -> Result<Self::Iter<'d>, DecodeError> {
-        let Self(target) = self;
-        let sect5_data = &target.sect5_bytes;
-        let simple_param = SimplePackingParam::from_buf(&sect5_data[11..21])?;
-        let complex_param = ComplexPackingParam::from_buf(&sect5_data[21..47]);
+        let Self(target, template) = self;
+        super::orig_field_type_is_supported(template.orig_field_type)?;
 
-        if complex_param.group_splitting_method_used != 1 {
+        if template.complex.group_splitting_method != 1 {
             return Err(DecodeError::NotSupported(
                 "GRIB2 code table 5.4 (group splitting method)",
-                complex_param.group_splitting_method_used.into(),
+                template.complex.group_splitting_method.into(),
             ));
         }
 
-        if complex_param.missing_value_management_used > 2 {
+        if template.complex.missing_value_management > 2 {
             return Err(DecodeError::NotSupported(
                 "GRIB2 code table 5.5 (missing value management for complex packing)",
-                complex_param.missing_value_management_used.into(),
+                template.complex.missing_value_management.into(),
             ));
         }
 
         let sect7_data = target.sect7_payload();
 
-        let unpacked_data =
-            decode_complex_packing(complex_param, sect7_data, 0, simple_param.nbit, 0);
-        let decoder = NonZeroSimplePackingDecoder::new(unpacked_data, &simple_param);
+        let unpacked_data = decode_complex_packing(
+            &template.complex,
+            sect7_data,
+            0,
+            template.simple.num_bits,
+            0,
+        );
+        let decoder = NonZeroSimplePackingDecoder::new(unpacked_data, &template.simple);
         let decoder = SimplePackingDecoder::NonZeroLength(decoder);
         Ok(decoder)
     }
 }
 
-pub(crate) struct ComplexSpatial<'d>(pub(crate) &'d Grib2SubmessageDecoder);
+pub(crate) struct ComplexSpatial<'d>(
+    pub(crate) &'d Grib2SubmessageDecoder,
+    pub(crate) &'d crate::def::grib2::template::Template5_3,
+);
 
 impl<'d> Grib2GpvUnpack for ComplexSpatial<'d> {
     type Iter<'a>
@@ -71,41 +79,42 @@ impl<'d> Grib2GpvUnpack for ComplexSpatial<'d> {
         Self: 'a;
 
     fn iter<'a>(&'a self) -> Result<Self::Iter<'d>, DecodeError> {
-        let Self(target) = self;
-        let sect5_data = &target.sect5_bytes;
-        let simple_param = SimplePackingParam::from_buf(&sect5_data[11..21])?;
-        let complex_param = ComplexPackingParam::from_buf(&sect5_data[21..47]);
-        let spdiff_param = SpatialDifferencingParam::from_buf(&sect5_data[47..49]);
-        let spdiff_order = Table5_6::try_from(spdiff_param.order).map_err(|e| {
+        let Self(target, template) = self;
+        super::orig_field_type_is_supported(template.orig_field_type)?;
+
+        let spdiff_order = Table5_6::try_from(template.spatial_diff_order).map_err(|e| {
             DecodeError::NotSupported(
                 "GRIB2 code table 5.6 (order of spatial differencing)",
                 e.number.into(),
             )
         })?;
 
-        if complex_param.group_splitting_method_used != 1 {
+        if template.complex.group_splitting_method != 1 {
             return Err(DecodeError::NotSupported(
                 "GRIB2 code table 5.4 (group splitting method)",
-                complex_param.group_splitting_method_used.into(),
+                template.complex.group_splitting_method.into(),
             ));
         }
 
-        if complex_param.missing_value_management_used > 2 {
+        if template.complex.missing_value_management > 2 {
             return Err(DecodeError::NotSupported(
                 "GRIB2 code table 5.5 (missing value management for complex packing)",
-                complex_param.missing_value_management_used.into(),
+                template.complex.missing_value_management.into(),
             ));
         }
 
         let sect7_data = target.sect7_payload();
-        let sect7_params =
-            diff::SpatialDifferencingExtraDescriptors::new(&spdiff_param, sect7_data)?;
+        let sect7_params = diff::SpatialDifferencingExtraDescriptors::new(
+            template.spatial_diff_order,
+            template.num_extra_desc_octets,
+            sect7_data,
+        )?;
 
         let unpacked_data = decode_complex_packing(
-            complex_param,
+            &template.complex,
             sect7_data,
             sect7_params.len(),
-            simple_param.nbit,
+            template.simple.num_bits,
             sect7_params.minimum(),
         );
         let first_values = sect7_params.first_values();
@@ -123,7 +132,7 @@ impl<'d> Grib2GpvUnpack for ComplexSpatial<'d> {
             }
             Table5_6::Missing => unreachable!(),
         };
-        let decoder = NonZeroSimplePackingDecoder::new(spdiff_unpacked, &simple_param);
+        let decoder = NonZeroSimplePackingDecoder::new(spdiff_unpacked, &template.simple);
         let decoder = SimplePackingDecoder::NonZeroLength(decoder);
         Ok(decoder)
     }
@@ -137,62 +146,63 @@ pub(crate) type ComplexPackingDecoded<'d> = iter::Flatten<
     >,
 >;
 
-fn decode_complex_packing(
-    complex_param: ComplexPackingParam,
-    sect7_data: &[u8],
+fn decode_complex_packing<'a>(
+    complex_param: &'a param_set::ComplexPacking,
+    sect7_data: &'a [u8],
     sect7_offset: usize,
-    nbit: u8,
+    num_bits: u8,
     z_min: i32,
-) -> ComplexPackingDecoded<'_> {
-    fn get_octet_length(nbit: u8, ngroup: u32) -> usize {
-        let total_bit: u32 = ngroup * u32::from(nbit);
-        let total_octet = (total_bit + 0b111) >> 3;
-        total_octet as usize
+) -> ComplexPackingDecoded<'a> {
+    fn get_octet_length(num_bits: u8, num_groups: u32) -> usize {
+        let total_num_bits: u32 = num_groups * u32::from(num_bits);
+        let total_num_octets = (total_num_bits + 0b111) >> 3;
+        total_num_octets as usize
     }
 
     let params_end_octet = sect7_offset;
-    let group_refs_end_octet = params_end_octet + get_octet_length(nbit, complex_param.ngroup);
+    let group_refs_end_octet =
+        params_end_octet + get_octet_length(num_bits, complex_param.num_groups);
     let group_widths_end_octet = group_refs_end_octet
-        + get_octet_length(complex_param.group_width_nbit, complex_param.ngroup);
+        + get_octet_length(complex_param.num_group_width_bits, complex_param.num_groups);
     let group_lens_end_octet = group_widths_end_octet
-        + get_octet_length(complex_param.group_len_nbit, complex_param.ngroup);
+        + get_octet_length(complex_param.num_group_len_bits, complex_param.num_groups);
 
     let group_refs_iter = BitStream::new(
         &sect7_data[params_end_octet..group_refs_end_octet],
-        usize::from(nbit),
-        complex_param.ngroup as usize,
+        usize::from(num_bits),
+        complex_param.num_groups as usize,
     );
-    let group_refs_iter = group_refs_iter.take(complex_param.ngroup as usize);
+    let group_refs_iter = group_refs_iter.take(complex_param.num_groups as usize);
 
     let group_widths_iter = WithOffset::new(
         BitStream::new(
             &sect7_data[group_refs_end_octet..group_widths_end_octet],
-            usize::from(complex_param.group_width_nbit),
-            complex_param.ngroup as usize,
+            usize::from(complex_param.num_group_width_bits),
+            complex_param.num_groups as usize,
         ),
         u32::from(complex_param.group_width_ref),
         1,
     )
-    .take(complex_param.ngroup as usize);
+    .take(complex_param.num_groups as usize);
 
     let group_lens_iter = WithOffset::new(
         BitStream::new(
             &sect7_data[group_widths_end_octet..group_lens_end_octet],
-            usize::from(complex_param.group_len_nbit),
-            (complex_param.ngroup - 1) as usize,
+            usize::from(complex_param.num_group_len_bits),
+            (complex_param.num_groups - 1) as usize,
         ),
         complex_param.group_len_ref,
         u32::from(complex_param.group_len_inc),
     )
-    .take((complex_param.ngroup - 1) as usize)
+    .take((complex_param.num_groups - 1) as usize)
     .chain(iter::once(complex_param.group_len_last));
 
     ComplexPackingValueDecodeIterator::new(
         group_refs_iter,
         group_widths_iter,
         group_lens_iter,
-        complex_param.missing_value_management_used,
-        nbit,
+        complex_param.missing_value_management,
+        num_bits,
         z_min,
         sect7_data[group_lens_end_octet..].to_vec(),
     )
@@ -238,7 +248,7 @@ pub(crate) struct ComplexPackingValueDecodeIterator<I, J, K> {
     width_iter: J,
     length_iter: K,
     missing_value_management: u8,
-    nbit: u8,
+    num_bits: u8,
     z_min: i32,
     data: Vec<u8>,
     pos: usize,
@@ -251,7 +261,7 @@ impl<I, J, K> ComplexPackingValueDecodeIterator<I, J, K> {
         width_iter: J,
         length_iter: K,
         missing_value_management: u8,
-        nbit: u8,
+        num_bits: u8,
         z_min: i32,
         data: Vec<u8>,
     ) -> Self {
@@ -260,7 +270,7 @@ impl<I, J, K> ComplexPackingValueDecodeIterator<I, J, K> {
             width_iter,
             length_iter,
             missing_value_management,
-            nbit,
+            num_bits,
             z_min,
             data,
             pos: 0,
@@ -291,7 +301,7 @@ where
                 // associated field width is 0, and no incremental data are physically present."
                 let _ref = _ref.to_i32().unwrap();
                 let length = length.to_usize().unwrap();
-                let missing1 = (1 << self.nbit) - 1;
+                let missing1 = (1 << self.num_bits) - 1;
                 let missing2 = missing1 - 1;
 
                 if self.missing_value_management > 0 && _ref == missing1 {
