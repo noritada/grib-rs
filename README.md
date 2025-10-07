@@ -37,9 +37,10 @@ A world where everyone can read weather data easily although its interpretation 
   * Decoding feature supporting templates listed in the following table
   * Support for computation of latitudes and longitudes of grid points for templates listed in the following table
 * CLI application `gribber` built on the top of the Rust library
-  * 5 subcommends:
+  * 6 subcommends:
     * completions: generation of shell completions for your shell
     * decode: data export as text and flat binary files
+    * dump: dump display of the content of a GRIB submessage
     * info: display of identification information
     * inspect: display of information mainly for development purpose such as template numbers
     * list: display of parameters for each layer inside
