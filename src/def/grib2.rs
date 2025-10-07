@@ -1,9 +1,12 @@
 use grib_template_derive::{Dump, TryFromSlice};
 
 #[derive(Debug, PartialEq, TryFromSlice, Dump)]
-pub struct Section5 {
+pub struct Section<T>
+where
+    T: PartialEq + grib_template_helpers::TryFromSlice + grib_template_helpers::Dump,
+{
     pub header: SectionHeader,
-    pub payload: Section5Payload,
+    pub payload: T,
 }
 
 #[derive(Debug, PartialEq, TryFromSlice, Dump)]
@@ -13,6 +16,8 @@ pub struct SectionHeader {
     /// Number of section (5).
     pub sect_num: u8,
 }
+
+pub type Section5 = Section<Section5Payload>;
 
 #[derive(Debug, PartialEq, TryFromSlice, Dump)]
 pub struct Section5Payload {
