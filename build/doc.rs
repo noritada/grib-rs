@@ -12,7 +12,7 @@ pub(crate) fn generate() -> Result<String, String> {
     let template_support = readme.get("Template support")?;
     let gds_template_support = readme.get("Supported grid definition templates")?;
     let drs_template_support = readme.get("Supported data representation templates")?;
-    let example = readme.get("Usage example")?;
+    let examples = readme.get("Usage examples")?;
 
     let manifest = read_manifest()
         .map_err(|e| e.to_string())?
@@ -34,9 +34,9 @@ pub(crate) fn generate() -> Result<String, String> {
 
 {drs_template_support}
 
-# Example
+# Examples
 
-{example}
+{examples}
 
 # Crate features
 
@@ -116,6 +116,7 @@ impl std::str::FromStr for ReadMeSections {
         let mut start = 0;
         let mut pos = 0;
         let mut title: Option<&str> = None;
+        let mut within_code_block = false;
 
         let push = |map: &mut HashMap<String, String>,
                     title: Option<&str>,
@@ -136,6 +137,14 @@ impl std::str::FromStr for ReadMeSections {
                 break;
             };
             pos += line.len();
+
+            if line.starts_with("```") {
+                within_code_block = !within_code_block;
+                continue;
+            }
+            if within_code_block {
+                continue;
+            }
 
             if line.starts_with("#") {
                 push(&mut map, title, s, start, pos - line.len());

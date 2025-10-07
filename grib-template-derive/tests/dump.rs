@@ -18,6 +18,8 @@ pub struct Params {
     field7: Vec<i16>,
     /// Field 8
     field8: Vec<i16>,
+    /// Field 9
+    field9: TypeWithGenerics,
 }
 
 #[derive(grib_template_derive::Dump)]
@@ -51,6 +53,14 @@ pub struct InnerParams1 {
     field1: u8,
 }
 
+#[derive(Debug, PartialEq, Eq, grib_template_derive::Dump)]
+pub struct ParamsWithGenerics<T: grib_template_helpers::DumpField> {
+    /// Field 1
+    field1: T,
+}
+
+pub type TypeWithGenerics = ParamsWithGenerics<i16>;
+
 fn main() {
     let params = Params {
         field1: 1,
@@ -65,6 +75,7 @@ fn main() {
         field6: Enum::Type1(InnerParams1 { field1: 61 }),
         field7: vec![1, 2, 3, 4],
         field8: vec![1],
+        field9: TypeWithGenerics { field1: -1 },
     };
 
     let mut buf = std::io::Cursor::new(Vec::with_capacity(1024));
@@ -83,6 +94,7 @@ fn main() {
 14        field6.field1 = 61  // Field 1
 15-22     field7 = [1, 2, 3, 4]  // Field 7
 23-24     field8 = [1]  // Field 8
+25-26     field9.field1 = -1  // Field 1
 "
     )
 }

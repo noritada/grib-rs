@@ -21,6 +21,7 @@ pub struct Params {
     /// Field 8
     #[grib_template(len = "field1")]
     field8: Vec<i16>,
+    field9: TypeWithGenerics,
 }
 
 #[derive(Debug, PartialEq, Eq, grib_template_derive::TryFromSlice)]
@@ -46,10 +47,18 @@ pub struct InnerParams1 {
     field1: u8,
 }
 
+#[derive(Debug, PartialEq, Eq, grib_template_derive::TryFromSlice)]
+pub struct ParamsWithGenerics<T: grib_template_helpers::TryFromSlice> {
+    /// Field 1
+    field1: T,
+}
+
+pub type TypeWithGenerics = ParamsWithGenerics<i16>;
+
 fn main() {
     let buf = vec![
         0x01_u8, 0xff, 0x00, 0xff, 0x00, 0x3f, 0x80, 0x00, 0x00, 0xf0, 0x0f, 0x01, 0xf0, 0xf1,
-        0xf2, 0xf3, 0xf4, 0xf5, 0xf6, 0xf7, 0xf0, 0xf1,
+        0xf2, 0xf3, 0xf4, 0xf5, 0xf6, 0xf7, 0xf0, 0xf1, 0xf0, 0xf1,
     ];
     let mut pos = 0;
     let actual = Params::try_from_slice(&buf, &mut pos);
@@ -65,6 +74,7 @@ fn main() {
         field6: Enum::Type1(InnerParams1 { field1: 0x01 }),
         field7: vec![-0x70f1, -0x72f3, -0x74f5, -0x76f7],
         field8: vec![-0x70f1],
+        field9: ParamsWithGenerics { field1: -0x70f1 },
     });
 
     assert_eq!(actual, expected)
