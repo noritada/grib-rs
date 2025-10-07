@@ -1,7 +1,9 @@
 [package]
 name = "grib-template-helpers"
 version = "0.1.0"
-description = "Shared utilities for the grib-codegen crate, used as an internal dependency"
+description = """
+Trait definitions for the `grib` and `grib-template-derive` crates, used as an internal dependency
+"""
 authors.workspace = true
 edition.workspace = true
 license.workspace = true

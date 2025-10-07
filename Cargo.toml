@@ -21,7 +21,7 @@ rustdoc-args = ["--cfg", "docsrs"]
 members = ["grib-template-derive", "grib-template-helpers", "gen", "cli", "demo", "codegen"]
 
 [workspace.package]
-version = "0.13.0"
+version = "0.13.1"
 authors = ["Noritada Kobayashi <noritada.kobayashi@gmail.com>"]
 edition = "2024"
 license = "MIT OR Apache-2.0"

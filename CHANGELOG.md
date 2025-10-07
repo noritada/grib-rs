@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.13.1] - 2025-10-07
+### New supports
+
+- Reading, accessing, and dumping section/template parameters:
+  - Section 5
+    (#140, PR #141, PR #142, PR #144)
+  - Templates 5.0, 5.1, 5,2, 5.3, 5.4, 5.40, 5.41, 5.42, 5.50, 5.51, 5.53, 5.61, 5.200
+    (#140, PR #141, PR #142, PR #144)
+
+### Enhancements for CLI application `gribber`
+
+- New subcommand "dump" to dump the content of a GRIB submessage is now available.
+  (#140, PR #141, PR #142, PR #143)
+
 ## [0.13.0] - 2025-09-26
 ### Enhancements
 
@@ -483,7 +497,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - inspect: display of information mainly for development purpose such as template numbers
     - list: display of a list of sections (the style is still tentative)
 
-[unreleased]: https://github.com/noritada/grib-rs/compare/v0.13.0...HEAD
+[unreleased]: https://github.com/noritada/grib-rs/compare/v0.13.1...HEAD
+[0.13.1]: https://github.com/noritada/grib-rs/compare/v0.13.0...v0.13.1
 [0.13.0]: https://github.com/noritada/grib-rs/compare/v0.12.1...v0.13.0
 [0.12.1]: https://github.com/noritada/grib-rs/compare/v0.12.0...v0.12.1
 [0.12.0]: https://github.com/noritada/grib-rs/compare/v0.11.2...v0.12.0

@@ -1,5 +1,8 @@
 [package]
 name = "grib-template-derive"
+description = """
+Derive macros for the `grib` crate, used as an internal dependency
+"""
 version = "0.1.0"
 authors.workspace = true
 edition.workspace = true
