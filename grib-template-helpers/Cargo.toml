@@ -1,0 +1,12 @@
+[package]
+name = "grib-template-helpers"
+version = "0.1.0"
+description = "Shared utilities for the grib-codegen crate, used as an internal dependency"
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+readme.workspace = true
+repository.workspace = true
+homepage.workspace = true
+
+[dependencies]
