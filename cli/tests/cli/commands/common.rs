@@ -30,6 +30,7 @@ macro_rules! test_subcommands_without_args {
 
 test_subcommands_without_args! {
     (decode_without_args, "decode"),
+    (dump_without_args, "dump"),
     (info_without_args, "info"),
     (list_without_args, "list"),
     (inspect_without_args, "inspect"),
@@ -56,6 +57,7 @@ macro_rules! test_subcommands_with_nonexisting_file {
 
 test_subcommands_with_nonexisting_file! {
     (decode_with_nonexisting_file, "decode", vec!["1.1"]),
+    (dump_with_nonexisting_file, "dump", vec!["1.1"]),
     (info_with_nonexisting_file, "info", Vec::<&str>::new()),
     (inspect_with_nonexisting_file, "inspect", Vec::<&str>::new()),
     (list_with_nonexisting_file, "list", Vec::<&str>::new()),
@@ -83,6 +85,13 @@ test_subcommands_with_wrong_input_files! {
     (
         decode_with_non_grib,
         "decode",
+        utils::testdata::non_grib_file()?,
+        vec!["1.1"],
+        predicate::str::diff("error: empty GRIB2 data\n")
+    ),
+    (
+        dump_with_non_grib,
+        "dump",
         utils::testdata::non_grib_file()?,
         vec!["1.1"],
         predicate::str::diff("error: empty GRIB2 data\n")
@@ -116,6 +125,13 @@ test_subcommands_with_wrong_input_files! {
         predicate::str::diff("error: empty GRIB2 data\n")
     ),
     (
+        dump_with_empty_file,
+        "dump",
+        utils::testdata::empty_file()?,
+        vec!["1.1"],
+        predicate::str::diff("error: empty GRIB2 data\n")
+    ),
+    (
         info_with_empty_file,
         "info",
         utils::testdata::empty_file()?,
@@ -139,6 +155,13 @@ test_subcommands_with_wrong_input_files! {
     (
         decode_with_too_small_file,
         "decode",
+        utils::testdata::too_small_file()?,
+        vec!["1.1"],
+        predicate::str::diff("error: empty GRIB2 data\n")
+    ),
+    (
+        dump_with_too_small_file,
+        "dump",
         utils::testdata::too_small_file()?,
         vec!["1.1"],
         predicate::str::diff("error: empty GRIB2 data\n")
