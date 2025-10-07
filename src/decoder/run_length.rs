@@ -1,12 +1,12 @@
 use crate::{
     Grib2GpvUnpack,
-    decoder::{
-        DecodeError, Grib2SubmessageDecoder, param::RunLengthPackingParam, stream::NBitwiseIterator,
-    },
-    helpers::read_as,
+    decoder::{DecodeError, Grib2SubmessageDecoder, stream::NBitwiseIterator},
 };
 
-pub(crate) struct RunLength<'d>(pub(crate) &'d Grib2SubmessageDecoder);
+pub(crate) struct RunLength<'d>(
+    pub(crate) &'d Grib2SubmessageDecoder,
+    pub(crate) &'d crate::def::grib2::template::Template5_200,
+);
 
 impl<'d> Grib2GpvUnpack for RunLength<'d> {
     type Iter<'a>
@@ -15,28 +15,23 @@ impl<'d> Grib2GpvUnpack for RunLength<'d> {
         Self: 'a;
 
     fn iter<'a>(&'a self) -> Result<Self::Iter<'a>, DecodeError> {
-        let Self(target) = self;
-        let sect5_data = &target.sect5_bytes;
-        let param = RunLengthPackingParam::from_buf(&sect5_data[11..17]);
+        let Self(target, template) = self;
 
-        let mut level_map = Vec::with_capacity(param.max_level.into());
+        let mut level_map = Vec::with_capacity(template.level_vals.len() + 1);
         level_map.push(f32::NAN);
-        let mut pos = 17;
-
-        for _ in 0..param.max_level {
-            let val: f32 = read_as!(u16, sect5_data, pos).into();
-            let num_digits: i32 = param.num_digits.into();
-            let factor = 10_f32.powi(-num_digits);
-            let val = val * factor;
-            level_map.push(val);
-            pos += std::mem::size_of::<u16>();
-        }
+        let factor = 10_f32.powi(-i32::from(template.dec));
+        level_map.extend(
+            template
+                .level_vals
+                .iter()
+                .map(|val| f32::from(*val) * factor),
+        );
 
         let decoded_levels = rleunpack(
             target.sect7_payload(),
-            param.nbit,
-            param.maxv,
-            Some(target.num_points_encoded()),
+            template.num_bits,
+            template.max_val,
+            Some(target.num_encoded_points()),
         )?;
 
         let level_to_value = |level: &u16| -> Result<f32, DecodeError> {
@@ -55,8 +50,8 @@ impl<'d> Grib2GpvUnpack for RunLength<'d> {
 // Since maxv is represented as a 16-bit integer, values are 16 bits or less.
 fn rleunpack(
     input: &[u8],
-    nbit: u8,
-    maxv: u16,
+    num_bits: u8,
+    max_val: u16,
     expected_len: Option<usize>,
 ) -> Result<Box<[u16]>, DecodeError> {
     let mut out_buf = match expected_len {
@@ -64,11 +59,11 @@ fn rleunpack(
         None => Vec::new(),
     };
 
-    let rlbase = maxv + 1;
-    let lngu: usize = ((1u16 << nbit) - rlbase).into();
+    let rlbase = max_val + 1;
+    let lngu: usize = ((1u16 << num_bits) - rlbase).into();
     let mut cached = None;
     let mut exp: usize = 1;
-    let iter = NBitwiseIterator::new(input, usize::from(nbit));
+    let iter = NBitwiseIterator::new(input, usize::from(num_bits));
 
     for value in iter {
         let value = value as u16;

@@ -5,6 +5,8 @@ use std::{
     io::{Cursor, Read, Seek},
 };
 
+use grib_template_helpers::{Dump as _, TryFromSlice as _};
+
 #[cfg(feature = "time-calculation")]
 use crate::TemporalInfo;
 use crate::{
@@ -13,6 +15,7 @@ use crate::{
         CodeTable3_1, CodeTable4_0, CodeTable4_1, CodeTable4_2, CodeTable4_3, CodeTable5_0, Lookup,
     },
     datatypes::*,
+    def::grib2::{Section5, SectionHeader},
     error::*,
     grid::GridPointIterator,
     parser::Grib2SubmessageIndexStream,
@@ -573,6 +576,127 @@ Data Representation:                    {}
             self.5.describe().unwrap_or_default(),
             self.repr_def().num_points(),
         )
+    }
+
+    /// Provides access to the parameters in Section 5.
+    ///
+    /// # Examples
+    /// ```
+    /// fn main() -> Result<(), Box<dyn std::error::Error>> {
+    ///     let f = std::fs::File::open(
+    ///         "testdata/Z__C_RJTD_20160822020000_NOWC_GPV_Ggis10km_Pphw10_FH0000-0100_grib2.bin",
+    ///     )?;
+    ///     let f = std::io::BufReader::new(f);
+    ///     let grib2 = grib::from_reader(f)?;
+    ///     let (_index, first_submessage) = grib2.iter().next().unwrap();
+    ///
+    ///     let actual = first_submessage.section5();
+    ///     let expected = Ok(grib::def::grib2::Section5 {
+    ///         header: grib::def::grib2::SectionHeader {
+    ///             len: 23,
+    ///             sect_num: 5,
+    ///         },
+    ///         payload: grib::def::grib2::Section5Payload {
+    ///             num_encoded_points: 86016,
+    ///             template_num: 200,
+    ///             template: grib::def::grib2::DataRepresentationTemplate::_5_200(
+    ///                 grib::def::grib2::template::Template5_200 {
+    ///                     num_bits: 8,
+    ///                     max_val: 3,
+    ///                     max_level: 3,
+    ///                     dec: 0,
+    ///                     level_vals: vec![1, 2, 3],
+    ///                 },
+    ///             ),
+    ///         },
+    ///     });
+    ///     assert_eq!(actual, expected);
+    ///
+    ///     Ok(())
+    /// }
+    /// ```
+    pub fn section5(&self) -> Result<Section5, GribError> {
+        let ReprDefinition { payload } = self.repr_def();
+        let mut pos = 0;
+        let payload = crate::def::grib2::Section5Payload::try_from_slice(payload, &mut pos)
+            .map_err(|e| GribError::Unknown(e.to_owned()))?;
+
+        let SectionInfo { num, size, .. } = self.5.body;
+        Ok(Section5 {
+            header: SectionHeader {
+                len: *size as u32,
+                sect_num: *num,
+            },
+            payload,
+        })
+    }
+
+    /// Dumps the GRIB2 submessage.
+    ///
+    /// # Examples
+    /// ```
+    /// fn main() -> Result<(), Box<dyn std::error::Error>> {
+    ///     let f = std::fs::File::open(
+    ///         "testdata/Z__C_RJTD_20160822020000_NOWC_GPV_Ggis10km_Pphw10_FH0000-0100_grib2.bin",
+    ///     )?;
+    ///     let f = std::io::BufReader::new(f);
+    ///     let grib2 = grib::from_reader(f)?;
+    ///     let (_index, first_submessage) = grib2.iter().next().unwrap();
+    ///
+    ///     let mut buf = std::io::Cursor::new(Vec::with_capacity(1024));
+    ///     first_submessage.dump(&mut buf)?;
+    ///     let expected = "\
+    /// ##  SUBMESSAGE (total_length = 10321)
+    /// ###  SECTION 0: INDICATOR SECTION (length = 16)
+    /// ###  SECTION 1: IDENTIFICATION SECTION (length = 21)
+    /// ###  SECTION 3: GRID DEFINITION SECTION (length = 72)
+    /// ###  SECTION 4: PRODUCT DEFINITION SECTION (length = 34)
+    /// ###  SECTION 5: DATA REPRESENTATION SECTION (length = 23)
+    /// 1-4       header.len = 23  // Length of section in octets (nn).
+    /// 5         header.sect_num = 5  // Number of section (5).
+    /// 6-9       payload.num_encoded_points = 86016  // Number of data points where one or more values are specified in Section 7 when a bit map is present, total number of data points when a bit map is absent.
+    /// 10-11     payload.template_num = 200  // Data representation template number (see Code table 5.0).
+    /// 12        payload.template.num_bits = 8  // Number of bits used for each packed value in the run length packing with level value.
+    /// 13-14     payload.template.max_val = 3  // MV - maximum value within the levels that are used in the packing.
+    /// 15-16     payload.template.max_level = 3  // MVL - maximum value of level (predefined).
+    /// 17        payload.template.dec = 0  // Decimal scale factor of representative value of each level.
+    /// 18-23     payload.template.level_vals = [1, 2, 3]  // List of MVL scaled representative values of each level from lv=1 to MVL.
+    /// ###  SECTION 6: BIT-MAP SECTION (length = 6)
+    /// ###  SECTION 7: DATA SECTION (length = 1391)
+    /// ###  SECTION 8: END SECTION (length = 4)
+    /// ";
+    ///     assert_eq!(String::from_utf8_lossy(buf.get_ref()), expected);
+    ///
+    ///     Ok(())
+    /// }
+    /// ```
+    pub fn dump<W: std::io::Write>(&self, writer: &mut W) -> Result<(), GribError> {
+        let write_heading =
+            |writer: &mut W, sect: &SectionInfo, sect_name: &str| -> Result<(), std::io::Error> {
+                let SectionInfo { num, size, .. } = sect;
+                let sect_name = sect_name.to_ascii_uppercase();
+                writeln!(writer, "##  SECTION {num}: {sect_name} (length = {size})")
+            };
+
+        let mut pos = 1;
+        let total_length = self.indicator().total_length;
+        writeln!(writer, "#  SUBMESSAGE (total_length = {total_length})")?;
+        write_heading(writer, self.0.body, "indicator section")?;
+        write_heading(writer, self.1.body, "identification section")?;
+        if let Some(sect) = &self.2 {
+            write_heading(writer, sect.body, "local use section")?;
+        }
+        write_heading(writer, self.3.body, "grid definition section")?;
+        write_heading(writer, self.4.body, "product definition section")?;
+        write_heading(writer, self.5.body, "data representation section")?;
+        self.section5()?.dump(None, &mut pos, writer)?;
+        write_heading(writer, self.6.body, "bit-map section")?;
+        write_heading(writer, self.7.body, "data section")?;
+
+        // Since `self.8.body` might be dummy, we don't use that Section 8 data.
+        writeln!(writer, "##  SECTION 8: END SECTION (length = 4)")?;
+
+        Ok(())
     }
 
     /// Returns time-related raw information associated with the submessage.

@@ -6,6 +6,7 @@ mod context;
 pub mod cookbook;
 mod datatypes;
 mod decoder;
+pub mod def;
 mod error;
 mod grid;
 mod helpers;

@@ -1,13 +1,15 @@
 use crate::{
     DecodeError, Grib2GpvUnpack, Grib2SubmessageDecoder,
     decoder::{
-        param::SimplePackingParam,
         simple::{NonZeroSimplePackingDecoder, SimplePackingDecoder},
         stream::{FixedValueIterator, NBitwiseIterator},
     },
 };
 
-pub(crate) struct Png<'d>(pub(crate) &'d Grib2SubmessageDecoder);
+pub(crate) struct Png<'d>(
+    pub(crate) &'d Grib2SubmessageDecoder,
+    pub(crate) &'d crate::def::grib2::template::Template5_41,
+);
 
 impl<'d> Grib2GpvUnpack for Png<'d> {
     type Iter<'a>
@@ -16,34 +18,33 @@ impl<'d> Grib2GpvUnpack for Png<'d> {
         Self: 'a;
 
     fn iter<'a>(&'a self) -> Result<Self::Iter<'a>, DecodeError> {
-        let Self(target) = self;
-        let sect5_data = &target.sect5_bytes;
-        let param = SimplePackingParam::from_buf(&sect5_data[11..21])?;
+        let Self(target, template) = self;
+        super::orig_field_type_is_supported(template.orig_field_type)?;
 
         let buf = read_image_buffer(target.sect7_payload())
             .map_err(|e| DecodeError::from(format!("PNG decode error: {e}")))?;
 
-        if param.nbit == 0 {
+        if template.simple.num_bits == 0 {
             eprintln!(
                 "WARNING: nbit = 0 for PNG decoder is not tested.
                 Please report your data and help us develop the library."
             );
             let decoder = SimplePackingDecoder::ZeroLength(FixedValueIterator::new(
-                param.zero_bit_reference_value(),
-                target.num_points_encoded(),
+                template.simple.zero_bit_reference_value(),
+                target.num_encoded_points(),
             ));
             return Ok(decoder);
         };
 
-        if param.nbit != 16 {
+        if template.simple.num_bits != 16 {
             eprintln!(
                 "WARNING: nbit != 16 for PNG decoder is not tested.
                 Please report your data and help us develop the library."
             );
         }
 
-        let iter = NBitwiseIterator::new(buf, usize::from(param.nbit));
-        let iter = NonZeroSimplePackingDecoder::new(iter, &param);
+        let iter = NBitwiseIterator::new(buf, usize::from(template.simple.num_bits));
+        let iter = NonZeroSimplePackingDecoder::new(iter, &template.simple);
         let iter = SimplePackingDecoder::NonZeroLength(iter);
         Ok(iter)
     }
