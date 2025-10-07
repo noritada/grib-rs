@@ -12,7 +12,7 @@ pub(crate) fn generate() -> Result<String, String> {
     let template_support = readme.get("Template support")?;
     let gds_template_support = readme.get("Supported grid definition templates")?;
     let drs_template_support = readme.get("Supported data representation templates")?;
-    let example = readme.get("Usage example")?;
+    let examples = readme.get("Usage examples")?;
 
     let manifest = read_manifest()
         .map_err(|e| e.to_string())?
@@ -34,9 +34,9 @@ pub(crate) fn generate() -> Result<String, String> {
 
 {drs_template_support}
 
-# Example
+# Examples
 
-{example}
+{examples}
 
 # Crate features
 

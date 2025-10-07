@@ -90,7 +90,9 @@ API Documentation of the released version of the library crate is [available on 
 
 If you feel a feature is missing, please send us your suggestions through the [GitHub Issues](https://github.com/noritada/grib-rs/issues/new/choose). We are working on expanding the basic functionality as our top priority in this project, so we would be happy to receive any requests.
 
-### Usage example
+### Usage examples
+
+This is an example of accessing the grid point values and latitude/longitude coordinates for a specific submessage within a GRIB2 file.
 
 ```rust
 use grib::{codetables::grib2::*, ForecastTime, Grib2SubmessageDecoder, Name};
@@ -121,6 +123,42 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     for ((lat, lon), value) in latlons.zip(values) {
         println!("{lat} {lon} {value}");
     }
+
+    Ok(())
+}
+```
+
+This is an example of accessing the parameter values contained within a section and template parameters of a specific submessage in a GRIB2 file.
+
+```rust
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let fname = "testdata/Z__C_RJTD_20160822020000_NOWC_GPV_Ggis10km_Pphw10_FH0000-0100_grib2.bin";
+    let f = std::fs::File::open(fname)?;
+    let f = std::io::BufReader::new(f);
+    let grib2 = grib::from_reader(f)?;
+    let (_index, first_submessage) = grib2.iter().next().unwrap();
+
+    let actual = first_submessage.section5();
+    let expected = Ok(grib::def::grib2::Section5 {
+        header: grib::def::grib2::SectionHeader {
+            len: 23,
+            sect_num: 5,
+        },
+        payload: grib::def::grib2::Section5Payload {
+            num_encoded_points: 86016,
+            template_num: 200,
+            template: grib::def::grib2::DataRepresentationTemplate::_5_200(
+                grib::def::grib2::template::Template5_200 {
+                    num_bits: 8,
+                    max_val: 3,
+                    max_level: 3,
+                    dec: 0,
+                    level_vals: vec![1, 2, 3],
+                },
+            ),
+        },
+    });
+    assert_eq!(actual, expected);
 
     Ok(())
 }
