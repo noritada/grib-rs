@@ -16,7 +16,7 @@ Since there is a lot of work that needs to be done in the release process, and I
 5. Run `cargo test --workspace --release`, `cargo test --workspace --release --no-default-features` and `cargo test --workspace --release --all-features` to reconfirm that the tests pass.
 6. Run `RUSTDOCFLAGS="--cfg docsrs" cargo +nightly doc --all-features --no-deps --open` in lib crate to reconfirm the generated documentation.
    Note that a simple `cargo doc --no-deps` command execution does not generate documentation on feature-specific APIs.
-7. Run the following commands, starting with the dependent packages, i.e. `grib-build`, `grib`, `grib-cli`, in that order.
+7. Run the following commands, starting with the dependent packages, i.e. `grib-template-helpers`, `grib-template-derive`, `grib-build`, `grib`, `grib-cli`, in that order.
    - `cargo package`
    - `cargo publish`
 8. Switch to the original repository and tag the release by running following commands.
