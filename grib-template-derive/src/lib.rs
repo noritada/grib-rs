@@ -20,6 +20,7 @@ fn impl_try_from_slice_for_struct(
     data: &syn::DataStruct,
 ) -> proc_macro2::TokenStream {
     let name = &input.ident;
+    let (impl_generics, type_generics, where_clause) = input.generics.split_for_impl();
     let fields = match &data.fields {
         syn::Fields::Named(fields) => &fields.named,
         _ => unimplemented!("`TryFromSlice` can only be derived for structs with named fields"),
@@ -80,7 +81,7 @@ fn impl_try_from_slice_for_struct(
     }
 
     quote! {
-        impl grib_template_helpers::TryFromSlice for #name {
+        impl #impl_generics grib_template_helpers::TryFromSlice for #name #type_generics #where_clause {
             fn try_from_slice(
                 slice: &[u8],
                 pos: &mut usize,
@@ -97,6 +98,7 @@ fn impl_try_from_slice_for_enum(
     data: &syn::DataEnum,
 ) -> proc_macro2::TokenStream {
     let name = &input.ident;
+    let (impl_generics, type_generics, where_clause) = input.generics.split_for_impl();
 
     let mut arms = Vec::new();
 
@@ -128,7 +130,7 @@ fn impl_try_from_slice_for_enum(
     }
 
     quote! {
-        impl grib_template_helpers::TryEnumFromSlice for #name {
+        impl #impl_generics grib_template_helpers::TryEnumFromSlice for #name #type_generics #where_clause {
             fn try_enum_from_slice(
                 discriminant: impl Into<u64>,
                 slice: &[u8],
@@ -232,6 +234,7 @@ fn impl_dump_for_struct(
     data: &syn::DataStruct,
 ) -> proc_macro2::TokenStream {
     let name = &input.ident;
+    let (impl_generics, type_generics, where_clause) = input.generics.split_for_impl();
     let fields = match &data.fields {
         syn::Fields::Named(fields) => &fields.named,
         _ => unimplemented!("`Dump` can only be derived for structs with named fields"),
@@ -259,7 +262,7 @@ fn impl_dump_for_struct(
     }
 
     quote! {
-        impl grib_template_helpers::Dump for #name {
+        impl #impl_generics grib_template_helpers::Dump for #name #type_generics #where_clause {
             fn dump<W: std::io::Write>(
                 &self,
                 parent: Option<&std::borrow::Cow<str>>,
@@ -275,6 +278,7 @@ fn impl_dump_for_struct(
 
 fn impl_dump_for_enum(input: &syn::DeriveInput, data: &syn::DataEnum) -> proc_macro2::TokenStream {
     let name = &input.ident;
+    let (impl_generics, type_generics, where_clause) = input.generics.split_for_impl();
 
     let mut arms = Vec::new();
 
@@ -299,7 +303,7 @@ fn impl_dump_for_enum(input: &syn::DeriveInput, data: &syn::DataEnum) -> proc_ma
     }
 
     quote! {
-        impl grib_template_helpers::Dump for #name {
+        impl #impl_generics grib_template_helpers::Dump for #name #type_generics #where_clause {
             fn dump<W: std::io::Write>(
                 &self,
                 parent: Option<&std::borrow::Cow<str>>,
