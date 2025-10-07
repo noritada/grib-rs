@@ -1,0 +1,5 @@
+error: wrong input file
+ --> tests/03-nonexistent-file.rs:3:26
+  |
+3 | #[parameter_codes(path = "nosuchfile")]
+  |                          ^^^^^^^^^^^^

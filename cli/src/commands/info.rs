@@ -49,7 +49,7 @@ pub fn exec(args: &ArgMatches) -> anyhow::Result<()> {
 
 struct InfoView<'i>(usize, &'i Indicator, &'i Identification, grib::UtcDateTime);
 
-impl<'i> Display for InfoView<'i> {
+impl Display for InfoView<'_> {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         let Self(index, indicator, identification, ref_time) = self;
         write!(
