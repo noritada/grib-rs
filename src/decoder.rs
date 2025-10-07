@@ -10,7 +10,7 @@ use crate::{
         simple::SimplePackingDecoder,
         stream::NBitwiseIterator,
     },
-    def::grib2::{Section5Param, Template},
+    def::grib2::{DataRepresentationTemplate, Section5},
     error::*,
     reader::Grib2Read,
 };
@@ -86,7 +86,7 @@ use crate::{
 /// ```
 pub struct Grib2SubmessageDecoder {
     num_points_total: usize,
-    sect5_param: Section5Param,
+    sect5_param: Section5,
     sect6_bytes: Vec<u8>,
     sect7_bytes: Vec<u8>,
 }
@@ -103,7 +103,7 @@ impl Grib2SubmessageDecoder {
         sect7_bytes: Vec<u8>,
     ) -> Result<Self, GribError> {
         let mut pos = 0;
-        let sect5_param = Section5Param::try_from_slice(&sect5_bytes, &mut pos)
+        let sect5_param = Section5::try_from_slice(&sect5_bytes, &mut pos)
             .map_err(|e| GribError::DecodeError(DecodeError::from(e)))?;
         let sect6_bytes = match sect6_bytes[5] {
             0x00 => sect6_bytes,
@@ -153,38 +153,38 @@ impl Grib2SubmessageDecoder {
         &self,
     ) -> Result<Grib2DecodedValues<'_, impl Iterator<Item = f32> + '_>, GribError> {
         let decoder = match &self.sect5_param.payload.template {
-            Template::_5_0(template) => {
+            DataRepresentationTemplate::_5_0(template) => {
                 Grib2ValueIterator::SigSNS(simple::Simple(self, template).iter()?)
             }
-            Template::_5_2(template) => {
+            DataRepresentationTemplate::_5_2(template) => {
                 Grib2ValueIterator::SigSC(complex::Complex(self, template).iter()?)
             }
-            Template::_5_3(template) => {
+            DataRepresentationTemplate::_5_3(template) => {
                 Grib2ValueIterator::SigSSCI(complex::ComplexSpatial(self, template).iter()?)
             }
             #[cfg(all(
                 feature = "jpeg2000-unpack-with-openjpeg",
                 feature = "jpeg2000-unpack-with-openjpeg-experimental"
             ))]
-            Template::_5_40(template) => {
+            DataRepresentationTemplate::_5_40(template) => {
                 Grib2ValueIterator::SigSIm(jpeg2000::Jpeg2000(self, template).iter()?)
             }
             #[cfg(all(
                 feature = "jpeg2000-unpack-with-openjpeg",
                 not(feature = "jpeg2000-unpack-with-openjpeg-experimental")
             ))]
-            Template::_5_40(template) => {
+            DataRepresentationTemplate::_5_40(template) => {
                 Grib2ValueIterator::SigSI(jpeg2000::Jpeg2000(self, template).iter()?)
             }
             #[cfg(feature = "png-unpack-with-png-crate")]
-            Template::_5_41(template) => {
+            DataRepresentationTemplate::_5_41(template) => {
                 Grib2ValueIterator::SigSNV(png::Png(self, template).iter()?)
             }
             #[cfg(feature = "ccsds-unpack-with-libaec")]
-            Template::_5_42(template) => {
+            DataRepresentationTemplate::_5_42(template) => {
                 Grib2ValueIterator::SigSNV(ccsds::Ccsds(self, template).iter()?)
             }
-            Template::_5_200(template) => {
+            DataRepresentationTemplate::_5_200(template) => {
                 Grib2ValueIterator::SigI(run_length::RunLength(self, template).iter()?)
             }
             #[allow(unreachable_patterns)]
@@ -227,7 +227,7 @@ impl Grib2SubmessageDecoder {
     ///
     ///     let decoder = Grib2SubmessageDecoder::from(first_submessage)?;
     ///     let actual = decoder.section5();
-    ///     let expected = grib::def::grib2::Section5Param {
+    ///     let expected = grib::def::grib2::Section5 {
     ///         header: grib::def::grib2::SectionHeader {
     ///             len: 23,
     ///             sect_num: 5,
@@ -235,7 +235,7 @@ impl Grib2SubmessageDecoder {
     ///         payload: grib::def::grib2::Section5Payload {
     ///             num_encoded_points: 86016,
     ///             template_num: 200,
-    ///             template: grib::def::grib2::Template::_5_200(
+    ///             template: grib::def::grib2::DataRepresentationTemplate::_5_200(
     ///                 grib::def::grib2::template::Template5_200 {
     ///                     num_bits: 8,
     ///                     max_val: 3,
@@ -251,7 +251,7 @@ impl Grib2SubmessageDecoder {
     ///     Ok(())
     /// }
     /// ```
-    pub fn section5(&self) -> &Section5Param {
+    pub fn section5(&self) -> &Section5 {
         &self.sect5_param
     }
 }

@@ -15,7 +15,7 @@ use crate::{
         CodeTable3_1, CodeTable4_0, CodeTable4_1, CodeTable4_2, CodeTable4_3, CodeTable5_0, Lookup,
     },
     datatypes::*,
-    def::grib2::{Section5Param, SectionHeader},
+    def::grib2::{Section5, SectionHeader},
     error::*,
     grid::GridPointIterator,
     parser::Grib2SubmessageIndexStream,
@@ -521,7 +521,7 @@ Data Representation:                    {}
     ///     let (_index, first_submessage) = grib2.iter().next().unwrap();
     ///
     ///     let actual = first_submessage.section5();
-    ///     let expected = Ok(grib::def::grib2::Section5Param {
+    ///     let expected = Ok(grib::def::grib2::Section5 {
     ///         header: grib::def::grib2::SectionHeader {
     ///             len: 23,
     ///             sect_num: 5,
@@ -529,7 +529,7 @@ Data Representation:                    {}
     ///         payload: grib::def::grib2::Section5Payload {
     ///             num_encoded_points: 86016,
     ///             template_num: 200,
-    ///             template: grib::def::grib2::Template::_5_200(
+    ///             template: grib::def::grib2::DataRepresentationTemplate::_5_200(
     ///                 grib::def::grib2::template::Template5_200 {
     ///                     num_bits: 8,
     ///                     max_val: 3,
@@ -545,14 +545,14 @@ Data Representation:                    {}
     ///     Ok(())
     /// }
     /// ```
-    pub fn section5(&self) -> Result<Section5Param, GribError> {
+    pub fn section5(&self) -> Result<Section5, GribError> {
         let ReprDefinition { payload } = self.repr_def();
         let mut pos = 0;
         let payload = crate::def::grib2::Section5Payload::try_from_slice(payload, &mut pos)
             .map_err(|e| GribError::Unknown(e.to_owned()))?;
 
         let SectionInfo { num, size, .. } = self.5.body;
-        Ok(Section5Param {
+        Ok(Section5 {
             header: SectionHeader {
                 len: *size as u32,
                 sect_num: *num,
