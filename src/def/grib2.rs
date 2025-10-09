@@ -1,3 +1,5 @@
+//! Definitions of parameters contained in GRIB2 data.
+
 use grib_template_derive::{Dump, TryFromSlice};
 
 #[derive(Debug, PartialEq, TryFromSlice, Dump)]
@@ -52,6 +54,8 @@ pub enum DataRepresentationTemplate {
 }
 
 pub mod template {
+    //! GRIB2 template definitions.
+
     pub use super::template5::*;
 }
 
