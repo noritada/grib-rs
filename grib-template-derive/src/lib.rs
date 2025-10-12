@@ -58,14 +58,14 @@ fn impl_try_from_slice_for_struct(
             unimplemented!("`#[grib_template(len = N)]` is only available for `Vec<T>`");
         }
 
-        let enum_attr = field
+        let disc_attr = field
             .attrs
             .iter()
             .find_map(|attr| attr_value(attr, "variant").map(|v| parse_variant_attr(&v)));
-        if let Some(enum_ident) = enum_attr {
+        if let Some(disc_ident) = disc_attr {
             field_reads.push(quote! {
                 let #ident = <#ty as grib_template_helpers::TryEnumFromSlice>::try_enum_from_slice(
-                    #enum_ident,
+                    #disc_ident,
                     slice,
                     pos,
                 )?;
