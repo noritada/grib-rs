@@ -55,7 +55,7 @@ fn impl_try_from_slice_for_struct(
                 idents.push(ident);
                 continue;
             }
-            unimplemented!("`#[grib_template(len = N)]` is only available for `Vec<T>");
+            unimplemented!("`#[grib_template(len = N)]` is only available for `Vec<T>`");
         }
 
         let enum_attr = field
