@@ -39,9 +39,9 @@ fn impl_try_from_slice_for_struct(
             .find_map(|attr| attr_value(attr, "len").map(|v| parse_len_attr(&v)));
         if let Some(len) = len_attr {
             if let syn::Type::Path(type_path) = ty
-                && let Some(inner_ty) = extract_vec_inner(type_path)
+                && let Some((inner_ty, has_option)) = extract_vec_inner(type_path)
             {
-                field_reads.push(quote! {
+                let tokens = quote! {
                     let mut #ident = Vec::with_capacity(#len);
                     for _ in 0..#len {
                         let item =
@@ -51,11 +51,28 @@ fn impl_try_from_slice_for_struct(
                             )?;
                         #ident.push(item);
                     }
-                });
+                };
+
+                let tokens = if has_option {
+                    quote! {
+                        let #ident = if *pos == slice.len() {
+                            None
+                        } else {
+                            #tokens
+                            Some(#ident)
+                        };
+                    }
+                } else {
+                    tokens
+                };
+                field_reads.push(tokens);
+
                 idents.push(ident);
                 continue;
             }
-            unimplemented!("`#[grib_template(len = N)]` is only available for `Vec<T>`");
+            unimplemented!(
+                "`#[grib_template(len = N)]` is only available for `Vec<T>` and `Option<Vec<T>>`"
+            );
         }
 
         let disc_attr = field
@@ -205,13 +222,26 @@ fn parse_variant_attr(attr_value: &syn::Expr) -> Option<syn::Ident> {
     }
 }
 
-fn extract_vec_inner(type_path: &syn::TypePath) -> Option<syn::Type> {
-    if type_path.path.segments.len() == 1
-        && type_path.path.segments[0].ident == "Vec"
-        && let syn::PathArguments::AngleBracketed(ref args) = type_path.path.segments[0].arguments
-        && let Some(syn::GenericArgument::Type(inner_ty)) = args.args.first()
-    {
-        return Some(inner_ty.clone());
+fn extract_vec_inner(type_path: &syn::TypePath) -> Option<(syn::Type, bool)> {
+    if type_path.path.segments.len() == 1 {
+        let (type_path, has_option) = if type_path.path.segments[0].ident == "Option"
+            && let syn::PathArguments::AngleBracketed(ref args) =
+                type_path.path.segments[0].arguments
+            && let Some(syn::GenericArgument::Type(inner_ty)) = args.args.first()
+            && let syn::Type::Path(type_path) = inner_ty
+        {
+            (type_path, true)
+        } else {
+            (type_path, false)
+        };
+
+        if type_path.path.segments[0].ident == "Vec"
+            && let syn::PathArguments::AngleBracketed(ref args) =
+                type_path.path.segments[0].arguments
+            && let Some(syn::GenericArgument::Type(inner_ty)) = args.args.first()
+        {
+            return Some((inner_ty.clone(), has_option));
+        }
     }
     None
 }
