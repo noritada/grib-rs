@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Reading, accessing, and dumping section/template parameters:
   - Section 5
     (#140, PR #142, PR #144)
-  - Templates 5.0, 5.1, 5,2, 5.3, 5.4, 5.40, 5.41, 5.42, 5.50, 5.51, 5.53, 5.61, 5.200
+  - Templates 5.0, 5.1, 5.2, 5.3, 5.4, 5.40, 5.41, 5.42, 5.50, 5.51, 5.53, 5.61, 5.200
     (#140, PR #142, PR #144)
 
 ### Enhancements
