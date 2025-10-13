@@ -118,6 +118,25 @@ add_impl_of_dump_field_for_number_types![
     Vec<f64>,
 ];
 
+impl<T: OctetSize + DumpField> DumpField for Option<T>
+where
+    Self: OctetSize,
+{
+    fn dump_field<W: Write>(
+        &self,
+        name: &str,
+        parent: Option<&Cow<str>>,
+        doc: &str,
+        pos: &mut usize,
+        output: &mut W,
+    ) -> Result<(), Error> {
+        if let Some(val) = self {
+            val.dump_field(name, parent, doc, pos, output)?;
+        }
+        Ok(())
+    }
+}
+
 impl<T: Dump> DumpField for T {
     fn dump_field<W: Write>(
         &self,
@@ -165,6 +184,16 @@ add_impl_of_octet_size_for_number_vectors![u8, u16, u32, u64, i8, i16, i32, i64,
 impl<T: Dump> OctetSize for T {
     fn octet_size(&self) -> usize {
         0
+    }
+}
+
+impl<T: OctetSize> OctetSize for Option<T> {
+    fn octet_size(&self) -> usize {
+        if let Some(inner) = self {
+            inner.octet_size()
+        } else {
+            0
+        }
     }
 }
 
