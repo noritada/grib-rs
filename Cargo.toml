@@ -21,7 +21,7 @@ rustdoc-args = ["--cfg", "docsrs"]
 members = ["grib-template-derive", "grib-template-helpers", "gen", "cli", "demo", "codegen"]
 
 [workspace.package]
-version = "0.13.1"
+version = "0.13.2"
 authors = ["Noritada Kobayashi <noritada.kobayashi@gmail.com>"]
 edition = "2024"
 license = "MIT OR Apache-2.0"
@@ -33,8 +33,8 @@ keywords = ["GRIB", "weather", "meteorology"]
 
 [dependencies]
 chrono = { version = "0.4.34", optional = true }
-grib-template-derive = { path = "grib-template-derive", version = "0.1.0" }
-grib-template-helpers = { path = "grib-template-helpers", version = "0.1.0" }
+grib-template-derive = { path = "grib-template-derive", version = "0.1.1" }
+grib-template-helpers = { path = "grib-template-helpers", version = "0.1.1" }
 num = "0.4"
 num_enum = "0.7"
 proj = { version = "0.31", optional = true }

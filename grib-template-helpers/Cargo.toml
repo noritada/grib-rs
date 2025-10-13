@@ -1,6 +1,6 @@
 [package]
 name = "grib-template-helpers"
-version = "0.1.0"
+version = "0.1.1"
 description = """
 Trait definitions for the `grib` and `grib-template-derive` crates, used as an internal dependency
 """

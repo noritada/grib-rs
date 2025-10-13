@@ -164,13 +164,7 @@ macro_rules! add_impl_of_octet_size_for_number_types {
                 std::mem::size_of::<Self>()
             }
         }
-    )*);
-}
 
-add_impl_of_octet_size_for_number_types![u8, u16, u32, u64, i8, i16, i32, i64, f32, f64,];
-
-macro_rules! add_impl_of_octet_size_for_number_vectors {
-    ($($ty:ty,)*) => ($(
         impl OctetSize for Vec<$ty> {
             fn octet_size(&self) -> usize {
                 std::mem::size_of::<$ty>() * self.len()
@@ -179,7 +173,7 @@ macro_rules! add_impl_of_octet_size_for_number_vectors {
     )*);
 }
 
-add_impl_of_octet_size_for_number_vectors![u8, u16, u32, u64, i8, i16, i32, i64, f32, f64,];
+add_impl_of_octet_size_for_number_types![u8, u16, u32, u64, i8, i16, i32, i64, f32, f64,];
 
 impl<T: Dump> OctetSize for T {
     fn octet_size(&self) -> usize {
