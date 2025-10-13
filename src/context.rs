@@ -15,7 +15,7 @@ use crate::{
         CodeTable3_1, CodeTable4_0, CodeTable4_1, CodeTable4_2, CodeTable4_3, CodeTable5_0, Lookup,
     },
     datatypes::*,
-    def::grib2::{Section5, SectionHeader},
+    def::grib2::{Section1, Section5, SectionHeader},
     error::*,
     grid::GridPointIterator,
     parser::Grib2SubmessageIndexStream,
@@ -508,6 +508,64 @@ Data Representation:                    {}
         )
     }
 
+    /// Provides access to the parameters in Section 1.
+    ///
+    /// # Examples
+    /// ```
+    /// fn main() -> Result<(), Box<dyn std::error::Error>> {
+    ///     let f = std::fs::File::open(
+    ///         "testdata/Z__C_RJTD_20160822020000_NOWC_GPV_Ggis10km_Pphw10_FH0000-0100_grib2.bin",
+    ///     )?;
+    ///     let f = std::io::BufReader::new(f);
+    ///     let grib2 = grib::from_reader(f)?;
+    ///     let (_index, first_submessage) = grib2.iter().next().unwrap();
+    ///
+    ///     let actual = first_submessage.section1();
+    ///     let expected = Ok(grib::def::grib2::Section1 {
+    ///         header: grib::def::grib2::SectionHeader {
+    ///             len: 21,
+    ///             sect_num: 1,
+    ///         },
+    ///         payload: grib::def::grib2::Section1Payload {
+    ///             centre_id: 34,
+    ///             subcentre_id: 0,
+    ///             master_table_version: 5,
+    ///             local_table_version: 1,
+    ///             ref_time_significance: 0,
+    ///             ref_time: grib::def::grib2::RefTime {
+    ///                 year: 2016,
+    ///                 month: 8,
+    ///                 day: 22,
+    ///                 hour: 2,
+    ///                 minute: 0,
+    ///                 second: 0,
+    ///             },
+    ///             prod_status: 0,
+    ///             data_type: 2,
+    ///             optional: None,
+    ///         },
+    ///     });
+    ///     assert_eq!(actual, expected);
+    ///
+    ///     Ok(())
+    /// }
+    /// ```
+    pub fn section1(&self) -> Result<Section1, GribError> {
+        let Identification { payload } = self.identification();
+        let mut pos = 0;
+        let payload = crate::def::grib2::Section1Payload::try_from_slice(payload, &mut pos)
+            .map_err(|e| GribError::Unknown(e.to_owned()))?;
+
+        let SectionInfo { num, size, .. } = self.1.body;
+        Ok(Section1 {
+            header: SectionHeader {
+                len: *size as u32,
+                sect_num: *num,
+            },
+            payload,
+        })
+    }
+
     /// Provides access to the parameters in Section 5.
     ///
     /// # Examples
@@ -579,11 +637,26 @@ Data Representation:                    {}
     /// ##  SUBMESSAGE (total_length = 10321)
     /// ###  SECTION 0: INDICATOR SECTION (length = 16)
     /// ###  SECTION 1: IDENTIFICATION SECTION (length = 21)
+    /// 1-4       header.len = 21  // Length of section in octets (nn).
+    /// 5         header.sect_num = 1  // Number of section.
+    /// 6-7       payload.centre_id = 34  // Identification of originating/generating centre (see Common Code table C–11).
+    /// 8-9       payload.subcentre_id = 0  // Identification of originating/generating subcentre (allocated by originating/generating centre).
+    /// 10        payload.master_table_version = 5  // GRIB master table version number (see Common Code table C–0 and Note 1).
+    /// 11        payload.local_table_version = 1  // Version number of GRIB Local tables used to augment Master tables (see Code table 1.1 and Note 2).
+    /// 12        payload.ref_time_significance = 0  // Significance of reference time (see Code table 1.2).
+    /// 13-14     payload.ref_time.year = 2016  // Year (4 digits).
+    /// 15        payload.ref_time.month = 8  // Month.
+    /// 16        payload.ref_time.day = 22  // Day.
+    /// 17        payload.ref_time.hour = 2  // Hour.
+    /// 18        payload.ref_time.minute = 0  // Minute.
+    /// 19        payload.ref_time.second = 0  // Second.
+    /// 20        payload.prod_status = 0  // Production status of processed data in this GRIB message (see Code table 1.3).
+    /// 21        payload.data_type = 2  // Type of processed data in this GRIB message (see Code table 1.4).
     /// ###  SECTION 3: GRID DEFINITION SECTION (length = 72)
     /// ###  SECTION 4: PRODUCT DEFINITION SECTION (length = 34)
     /// ###  SECTION 5: DATA REPRESENTATION SECTION (length = 23)
     /// 1-4       header.len = 23  // Length of section in octets (nn).
-    /// 5         header.sect_num = 5  // Number of section (5).
+    /// 5         header.sect_num = 5  // Number of section.
     /// 6-9       payload.num_encoded_points = 86016  // Number of data points where one or more values are specified in Section 7 when a bit map is present, total number of data points when a bit map is absent.
     /// 10-11     payload.template_num = 200  // Data representation template number (see Code table 5.0).
     /// 12        payload.template.num_bits = 8  // Number of bits used for each packed value in the run length packing with level value.
@@ -608,17 +681,19 @@ Data Representation:                    {}
                 writeln!(writer, "##  SECTION {num}: {sect_name} (length = {size})")
             };
 
-        let mut pos = 1;
         let total_length = self.indicator().total_length;
         writeln!(writer, "#  SUBMESSAGE (total_length = {total_length})")?;
         write_heading(writer, self.0.body, "indicator section")?;
         write_heading(writer, self.1.body, "identification section")?;
+        let mut pos = 1;
+        self.section1()?.dump(None, &mut pos, writer)?;
         if let Some(sect) = &self.2 {
             write_heading(writer, sect.body, "local use section")?;
         }
         write_heading(writer, self.3.body, "grid definition section")?;
         write_heading(writer, self.4.body, "product definition section")?;
         write_heading(writer, self.5.body, "data representation section")?;
+        let mut pos = 1;
         self.section5()?.dump(None, &mut pos, writer)?;
         write_heading(writer, self.6.body, "bit-map section")?;
         write_heading(writer, self.7.body, "data section")?;
