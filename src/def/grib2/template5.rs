@@ -201,6 +201,8 @@ pub struct Template5_200 {
 }
 
 pub mod param_set {
+    //! Definitions of parameter sets used in GRIB2 templates.
+
     use grib_template_derive::{Dump, TryFromSlice};
 
     #[derive(Debug, PartialEq, TryFromSlice, Dump)]

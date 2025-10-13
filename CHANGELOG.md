@@ -12,14 +12,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Reading, accessing, and dumping section/template parameters:
   - Section 5
-    (#140, PR #141, PR #142, PR #144)
+    (#140, PR #142, PR #144)
   - Templates 5.0, 5.1, 5,2, 5.3, 5.4, 5.40, 5.41, 5.42, 5.50, 5.51, 5.53, 5.61, 5.200
-    (#140, PR #141, PR #142, PR #144)
+    (#140, PR #142, PR #144)
+
+### Enhancements
+
+- Following new methods are now available:
+  - `SubMessage::section5()` to access the parameters in Section 5 (and its template) of the submessage
+    (#140, PR #141, PR #142)
+  - `SubMessage::dump()` to dump the parameters in Section 5 (and its template) of the submessage
+    (#140, PR #141, PR #142)
+  - `Grib2SubmessageDecoder::section5()` to access the parameters in Section 5 (and its template) of the submessage
+    (#140, PR #141, PR #142)
 
 ### Enhancements for CLI application `gribber`
 
 - New subcommand "dump" to dump the content of a GRIB submessage is now available.
-  (#140, PR #141, PR #142, PR #143)
+  (#140, PR #143)
+
+### Versions
+
+```
+grib 0.13.1
+grib-cli 0.13.1
+grib-template-derive 0.1.0
+grib-template-helpers 0.1.0
+```
 
 ## [0.13.0] - 2025-09-26
 ### Enhancements
@@ -40,11 +59,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated to the Rust 2024 Edition.
   (#139)
 
+### Versions
+
+```
+grib 0.13.0
+grib-build 0.4.4
+grib-cli 0.13.0
+```
+
 ## [0.12.1] - 2025-09-21
 ### Documentation improvements
 
 - Crate-level documentation.
   (#138)
+
+### Versions
+
+```
+grib 0.12.1
+grib-cli 0.12.1
+```
 
 ## [0.12.0] - 2025-09-08
 ### Enhancements
@@ -61,6 +95,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Updated dependencies on `png` and `proj` crates.
 
+### Versions
+
+```
+grib 0.12.0
+grib-cli 0.12.0
+```
+
 ## [0.11.2] - 2025-08-05
 ### New supports
 
@@ -72,6 +113,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fixed API documentation build failure on docs.rs
   (#124)
+
+### Versions
+
+```
+grib 0.11.2
+grib-cli 0.11.2
+```
 
 ## [0.11.1] - 2025-07-14
 ### Documentation improvements
@@ -85,6 +133,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Correct the dependency on chrono to fix a build failure
   (#123)
+
+### Versions
+
+```
+grib 0.11.1
+grib-cli 0.11.1
+```
 
 ## [0.11.0] - 2025-07-12
 ### New supports
@@ -131,11 +186,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - As usual, updated dependencies.
   (e.g. #116 (thanks @ejd))
 
+### Versions
+
+```
+grib 0.11.0
+grib-cli 0.11.0
+```
+
 ## [0.10.2] - 2024-10-02
 ### Fixed
 
 - Library `grib`
   - Fixed longitude computation failures in the regular lat/lon and Gaussian grids when start/end latitudes are inconsistent with scanning mode. (#51, #103, #104)
+
+### Versions
+
+```
+grib 0.10.2
+grib-cli 0.10.2
+```
 
 ## [0.10.1] - 2024-08-12
 ### Changed
@@ -147,6 +216,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Library `grib`
   - Fixed a possible issue that decoders returned wrong values when nbit is 0 and D is not 0, although no such data have been found so far. (#96)
+
+### Versions
+
+```
+grib 0.10.1
+grib-cli 0.10.1
+```
 
 ## [0.10.0] - 2024-07-04
 ### Added
@@ -172,6 +248,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Thanks for sharing the data that cannot be processed.
   - @BruAPAHE (#85)
 
+### Versions
+
+```
+grib 0.10.0
+grib-cli 0.10.0
+```
+
 ## [0.9.2] - 2024-05-24
 ### Added
 
@@ -184,6 +267,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Thanks for sharing the data that cannot be processed.
   - @animus27 (#77)
 
+### Versions
+
+```
+grib 0.9.2
+grib-cli 0.9.2
+```
+
 ## [0.9.1] - 2024-04-03
 ### Fixed
 
@@ -194,6 +284,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Thanks for reporting a bug and providing its fix.
   - @shastro (#75, #76)
+
+### Versions
+
+```
+grib 0.9.1
+grib-build 0.4.3
+grib-cli 0.9.1
+```
 
 ## [0.9.0] - 2024-02-04
 
@@ -216,6 +314,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Improved the module structure to make the source code a little more readable and easier to contribute. (#66)
 - Others
   - Improved descriptions on template support in README. (#74)
+
+### Versions
+
+```
+grib 0.9.0
+grib-cli 0.9.0
+```
 
 ## [0.8.0] - 2023-11-11
 ### Added
@@ -250,6 +355,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Thanks for sharing the data that cannot be processed.
   - @sapiennervosa (#59)
 
+### Versions
+
+```
+grib 0.8.0
+grib-cli 0.8.0
+```
+
 ## [0.7.1] - 2023-04-20
 ### Added
 
@@ -262,6 +374,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Library `grib`
   - Fixed an issue that `size_hint()` results do not change after consuming iterator items. (#50, #54)
+
+### Versions
+
+```
+grib 0.7.1
+grib-cli 0.7.1
+```
 
 ## [0.7.0] - 2023-02-09
 ### Added
@@ -294,6 +413,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Thanks for reporting issues fixed in this release:
   - @LafeWessel (#37, #38)
 
+### Versions
+
+```
+grib 0.7.0
+grib-build 0.4.2
+grib-cli 0.7.0
+```
+
 ## [0.6.1] - 2023-01-29
 ### Added
 
@@ -325,6 +452,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Thanks for reporting issues concerning this release:
   - @LafeWessel (#29, #32)
+
+### Versions
+
+```
+grib 0.6.1
+grib-build 0.4.1
+grib-cli 0.6.1
+```
 
 ## [0.6.0] - 2022-11-13
 ### Added
@@ -374,6 +509,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CLI application `gribber` built on the top of the Rust library
   - Fixed an issue that "Something unexpected happend" is shown when a wrong message index is given to the "decode" subcommand
 
+### Versions
+
+```
+grib 0.6.0
+grib-build 0.4.0
+grib-cli 0.6.0
+```
+
 ## [0.5.0] - 2022-07-10
 ### Added
 
@@ -393,12 +536,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Thanks for sending PRs to this release:
   - @resistor (#18)
 
+### Versions
+
+```
+grib 0.5.0
+```
+
 ## [0.4.3] - 2022-01-15
 
 ### Changed
 
 - CLI application `gribber` built on the top of the Rust library
   - The performance of the "decode" subcommand is improved for big-endian binary output.
+
+### Versions
+
+```
+grib 0.4.3
+```
 
 ## [0.4.2] - 2022-01-13
 
@@ -408,11 +563,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - The performance of the "decode" subcommand is improved.
   - The version of `clap` used is now 3 (no change in behavior except for messages).
 
+### Versions
+
+```
+grib 0.4.2
+```
+
 ## [0.4.1] - 2022-01-03
 ### Added
 
 - Library `grib`
   - Simple and easy-to-use reading APIs `from_reader())` and `from_slice()`.
+
+### Versions
+
+```
+grib 0.4.1
+```
 
 ## [0.4.0] - 2021-12-29
 ### Added
@@ -441,6 +608,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - @crepererum
   - @mulimoen
 
+### Versions
+
+```
+grib 0.4.0
+grib-build 0.3.0
+```
+
 ## [0.3.0] - 2021-05-04
 ### Added
 
@@ -465,6 +639,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - "inspect" now shows sections and templates used in each surface (submessage).
   - "list" now shows attributes of each surface, such as an element name and forecast time.
 
+### Versions
+
+```
+grib 0.3.0
+grib-build 0.2.0
+```
+
 ## [0.2.0] - 2021-01-24
 ### Added
 
@@ -482,6 +663,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CLI application `gribber` built on the top of the Rust library
   - Try to colorize even when using a pager.
 
+### Versions
+
+```
+grib 0.2.0
+grib-build 0.1.0
+```
+
 ## [0.1.0] - 2020-06-07
 ### Added
 
@@ -496,6 +684,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - info: display of identification information
     - inspect: display of information mainly for development purpose such as template numbers
     - list: display of a list of sections (the style is still tentative)
+
+### Versions
+
+```
+grib 0.1.0
+```
 
 [unreleased]: https://github.com/noritada/grib-rs/compare/v0.13.1...HEAD
 [0.13.1]: https://github.com/noritada/grib-rs/compare/v0.13.0...v0.13.1
