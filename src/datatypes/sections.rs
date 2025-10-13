@@ -39,7 +39,7 @@ impl Indicator {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Identification {
-    payload: Box<[u8]>,
+    pub(crate) payload: Box<[u8]>,
 }
 
 impl Identification {

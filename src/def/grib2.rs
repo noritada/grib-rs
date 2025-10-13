@@ -15,8 +15,69 @@ where
 pub struct SectionHeader {
     /// Length of section in octets (nn).
     pub len: u32,
-    /// Number of section (5).
+    /// Number of section.
     pub sect_num: u8,
+}
+
+pub type Section1 = Section<Section1Payload>;
+
+#[derive(Debug, PartialEq, TryFromSlice, Dump)]
+pub struct Section1Payload {
+    /// Identification of originating/generating centre (see Common Code table
+    /// C–11).
+    pub centre_id: u16,
+    /// Identification of originating/generating subcentre (allocated by
+    /// originating/generating centre).
+    pub subcentre_id: u16,
+    /// GRIB master table version number (see Common Code table C–0 and Note 1).
+    pub master_table_version: u8,
+    /// Version number of GRIB Local tables used to augment Master tables (see
+    /// Code table 1.1 and Note 2).
+    pub local_table_version: u8,
+    /// Significance of reference time (see Code table 1.2).
+    pub ref_time_significance: u8,
+    /// Reference time of data.
+    pub ref_time: RefTime,
+    /// Production status of processed data in this GRIB message (see Code table
+    /// 1.3).
+    pub prod_status: u8,
+    /// Type of processed data in this GRIB message (see Code table 1.4).
+    pub data_type: u8,
+    pub optional: Option<Section1PayloadOptional>,
+}
+
+#[derive(Debug, PartialEq, TryFromSlice, Dump)]
+pub struct RefTime {
+    /// Year (4 digits).
+    pub year: u16,
+    /// Month.
+    pub month: u8,
+    /// Day.
+    pub day: u8,
+    /// Hour.
+    pub hour: u8,
+    /// Minute.
+    pub minute: u8,
+    /// Second.
+    pub second: u8,
+}
+
+#[derive(Debug, PartialEq, TryFromSlice, Dump)]
+pub struct Section1PayloadOptional {
+    /// Identification template number (optional, see Code table 1.5).
+    pub template_num: u16,
+    /// Identification template (optional, see template 1.X, where X is the
+    /// identification template number given in octets 22–23).
+    #[grib_template(variant = "template_num")]
+    pub template: IdentificationTemplate,
+}
+
+#[derive(Debug, PartialEq, TryFromSlice, Dump)]
+#[repr(u16)]
+pub enum IdentificationTemplate {
+    _1_0(template1::Template1_0) = 0,
+    _1_1(template1::Template1_1) = 1,
+    _1_2(template1::Template1_2) = 2,
 }
 
 pub type Section5 = Section<Section5Payload>;
@@ -56,7 +117,8 @@ pub enum DataRepresentationTemplate {
 pub mod template {
     //! GRIB2 template definitions.
 
-    pub use super::template5::*;
+    pub use super::{template1::*, template5::*};
 }
 
+mod template1;
 mod template5;
