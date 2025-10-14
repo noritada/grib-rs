@@ -24,12 +24,12 @@ pub type Section1 = Section<Section1Payload>;
 #[derive(Debug, PartialEq, TryFromSlice, Dump)]
 pub struct Section1Payload {
     /// Identification of originating/generating centre (see Common Code table
-    /// C–11).
+    /// C-11).
     pub centre_id: u16,
     /// Identification of originating/generating subcentre (allocated by
     /// originating/generating centre).
     pub subcentre_id: u16,
-    /// GRIB master table version number (see Common Code table C–0 and Note 1).
+    /// GRIB master table version number (see Common Code table C-0 and Note 1).
     pub master_table_version: u8,
     /// Version number of GRIB Local tables used to augment Master tables (see
     /// Code table 1.1 and Note 2).
@@ -67,7 +67,7 @@ pub struct Section1PayloadOptional {
     /// Identification template number (optional, see Code table 1.5).
     pub template_num: u16,
     /// Identification template (optional, see template 1.X, where X is the
-    /// identification template number given in octets 22–23).
+    /// identification template number given in octets 22-23).
     #[grib_template(variant = "template_num")]
     pub template: IdentificationTemplate,
 }
@@ -91,7 +91,7 @@ pub struct Section5Payload {
     /// Data representation template number (see Code table 5.0).
     pub template_num: u16,
     /// Data representation template (see template 5.X, where X is the data
-    /// representation template number given in octets 10–11).
+    /// representation template number given in octets 10-11).
     #[grib_template(variant = "template_num")]
     pub template: DataRepresentationTemplate,
 }
