@@ -179,8 +179,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // In the following example, the dump output is written to a buffer for testing purposes.
     // To dump to standard output, use the following instead:
     //
-    //     let mut stream = std::io::stdout();
-    //     first_submessage.dump(&mut stream)?;
+    //     first_submessage.dump(std::io::stdout())?;
     let mut buf = std::io::Cursor::new(Vec::with_capacity(1024));
     first_submessage.dump(&mut buf)?;
     let expected = "\
