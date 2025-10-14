@@ -1,7 +1,13 @@
-use std::path::PathBuf;
+use std::{
+    io::{BufRead, Write as _},
+    path::PathBuf,
+    sync::LazyLock,
+};
 
 use anyhow::Result;
 use clap::{ArgMatches, Command, arg};
+use console::Style;
+use regex::Regex;
 
 use crate::cli;
 
@@ -16,6 +22,7 @@ pub fn cli() -> Command {
             arg!(<INDEX> "Submessage index")
                 .value_parser(clap::value_parser!(cli::CliMessageIndex)),
         )
+        .arg(arg!(--"no-color" "Output without colorizing").action(clap::ArgAction::SetTrue))
 }
 
 pub fn exec(args: &ArgMatches) -> Result<()> {
@@ -27,6 +34,55 @@ pub fn exec(args: &ArgMatches) -> Result<()> {
         .find(|(index, _)| index == message_index)
         .ok_or_else(|| anyhow::anyhow!("no such index: {}.{}", message_index.0, message_index.1))?;
     let mut stream = std::io::stdout();
-    submessage.dump(&mut stream)?;
+    if args.get_flag("no-color") {
+        submessage.dump(&mut stream)?;
+    } else {
+        // TODO: Implement multithreading for the coloring process.
+        // Since the current `SubMessage` is not thread-safe and cannot be used in a
+        // multithreaded environment, we will first write everything to a buffer and
+        // then apply the coloring process to it.
+
+        let mut buf = std::io::Cursor::new(Vec::with_capacity(4096));
+        submessage.dump(&mut buf)?;
+        buf.set_position(0);
+        for line in buf.lines() {
+            stream.write_all(colorize(&line?).as_bytes())?;
+        }
+    };
     Ok(())
+}
+
+fn colorize(line: &str) -> String {
+    static RE: LazyLock<Regex> = LazyLock::new(|| {
+        Regex::new(
+            r"(?x)                    # insignificant whitespace mode
+            ^
+            (?<pos>[0-9]+(-[0-9]+)?)  # octet position
+            (?<param>\s+\S+\s+)       # parameter
+            (?<equal>=)
+            (?<val>\s+.+\s+?)         # value
+            (?<comment>(//.+)?)       # description
+            $",
+        )
+        .unwrap()
+    });
+
+    if line.starts_with("#") {
+        let yellow = Style::new().yellow().bold();
+        format!("{}\n", yellow.apply_to(line))
+    } else if line.starts_with("error:") {
+        let red = Style::new().red();
+        format!("{}\n", red.apply_to(line))
+    } else if let Some(cap) = RE.captures(line) {
+        format!(
+            "{}{}{}{}{}\n",
+            Style::new().green().apply_to(&cap["pos"]),
+            Style::new().bold().apply_to(&cap["param"]),
+            Style::new().cyan().apply_to(&cap["equal"]),
+            Style::new().magenta().bold().apply_to(&cap["val"]),
+            Style::new().dim().apply_to(&cap["comment"]),
+        )
+    } else {
+        format!("{}\n", line)
+    }
 }
