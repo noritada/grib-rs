@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.13.3] - 2025-10-16
+### Fixes
+
+- `SubMessage::dump()` now properly dumps sections that were read correctly and displays errors for sections that were not.
+  Previously, if even 1 section failed to read, the entire dump would fail.
+  (PR #147)
+
+### Enhancements for CLI application `gribber`
+
+- The "dump" subcommand now colors dump output by default.
+  Using the `--no-color` option suppresses color output.
+  (PR #146, PR #148)
+
+### Versions
+
+```
+grib 0.13.3
+grib-cli 0.13.3
+```
+
 ## [0.13.2] - 2025-10-13
 ### New supports
 
@@ -720,7 +740,8 @@ grib-build 0.1.0
 grib 0.1.0
 ```
 
-[unreleased]: https://github.com/noritada/grib-rs/compare/v0.13.2...HEAD
+[unreleased]: https://github.com/noritada/grib-rs/compare/v0.13.3...HEAD
+[0.13.3]: https://github.com/noritada/grib-rs/compare/v0.13.2...v0.13.3
 [0.13.2]: https://github.com/noritada/grib-rs/compare/v0.13.1...v0.13.2
 [0.13.1]: https://github.com/noritada/grib-rs/compare/v0.13.0...v0.13.1
 [0.13.0]: https://github.com/noritada/grib-rs/compare/v0.12.1...v0.13.0
