@@ -709,9 +709,9 @@ Data Representation:                    {}
     /// ###  SECTION 1: IDENTIFICATION SECTION (length = 21)
     /// 1-4       header.len = 21  // Length of section in octets (nn).
     /// 5         header.sect_num = 1  // Number of section.
-    /// 6-7       payload.centre_id = 34  // Identification of originating/generating centre (see Common Code table C–11).
+    /// 6-7       payload.centre_id = 34  // Identification of originating/generating centre (see Common Code table C-11).
     /// 8-9       payload.subcentre_id = 0  // Identification of originating/generating subcentre (allocated by originating/generating centre).
-    /// 10        payload.master_table_version = 5  // GRIB master table version number (see Common Code table C–0 and Note 1).
+    /// 10        payload.master_table_version = 5  // GRIB master table version number (see Common Code table C-0 and Note 1).
     /// 11        payload.local_table_version = 1  // Version number of GRIB Local tables used to augment Master tables (see Code table 1.1 and Note 2).
     /// 12        payload.ref_time_significance = 0  // Significance of reference time (see Code table 1.2).
     /// 13-14     payload.ref_time.year = 2016  // Year (4 digits).
