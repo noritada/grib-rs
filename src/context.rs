@@ -744,6 +744,8 @@ Data Representation:                    {}
     /// }
     /// ```
     pub fn dump<W: std::io::Write>(&self, writer: &mut W) -> Result<(), GribError> {
+        // TODO: return `Result<(), std::io::Error>` instead.
+
         let write_heading =
             |writer: &mut W, sect: &SectionInfo, sect_name: &str| -> Result<(), std::io::Error> {
                 let SectionInfo { num, size, .. } = sect;
@@ -751,20 +753,28 @@ Data Representation:                    {}
                 writeln!(writer, "##  SECTION {num}: {sect_name} (length = {size})")
             };
 
+        macro_rules! write_section {
+            ($sect:expr) => {{
+                let mut pos = 1;
+                match $sect {
+                    Ok(s) => s.dump(None, &mut pos, writer)?,
+                    Err(e) => writeln!(writer, "error: {}", e)?,
+                }
+            }};
+        }
+
         let total_length = self.indicator().total_length;
         writeln!(writer, "#  SUBMESSAGE (total_length = {total_length})")?;
         write_heading(writer, self.0.body, "indicator section")?;
         write_heading(writer, self.1.body, "identification section")?;
-        let mut pos = 1;
-        self.section1()?.dump(None, &mut pos, writer)?;
+        write_section!(self.section1());
         if let Some(sect) = &self.2 {
             write_heading(writer, sect.body, "local use section")?;
         }
         write_heading(writer, self.3.body, "grid definition section")?;
         write_heading(writer, self.4.body, "product definition section")?;
         write_heading(writer, self.5.body, "data representation section")?;
-        let mut pos = 1;
-        self.section5()?.dump(None, &mut pos, writer)?;
+        write_section!(self.section5());
         write_heading(writer, self.6.body, "bit-map section")?;
         write_heading(writer, self.7.body, "data section")?;
 
