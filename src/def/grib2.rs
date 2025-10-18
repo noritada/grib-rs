@@ -118,6 +118,12 @@ pub mod template {
     //! GRIB2 template definitions.
 
     pub use super::{template1::*, template5::*};
+
+    pub mod param_set {
+        //! Definitions of parameter sets used in GRIB2 templates.
+
+        pub use super::super::template5::param_set::*;
+    }
 }
 
 mod template1;

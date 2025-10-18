@@ -200,9 +200,7 @@ pub struct Template5_200 {
     pub level_vals: Vec<u16>,
 }
 
-pub mod param_set {
-    //! Definitions of parameter sets used in GRIB2 templates.
-
+pub(crate) mod param_set {
     use grib_template_derive::{Dump, TryFromSlice};
 
     #[derive(Debug, PartialEq, TryFromSlice, Dump)]
