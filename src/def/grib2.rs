@@ -19,6 +19,7 @@ pub struct SectionHeader {
     pub sect_num: u8,
 }
 
+/// Section 1 - Identification section.
 pub type Section1 = Section<Section1Payload>;
 
 #[derive(Debug, PartialEq, TryFromSlice, Dump)]
@@ -80,6 +81,7 @@ pub enum IdentificationTemplate {
     _1_2(template1::Template1_2) = 2,
 }
 
+/// Section 5 - Data representation section.
 pub type Section5 = Section<Section5Payload>;
 
 #[derive(Debug, PartialEq, TryFromSlice, Dump)]
