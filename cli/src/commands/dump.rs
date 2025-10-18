@@ -53,27 +53,13 @@ pub fn exec(args: &ArgMatches) -> Result<()> {
 }
 
 fn colorize(line: &str) -> String {
-    static RE: LazyLock<Regex> = LazyLock::new(|| {
-        Regex::new(
-            r"(?x)                    # insignificant whitespace mode
-            ^
-            (?<pos>[0-9]+(-[0-9]+)?)  # octet position
-            (?<param>\s+\S+\s+)       # parameter
-            (?<equal>=)
-            (?<val>\s+.+\s+?)         # value
-            (?<comment>(//.+)?)       # description
-            $",
-        )
-        .unwrap()
-    });
-
     if line.starts_with("#") {
         let yellow = Style::new().yellow().bold();
         format!("{}\n", yellow.apply_to(line))
     } else if line.starts_with("error:") {
         let red = Style::new().red();
         format!("{}\n", red.apply_to(line))
-    } else if let Some(cap) = RE.captures(line) {
+    } else if let Some(cap) = parse_line(line) {
         format!(
             "{}{}{}{}{}\n",
             Style::new().green().apply_to(&cap["pos"]),
@@ -84,5 +70,61 @@ fn colorize(line: &str) -> String {
         )
     } else {
         format!("{}\n", line)
+    }
+}
+
+fn parse_line(line: &str) -> Option<regex::Captures<'_>> {
+    static RE: LazyLock<Regex> = LazyLock::new(|| {
+        Regex::new(
+            r"(?x)                    # insignificant whitespace mode
+        ^
+        (?<pos>[0-9]+(-[0-9]+)?)  # octet position
+        (?<param>\s+\S+\s+)       # parameter
+        (?<equal>=)
+        (?<val>\s+.+?)  　　　       # value
+        (?<comment>(\s+//.+)?)    # description
+        $",
+        )
+        .unwrap()
+    });
+    RE.captures(line)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_line_parser() {
+        fn parse(line: &str) -> Option<[String; 5]> {
+            parse_line(line).map(|cap| {
+                [
+                    &cap["pos"],
+                    &cap["param"],
+                    &cap["equal"],
+                    &cap["val"],
+                    &cap["comment"],
+                ]
+                .map(|s| s.to_owned())
+            })
+        }
+
+        assert_eq!(
+            parse("12-34     foo.bar_bar.baz = [1, 2, 3]  // Parameter descriptions."),
+            Some(
+                [
+                    "12-34",
+                    "     foo.bar_bar.baz ",
+                    "=",
+                    " [1, 2, 3]",
+                    "  // Parameter descriptions."
+                ]
+                .map(|s| s.to_owned())
+            ),
+        );
+        assert_eq!(
+            parse("12-34     foo.bar_bar.baz = [1, 2, 3]"),
+            Some(["12-34", "     foo.bar_bar.baz ", "=", " [1, 2, 3]", ""].map(|s| s.to_owned())),
+        );
     }
 }
