@@ -81,6 +81,35 @@ pub enum IdentificationTemplate {
     _1_2(template1::Template1_2) = 2,
 }
 
+/// Section 3 - Grid definition section.
+pub type Section3 = Section<Section3Payload>;
+
+#[derive(Debug, PartialEq, TryFromSlice, Dump)]
+pub struct Section3Payload {
+    /// Source of grid definition (see Code table 3.0 and Note 1).
+    pub grid_def_source: u8,
+    /// Number of data points.
+    pub num_points: u32,
+    /// Number of octets for optional list of numbers (see Note 2).
+    pub num_point_list_octets: u8,
+    /// Interpretation of list of numbers (see Code table 3.11).
+    pub point_list_interpretation: u8,
+    /// Grid definition template number (= N) (see Code table 3.1).
+    pub template_num: u16,
+}
+
+/// Section 4 - Product definition section.
+pub type Section4 = Section<Section4Payload>;
+
+#[derive(Debug, PartialEq, TryFromSlice, Dump)]
+pub struct Section4Payload {
+    /// Number of coordinate values after template or number of information
+    /// according to 3D vertical coordinate GRIB2 message (see Notes 1 and 5).
+    pub num_coord_values: u16,
+    /// Product definition template number (see Code table 4.0).
+    pub template_num: u16,
+}
+
 /// Section 5 - Data representation section.
 pub type Section5 = Section<Section5Payload>;
 
@@ -114,6 +143,15 @@ pub enum DataRepresentationTemplate {
     _5_53(template5::Template5_53) = 53,
     _5_61(template5::Template5_61) = 61,
     _5_200(template5::Template5_200) = 200,
+}
+
+/// Section 6 - Bit-map section.
+pub type Section6 = Section<Section6Payload>;
+
+#[derive(Debug, PartialEq, TryFromSlice, Dump)]
+pub struct Section6Payload {
+    /// Bit-map indicator (see Code table 6.0 and the Note).
+    pub bitmap_indicator: u8,
 }
 
 pub mod template {
