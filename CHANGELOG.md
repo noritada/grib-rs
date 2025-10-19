@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.13.4] - 2025-10-19
+### New supports
+
+- Reading, accessing, and dumping section/template parameters:
+  - Sections 3, 4, 6
+    (#140, PR #149)
+
+### Enhancements
+
+- Following new methods are now available:
+  - `SubMessage::section3()`, `SubMessage::section4()` and `SubMessage::section6()` to access the parameters in Sections 3, 4, and 6 of the submessage respectively
+    (#140, PR #149)
+
+### Versions
+
+```
+grib 0.13.4
+grib-cli 0.13.4
+```
+
 ## [0.13.3] - 2025-10-16
 ### Fixes
 
@@ -740,7 +760,8 @@ grib-build 0.1.0
 grib 0.1.0
 ```
 
-[unreleased]: https://github.com/noritada/grib-rs/compare/v0.13.3...HEAD
+[unreleased]: https://github.com/noritada/grib-rs/compare/v0.13.4...HEAD
+[0.13.4]: https://github.com/noritada/grib-rs/compare/v0.13.3...v0.13.4
 [0.13.3]: https://github.com/noritada/grib-rs/compare/v0.13.2...v0.13.3
 [0.13.2]: https://github.com/noritada/grib-rs/compare/v0.13.1...v0.13.2
 [0.13.1]: https://github.com/noritada/grib-rs/compare/v0.13.0...v0.13.1
