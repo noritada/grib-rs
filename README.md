@@ -202,7 +202,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 20        payload.prod_status = 0  // Production status of processed data in this GRIB message (see Code table 1.3).
 21        payload.data_type = 2  // Type of processed data in this GRIB message (see Code table 1.4).
 ###  SECTION 3: GRID DEFINITION SECTION (length = 72)
+1-4       header.len = 72  // Length of section in octets (nn).
+5         header.sect_num = 3  // Number of section.
+6         payload.grid_def_source = 0  // Source of grid definition (see Code table 3.0 and Note 1).
+7-10      payload.num_points = 86016  // Number of data points.
+11        payload.num_point_list_octets = 0  // Number of octets for optional list of numbers (see Note 2).
+12        payload.point_list_interpretation = 0  // Interpretation of list of numbers (see Code table 3.11).
+13-14     payload.template_num = 0  // Grid definition template number (= N) (see Code table 3.1).
 ###  SECTION 4: PRODUCT DEFINITION SECTION (length = 34)
+1-4       header.len = 34  // Length of section in octets (nn).
+5         header.sect_num = 4  // Number of section.
+6-7       payload.num_coord_values = 0  // Number of coordinate values after template or number of information according to 3D vertical coordinate GRIB2 message (see Notes 1 and 5).
+8-9       payload.template_num = 0  // Product definition template number (see Code table 4.0).
 ###  SECTION 5: DATA REPRESENTATION SECTION (length = 23)
 1-4       header.len = 23  // Length of section in octets (nn).
 5         header.sect_num = 5  // Number of section.
@@ -214,6 +225,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 17        payload.template.dec = 0  // Decimal scale factor of representative value of each level.
 18-23     payload.template.level_vals = [1, 2, 3]  // List of MVL scaled representative values of each level from lv=1 to MVL.
 ###  SECTION 6: BIT-MAP SECTION (length = 6)
+1-4       header.len = 6  // Length of section in octets (nn).
+5         header.sect_num = 6  // Number of section.
+6         payload.bitmap_indicator = 255  // Bit-map indicator (see Code table 6.0 and the Note).
 ###  SECTION 7: DATA SECTION (length = 1391)
 ###  SECTION 8: END SECTION (length = 4)
 ";

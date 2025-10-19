@@ -15,7 +15,7 @@ use crate::{
         CodeTable3_1, CodeTable4_0, CodeTable4_1, CodeTable4_2, CodeTable4_3, CodeTable5_0, Lookup,
     },
     datatypes::*,
-    def::grib2::{Section1, Section5, SectionHeader},
+    def::grib2::{Section1, Section3, Section4, Section5, Section6, SectionHeader},
     error::*,
     grid::GridPointIterator,
     parser::Grib2SubmessageIndexStream,
@@ -566,6 +566,97 @@ Data Representation:                    {}
         })
     }
 
+    /// Provides access to the parameters in Section 3.
+    ///
+    /// # Examples
+    /// ```
+    /// fn main() -> Result<(), Box<dyn std::error::Error>> {
+    ///     let f = std::fs::File::open(
+    ///         "testdata/Z__C_RJTD_20160822020000_NOWC_GPV_Ggis10km_Pphw10_FH0000-0100_grib2.bin",
+    ///     )?;
+    ///     let f = std::io::BufReader::new(f);
+    ///     let grib2 = grib::from_reader(f)?;
+    ///     let (_index, first_submessage) = grib2.iter().next().unwrap();
+    ///
+    ///     let actual = first_submessage.section3();
+    ///     let expected = Ok(grib::def::grib2::Section3 {
+    ///         header: grib::def::grib2::SectionHeader {
+    ///             len: 72,
+    ///             sect_num: 3,
+    ///         },
+    ///         payload: grib::def::grib2::Section3Payload {
+    ///             grid_def_source: 0,
+    ///             num_points: 86016,
+    ///             num_point_list_octets: 0,
+    ///             point_list_interpretation: 0,
+    ///             template_num: 0,
+    ///         },
+    ///     });
+    ///     assert_eq!(actual, expected);
+    ///
+    ///     Ok(())
+    /// }
+    /// ```
+    pub fn section3(&self) -> Result<Section3, GribError> {
+        let GridDefinition { payload } = self.grid_def();
+        let mut pos = 0;
+        let payload = crate::def::grib2::Section3Payload::try_from_slice(payload, &mut pos)
+            .map_err(|e| GribError::Unknown(e.to_owned()))?;
+
+        let SectionInfo { num, size, .. } = self.3.body;
+        Ok(Section3 {
+            header: SectionHeader {
+                len: *size as u32,
+                sect_num: *num,
+            },
+            payload,
+        })
+    }
+
+    /// Provides access to the parameters in Section 4.
+    ///
+    /// # Examples
+    /// ```
+    /// fn main() -> Result<(), Box<dyn std::error::Error>> {
+    ///     let f = std::fs::File::open(
+    ///         "testdata/Z__C_RJTD_20160822020000_NOWC_GPV_Ggis10km_Pphw10_FH0000-0100_grib2.bin",
+    ///     )?;
+    ///     let f = std::io::BufReader::new(f);
+    ///     let grib2 = grib::from_reader(f)?;
+    ///     let (_index, first_submessage) = grib2.iter().next().unwrap();
+    ///
+    ///     let actual = first_submessage.section4();
+    ///     let expected = Ok(grib::def::grib2::Section4 {
+    ///         header: grib::def::grib2::SectionHeader {
+    ///             len: 34,
+    ///             sect_num: 4,
+    ///         },
+    ///         payload: grib::def::grib2::Section4Payload {
+    ///             num_coord_values: 0,
+    ///             template_num: 0,
+    ///         },
+    ///     });
+    ///     assert_eq!(actual, expected);
+    ///
+    ///     Ok(())
+    /// }
+    /// ```
+    pub fn section4(&self) -> Result<Section4, GribError> {
+        let ProdDefinition { payload }: &ProdDefinition = self.prod_def();
+        let mut pos = 0;
+        let payload = crate::def::grib2::Section4Payload::try_from_slice(payload, &mut pos)
+            .map_err(|e| GribError::Unknown(e.to_owned()))?;
+
+        let SectionInfo { num, size, .. } = self.4.body;
+        Ok(Section4 {
+            header: SectionHeader {
+                len: *size as u32,
+                sect_num: *num,
+            },
+            payload,
+        })
+    }
+
     /// Provides access to the parameters in Section 5.
     ///
     /// # Examples
@@ -619,6 +710,53 @@ Data Representation:                    {}
         })
     }
 
+    /// Provides access to the parameters in Section 6.
+    ///
+    /// # Examples
+    /// ```
+    /// fn main() -> Result<(), Box<dyn std::error::Error>> {
+    ///     let f = std::fs::File::open(
+    ///         "testdata/Z__C_RJTD_20160822020000_NOWC_GPV_Ggis10km_Pphw10_FH0000-0100_grib2.bin",
+    ///     )?;
+    ///     let f = std::io::BufReader::new(f);
+    ///     let grib2 = grib::from_reader(f)?;
+    ///     let (_index, first_submessage) = grib2.iter().next().unwrap();
+    ///
+    ///     let actual = first_submessage.section6();
+    ///     let expected = Ok(grib::def::grib2::Section6 {
+    ///         header: grib::def::grib2::SectionHeader {
+    ///             len: 6,
+    ///             sect_num: 6,
+    ///         },
+    ///         payload: grib::def::grib2::Section6Payload {
+    ///             bitmap_indicator: 255,
+    ///         },
+    ///     });
+    ///     assert_eq!(actual, expected);
+    ///
+    ///     Ok(())
+    /// }
+    /// ```
+    pub fn section6(&self) -> Result<Section6, GribError> {
+        // panics should not happen if data is correct
+        let BitMap { bitmap_indicator } = match self.6.body.body.as_ref().unwrap() {
+            SectionBody::Section6(data) => data,
+            _ => panic!("something unexpected happened"),
+        };
+        let payload = crate::def::grib2::Section6Payload {
+            bitmap_indicator: *bitmap_indicator,
+        };
+
+        let SectionInfo { num, size, .. } = self.6.body;
+        Ok(Section6 {
+            header: SectionHeader {
+                len: *size as u32,
+                sect_num: *num,
+            },
+            payload,
+        })
+    }
+
     /// Dumps the GRIB2 submessage.
     ///
     /// # Examples
@@ -653,7 +791,18 @@ Data Representation:                    {}
     /// 20        payload.prod_status = 0  // Production status of processed data in this GRIB message (see Code table 1.3).
     /// 21        payload.data_type = 2  // Type of processed data in this GRIB message (see Code table 1.4).
     /// ###  SECTION 3: GRID DEFINITION SECTION (length = 72)
+    /// 1-4       header.len = 72  // Length of section in octets (nn).
+    /// 5         header.sect_num = 3  // Number of section.
+    /// 6         payload.grid_def_source = 0  // Source of grid definition (see Code table 3.0 and Note 1).
+    /// 7-10      payload.num_points = 86016  // Number of data points.
+    /// 11        payload.num_point_list_octets = 0  // Number of octets for optional list of numbers (see Note 2).
+    /// 12        payload.point_list_interpretation = 0  // Interpretation of list of numbers (see Code table 3.11).
+    /// 13-14     payload.template_num = 0  // Grid definition template number (= N) (see Code table 3.1).
     /// ###  SECTION 4: PRODUCT DEFINITION SECTION (length = 34)
+    /// 1-4       header.len = 34  // Length of section in octets (nn).
+    /// 5         header.sect_num = 4  // Number of section.
+    /// 6-7       payload.num_coord_values = 0  // Number of coordinate values after template or number of information according to 3D vertical coordinate GRIB2 message (see Notes 1 and 5).
+    /// 8-9       payload.template_num = 0  // Product definition template number (see Code table 4.0).
     /// ###  SECTION 5: DATA REPRESENTATION SECTION (length = 23)
     /// 1-4       header.len = 23  // Length of section in octets (nn).
     /// 5         header.sect_num = 5  // Number of section.
@@ -665,6 +814,9 @@ Data Representation:                    {}
     /// 17        payload.template.dec = 0  // Decimal scale factor of representative value of each level.
     /// 18-23     payload.template.level_vals = [1, 2, 3]  // List of MVL scaled representative values of each level from lv=1 to MVL.
     /// ###  SECTION 6: BIT-MAP SECTION (length = 6)
+    /// 1-4       header.len = 6  // Length of section in octets (nn).
+    /// 5         header.sect_num = 6  // Number of section.
+    /// 6         payload.bitmap_indicator = 255  // Bit-map indicator (see Code table 6.0 and the Note).
     /// ###  SECTION 7: DATA SECTION (length = 1391)
     /// ###  SECTION 8: END SECTION (length = 4)
     /// ";
@@ -702,10 +854,13 @@ Data Representation:                    {}
             write_heading(writer, sect.body, "local use section")?;
         }
         write_heading(writer, self.3.body, "grid definition section")?;
+        write_section!(self.section3());
         write_heading(writer, self.4.body, "product definition section")?;
+        write_section!(self.section4());
         write_heading(writer, self.5.body, "data representation section")?;
         write_section!(self.section5());
         write_heading(writer, self.6.body, "bit-map section")?;
+        write_section!(self.section6());
         write_heading(writer, self.7.body, "data section")?;
 
         // Since `self.8.body` might be dummy, we don't use that Section 8 data.

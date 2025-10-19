@@ -138,7 +138,7 @@ impl LocalUse {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct GridDefinition {
-    payload: Box<[u8]>,
+    pub(crate) payload: Box<[u8]>,
 }
 
 impl GridDefinition {
@@ -294,7 +294,7 @@ const START_OF_PROD_TEMPLATE: usize = 4;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ProdDefinition {
-    payload: Box<[u8]>,
+    pub(crate) payload: Box<[u8]>,
 }
 
 impl ProdDefinition {
