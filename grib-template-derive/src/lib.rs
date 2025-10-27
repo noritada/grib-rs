@@ -21,10 +21,42 @@ fn impl_try_from_slice_for_struct(
 ) -> proc_macro2::TokenStream {
     let name = &input.ident;
     let (impl_generics, type_generics, where_clause) = input.generics.split_for_impl();
-    let fields = match &data.fields {
-        syn::Fields::Named(fields) => &fields.named,
-        _ => unimplemented!("`TryFromSlice` can only be derived for structs with named fields"),
+    let (kind, fields) = match &data.fields {
+        syn::Fields::Named(fields) => (StructKind::NamedStruct, &fields.named),
+        syn::Fields::Unnamed(fields) => {
+            let fields = &fields.unnamed;
+            if fields.len() == 1 && is_type_u8(&fields.first().unwrap().ty) {
+                (StructKind::TupleStruct, fields)
+            } else {
+                unimplemented!(
+                    "`TryFromSlice` can only be derived for structs with named fields or with a single unnamed `u8` field"
+                )
+            }
+        }
+        _ => unimplemented!(
+            "`TryFromSlice` can only be derived for structs with named fields or with a single unnamed `u8` field"
+        ),
     };
+
+    if kind == StructKind::TupleStruct {
+        let field_reads = fields.iter().map(|field| {
+            let ty = &field.ty;
+            quote! {
+                <#ty as grib_template_helpers::TryFromSlice>::try_from_slice(slice, pos)?
+            }
+        });
+
+        return quote! {
+            impl #impl_generics grib_template_helpers::TryFromSlice for #name #type_generics #where_clause {
+                fn try_from_slice(
+                    slice: &[u8],
+                    pos: &mut usize,
+                ) -> grib_template_helpers::TryFromSliceResult<Self> {
+                    Ok(Self(#(#field_reads),*))
+                }
+            }
+        };
+    }
 
     let mut field_reads = Vec::new();
     let mut idents = Vec::new();
@@ -363,4 +395,19 @@ fn get_doc(attrs: &[syn::Attribute]) -> Option<String> {
         }
     }
     if doc.is_empty() { None } else { Some(doc) }
+}
+
+#[derive(PartialEq)]
+enum StructKind {
+    TupleStruct,
+    NamedStruct,
+}
+
+fn is_type_u8(ty: &syn::Type) -> bool {
+    if let syn::Type::Path(syn::TypePath { path, .. }) = ty
+        && let Some(segment) = path.segments.last()
+    {
+        return segment.ident == "u8";
+    }
+    false
 }
