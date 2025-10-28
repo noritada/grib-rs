@@ -18,6 +18,8 @@ pub struct Params {
     field7: Vec<i16>,
     /// Field 8
     field8: Vec<i16>,
+    /// Field 9
+    field9: TypeWithGenerics,
 }
 
 #[derive(grib_template_derive::Dump)]
