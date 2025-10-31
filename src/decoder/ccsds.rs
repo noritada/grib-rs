@@ -28,7 +28,7 @@ impl<'d> Grib2GpvUnpack for Ccsds<'d> {
                 target.num_encoded_points(),
             ))
         } else {
-            let element_size_in_bytes = usize::from(template.simple.num_bits >> 3) + 1;
+            let element_size_in_bytes = usize::from(template.simple.num_bits + 0b111) >> 3;
             let size = element_size_in_bytes * target.num_encoded_points();
             let mut decoded = vec![0; size];
             let mut stream = aec::Stream::new(

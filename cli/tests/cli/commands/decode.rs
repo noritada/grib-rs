@@ -126,10 +126,17 @@ test_operation_with_data_without_nan_values_and_byte_order_options! {
     ),
     (
         decoding_ccsds_compression_as_little_endian,
-        utils::testdata::grib2::ecmwf_realtime_oper_fc()?,
+        utils::testdata::grib2::ecmwf_realtime_oper_fc_0()?,
         "0.0",
         "-l",
         utils::testdata::flat_binary::ecmwf_realtime_oper_fc_0_le()?
+    ),
+    (
+        decoding_ccsds_compression_where_num_bits_is_multiple_of_eight,
+        utils::testdata::grib2::ecmwf_realtime_oper_fc_89()?,
+        "0.0",
+        "-l",
+        utils::testdata::flat_binary::ecmwf_realtime_oper_fc_89_le()?
     ),
 }
 
