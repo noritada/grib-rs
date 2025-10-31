@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.13.5] - 2025-10-31
+### Fixes
+
+-  Fix an error in the decoding logic for CCSDS recommended lossless compression.
+   This issue concerned the calculation of the number of octets and occurred when the parameter `num_bits` was a multiple of 8.
+   (#150 (thanks @KMarshland), PR #151)
+
+### Versions
+
+```
+grib 0.13.5
+grib-cli 0.13.5
+```
+
 ## [0.13.4] - 2025-10-19
 ### New supports
 
@@ -760,7 +774,8 @@ grib-build 0.1.0
 grib 0.1.0
 ```
 
-[unreleased]: https://github.com/noritada/grib-rs/compare/v0.13.4...HEAD
+[unreleased]: https://github.com/noritada/grib-rs/compare/v0.13.5...HEAD
+[0.13.5]: https://github.com/noritada/grib-rs/compare/v0.13.4...v0.13.5
 [0.13.4]: https://github.com/noritada/grib-rs/compare/v0.13.3...v0.13.4
 [0.13.3]: https://github.com/noritada/grib-rs/compare/v0.13.2...v0.13.3
 [0.13.2]: https://github.com/noritada/grib-rs/compare/v0.13.1...v0.13.2
