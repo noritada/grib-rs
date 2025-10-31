@@ -68,7 +68,7 @@ fn has_zero_at_offset(byte: &u8, offset: &usize) -> bool {
 }
 
 pub(crate) fn dummy_bitmap_for_nonnullable_data(num_points: usize) -> Vec<u8> {
-    let size = num_points.div_ceil(8);
+    let size = super::helpers::num_octets(num_points);
     vec![0b11111111u8; size]
 }
 

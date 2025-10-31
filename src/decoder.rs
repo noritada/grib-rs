@@ -363,6 +363,7 @@ mod bitmap;
 #[cfg(feature = "ccsds-unpack-with-libaec")]
 mod ccsds;
 mod complex;
+mod helpers;
 #[cfg(feature = "jpeg2000-unpack-with-openjpeg")]
 mod jpeg2000;
 #[cfg(feature = "png-unpack-with-png-crate")]

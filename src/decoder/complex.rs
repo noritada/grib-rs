@@ -154,9 +154,7 @@ fn decode_complex_packing<'a>(
     z_min: i32,
 ) -> ComplexPackingDecoded<'a> {
     fn get_octet_length(num_bits: u8, num_groups: u32) -> usize {
-        let total_num_bits: u32 = num_groups * u32::from(num_bits);
-        let total_num_octets = (total_num_bits + 0b111) >> 3;
-        total_num_octets as usize
+        super::helpers::num_octets((num_groups * u32::from(num_bits)) as usize)
     }
 
     let params_end_octet = sect7_offset;
