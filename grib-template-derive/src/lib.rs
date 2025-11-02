@@ -297,10 +297,49 @@ fn impl_dump_for_struct(
 ) -> proc_macro2::TokenStream {
     let name = &input.ident;
     let (impl_generics, type_generics, where_clause) = input.generics.split_for_impl();
-    let fields = match &data.fields {
-        syn::Fields::Named(fields) => &fields.named,
-        _ => unimplemented!("`Dump` can only be derived for structs with named fields"),
+    let (kind, fields) = match &data.fields {
+        syn::Fields::Named(fields) => (StructKind::NamedStruct, &fields.named),
+        syn::Fields::Unnamed(fields) => {
+            let fields = &fields.unnamed;
+            if fields.len() == 1 && is_type_u8(&fields.first().unwrap().ty) {
+                (StructKind::TupleStruct, fields)
+            } else {
+                unimplemented!(
+                    "`Dump` can only be derived for structs with named fields or with a single unnamed `u8` field"
+                )
+            }
+        }
+        _ => unimplemented!(
+            "`Dump` can only be derived for structs with named fields or with a single unnamed `u8` field"
+        ),
     };
+
+    if kind == StructKind::TupleStruct {
+        let doc = get_doc(&fields[0].attrs)
+            .map(|s| format!("  // {}", s.trim()))
+            .unwrap_or_default();
+
+        return quote! {
+            impl #impl_generics grib_template_helpers::Dump for #name #type_generics #where_clause {
+                fn dump<W: std::io::Write>(
+                    &self,
+                    parent: Option<&std::borrow::Cow<str>>,
+                    pos: &mut usize,
+                    output: &mut W,
+                ) -> Result<(), std::io::Error> {
+                    let size = 1;
+                    grib_template_helpers::write_position_column(output, pos, size)?;
+                    if let Some(parent) = parent {
+                        write!(output, "{}", parent)?;
+                    }
+                    writeln!(output, " = {:#010b}{}",
+                        self.0,
+                        #doc,
+                    )
+                }
+            }
+        };
+    }
 
     let mut dumps = Vec::new();
 
