@@ -21,21 +21,10 @@ fn impl_try_from_slice_for_struct(
 ) -> proc_macro2::TokenStream {
     let name = &input.ident;
     let (impl_generics, type_generics, where_clause) = input.generics.split_for_impl();
-    let (kind, fields) = match &data.fields {
-        syn::Fields::Named(fields) => (StructKind::NamedStruct, &fields.named),
-        syn::Fields::Unnamed(fields) => {
-            let fields = &fields.unnamed;
-            if fields.len() == 1 && is_type_u8(&fields.first().unwrap().ty) {
-                (StructKind::TupleStruct, fields)
-            } else {
-                unimplemented!(
-                    "`TryFromSlice` can only be derived for structs with named fields or with a single unnamed `u8` field"
-                )
-            }
-        }
-        _ => unimplemented!(
+    let Some((kind, fields)) = extract_struct_info(data) else {
+        unimplemented!(
             "`TryFromSlice` can only be derived for structs with named fields or with a single unnamed `u8` field"
-        ),
+        )
     };
 
     if kind == StructKind::TupleStruct {
@@ -297,21 +286,10 @@ fn impl_dump_for_struct(
 ) -> proc_macro2::TokenStream {
     let name = &input.ident;
     let (impl_generics, type_generics, where_clause) = input.generics.split_for_impl();
-    let (kind, fields) = match &data.fields {
-        syn::Fields::Named(fields) => (StructKind::NamedStruct, &fields.named),
-        syn::Fields::Unnamed(fields) => {
-            let fields = &fields.unnamed;
-            if fields.len() == 1 && is_type_u8(&fields.first().unwrap().ty) {
-                (StructKind::TupleStruct, fields)
-            } else {
-                unimplemented!(
-                    "`Dump` can only be derived for structs with named fields or with a single unnamed `u8` field"
-                )
-            }
-        }
-        _ => unimplemented!(
+    let Some((kind, fields)) = extract_struct_info(data) else {
+        unimplemented!(
             "`Dump` can only be derived for structs with named fields or with a single unnamed `u8` field"
-        ),
+        )
     };
 
     if kind == StructKind::TupleStruct {
@@ -434,6 +412,26 @@ fn get_doc(attrs: &[syn::Attribute]) -> Option<String> {
         }
     }
     if doc.is_empty() { None } else { Some(doc) }
+}
+
+fn extract_struct_info(
+    data: &syn::DataStruct,
+) -> Option<(
+    StructKind,
+    &syn::punctuated::Punctuated<syn::Field, syn::token::Comma>,
+)> {
+    match &data.fields {
+        syn::Fields::Named(fields) => Some((StructKind::NamedStruct, &fields.named)),
+        syn::Fields::Unnamed(fields) => {
+            let fields = &fields.unnamed;
+            if fields.len() == 1 && is_type_u8(&fields.first().unwrap().ty) {
+                Some((StructKind::TupleStruct, fields))
+            } else {
+                None
+            }
+        }
+        _ => None,
+    }
 }
 
 #[derive(PartialEq)]
