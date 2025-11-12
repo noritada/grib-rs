@@ -174,9 +174,14 @@ fn impl_try_from_slice_for_enum(
                 slice: &[u8],
                 pos: &mut usize,
             ) -> grib_template_helpers::TryFromSliceResult<Self> {
-                match discriminant.into() {
+                let discriminant = discriminant.into();
+                match discriminant {
                     #(#arms),*,
-                    _ => panic!("unknown variant for {}", stringify!(#name)),
+                    _ => panic!(
+                        "unknown variant for {} (discriminant = {})",
+                        stringify!(#name),
+                        &discriminant
+                    ),
                 }
             }
         }
