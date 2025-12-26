@@ -825,9 +825,7 @@ Data Representation:                    {}
     ///     Ok(())
     /// }
     /// ```
-    pub fn dump<W: std::io::Write>(&self, writer: &mut W) -> Result<(), GribError> {
-        // TODO: return `Result<(), std::io::Error>` instead.
-
+    pub fn dump<W: std::io::Write>(&self, writer: &mut W) -> Result<(), std::io::Error> {
         let write_heading =
             |writer: &mut W, sect: &SectionInfo, sect_name: &str| -> Result<(), std::io::Error> {
                 let SectionInfo { num, size, .. } = sect;
