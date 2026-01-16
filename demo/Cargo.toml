@@ -23,4 +23,4 @@ web-sys = { version = "0.3", features = [
     "CanvasRenderingContext2d",
     "ImageData",
 ] }
-yew = { version = "0.21", features = ["csr"] }
+yew = { version = "0.22", features = ["csr"] }
