@@ -10,32 +10,27 @@ use std::{
 use eccodes_sys::grib_handle;
 
 #[derive(Debug)]
-pub(crate) struct Error(String);
-
-impl fmt::Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.0)
-    }
-}
-
-impl error::Error for Error {
-    fn source(&self) -> Option<&(dyn error::Error + 'static)> {
-        None
-    }
-}
-
-impl From<&str> for Error {
-    fn from(value: &str) -> Self {
-        Self(value.to_owned())
-    }
-}
-
 pub(crate) struct Grib2EncoderInput<'a> {
     pub vals: &'a [f64],
     pub latlon_shape: (usize, usize),
     pub first_point_latlon: (f64, f64),
     pub last_point_latlon: (f64, f64),
     pub date_time: grib::UtcDateTime,
+}
+
+pub(crate) fn encode_grib2(
+    input: &Grib2EncoderInput<'_>,
+    packing_type: &str,
+) -> Result<Vec<u8>, Error> {
+    let out = tempfile::NamedTempFile::new().map_err(|e| Error(e.to_string()))?;
+    let out_fname = out.path();
+    write_grib2(input, packing_type, out_fname)?;
+    let mut f = out.reopen().map_err(|e| Error(e.to_string()))?;
+    let mut buf = Vec::new();
+    f.read_to_end(&mut buf).map_err(|e| Error(e.to_string()))?;
+    out.close().map_err(|e| Error(e.to_string()))?;
+
+    Ok(buf)
 }
 
 pub(crate) fn write_grib2<P: AsRef<Path>>(
@@ -132,21 +127,6 @@ pub(crate) fn write_grib2<P: AsRef<Path>>(
     gh.write_message(out_fname)?;
 
     Ok(())
-}
-
-pub(crate) fn encode_grib2(
-    input: &Grib2EncoderInput<'_>,
-    packing_type: &str,
-) -> Result<Vec<u8>, Error> {
-    let out = tempfile::NamedTempFile::new().map_err(|e| Error(e.to_string()))?;
-    let out_fname = out.path();
-    write_grib2(input, packing_type, out_fname)?;
-    let mut f = out.reopen().map_err(|e| Error(e.to_string()))?;
-    let mut buf = Vec::new();
-    f.read_to_end(&mut buf).map_err(|e| Error(e.to_string()))?;
-    out.close().map_err(|e| Error(e.to_string()))?;
-
-    Ok(buf)
 }
 
 struct GribHandle(NonNull<grib_handle>);
@@ -269,4 +249,25 @@ fn const_c_char(s: &str) -> Result<*const c_char, Error> {
 /// ```
 fn normalize_longitude(val: f64) -> f64 {
     if val < 0. { val + 360. } else { val }
+}
+
+#[derive(Debug)]
+pub(crate) struct Error(String);
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+impl error::Error for Error {
+    fn source(&self) -> Option<&(dyn error::Error + 'static)> {
+        None
+    }
+}
+
+impl From<&str> for Error {
+    fn from(value: &str) -> Self {
+        Self(value.to_owned())
+    }
 }
