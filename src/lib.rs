@@ -7,6 +7,7 @@ pub mod cookbook;
 mod datatypes;
 mod decoder;
 pub mod def;
+mod encoder;
 mod error;
 mod grid;
 mod helpers;
@@ -20,6 +21,7 @@ pub use crate::{
     context::*,
     datatypes::*,
     decoder::*,
+    encoder::*,
     error::*,
     grid::{
         EarthShapeDefinition, GaussianGridDefinition, GridPointIndexIterator, GridPointIterator,
