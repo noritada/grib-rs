@@ -21,10 +21,11 @@ pub(crate) struct Grib2EncoderInput<'a> {
 pub(crate) fn encode_grib2(
     input: &Grib2EncoderInput<'_>,
     packing_type: &str,
+    decimal_scale: i16,
 ) -> Result<Vec<u8>, Error> {
     let out = tempfile::NamedTempFile::new().map_err(|e| Error(e.to_string()))?;
     let out_fname = out.path();
-    write_grib2(input, packing_type, out_fname)?;
+    write_grib2(input, packing_type, decimal_scale, out_fname)?;
     let mut f = out.reopen().map_err(|e| Error(e.to_string()))?;
     let mut buf = Vec::new();
     f.read_to_end(&mut buf).map_err(|e| Error(e.to_string()))?;
@@ -36,6 +37,7 @@ pub(crate) fn encode_grib2(
 pub(crate) fn write_grib2<P: AsRef<Path>>(
     input: &Grib2EncoderInput<'_>,
     packing_type: &str,
+    decimal_scale: i16,
     out_fname: P,
 ) -> Result<(), Error> {
     let gh = GribHandle::new_from_samples("regular_ll_pl_grib2")?;
@@ -110,19 +112,22 @@ pub(crate) fn write_grib2<P: AsRef<Path>>(
     gh.set_missing("scaledValueOfSecondFixedSurface")?;
 
     // Sections 5 & 7
-    if input.vals.iter().any(|val| val.is_nan()) {
-        let vals = input
-            .vals
-            .iter()
-            .map(|val| if val.is_nan() { -9999. } else { *val })
-            .collect::<Vec<_>>();
+    let vals = input
+        .vals
+        .iter()
+        .map(|val| {
+            if val.is_nan() {
+                -9999.
+            } else {
+                *val * 10_f64.powf(decimal_scale as f64)
+            }
+        })
+        .collect::<Vec<_>>();
 
-        gh.set_double_array("values", &vals)?;
-    } else {
-        gh.set_double_array("values", input.vals)?;
-    }
+    gh.set_double_array("values", &vals)?;
 
     gh.set_string("packingType", packing_type)?;
+    gh.set_long("decimalScaleFactor", decimal_scale.into())?;
 
     gh.write_message(out_fname)?;
 
