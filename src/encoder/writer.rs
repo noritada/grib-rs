@@ -55,6 +55,64 @@ impl WriteToBuffer for f32 {
     }
 }
 
+#[derive(Clone)]
+pub(crate) struct NBitwise<B> {
+    data: B,
+    num_bits: usize,
+}
+
+impl<B> NBitwise<B> {
+    pub(crate) fn new(data: B, num_bits: usize) -> Self {
+        Self { data, num_bits }
+    }
+}
+
+impl<B: AsRef<[u32]>> WriteToBuffer for NBitwise<B> {
+    fn write_to_buffer(&self, buf: &mut Vec<u8>) -> Result<(), &'static str> {
+        if self.num_bits == 0 {
+            return Err("invalid `num_bits` value");
+        }
+        if buf.len() < self.num_bytes_required() {
+            return Err("destination buffer is too small");
+        }
+
+        let (mut current_pos, mut current_offset) = (0, 0);
+
+        const DATA_NUM_BITS: usize = 32;
+        let shr_bits = DATA_NUM_BITS - 8;
+        if self.num_bits % 8 == 0 {
+            for item in self.data.as_ref() {
+                let mut shl_bits = DATA_NUM_BITS - self.num_bits;
+                while shl_bits < DATA_NUM_BITS {
+                    buf[current_pos] = (item << shl_bits >> shr_bits) as u8;
+                    shl_bits += 8;
+                    current_pos += 1;
+                }
+            }
+        } else {
+            for item in self.data.as_ref() {
+                let mut shl_bits = DATA_NUM_BITS - self.num_bits;
+                while shl_bits < DATA_NUM_BITS {
+                    buf[current_pos] |= (item << shl_bits >> shr_bits >> current_offset) as u8;
+                    let shift_size = (DATA_NUM_BITS - shl_bits).min(8 - current_offset);
+                    shl_bits += shift_size;
+                    current_offset += shift_size;
+                    if current_offset >= 8 {
+                        current_pos += 1;
+                        current_offset -= 8;
+                    }
+                }
+            }
+        }
+
+        Ok(())
+    }
+
+    fn num_bytes_required(&self) -> usize {
+        (self.num_bits * self.data.as_ref().len()).div_ceil(8)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -75,5 +133,55 @@ mod tests {
         (writing_u8_to_buffer, 1_u8, vec![1, 0, 0, 0]),
         (writing_u16_to_buffer, 1_u16, vec![0, 1, 0, 0]),
         (writing_u32_to_buffer, 1_u32, vec![0, 0, 0, 1]),
+    }
+
+    macro_rules! test_nbitwise {
+        ($(($name:ident, $input:expr, $num_bits:expr, $expected:expr),)*) => ($(
+            #[test]
+            fn $name() {
+                let src = NBitwise::new($input, $num_bits);
+                let mut buf = vec![0; src.num_bytes_required()];
+                let result = src.write_to_buffer(&mut buf);
+                assert!(result.is_ok());
+                assert_eq!(buf, $expected);
+            }
+        )*);
+    }
+
+    test_nbitwise! {
+        (
+            nbitwise_for_0_modulo_8,
+            (0_u32..11).collect::<Vec<_>>(),
+            16,
+            vec![
+                0x00, 0x00, 0x00, 0x01, 0x00, 0x02, 0x00, 0x03, 0x00, 0x04, 0x00, 0x05, 0x00, 0x06,
+                0x00, 0x07, 0x00, 0x08, 0x00, 0x09, 0x00, 0x0a,
+            ]
+        ),
+        (
+            nbitwise_for_4_modulo_8,
+            (0_u32..11).collect::<Vec<_>>(),
+            4,
+            vec![0x01, 0x23, 0x45, 0x67, 0x89, 0xa0]
+        ),
+        (
+            nbitwise_for_5_modulo_8,
+            (0_u32..11).collect::<Vec<_>>(),
+            5,
+            vec![
+                0b00000_000, 0b01_00010_0, 0b0011_0010, 0b0_00101_00, 0b110_00111, 0b01000_010,
+                0b01_01010_0
+            ]
+        ),
+        (
+            nbitwise_for_3_modulo_8_larger_than_8,
+            (0_u32..11).collect::<Vec<_>>(),
+            11,
+            vec![
+                0b00000000, 0b000_00000, 0b000001_00, 0b00000001, 0b0_0000000, 0b0011_0000,
+                0b0000100_0, 0b00000001, 0b01_000000, 0b00110_000, 0b00000111, 0b00000001,
+                0b000_00000, 0b001001_00, 0b00000101, 0b0_0000000
+            ]
+        ),
     }
 }
