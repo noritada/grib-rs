@@ -78,25 +78,26 @@ impl<B: AsRef<[u32]>> WriteToBuffer for NBitwise<B> {
 
         let (mut current_pos, mut current_offset) = (0, 0);
 
-        const DATA_NUM_BITS: usize = 32;
-        let shr_bits = DATA_NUM_BITS - 8;
+        const BYTE_MASK: u32 = 0xff;
         if self.num_bits % 8 == 0 {
             for item in self.data.as_ref() {
-                let mut shl_bits = DATA_NUM_BITS - self.num_bits;
-                while shl_bits < DATA_NUM_BITS {
-                    buf[current_pos] = (item << shl_bits >> shr_bits) as u8;
-                    shl_bits += 8;
+                let mut num_bits = self.num_bits;
+                while num_bits > 0 {
+                    num_bits -= 8;
+                    buf[current_pos] = ((item >> num_bits) & BYTE_MASK) as u8;
                     current_pos += 1;
                 }
             }
         } else {
             for item in self.data.as_ref() {
-                let mut shl_bits = DATA_NUM_BITS - self.num_bits;
-                while shl_bits < DATA_NUM_BITS {
-                    buf[current_pos] |= (item << shl_bits >> shr_bits >> current_offset) as u8;
-                    let shift_size = (DATA_NUM_BITS - shl_bits).min(8 - current_offset);
-                    shl_bits += shift_size;
-                    current_offset += shift_size;
+                let mut num_bits = self.num_bits;
+                while num_bits > 0 {
+                    let window_size = (8 - current_offset).min(num_bits);
+                    let pad_size = 8 - 8.min(current_offset + num_bits);
+                    num_bits -= window_size;
+                    buf[current_pos] |=
+                        (((item >> num_bits) & (BYTE_MASK >> current_offset)) as u8) << pad_size;
+                    current_offset += window_size;
                     if current_offset >= 8 {
                         current_pos += 1;
                         current_offset -= 8;
