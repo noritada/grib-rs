@@ -95,8 +95,13 @@ impl<B: AsRef<[u32]>> WriteToBuffer for NBitwise<B> {
                     let window_size = (8 - current_offset).min(num_bits);
                     let pad_size = 8 - 8.min(current_offset + num_bits);
                     num_bits -= window_size;
-                    buf[current_pos] |=
+                    let value =
                         (((item >> num_bits) & (BYTE_MASK >> current_offset)) as u8) << pad_size;
+                    if current_offset == 0 {
+                        buf[current_pos] = value;
+                    } else {
+                        buf[current_pos] |= value;
+                    }
                     current_offset += window_size;
                     if current_offset >= 8 {
                         current_pos += 1;
@@ -141,10 +146,10 @@ mod tests {
             #[test]
             fn $name() {
                 let src = NBitwise::new($input, $num_bits);
-                let mut buf = vec![0; src.num_bytes_required()];
-                let result = src.write_to_buffer(&mut buf);
+                let mut dirty_buf = vec![1; src.num_bytes_required()];
+                let result = src.write_to_buffer(&mut dirty_buf);
                 assert!(result.is_ok());
-                assert_eq!(buf, $expected);
+                assert_eq!(dirty_buf, $expected);
             }
         )*);
     }
