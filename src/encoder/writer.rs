@@ -1,14 +1,14 @@
 use crate::encoder::to_grib_signed::ToGribSigned as _;
 
 pub(crate) trait WriteToBuffer {
-    fn write_to_buffer(&self, buf: &mut Vec<u8>) -> Result<(), &'static str>;
+    fn write_to_buffer(&self, buf: &mut [u8]) -> Result<(), &'static str>;
     fn num_bytes_required(&self) -> usize;
 }
 
 macro_rules! add_impl_for_unsigned_integer_types {
     ($($ty:ty,)*) => ($(
         impl WriteToBuffer for $ty {
-            fn write_to_buffer(&self, buf: &mut Vec<u8>) -> Result<(), &'static str> {
+            fn write_to_buffer(&self, buf: &mut [u8]) -> Result<(), &'static str> {
                 if buf.len() < self.num_bytes_required() {
                     return Err("destination buffer is too small");
                 }
@@ -32,7 +32,7 @@ add_impl_for_unsigned_integer_types![u8, u16, u32, u64,];
 macro_rules! add_impl_for_signed_integer_types {
     ($($ty:ty,)*) => ($(
         impl WriteToBuffer for $ty {
-            fn write_to_buffer(&self, buf: &mut Vec<u8>) -> Result<(), &'static str> {
+            fn write_to_buffer(&self, buf: &mut [u8]) -> Result<(), &'static str> {
                 self.to_grib_signed().write_to_buffer(buf)
             }
 
@@ -46,7 +46,7 @@ macro_rules! add_impl_for_signed_integer_types {
 add_impl_for_signed_integer_types![i8, i16, i32,];
 
 impl WriteToBuffer for f32 {
-    fn write_to_buffer(&self, buf: &mut Vec<u8>) -> Result<(), &'static str> {
+    fn write_to_buffer(&self, buf: &mut [u8]) -> Result<(), &'static str> {
         self.to_bits().write_to_buffer(buf)
     }
 
@@ -68,7 +68,7 @@ impl<B> NBitwise<B> {
 }
 
 impl<B: AsRef<[u32]>> WriteToBuffer for NBitwise<B> {
-    fn write_to_buffer(&self, buf: &mut Vec<u8>) -> Result<(), &'static str> {
+    fn write_to_buffer(&self, buf: &mut [u8]) -> Result<(), &'static str> {
         if self.num_bits == 0 {
             return Err("invalid `num_bits` value");
         }
