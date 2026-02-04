@@ -154,7 +154,7 @@ impl Grib2SubmessageDecoder {
     ) -> Result<Grib2DecodedValues<'_, impl Iterator<Item = f32> + '_>, GribError> {
         let decoder = match &self.sect5_param.payload.template {
             DataRepresentationTemplate::_5_0(template) => {
-                Grib2ValueIterator::SigSNS(simple::Simple(self, template).iter()?)
+                Grib2ValueIterator::SigSTNS(simple::Simple(self, template).iter()?)
             }
             DataRepresentationTemplate::_5_2(template) => {
                 Grib2ValueIterator::SigSC(complex::Complex(self, template).iter()?)
@@ -286,7 +286,7 @@ where
 }
 
 enum Grib2ValueIterator<'d> {
-    SigSNS(SimplePackingDecoder<NBitwiseIterator<&'d [u8]>>),
+    SigSTNS(SimplePackingDecoder<std::iter::Take<NBitwiseIterator<&'d [u8]>>>),
     SigSC(SimplePackingDecoder<ComplexPackingDecoded<'d>>),
     SigSSCI(
         SimplePackingDecoder<
@@ -307,7 +307,7 @@ impl<'d> Iterator for Grib2ValueIterator<'d> {
 
     fn next(&mut self) -> Option<Self::Item> {
         match self {
-            Self::SigSNS(inner) => inner.next(),
+            Self::SigSTNS(inner) => inner.next(),
             Self::SigSC(inner) => inner.next(),
             Self::SigSSCI(inner) => inner.next(),
             Self::SigSI(inner) => inner.next(),
@@ -320,7 +320,7 @@ impl<'d> Iterator for Grib2ValueIterator<'d> {
 
     fn size_hint(&self) -> (usize, Option<usize>) {
         match self {
-            Self::SigSNS(inner) => inner.size_hint(),
+            Self::SigSTNS(inner) => inner.size_hint(),
             Self::SigSC(inner) => inner.size_hint(),
             Self::SigSSCI(inner) => inner.size_hint(),
             Self::SigSI(inner) => inner.size_hint(),
