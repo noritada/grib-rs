@@ -1,15 +1,16 @@
 use crate::encoder::to_grib_signed::ToGribSigned as _;
 
 pub trait WriteToBuffer {
-    fn write_to_buffer(&self, buf: &mut [u8]) -> Result<(), &'static str>;
+    fn write_to_buffer(&self, buf: &mut [u8]) -> Result<usize, &'static str>;
     fn num_bytes_required(&self) -> usize;
 }
 
 macro_rules! add_impl_for_unsigned_integer_types {
     ($($ty:ty,)*) => ($(
         impl WriteToBuffer for $ty {
-            fn write_to_buffer(&self, buf: &mut [u8]) -> Result<(), &'static str> {
-                if buf.len() < self.num_bytes_required() {
+            fn write_to_buffer(&self, buf: &mut [u8]) -> Result<usize, &'static str> {
+                let len = self.num_bytes_required();
+                if buf.len() < len {
                     return Err("destination buffer is too small");
                 }
 
@@ -17,7 +18,7 @@ macro_rules! add_impl_for_unsigned_integer_types {
                 for i in 0..self.num_bytes_required() {
                     buf[i] = bytes[i];
                 }
-                Ok(())
+                Ok(len)
             }
 
             fn num_bytes_required(&self) -> usize {
@@ -32,7 +33,7 @@ add_impl_for_unsigned_integer_types![u8, u16, u32, u64,];
 macro_rules! add_impl_for_signed_integer_types {
     ($($ty:ty,)*) => ($(
         impl WriteToBuffer for $ty {
-            fn write_to_buffer(&self, buf: &mut [u8]) -> Result<(), &'static str> {
+            fn write_to_buffer(&self, buf: &mut [u8]) -> Result<usize, &'static str> {
                 self.to_grib_signed().write_to_buffer(buf)
             }
 
@@ -46,7 +47,7 @@ macro_rules! add_impl_for_signed_integer_types {
 add_impl_for_signed_integer_types![i8, i16, i32,];
 
 impl WriteToBuffer for f32 {
-    fn write_to_buffer(&self, buf: &mut [u8]) -> Result<(), &'static str> {
+    fn write_to_buffer(&self, buf: &mut [u8]) -> Result<usize, &'static str> {
         self.to_bits().write_to_buffer(buf)
     }
 
@@ -56,13 +57,13 @@ impl WriteToBuffer for f32 {
 }
 
 impl<const N: usize> WriteToBuffer for [u8; N] {
-    fn write_to_buffer(&self, buf: &mut [u8]) -> Result<(), &'static str> {
+    fn write_to_buffer(&self, buf: &mut [u8]) -> Result<usize, &'static str> {
         if buf.len() < N {
             return Err("destination buffer is too small");
         }
 
         buf.copy_from_slice(self);
-        Ok(())
+        Ok(N)
     }
 
     fn num_bytes_required(&self) -> usize {
@@ -83,11 +84,12 @@ impl<B> NBitwise<B> {
 }
 
 impl<B: AsRef<[u32]>> WriteToBuffer for NBitwise<B> {
-    fn write_to_buffer(&self, buf: &mut [u8]) -> Result<(), &'static str> {
+    fn write_to_buffer(&self, buf: &mut [u8]) -> Result<usize, &'static str> {
         if self.num_bits == 0 {
             return Err("invalid `num_bits` value");
         }
-        if buf.len() < self.num_bytes_required() {
+        let len = self.num_bytes_required();
+        if buf.len() < len {
             return Err("destination buffer is too small");
         }
 
@@ -126,7 +128,7 @@ impl<B: AsRef<[u32]>> WriteToBuffer for NBitwise<B> {
             }
         }
 
-        Ok(())
+        Ok(len)
     }
 
     fn num_bytes_required(&self) -> usize {
