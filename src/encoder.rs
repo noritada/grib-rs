@@ -22,10 +22,18 @@ pub trait WriteGrib2DataSections {
     fn write_section7(&self, buf: &mut [u8]) -> Result<(), &'static str>;
 }
 
+/// Strategies applied when performing simple packing on numerical sequences.
+/// Simple packing is a method for discretizing continuous numerical values as
+/// integers, and various approaches can be taken during this process.
 pub enum SimplePackingStrategy {
+    /// A strategy specifying how many decimal places to consider valid for the
+    /// numbers. This strategy is effective for various types of data, such as
+    /// observation data obtained from specific observation instruments, where
+    /// precision is clearly defined.
     Decimal(i16),
 }
 
+/// Simple packing encoder.
 pub struct SimplePackingEncoder<'a> {
     data: &'a [f64],
     strategy: SimplePackingStrategy,
@@ -36,6 +44,7 @@ impl<'a> SimplePackingEncoder<'a> {
         Self { data, strategy }
     }
 
+    /// Performs data encoding.
     pub fn encode(&self) -> SimplePackingEncoded {
         match self.strategy {
             SimplePackingStrategy::Decimal(dec) => {
@@ -51,6 +60,9 @@ impl<'a> SimplePackingEncoder<'a> {
     }
 }
 
+/// Data obtained through encoding using simple packing. Instances are typically
+/// used to write GRIB2 data via the methods defined in
+/// [`WriteGrib2DataSections`].
 pub struct SimplePackingEncoded {
     params: SimplePacking,
     coded: Vec<u32>,
@@ -61,6 +73,7 @@ impl SimplePackingEncoded {
         Self { params, coded }
     }
 
+    /// Returns the parameter set for simple packing.
     pub fn params(&self) -> &SimplePacking {
         &self.params
     }
