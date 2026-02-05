@@ -1,5 +1,27 @@
 use crate::{def::grib2::template::param_set::SimplePacking, encoder::writer::WriteToBuffer};
 
+/// A serializer that writes the byte sequence of sections concerning GPV data
+/// to the output buffer
+pub trait WriteGrib2DataSections {
+    /// Returns the length of the byte sequence in Section 5.
+    fn section5_len(&self) -> usize;
+
+    /// Writes the byte sequence of Section 5 to the output buffer
+    fn write_section5(&self, buf: &mut [u8]) -> Result<(), &'static str>;
+
+    /// Returns the length of the byte sequence in Section 6.
+    fn section6_len(&self) -> usize;
+
+    /// Writes the byte sequence of Section 6 to the output buffer
+    fn write_section6(&self, buf: &mut [u8]) -> Result<(), &'static str>;
+
+    /// Returns the length of the byte sequence in Section 7.
+    fn section7_len(&self) -> usize;
+
+    /// Writes the byte sequence of Section 7 to the output buffer
+    fn write_section7(&self, buf: &mut [u8]) -> Result<(), &'static str>;
+}
+
 pub enum SimplePackingStrategy {
     Decimal(i16),
 }
@@ -42,18 +64,20 @@ impl SimplePackingEncoded {
     pub fn params(&self) -> &SimplePacking {
         &self.params
     }
+}
 
-    pub fn section5_size(&self) -> usize {
+impl WriteGrib2DataSections for SimplePackingEncoded {
+    fn section5_len(&self) -> usize {
         21
     }
 
-    pub fn write_section5(&self, buf: &mut [u8]) -> Result<(), &'static str> {
-        let size = self.section5_size();
-        if buf.len() < size {
+    fn write_section5(&self, buf: &mut [u8]) -> Result<(), &'static str> {
+        let len = self.section5_len();
+        if buf.len() < len {
             return Err("destination buffer is too small");
         }
 
-        (size as u32).write_to_buffer(&mut buf[0..4])?; // header.len
+        (len as u32).write_to_buffer(&mut buf[0..4])?; // header.len
         5_u8.write_to_buffer(&mut buf[4..5])?; // header.sect_num
         (self.coded.len() as u32).write_to_buffer(&mut buf[5..9])?; // payload.num_encoded_points
         0_u16.write_to_buffer(&mut buf[9..11])?; // payload.template_num
@@ -66,38 +90,38 @@ impl SimplePackingEncoded {
         Ok(())
     }
 
-    pub fn section6_size(&self) -> usize {
+    fn section6_len(&self) -> usize {
         6
     }
 
-    pub fn write_section6(&self, buf: &mut [u8]) -> Result<(), &'static str> {
-        let size = self.section6_size();
-        if buf.len() < size {
+    fn write_section6(&self, buf: &mut [u8]) -> Result<(), &'static str> {
+        let len = self.section6_len();
+        if buf.len() < len {
             return Err("destination buffer is too small");
         }
 
-        (size as u32).write_to_buffer(&mut buf[0..4])?;
+        (len as u32).write_to_buffer(&mut buf[0..4])?;
         6_u8.write_to_buffer(&mut buf[4..5])?;
         255_u8.write_to_buffer(&mut buf[5..6])?;
 
         Ok(())
     }
 
-    pub fn section7_size(&self) -> usize {
+    fn section7_len(&self) -> usize {
         let nbitwise = writer::NBitwise::new(&self.coded, self.params.num_bits as usize);
         nbitwise.num_bytes_required() + 5
     }
 
-    pub fn write_section7(&self, buf: &mut [u8]) -> Result<(), &'static str> {
+    fn write_section7(&self, buf: &mut [u8]) -> Result<(), &'static str> {
         let nbitwise = writer::NBitwise::new(&self.coded, self.params.num_bits as usize);
-        let size = self.section7_size();
-        if buf.len() < size {
+        let len = self.section7_len();
+        if buf.len() < len {
             return Err("destination buffer is too small");
         }
 
-        (size as u32).write_to_buffer(&mut buf[0..4])?;
+        (len as u32).write_to_buffer(&mut buf[0..4])?;
         7_u8.write_to_buffer(&mut buf[4..5])?;
-        nbitwise.write_to_buffer(&mut buf[5..size])?;
+        nbitwise.write_to_buffer(&mut buf[5..len])?;
 
         Ok(())
     }
@@ -183,11 +207,11 @@ mod tests {
         let values = (2..11).map(|val| val as f64).collect::<Vec<_>>();
         let encoder = SimplePackingEncoder::new(&values, SimplePackingStrategy::Decimal(0));
         let encoded = encoder.encode();
-        let mut sect5 = vec![0; encoded.section5_size()];
+        let mut sect5 = vec![0; encoded.section5_len()];
         encoded.write_section5(&mut sect5)?;
-        let mut sect6 = vec![0; encoded.section6_size()];
+        let mut sect6 = vec![0; encoded.section6_len()];
         encoded.write_section6(&mut sect6)?;
-        let mut sect7 = vec![0; encoded.section7_size()];
+        let mut sect7 = vec![0; encoded.section7_len()];
         encoded.write_section7(&mut sect7)?;
         let decoder = crate::Grib2SubmessageDecoder::new(values.len(), sect5, sect6, sect7)?;
         let actual = decoder.dispatch()?.collect::<Vec<_>>();
