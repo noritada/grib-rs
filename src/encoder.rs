@@ -170,6 +170,62 @@ fn determine_simple_packing_params(values: &[f64], dec: i16) -> (SimplePacking, 
     (params, scaled)
 }
 
+pub fn write_section0(discipline: u8, len: usize, buf: &mut [u8]) -> Result<(), &'static str> {
+    const HEAD: [u8; 6] = [0x47, 0x52, 0x49, 0x42, 0xff, 0xff];
+    const EDITION: u8 = 2;
+    const LEN: usize = 16;
+    if buf.len() < LEN {
+        return Err("destination buffer is too small");
+    }
+
+    HEAD.write_to_buffer(&mut buf[0..HEAD.len()])?;
+    discipline.write_to_buffer(&mut buf[6..7])?;
+    EDITION.write_to_buffer(&mut buf[7..8])?;
+    (len as u64).write_to_buffer(&mut buf[8..16])?;
+    Ok(())
+}
+
+pub fn write_section1(
+    payload: &crate::def::grib2::Section1Payload,
+    buf: &mut [u8],
+) -> Result<(), &'static str> {
+    const LEN: usize = 0x15;
+    if buf.len() < LEN {
+        return Err("destination buffer is too small");
+    }
+
+    (LEN as u32).write_to_buffer(&mut buf[0..4])?;
+    2_u8.write_to_buffer(&mut buf[4..5])?;
+    payload.centre_id.write_to_buffer(&mut buf[5..7])?;
+    payload.subcentre_id.write_to_buffer(&mut buf[7..9])?;
+    payload
+        .master_table_version
+        .write_to_buffer(&mut buf[9..10])?;
+    payload
+        .local_table_version
+        .write_to_buffer(&mut buf[10..11])?;
+    payload
+        .ref_time_significance
+        .write_to_buffer(&mut buf[11..12])?;
+    payload.ref_time.year.write_to_buffer(&mut buf[12..14])?;
+    payload.ref_time.month.write_to_buffer(&mut buf[14..15])?;
+    payload.ref_time.day.write_to_buffer(&mut buf[15..16])?;
+    payload.ref_time.hour.write_to_buffer(&mut buf[16..17])?;
+    payload.ref_time.minute.write_to_buffer(&mut buf[17..18])?;
+    payload.ref_time.second.write_to_buffer(&mut buf[18..19])?;
+    payload.prod_status.write_to_buffer(&mut buf[19..20])?;
+    payload.data_type.write_to_buffer(&mut buf[20..21])?;
+    Ok(())
+}
+
+pub fn write_section8(buf: &mut [u8]) -> Result<(), &'static str> {
+    const SIGNATURE: [u8; 4] = [0x37, 0x37, 0x37, 0x37];
+    if buf.len() < SIGNATURE.num_bytes_required() {
+        return Err("destination buffer is too small");
+    }
+    SIGNATURE.write_to_buffer(buf)
+}
+
 mod to_grib_signed;
 mod writer;
 

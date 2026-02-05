@@ -55,6 +55,21 @@ impl WriteToBuffer for f32 {
     }
 }
 
+impl<const N: usize> WriteToBuffer for [u8; N] {
+    fn write_to_buffer(&self, buf: &mut [u8]) -> Result<(), &'static str> {
+        if buf.len() < N {
+            return Err("destination buffer is too small");
+        }
+
+        buf.copy_from_slice(self);
+        Ok(())
+    }
+
+    fn num_bytes_required(&self) -> usize {
+        N
+    }
+}
+
 #[derive(Clone)]
 pub(crate) struct NBitwise<B> {
     data: B,
