@@ -161,17 +161,27 @@ fn determine_simple_packing_params(values: &[f64], dec: i16) -> (SimplePacking, 
         })
         .collect::<Vec<_>>();
     let ref_val = min as f32;
-    let range = max - min;
-    let exp = 0;
-    let num_bits = (range + 1.).log2().ceil() as u8;
-    // TODO: if `num_bits` is too large, increase `exp` to reduce `num_bits`.
-    let params = SimplePacking {
-        ref_val,
-        exp,
-        dec,
-        num_bits,
-    };
-    (params, scaled)
+    if min == max {
+        let params = SimplePacking {
+            ref_val,
+            exp: 0,
+            dec,
+            num_bits: 0,
+        };
+        (params, Vec::new())
+    } else {
+        let range = max - min;
+        let exp = 0;
+        let num_bits = (range + 1.).log2().ceil() as u8;
+        // TODO: if `num_bits` is too large, increase `exp` to reduce `num_bits`.
+        let params = SimplePacking {
+            ref_val,
+            exp,
+            dec,
+            num_bits,
+        };
+        (params, scaled)
+    }
 }
 
 pub fn write_section0(discipline: u8, len: usize, buf: &mut [u8]) -> Result<usize, &'static str> {
@@ -239,17 +249,26 @@ mod writer;
 mod tests {
     use super::*;
 
-    macro_rules! test_decimal_strategy{
-        ($(($name:ident, $decimal:expr, $expected:expr),)*) => ($(
+    macro_rules! test_decimal_strategy {
+        ($((
+            $name:ident,
+            $input:expr,
+            $decimal:expr,
+            $expected_params:expr,
+            $expected_len:expr
+        ),)*) => ($(
             #[test]
             fn $name() {
-                let values = (2..11).map(|val| val as f64).collect::<Vec<_>>();
+                let values = $input;
                 let encoder =
                     SimplePackingEncoder::new(&values, SimplePackingStrategy::Decimal($decimal));
                 let encoded = encoder.encode();
-                let actual = encoded.params();
-                let expected = $expected;
-                assert_eq!(actual, &expected);
+                let actual_params = encoded.params();
+                let expected_params = $expected_params;
+                assert_eq!(actual_params, &expected_params);
+                let actual_len = encoded.coded.len();
+                let expected_len = $expected_len;
+                assert_eq!(actual_len, expected_len);
             }
         )*);
     }
@@ -257,23 +276,39 @@ mod tests {
     test_decimal_strategy! {
         (
             decimal_strategy_with_decimal_0,
+            (2..11).map(|val| val as f64).collect::<Vec<_>>(),
             0,
             SimplePacking {
                 ref_val: 2.,
                 exp: 0,
                 dec: 0,
                 num_bits: 4,
-            }
+            },
+            9
         ),
         (
             decimal_strategy_with_decimal_1,
+            (2..11).map(|val| val as f64).collect::<Vec<_>>(),
             1,
             SimplePacking {
                 ref_val: 20.,
                 exp: 0,
                 dec: 1,
                 num_bits: 7,
-            }
+            },
+            9
+        ),
+        (
+            decimal_strategy_with_decimal_0_for_unique_values,
+            vec![10.0_f64; 256],
+            0,
+            SimplePacking {
+                ref_val: 10.0,
+                exp: 0,
+                dec: 0,
+                num_bits: 0,
+            },
+            0
         ),
     }
 
