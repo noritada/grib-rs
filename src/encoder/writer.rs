@@ -62,7 +62,7 @@ impl<const N: usize> WriteToBuffer for [u8; N] {
             return Err("destination buffer is too small");
         }
 
-        buf.copy_from_slice(self);
+        buf[0..N].copy_from_slice(self);
         Ok(N)
     }
 
