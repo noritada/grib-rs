@@ -1,6 +1,6 @@
 use crate::encoder::to_grib_signed::ToGribSigned as _;
 
-pub(crate) trait WriteToBuffer {
+pub trait WriteToBuffer {
     fn write_to_buffer(&self, buf: &mut [u8]) -> Result<(), &'static str>;
     fn num_bytes_required(&self) -> usize;
 }

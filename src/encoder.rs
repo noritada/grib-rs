@@ -1,4 +1,5 @@
-use crate::{def::grib2::template::param_set::SimplePacking, encoder::writer::WriteToBuffer};
+use crate::def::grib2::template::param_set::SimplePacking;
+pub use crate::encoder::writer::WriteToBuffer;
 
 /// A serializer that writes the byte sequence of sections concerning GPV data
 /// to the output buffer
