@@ -50,11 +50,16 @@ impl<'a> SimplePackingEncoder<'a> {
         match self.strategy {
             SimplePackingStrategy::Decimal(dec) => {
                 let (params, scaled) = determine_simple_packing_params(self.data, dec);
-                let exp = 2_f64.powf(params.exp as f64);
-                let coded = scaled
-                    .iter()
-                    .map(|value| ((value - params.ref_val as f64) / exp).round() as u32)
-                    .collect::<Vec<_>>();
+                let coded = if params.num_bits == 0 {
+                    CodedValues::Unique(self.data.len())
+                } else {
+                    let exp = 2_f64.powf(params.exp as f64);
+                    let coded = scaled
+                        .iter()
+                        .map(|value| ((value - params.ref_val as f64) / exp).round() as u32)
+                        .collect::<Vec<_>>();
+                    CodedValues::NonUnique(coded)
+                };
                 SimplePackingEncoded::new(params, coded)
             }
         }
@@ -66,11 +71,11 @@ impl<'a> SimplePackingEncoder<'a> {
 /// [`WriteGrib2DataSections`].
 pub struct SimplePackingEncoded {
     params: SimplePacking,
-    coded: Vec<u32>,
+    coded: CodedValues,
 }
 
 impl SimplePackingEncoded {
-    fn new(params: SimplePacking, coded: Vec<u32>) -> Self {
+    fn new(params: SimplePacking, coded: CodedValues) -> Self {
         Self { params, coded }
     }
 
@@ -94,7 +99,7 @@ impl WriteGrib2DataSections for SimplePackingEncoded {
         let mut pos = 0;
         pos += (len as u32).write_to_buffer(&mut buf[pos..])?; // header.len
         pos += 5_u8.write_to_buffer(&mut buf[pos..])?; // header.sect_num
-        pos += (self.coded.len() as u32).write_to_buffer(&mut buf[pos..])?; // payload.num_encoded_points
+        pos += (self.coded.num_values() as u32).write_to_buffer(&mut buf[pos..])?; // payload.num_encoded_points
         pos += 0_u16.write_to_buffer(&mut buf[pos..])?; // payload.template_num
         pos += self.params.ref_val.write_to_buffer(&mut buf[pos..])?;
         pos += self.params.exp.write_to_buffer(&mut buf[pos..])?;
@@ -124,12 +129,17 @@ impl WriteGrib2DataSections for SimplePackingEncoded {
     }
 
     fn section7_len(&self) -> usize {
-        let nbitwise = writer::NBitwise::new(&self.coded, self.params.num_bits as usize);
-        nbitwise.num_bytes_required() + 5
+        let len = match &self.coded {
+            CodedValues::NonUnique(vec) => {
+                let nbitwise = writer::NBitwise::new(&vec, self.params.num_bits as usize);
+                nbitwise.num_bytes_required()
+            }
+            CodedValues::Unique(_) => 0,
+        };
+        5 + len
     }
 
     fn write_section7(&self, buf: &mut [u8]) -> Result<usize, &'static str> {
-        let nbitwise = writer::NBitwise::new(&self.coded, self.params.num_bits as usize);
         let len = self.section7_len();
         if buf.len() < len {
             return Err("destination buffer is too small");
@@ -138,7 +148,13 @@ impl WriteGrib2DataSections for SimplePackingEncoded {
         let mut pos = 0;
         pos += (len as u32).write_to_buffer(&mut buf[pos..])?;
         pos += 7_u8.write_to_buffer(&mut buf[pos..])?;
-        pos += nbitwise.write_to_buffer(&mut buf[pos..])?;
+        match &self.coded {
+            CodedValues::NonUnique(vec) => {
+                let nbitwise = writer::NBitwise::new(&vec, self.params.num_bits as usize);
+                pos += nbitwise.write_to_buffer(&mut buf[pos..])?;
+            }
+            CodedValues::Unique(_) => {}
+        }
 
         Ok(pos)
     }
@@ -181,6 +197,20 @@ fn determine_simple_packing_params(values: &[f64], dec: i16) -> (SimplePacking, 
             num_bits,
         };
         (params, scaled)
+    }
+}
+
+enum CodedValues {
+    NonUnique(Vec<u32>),
+    Unique(usize),
+}
+
+impl CodedValues {
+    pub(crate) fn num_values(&self) -> usize {
+        match self {
+            Self::NonUnique(vec) => vec.len(),
+            Self::Unique(size) => *size,
+        }
     }
 }
 
@@ -255,7 +285,6 @@ mod tests {
             $input:expr,
             $decimal:expr,
             $expected_params:expr,
-            $expected_len:expr
         ),)*) => ($(
             #[test]
             fn $name() {
@@ -266,9 +295,8 @@ mod tests {
                 let actual_params = encoded.params();
                 let expected_params = $expected_params;
                 assert_eq!(actual_params, &expected_params);
-                let actual_len = encoded.coded.len();
-                let expected_len = $expected_len;
-                assert_eq!(actual_len, expected_len);
+                let actual_num_values = encoded.coded.num_values();
+                assert_eq!(actual_num_values, values.len());
             }
         )*);
     }
@@ -284,7 +312,6 @@ mod tests {
                 dec: 0,
                 num_bits: 4,
             },
-            9
         ),
         (
             decimal_strategy_with_decimal_1,
@@ -296,7 +323,6 @@ mod tests {
                 dec: 1,
                 num_bits: 7,
             },
-            9
         ),
         (
             decimal_strategy_with_decimal_0_for_unique_values,
@@ -308,25 +334,42 @@ mod tests {
                 dec: 0,
                 num_bits: 0,
             },
-            0
         ),
     }
 
-    #[test]
-    fn grib2_writing() -> Result<(), Box<dyn std::error::Error>> {
-        let values = (2..11).map(|val| val as f64).collect::<Vec<_>>();
-        let encoder = SimplePackingEncoder::new(&values, SimplePackingStrategy::Decimal(0));
-        let encoded = encoder.encode();
-        let mut sect5 = vec![0; encoded.section5_len()];
-        encoded.write_section5(&mut sect5)?;
-        let mut sect6 = vec![0; encoded.section6_len()];
-        encoded.write_section6(&mut sect6)?;
-        let mut sect7 = vec![0; encoded.section7_len()];
-        encoded.write_section7(&mut sect7)?;
-        let decoder = crate::Grib2SubmessageDecoder::new(values.len(), sect5, sect6, sect7)?;
-        let actual = decoder.dispatch()?.collect::<Vec<_>>();
-        let expected = values.iter().map(|val| *val as f32).collect::<Vec<_>>();
-        assert_eq!(actual, expected);
-        Ok(())
+    macro_rules! grib2_coded_values_roundtrip_tests {
+        ($(($name:ident, $input:expr, $decimal:expr),)*) => ($(
+            #[test]
+            fn $name() -> Result<(), Box<dyn std::error::Error>> {
+                let values = $input;
+                let encoder =
+                    SimplePackingEncoder::new(&values, SimplePackingStrategy::Decimal($decimal));
+                let encoded = encoder.encode();
+                let mut sect5 = vec![0; encoded.section5_len()];
+                encoded.write_section5(&mut sect5)?;
+                let mut sect6 = vec![0; encoded.section6_len()];
+                encoded.write_section6(&mut sect6)?;
+                let mut sect7 = vec![0; encoded.section7_len()];
+                encoded.write_section7(&mut sect7)?;
+                let decoder = crate::Grib2SubmessageDecoder::new(values.len(), sect5, sect6, sect7)?;
+                let actual = decoder.dispatch()?.collect::<Vec<_>>();
+                let expected = values.iter().map(|val| *val as f32).collect::<Vec<_>>();
+                assert_eq!(actual, expected);
+                Ok(())
+            }
+        )*);
+    }
+
+    grib2_coded_values_roundtrip_tests! {
+        (
+            grib2_coded_values_roundtrip_test_with_decimal_0_and_nonunique_values,
+            (2..11).map(|val| val as f64).collect::<Vec<_>>(),
+            0
+        ),
+        (
+            grib2_coded_values_roundtrip_test_with_decimal_0_and_unique_values,
+            vec![10.0_f64; 256],
+            0
+        ),
     }
 }
