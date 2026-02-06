@@ -241,7 +241,7 @@ pub fn write_section1(
 
     let mut pos = 0;
     pos += (LEN as u32).write_to_buffer(&mut buf[pos..])?;
-    pos += 2_u8.write_to_buffer(&mut buf[pos..])?;
+    pos += 1_u8.write_to_buffer(&mut buf[pos..])?;
     pos += payload.centre_id.write_to_buffer(&mut buf[pos..])?;
     pos += payload.subcentre_id.write_to_buffer(&mut buf[pos..])?;
     pos += payload
@@ -277,7 +277,10 @@ mod writer;
 
 #[cfg(test)]
 mod tests {
+    use grib_template_helpers::TryFromSlice as _;
+
     use super::*;
+    use crate::def::grib2::Section1;
 
     macro_rules! test_decimal_strategy {
         ($((
@@ -371,5 +374,38 @@ mod tests {
             vec![10.0_f64; 256],
             0
         ),
+    }
+
+    #[test]
+    fn grib2_section1_roundtrip_test() -> Result<(), Box<dyn std::error::Error>> {
+        let sect = Section1 {
+            header: crate::def::grib2::SectionHeader {
+                len: 21,
+                sect_num: 1,
+            },
+            payload: crate::def::grib2::Section1Payload {
+                centre_id: 0xffff,
+                subcentre_id: 0,
+                master_table_version: 29,
+                local_table_version: 0,
+                ref_time_significance: 0,
+                ref_time: crate::def::grib2::RefTime {
+                    year: 2026,
+                    month: 1,
+                    day: 2,
+                    hour: 3,
+                    minute: 4,
+                    second: 5,
+                },
+                prod_status: 0,
+                data_type: 0,
+                optional: None,
+            },
+        };
+        let mut buf = vec![0; 21];
+        write_section1(&sect.payload, &mut buf)?;
+        let decoded = Section1::try_from_slice(&buf, &mut 0)?;
+        assert_eq!(decoded, sect);
+        Ok(())
     }
 }
