@@ -45,7 +45,7 @@ pub(crate) struct Simple<'d>(
 
 impl<'d> Grib2GpvUnpack for Simple<'d> {
     type Iter<'a>
-        = SimplePackingDecoder<NBitwiseIterator<&'d [u8]>>
+        = SimplePackingDecoder<std::iter::Take<NBitwiseIterator<&'d [u8]>>>
     where
         Self: 'a;
 
@@ -62,7 +62,8 @@ impl<'d> Grib2GpvUnpack for Simple<'d> {
             let iter = NBitwiseIterator::new(
                 target.sect7_payload(),
                 usize::from(template.simple.num_bits),
-            );
+            )
+            .take(target.num_encoded_points());
             let iter = NonZeroSimplePackingDecoder::new(iter, &template.simple);
             SimplePackingDecoder::NonZeroLength(iter)
         };
@@ -134,6 +135,22 @@ mod tests {
             assert!(actual[i] > expected[i] - 0.00000001);
             i += 1;
         }
+    }
+
+    #[test]
+    fn simple_packing_length() {
+        let length = 9;
+        let sect5 = vec![
+            0x00, 0x00, 0x00, 0x15, 0x05, 0x00, 0x00, 0x00, 0x09, 0x00, 0x00, 0x40, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0x00,
+        ];
+        let sect6 = vec![0x00, 0x00, 0x00, 0x06, 0x06, 0xff];
+        let sect7 = vec![0x00, 0x00, 0x00, 0x0a, 0x07, 0x01, 0x23, 0x45, 0x67, 0x80];
+        let decoder = Grib2SubmessageDecoder::new(length, sect5, sect6, sect7).unwrap();
+        let decoded = decoder.dispatch().unwrap();
+        assert_eq!(decoded.size_hint(), (length, Some(length)));
+        let actual = decoded.collect::<Vec<_>>().len();
+        assert_eq!(actual, length);
     }
 
     #[test]
