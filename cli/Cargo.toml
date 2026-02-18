@@ -25,12 +25,12 @@ console = "0.16"
 regex = "1.8"
 
 [target.'cfg(unix)'.dependencies]
-grib = { path = "..", version = "=0.13.5", features = ["gridpoints-proj", "jpeg2000-unpack-with-openjpeg", "png-unpack-with-png-crate", "ccsds-unpack-with-libaec"] }
+grib = { path = "..", version = "=0.13.6", features = ["gridpoints-proj", "jpeg2000-unpack-with-openjpeg", "png-unpack-with-png-crate", "ccsds-unpack-with-libaec"] }
 pager = "0.16"
 which = "8"
 
 [target.'cfg(not(unix))'.dependencies]
-grib = { path = "..", version = "=0.13.5", features = ["jpeg2000-unpack-with-openjpeg", "png-unpack-with-png-crate", "ccsds-unpack-with-libaec"] }
+grib = { path = "..", version = "=0.13.6", features = ["jpeg2000-unpack-with-openjpeg", "png-unpack-with-png-crate", "ccsds-unpack-with-libaec"] }
 
 [dev-dependencies]
 assert_cmd = "2"
