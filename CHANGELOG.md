@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.13.6] - 2026-02-18
+### Fixes
+
+-  Fix an issue where the decoded iterator length of simple packing could be slightly longer.
+   This issue could occur when `(num_bits * num_encoded_points / 8).floor()` was equal to `(num_bits * (num_encoded_points + 1) / 8).floor()`.
+   (PR #156)
+
+### Fixes to helper crates
+
+-  Fix an `ambiguous_derive_helpers` warning from nightly compiler, which will be a hard error in a futuer compiler release.
+   (PR #155)
+
+### Versions
+
+```
+grib 0.13.6
+grib-cli 0.13.6
+grib-template-derive 0.1.2
+```
+
 ## [0.13.5] - 2025-10-31
 ### Fixes
 
@@ -774,7 +794,8 @@ grib-build 0.1.0
 grib 0.1.0
 ```
 
-[unreleased]: https://github.com/noritada/grib-rs/compare/v0.13.5...HEAD
+[unreleased]: https://github.com/noritada/grib-rs/compare/v0.13.6...HEAD
+[0.13.6]: https://github.com/noritada/grib-rs/compare/v0.13.5...v0.13.6
 [0.13.5]: https://github.com/noritada/grib-rs/compare/v0.13.4...v0.13.5
 [0.13.4]: https://github.com/noritada/grib-rs/compare/v0.13.3...v0.13.4
 [0.13.3]: https://github.com/noritada/grib-rs/compare/v0.13.2...v0.13.3
