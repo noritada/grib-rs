@@ -7,6 +7,7 @@ use crate::{
     error::*,
     grid::{
         GaussianGridDefinition, GridPointIterator, LambertGridDefinition, LatLonGridDefinition,
+        RotatedLatLonGridDefinition,
     },
     helpers::{GribInt, read_as},
     time::UtcDateTime,
@@ -168,9 +169,10 @@ impl GridDefinition {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq)]
 pub enum GridDefinitionTemplateValues {
     Template0(LatLonGridDefinition),
+    Template1(RotatedLatLonGridDefinition),
     Template20(PolarStereographicGridDefinition),
     Template30(LambertGridDefinition),
     Template40(GaussianGridDefinition),
@@ -182,6 +184,7 @@ impl GridDefinitionTemplateValues {
     pub fn grid_shape(&self) -> (usize, usize) {
         match self {
             Self::Template0(def) => def.grid_shape(),
+            Self::Template1(def) => def.grid_shape(),
             Self::Template20(def) => def.grid_shape(),
             Self::Template30(def) => def.grid_shape(),
             Self::Template40(def) => def.grid_shape(),
@@ -199,6 +202,7 @@ impl GridDefinitionTemplateValues {
     pub fn short_name(&self) -> &'static str {
         match self {
             Self::Template0(def) => def.short_name(),
+            Self::Template1(def) => def.short_name(),
             Self::Template20(def) => def.short_name(),
             Self::Template30(def) => def.short_name(),
             Self::Template40(def) => def.short_name(),
@@ -213,6 +217,7 @@ impl GridDefinitionTemplateValues {
     pub fn ij(&self) -> Result<GridPointIndexIterator, GribError> {
         match self {
             Self::Template0(def) => def.ij(),
+            Self::Template1(def) => def.ij(),
             Self::Template20(def) => def.ij(),
             Self::Template30(def) => def.ij(),
             Self::Template40(def) => def.ij(),
@@ -228,6 +233,7 @@ impl GridDefinitionTemplateValues {
     pub fn latlons(&self) -> Result<GridPointIterator, GribError> {
         let iter = match self {
             Self::Template0(def) => GridPointIterator::LatLon(def.latlons()?),
+            Self::Template1(def) => GridPointIterator::RotatedLatLon(def.latlons()?),
             #[cfg(feature = "gridpoints-proj")]
             Self::Template20(def) => GridPointIterator::Lambert(def.latlons()?),
             #[cfg(feature = "gridpoints-proj")]
@@ -260,6 +266,17 @@ impl TryFrom<&GridDefinition> for GridDefinitionTemplateValues {
                 }
                 Ok(GridDefinitionTemplateValues::Template0(
                     LatLonGridDefinition::from_buf(&buf[25..]),
+                ))
+            }
+            1 => {
+                let buf = &value.payload;
+                if buf.len() > 79 {
+                    return Err(GribError::NotSupported(format!(
+                        "template {num} with list of number of points"
+                    )));
+                }
+                Ok(GridDefinitionTemplateValues::Template1(
+                    RotatedLatLonGridDefinition::from_buf(&buf[25..]),
                 ))
             }
             20 => {
