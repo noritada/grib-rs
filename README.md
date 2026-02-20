@@ -62,6 +62,7 @@ For data using the following grid systems, latitudes and longitudes of grid poin
 | Template number | Grid system | Notes |
 | --- | --- | --- |
 | 3.0 | latitude/longitude (or equidistant cylindrical, or Plate Carree) | supporting only regular grids |
+| 3.1 | rotated latitude/longitude (or equidistant cylindrical, or Plate Carrée) | supporting only regular grids |
 | 3.20 | Polar stereographic projection | enabling feature `gridpoints-proj` required |
 | 3.30 | Lambert conformal | enabling feature `gridpoints-proj` required |
 | 3.40 | Gaussian latitude/longitude | supporting only regular grids |

@@ -6,6 +6,7 @@ pub use self::{
     lambert::LambertGridDefinition,
     latlon::LatLonGridDefinition,
     polar_stereographic::PolarStereographicGridDefinition,
+    rotated_ll::{RotatedLatLonGridDefinition, Unrotate},
 };
 
 /// An iterator over latitudes and longitudes of grid points in a submessage.
@@ -18,6 +19,7 @@ pub use self::{
 #[derive(Clone)]
 pub enum GridPointIterator {
     LatLon(RegularGridIterator),
+    RotatedLatLon(Unrotate<RegularGridIterator>),
     Lambert(std::vec::IntoIter<(f32, f32)>),
 }
 
@@ -27,6 +29,7 @@ impl Iterator for GridPointIterator {
     fn next(&mut self) -> Option<Self::Item> {
         match self {
             Self::LatLon(iter) => iter.next(),
+            Self::RotatedLatLon(iter) => iter.next(),
             Self::Lambert(iter) => iter.next(),
         }
     }
@@ -34,6 +37,7 @@ impl Iterator for GridPointIterator {
     fn size_hint(&self) -> (usize, Option<usize>) {
         match self {
             Self::LatLon(iter) => iter.size_hint(),
+            Self::RotatedLatLon(iter) => iter.size_hint(),
             Self::Lambert(iter) => iter.size_hint(),
         }
     }
@@ -219,3 +223,4 @@ mod helpers;
 mod lambert;
 mod latlon;
 mod polar_stereographic;
+mod rotated_ll;
