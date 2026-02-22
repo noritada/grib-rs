@@ -47,7 +47,7 @@ pub struct Section1Payload {
     pub optional: Option<Section1PayloadOptional>,
 }
 
-#[derive(Debug, PartialEq, TryFromSlice, Dump)]
+#[derive(Debug, PartialEq, Eq, TryFromSlice, Dump)]
 pub struct RefTime {
     /// Year (4 digits).
     pub year: u16,

@@ -880,8 +880,9 @@ Data Representation:                    {}
     /// };
     ///
     /// use grib::{
-    ///     Code, ForecastTime, TemporalRawInfo, UtcDateTime,
+    ///     Code, ForecastTime, TemporalRawInfo,
     ///     codetables::grib2::{Table1_2, Table4_4},
+    ///     def::grib2::RefTime,
     /// };
     ///
     /// fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -898,7 +899,7 @@ Data Representation:                    {}
     ///         let actual = message.temporal_raw_info();
     ///         let expected = TemporalRawInfo {
     ///             ref_time_significance: Code::Name(Table1_2::Analysis),
-    ///             ref_time_unchecked: UtcDateTime::new(2016, 8, 22, 2, 0, 0),
+    ///             ref_time_unchecked: RefTime::new(2016, 8, 22, 2, 0, 0),
     ///             forecast_time_diff: Some(ForecastTime {
     ///                 unit: Code::Name(Table4_4::Minute),
     ///                 value: 0,
@@ -912,7 +913,7 @@ Data Representation:                    {}
     ///         let actual = message.temporal_raw_info();
     ///         let expected = TemporalRawInfo {
     ///             ref_time_significance: Code::Name(Table1_2::Analysis),
-    ///             ref_time_unchecked: UtcDateTime::new(2016, 8, 22, 2, 0, 0),
+    ///             ref_time_unchecked: RefTime::new(2016, 8, 22, 2, 0, 0),
     ///             forecast_time_diff: Some(ForecastTime {
     ///                 unit: Code::Name(Table4_4::Minute),
     ///                 value: 10,

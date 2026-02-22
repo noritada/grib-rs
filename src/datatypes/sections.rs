@@ -10,7 +10,6 @@ use crate::{
         RotatedLatLonGridDefinition,
     },
     helpers::{GribInt, read_as},
-    time::UtcDateTime,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -96,9 +95,9 @@ impl Identification {
     /// This method returns unchecked data, so for example, if the data contains
     /// a "date and time" such as "2000-13-32 25:61:62", it will be returned as
     /// is.
-    pub fn ref_time_unchecked(&self) -> UtcDateTime {
+    pub fn ref_time_unchecked(&self) -> crate::def::grib2::RefTime {
         let payload = &self.payload;
-        UtcDateTime::new(
+        crate::def::grib2::RefTime::new(
             read_as!(u16, payload, 7),
             payload[9],
             payload[10],
