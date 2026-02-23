@@ -1,3 +1,5 @@
+use std::sync::Once;
+
 use crate::{
     DecodeError, Grib2GpvUnpack, Grib2SubmessageDecoder,
     decoder::{
@@ -5,6 +7,9 @@ use crate::{
         stream::{FixedValueIterator, NBitwiseIterator},
     },
 };
+
+static PNG_NBIT_ZERO_WARNING_ONCE: Once = Once::new();
+static PNG_NBIT_NOT16_WARNING_ONCE: Once = Once::new();
 
 pub(crate) struct Png<'d>(
     pub(crate) &'d Grib2SubmessageDecoder,
@@ -25,10 +30,12 @@ impl<'d> Grib2GpvUnpack for Png<'d> {
             .map_err(|e| DecodeError::from(format!("PNG decode error: {e}")))?;
 
         if template.simple.num_bits == 0 {
-            eprintln!(
-                "WARNING: nbit = 0 for PNG decoder is not tested.
-                Please report your data and help us develop the library."
-            );
+            PNG_NBIT_ZERO_WARNING_ONCE.call_once(|| {
+                eprintln!(
+                    "WARNING: nbit = 0 for PNG decoder is not tested.
+                    Please report your data and help us develop the library."
+                );
+            });
             let decoder = SimplePackingDecoder::ZeroLength(FixedValueIterator::new(
                 template.simple.zero_bit_reference_value(),
                 target.num_encoded_points(),
@@ -37,10 +44,12 @@ impl<'d> Grib2GpvUnpack for Png<'d> {
         };
 
         if template.simple.num_bits != 16 {
-            eprintln!(
-                "WARNING: nbit != 16 for PNG decoder is not tested.
-                Please report your data and help us develop the library."
-            );
+            PNG_NBIT_NOT16_WARNING_ONCE.call_once(|| {
+                eprintln!(
+                    "WARNING: nbit != 16 for PNG decoder is not tested.
+                    Please report your data and help us develop the library."
+                );
+            });
         }
 
         let iter = NBitwiseIterator::new(buf, usize::from(template.simple.num_bits));
