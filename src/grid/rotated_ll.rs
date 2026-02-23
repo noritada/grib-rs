@@ -1,9 +1,9 @@
+use grib_template_helpers::TryFromSlice;
+
 use super::GridPointIndexIterator;
 use crate::{
-    LatLonGridDefinition,
-    error::GribError,
+    LatLonGridDefinition, def::grib2::template::param_set::Rotation, error::GribError,
     grid::helpers::RegularGridIterator,
-    helpers::{GribInt, read_as},
 };
 
 #[derive(Debug, PartialEq)]
@@ -46,26 +46,13 @@ impl RotatedLatLonGridDefinition {
 
     pub(crate) fn from_buf(buf: &[u8]) -> Self {
         let lat_lon = LatLonGridDefinition::from_buf(buf);
-        let south_pole_lat = read_as!(u32, buf, 42).as_grib_int();
-        let south_pole_lon = read_as!(u32, buf, 46).as_grib_int();
-        let rot_angle = read_as!(f32, buf, 50);
-        let rotation = Rotation {
-            south_pole_lat,
-            south_pole_lon,
-            rot_angle,
-        };
+        let mut pos = 42;
+        let rotation = Rotation::try_from_slice(buf, &mut pos).unwrap();
         Self {
             rotated: lat_lon,
             rotation,
         }
     }
-}
-
-#[derive(Debug, PartialEq, Clone)]
-pub struct Rotation {
-    pub south_pole_lat: i32,
-    pub south_pole_lon: i32,
-    pub rot_angle: f32,
 }
 
 #[derive(Clone)]

@@ -18,4 +18,14 @@ pub(crate) mod param_set {
         /// Scaled value of minor axis of oblate spheroid Earth.
         pub minor_axis_scaled_value: u32,
     }
+
+    #[derive(Debug, PartialEq, TryFromSlice, Dump)]
+    pub struct Rotation {
+        /// Latitude of the southern pole of projection.
+        pub south_pole_lat: i32,
+        /// Longitude of the southern pole of projection.
+        pub south_pole_lon: i32,
+        /// Angle of rotation of projection.
+        pub rot_angle: f32,
+    }
 }
