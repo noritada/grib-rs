@@ -895,9 +895,7 @@ Data Representation:                    {}
     ///     Ok(())
     /// }
     /// ```
-    pub fn dump<W: std::io::Write>(&self, writer: &mut W) -> Result<(), GribError> {
-        // TODO: return `Result<(), std::io::Error>` instead.
-
+    pub fn dump<W: std::io::Write>(&self, writer: &mut W) -> Result<(), std::io::Error> {
         let write_heading =
             |writer: &mut W, sect: &SectionInfo, sect_name: &str| -> Result<(), std::io::Error> {
                 let SectionInfo { num, size, .. } = sect;
@@ -950,8 +948,9 @@ Data Representation:                    {}
     /// };
     ///
     /// use grib::{
-    ///     Code, ForecastTime, TemporalRawInfo, UtcDateTime,
+    ///     Code, ForecastTime, TemporalRawInfo,
     ///     codetables::grib2::{Table1_2, Table4_4},
+    ///     def::grib2::RefTime,
     /// };
     ///
     /// fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -968,7 +967,7 @@ Data Representation:                    {}
     ///         let actual = message.temporal_raw_info();
     ///         let expected = TemporalRawInfo {
     ///             ref_time_significance: Code::Name(Table1_2::Analysis),
-    ///             ref_time_unchecked: UtcDateTime::new(2016, 8, 22, 2, 0, 0),
+    ///             ref_time_unchecked: RefTime::new(2016, 8, 22, 2, 0, 0),
     ///             forecast_time_diff: Some(ForecastTime {
     ///                 unit: Code::Name(Table4_4::Minute),
     ///                 value: 0,
@@ -982,7 +981,7 @@ Data Representation:                    {}
     ///         let actual = message.temporal_raw_info();
     ///         let expected = TemporalRawInfo {
     ///             ref_time_significance: Code::Name(Table1_2::Analysis),
-    ///             ref_time_unchecked: UtcDateTime::new(2016, 8, 22, 2, 0, 0),
+    ///             ref_time_unchecked: RefTime::new(2016, 8, 22, 2, 0, 0),
     ///             forecast_time_diff: Some(ForecastTime {
     ///                 unit: Code::Name(Table4_4::Minute),
     ///                 value: 10,
@@ -1016,7 +1015,7 @@ Data Representation:                    {}
     ///
     /// use chrono::{TimeZone, Utc};
     /// use grib::{
-    ///     Code, ForecastTime, TemporalInfo, UtcDateTime,
+    ///     Code, ForecastTime, TemporalInfo,
     ///     codetables::grib2::{Table1_2, Table4_4},
     /// };
     ///

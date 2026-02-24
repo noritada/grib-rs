@@ -14,7 +14,7 @@ pub struct TemporalRawInfo {
     /// [Code Table 1.2](crate::codetables::grib2::Table1_2).
     pub ref_time_significance: Code<Table1_2, u8>,
     /// "Reference time" set in Section 1 of the submessage.
-    pub ref_time_unchecked: UtcDateTime,
+    pub ref_time_unchecked: crate::def::grib2::RefTime,
     /// "Forecast time" set in Section 3 of the submessage.
     pub forecast_time_diff: Option<ForecastTime>,
 }
@@ -22,7 +22,7 @@ pub struct TemporalRawInfo {
 impl TemporalRawInfo {
     pub(crate) fn new(
         ref_time_significance: u8,
-        ref_time_unchecked: UtcDateTime,
+        ref_time_unchecked: crate::def::grib2::RefTime,
         forecast_time_diff: Option<ForecastTime>,
     ) -> Self {
         let ref_time_significance = Table1_2::try_from(ref_time_significance).into();
@@ -70,24 +70,7 @@ impl From<&TemporalRawInfo> for TemporalInfo {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
-/// UTC date and time container.
-pub struct UtcDateTime {
-    /// Year.
-    pub year: u16,
-    /// Month.
-    pub month: u8,
-    /// Day.
-    pub day: u8,
-    /// Hour.
-    pub hour: u8,
-    /// Minute.
-    pub minute: u8,
-    /// Second.
-    pub second: u8,
-}
-
-impl UtcDateTime {
+impl crate::def::grib2::RefTime {
     pub fn new(year: u16, month: u8, day: u8, hour: u8, minute: u8, second: u8) -> Self {
         Self {
             year,
@@ -100,7 +83,7 @@ impl UtcDateTime {
     }
 }
 
-impl fmt::Display for UtcDateTime {
+impl fmt::Display for crate::def::grib2::RefTime {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
@@ -154,6 +137,7 @@ impl BasicTimeDelta {
 
 #[cfg(test)]
 mod tests {
+    #[cfg(feature = "time-calculation")]
     use super::*;
 
     macro_rules! test_date_time_creation {
@@ -184,7 +168,7 @@ mod tests {
 
     #[test]
     fn test_utc_date_time_string() {
-        let time = UtcDateTime::new(2025, 1, 1, 0, 0, 0);
+        let time = crate::def::grib2::RefTime::new(2025, 1, 1, 0, 0, 0);
         assert_eq!(format!("{time}"), "2025-01-01 00:00:00 UTC".to_owned())
     }
 }
