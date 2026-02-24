@@ -945,7 +945,7 @@ Data Representation:                    {}
     ///
     /// use chrono::{TimeZone, Utc};
     /// use grib::{
-    ///     Code, ForecastTime, TemporalInfo, UtcDateTime,
+    ///     Code, ForecastTime, TemporalInfo,
     ///     codetables::grib2::{Table1_2, Table4_4},
     /// };
     ///
