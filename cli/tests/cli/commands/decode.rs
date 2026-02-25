@@ -118,6 +118,13 @@ test_operation_with_data_without_nan_values_and_byte_order_options! {
         utils::testdata::flat_binary::noaa_gdas_46_le()?
     ),
     (
+        decoding_png_packing_with_num_bits_being_8_as_little_endian,
+        utils::testdata::grib2::noaa_mrms_precip_flag()?,
+        "0.0",
+        "-l",
+        utils::testdata::flat_binary::noaa_mrms_precip_flag_le()?
+    ),
+    (
         decoding_png_packing_with_num_bits_being_16_as_little_endian,
         utils::testdata::grib2::noaa_mrms_reflectivity()?,
         "0.0",
@@ -342,6 +349,16 @@ test_operation_with_data_without_nan_values_compared_using_simple_packing! {
         3,
         9,
         utils::testdata::flat_binary::noaa_gdas_2_le()?
+    ),
+    (
+        decoding_png_packing_with_num_bits_being_24_as_little_endian,
+        utils::testdata::grib2::noaa_mrms_merged_rho_hv()?,
+        "0.0",
+        "-l",
+        f32::from_be_bytes([0xc7, 0xc3, 0x1e, 0x00]),
+        0,
+        2,
+        utils::testdata::flat_binary::noaa_mrms_merged_rho_hv_le()?
     ),
 }
 

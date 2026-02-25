@@ -8,8 +8,8 @@ use crate::{
     },
 };
 
-static PNG_NBIT_ZERO_WARNING_ONCE: Once = Once::new();
-static PNG_NBIT_NOT16_WARNING_ONCE: Once = Once::new();
+static PNG_NUM_BITS_ZERO_WARNING_ONCE: Once = Once::new();
+static PNG_NUM_BITS_1_2_4_OR_32_WARNING_ONCE: Once = Once::new();
 
 pub(crate) struct Png<'d>(
     pub(crate) &'d Grib2SubmessageDecoder,
@@ -26,13 +26,10 @@ impl<'d> Grib2GpvUnpack for Png<'d> {
         let Self(target, template) = self;
         super::orig_field_type_is_supported(template.orig_field_type)?;
 
-        let buf = read_image_buffer(target.sect7_payload())
-            .map_err(|e| DecodeError::from(format!("PNG decode error: {e}")))?;
-
         if template.simple.num_bits == 0 {
-            PNG_NBIT_ZERO_WARNING_ONCE.call_once(|| {
+            PNG_NUM_BITS_ZERO_WARNING_ONCE.call_once(|| {
                 eprintln!(
-                    "WARNING: nbit = 0 for PNG decoder is not tested.
+                    "WARNING: data with num_bits being 0 for PNG decoder is not tested.
                     Please report your data and help us develop the library."
                 );
             });
@@ -43,15 +40,17 @@ impl<'d> Grib2GpvUnpack for Png<'d> {
             return Ok(decoder);
         };
 
-        if template.simple.num_bits != 16 {
-            PNG_NBIT_NOT16_WARNING_ONCE.call_once(|| {
+        if template.simple.num_bits < 8 || template.simple.num_bits == 32 {
+            PNG_NUM_BITS_1_2_4_OR_32_WARNING_ONCE.call_once(|| {
                 eprintln!(
-                    "WARNING: nbit != 16 for PNG decoder is not tested.
+                    "WARNING: data with num_bits being 1, 2, 4, or 32 for PNG decoder is not tested.
                     Please report your data and help us develop the library."
                 );
             });
         }
 
+        let buf = read_image_buffer(target.sect7_payload())
+            .map_err(|e| DecodeError::from(format!("PNG decode error: {e}")))?;
         let iter = NBitwiseIterator::new(buf, usize::from(template.simple.num_bits));
         let iter = NonZeroSimplePackingDecoder::new(iter, &template.simple);
         let iter = SimplePackingDecoder::NonZeroLength(iter);
