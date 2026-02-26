@@ -7,6 +7,7 @@ pub use self::{
     polar_stereographic::PolarStereographicGridDefinition,
     rotated_ll::{RotatedLatLonGridDefinition, Unrotate},
 };
+use crate::def::grib2::template::param_set::ScanningMode;
 
 /// An iterator over latitudes and longitudes of grid points in a submessage.
 ///
@@ -114,9 +115,6 @@ impl Iterator for GridPointIndexIterator {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
-pub struct ScanningMode(pub u8);
-
 impl ScanningMode {
     /// Returns `true` if points of the first row or column scan in the `+i`
     /// (`+x`) direction.
@@ -125,7 +123,7 @@ impl ScanningMode {
     ///
     /// ```
     /// assert_eq!(
-    ///     grib::ScanningMode(0b00000000).scans_positively_for_i(),
+    ///     grib::def::grib2::template::param_set::ScanningMode(0b00000000).scans_positively_for_i(),
     ///     true
     /// );
     /// ```
@@ -140,7 +138,7 @@ impl ScanningMode {
     ///
     /// ```
     /// assert_eq!(
-    ///     grib::ScanningMode(0b00000000).scans_positively_for_j(),
+    ///     grib::def::grib2::template::param_set::ScanningMode(0b00000000).scans_positively_for_j(),
     ///     false
     /// );
     /// ```
@@ -154,7 +152,10 @@ impl ScanningMode {
     /// # Examples
     ///
     /// ```
-    /// assert_eq!(grib::ScanningMode(0b00000000).is_consecutive_for_i(), true);
+    /// assert_eq!(
+    ///     grib::def::grib2::template::param_set::ScanningMode(0b00000000).is_consecutive_for_i(),
+    ///     true
+    /// );
     /// ```
     pub fn is_consecutive_for_i(&self) -> bool {
         self.0 & 0b00100000 == 0
@@ -166,7 +167,7 @@ impl ScanningMode {
     ///
     /// ```
     /// assert_eq!(
-    ///     grib::ScanningMode(0b00000000).scans_alternating_rows(),
+    ///     grib::def::grib2::template::param_set::ScanningMode(0b00000000).scans_alternating_rows(),
     ///     false
     /// );
     /// ```

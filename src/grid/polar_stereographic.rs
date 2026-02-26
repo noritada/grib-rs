@@ -1,9 +1,9 @@
 use grib_template_helpers::TryFromSlice;
 
-use super::{GridPointIndexIterator, ScanningMode};
+use super::GridPointIndexIterator;
 use crate::{
     ProjectionCentreFlag,
-    def::grib2::template::param_set::EarthShape,
+    def::grib2::template::param_set::{EarthShape, ScanningMode},
     error::GribError,
     helpers::{GribInt, read_as},
 };
@@ -49,7 +49,7 @@ impl PolarStereographicGridDefinition {
     ///     dx: 1000,
     ///     dy: 1000,
     ///     projection_centre: grib::ProjectionCentreFlag(0b00000000),
-    ///     scanning_mode: grib::ScanningMode(0b01000000),
+    ///     scanning_mode: grib::def::grib2::template::param_set::ScanningMode(0b01000000),
     /// };
     /// let shape = def.grid_shape();
     /// assert_eq!(shape, (2, 3));
@@ -91,7 +91,7 @@ impl PolarStereographicGridDefinition {
     ///     dx: 1000,
     ///     dy: 1000,
     ///     projection_centre: grib::ProjectionCentreFlag(0b00000000),
-    ///     scanning_mode: grib::ScanningMode(0b01000000),
+    ///     scanning_mode: grib::def::grib2::template::param_set::ScanningMode(0b01000000),
     /// };
     /// let ij = def.ij();
     /// assert!(ij.is_ok());
@@ -182,7 +182,8 @@ impl PolarStereographicGridDefinition {
         let dx = read_as!(u32, buf, 41);
         let dy = read_as!(u32, buf, 45);
         let projection_centre = read_as!(u8, buf, 49);
-        let scanning_mode = read_as!(u8, buf, 50);
+        pos = 50;
+        let scanning_mode = ScanningMode::try_from_slice(buf, &mut pos).unwrap();
         Self {
             earth_shape,
             ni,
@@ -194,7 +195,7 @@ impl PolarStereographicGridDefinition {
             dx,
             dy,
             projection_centre: ProjectionCentreFlag(projection_centre),
-            scanning_mode: ScanningMode(scanning_mode),
+            scanning_mode,
         }
     }
 }

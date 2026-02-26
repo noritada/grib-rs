@@ -1,8 +1,11 @@
+use grib_template_helpers::TryFromSlice;
+
 use super::{
-    GridPointIndexIterator, ScanningMode,
+    GridPointIndexIterator,
     helpers::{RegularGridIterator, evenly_spaced_degrees, evenly_spaced_longitudes},
 };
 use crate::{
+    def::grib2::template::param_set::ScanningMode,
     error::GribError,
     helpers::{GribInt, read_as},
 };
@@ -32,7 +35,7 @@ impl LatLonGridDefinition {
     ///     first_point_lon: 0,
     ///     last_point_lat: 2_000_000,
     ///     last_point_lon: 1_000_000,
-    ///     scanning_mode: grib::ScanningMode(0b01000000),
+    ///     scanning_mode: grib::def::grib2::template::param_set::ScanningMode(0b01000000),
     /// };
     /// let shape = def.grid_shape();
     /// assert_eq!(shape, (2, 3));
@@ -62,7 +65,7 @@ impl LatLonGridDefinition {
     ///     first_point_lon: 0,
     ///     last_point_lat: 2_000_000,
     ///     last_point_lon: 1_000_000,
-    ///     scanning_mode: grib::ScanningMode(0b01000000),
+    ///     scanning_mode: grib::def::grib2::template::param_set::ScanningMode(0b01000000),
     /// };
     /// let ij = def.ij();
     /// assert!(ij.is_ok());
@@ -100,7 +103,7 @@ impl LatLonGridDefinition {
     ///     first_point_lon: 0,
     ///     last_point_lat: 2_000_000,
     ///     last_point_lon: 1_000_000,
-    ///     scanning_mode: grib::ScanningMode(0b01000000),
+    ///     scanning_mode: grib::def::grib2::template::param_set::ScanningMode(0b01000000),
     /// };
     /// let latlons = def.latlons();
     /// assert!(latlons.is_ok());
@@ -147,7 +150,8 @@ impl LatLonGridDefinition {
         let first_point_lon = read_as!(u32, buf, 20).as_grib_int();
         let last_point_lat = read_as!(u32, buf, 25).as_grib_int();
         let last_point_lon = read_as!(u32, buf, 29).as_grib_int();
-        let scanning_mode = read_as!(u8, buf, 41);
+        let mut pos = 41;
+        let scanning_mode = ScanningMode::try_from_slice(buf, &mut pos).unwrap();
         Self {
             ni,
             nj,
@@ -155,7 +159,7 @@ impl LatLonGridDefinition {
             first_point_lon,
             last_point_lat,
             last_point_lon,
-            scanning_mode: ScanningMode(scanning_mode),
+            scanning_mode,
         }
     }
 }

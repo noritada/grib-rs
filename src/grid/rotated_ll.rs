@@ -142,7 +142,7 @@ mod tests {
                 first_point_lon: 345178780,
                 last_point_lat: 16700001,
                 last_point_lon: 42306283,
-                scanning_mode: crate::ScanningMode(0b01000000),
+                scanning_mode: crate::def::grib2::template::param_set::ScanningMode(0b01000000),
             },
             rotation: Rotation {
                 south_pole_lat: -36088520,

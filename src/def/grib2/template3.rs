@@ -28,4 +28,10 @@ pub(crate) mod param_set {
         /// Angle of rotation of projection.
         pub rot_angle: f32,
     }
+
+    #[derive(Debug, PartialEq, Eq, Clone, Copy, TryFromSlice, Dump)]
+    pub struct ScanningMode(
+        /// Scanning mode (flags - see Flag table 3.4).
+        pub u8,
+    );
 }

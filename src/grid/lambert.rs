@@ -1,8 +1,8 @@
 use grib_template_helpers::TryFromSlice;
 
-use super::{GridPointIndexIterator, ScanningMode};
+use super::GridPointIndexIterator;
 use crate::{
-    def::grib2::template::param_set::EarthShape,
+    def::grib2::template::param_set::{EarthShape, ScanningMode},
     error::GribError,
     helpers::{GribInt, read_as},
 };
@@ -48,7 +48,7 @@ impl LambertGridDefinition {
     ///     lov: 0,
     ///     dx: 1000,
     ///     dy: 1000,
-    ///     scanning_mode: grib::ScanningMode(0b01000000),
+    ///     scanning_mode: grib::def::grib2::template::param_set::ScanningMode(0b01000000),
     ///     latin1: 0,
     ///     latin2: 0,
     /// };
@@ -91,7 +91,7 @@ impl LambertGridDefinition {
     ///     lov: 0,
     ///     dx: 1000,
     ///     dy: 1000,
-    ///     scanning_mode: grib::ScanningMode(0b01000000),
+    ///     scanning_mode: grib::def::grib2::template::param_set::ScanningMode(0b01000000),
     ///     latin1: 0,
     ///     latin2: 0,
     /// };
@@ -172,7 +172,8 @@ impl LambertGridDefinition {
         let lov = read_as!(u32, buf, 37).as_grib_int();
         let dx = read_as!(u32, buf, 41);
         let dy = read_as!(u32, buf, 45);
-        let scanning_mode = read_as!(u8, buf, 50);
+        pos = 50;
+        let scanning_mode = ScanningMode::try_from_slice(buf, &mut pos).unwrap();
         let latin1 = read_as!(u32, buf, 51).as_grib_int();
         let latin2 = read_as!(u32, buf, 55).as_grib_int();
         Self {
@@ -185,7 +186,7 @@ impl LambertGridDefinition {
             lov,
             dx,
             dy,
-            scanning_mode: ScanningMode(scanning_mode),
+            scanning_mode,
             latin1,
             latin2,
         }

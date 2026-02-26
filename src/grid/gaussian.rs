@@ -1,8 +1,11 @@
+use grib_template_helpers::TryFromSlice;
+
 use super::{
-    GridPointIndexIterator, ScanningMode,
+    GridPointIndexIterator,
     helpers::{RegularGridIterator, evenly_spaced_longitudes},
 };
 use crate::{
+    def::grib2::template::param_set::ScanningMode,
     error::GribError,
     helpers::{GribInt, read_as},
 };
@@ -96,7 +99,8 @@ impl GaussianGridDefinition {
         let last_point_lon = read_as!(u32, buf, 29).as_grib_int();
         let i_direction_inc = read_as!(u32, buf, 33);
         let n = read_as!(u32, buf, 37);
-        let scanning_mode = read_as!(u8, buf, 41);
+        let mut pos = 41;
+        let scanning_mode = ScanningMode::try_from_slice(buf, &mut pos).unwrap();
         Self {
             ni,
             nj,
@@ -106,7 +110,7 @@ impl GaussianGridDefinition {
             last_point_lon,
             i_direction_inc,
             n,
-            scanning_mode: ScanningMode(scanning_mode),
+            scanning_mode,
         }
     }
 }

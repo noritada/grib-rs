@@ -564,7 +564,7 @@ mod tests {
             first_point_lon: 118062500,
             last_point_lat: 20041667,
             last_point_lon: 149937500,
-            scanning_mode: crate::grid::ScanningMode(0b00000000),
+            scanning_mode: crate::def::grib2::template::param_set::ScanningMode(0b00000000),
         });
         assert_eq!(actual, expected);
     }
