@@ -68,6 +68,8 @@ The disclaimer is [available online](https://www.weather.gov/disclaimer).
 
 Following data files are downloaded from [MRMS (multi-radar multi-sensor) products page](https://mrms.ncep.noaa.gov/data/).
 
+- `MRMS_MergedRhoHV_19.00_20260219-042039.grib2.gz`
+- `MRMS_PrecipFlag_00.00_20260219-042400.grib2.gz`
 - `MRMS_ReflectivityAtLowestAltitude_00.50_20230406-120039.grib2.gz`
 
 Following data files are downloaded from [NDFD (National Digital Forecast Database) page](https://www.ncei.noaa.gov/products/weather-climate-models/national-digital-forecast-database).
@@ -132,7 +134,11 @@ $ wgrib2 -d 1 -order raw -no_header -bin gdas-12-wgrib2-le.bin gdas.t12z.pgrb2.0
 
 $ wgrib2 -d 1 -order raw -no_header -bin gdas-46-wgrib2-le.bin gdas.t12z.pgrb2.0p25.f000.46
 
-$ wgrib2 -d 1 -order raw -no_header -bin mrms-wgrib2-le.bin MRMS_ReflectivityAtLowestAltitude_00.50_20230406-120039.grib2
+$ wgrib2 -d 1 -order raw -no_header -bin mrms-merged-rho-hv-wgrib2-le.bin MRMS_MergedRhoHV_19.00_20260219-042039.grib2
+
+$ wgrib2 -d 1 -order raw -no_header -bin mrms-precip-flag-wgrib2-le.bin MRMS_PrecipFlag_00.00_20260219-042400.grib2
+
+$ wgrib2 -d 1 -order raw -no_header -bin mrms-reflectivity-wgrib2-le.bin MRMS_ReflectivityAtLowestAltitude_00.50_20230406-120039.grib2
 
 $ wgrib2 -d 1 -order raw -no_header -bin ds.critfireo.bin.0 ds.critfireo.bin
 
