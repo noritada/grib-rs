@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.13.7] - 2026-02-26
+### Enhancements
+
+- `num_bits` warning flood during parallel file decode with the PNG format decoder is now avoided.
+  (PR #158 (thanks @andyfangdz))
+- Decoding of data encoded in the PNG format with a non-zero `num_bits` value is now regarded as tested.
+  (PR #158 (thanks @andyfangdz), PR #160)
+
+### Versions
+
+```
+grib 0.13.7
+grib-cli 0.13.7
+```
+
 ## [0.13.6] - 2026-02-18
 ### Fixes
 
@@ -794,7 +809,8 @@ grib-build 0.1.0
 grib 0.1.0
 ```
 
-[unreleased]: https://github.com/noritada/grib-rs/compare/v0.13.6...HEAD
+[unreleased]: https://github.com/noritada/grib-rs/compare/v0.13.7...HEAD
+[0.13.7]: https://github.com/noritada/grib-rs/compare/v0.13.6...v0.13.7
 [0.13.6]: https://github.com/noritada/grib-rs/compare/v0.13.5...v0.13.6
 [0.13.5]: https://github.com/noritada/grib-rs/compare/v0.13.4...v0.13.5
 [0.13.4]: https://github.com/noritada/grib-rs/compare/v0.13.3...v0.13.4
