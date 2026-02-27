@@ -1,13 +1,13 @@
 use helpers::RegularGridIterator;
 
 pub use self::{
-    earth::EarthShapeDefinition,
     gaussian::{GaussianGridDefinition, compute_gaussian_latitudes},
     lambert::LambertGridDefinition,
     latlon::LatLonGridDefinition,
     polar_stereographic::PolarStereographicGridDefinition,
     rotated_ll::{RotatedLatLonGridDefinition, Unrotate},
 };
+use crate::def::grib2::template::param_set::ScanningMode;
 
 /// An iterator over latitudes and longitudes of grid points in a submessage.
 ///
@@ -115,9 +115,6 @@ impl Iterator for GridPointIndexIterator {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
-pub struct ScanningMode(pub u8);
-
 impl ScanningMode {
     /// Returns `true` if points of the first row or column scan in the `+i`
     /// (`+x`) direction.
@@ -126,7 +123,7 @@ impl ScanningMode {
     ///
     /// ```
     /// assert_eq!(
-    ///     grib::ScanningMode(0b00000000).scans_positively_for_i(),
+    ///     grib::def::grib2::template::param_set::ScanningMode(0b00000000).scans_positively_for_i(),
     ///     true
     /// );
     /// ```
@@ -141,7 +138,7 @@ impl ScanningMode {
     ///
     /// ```
     /// assert_eq!(
-    ///     grib::ScanningMode(0b00000000).scans_positively_for_j(),
+    ///     grib::def::grib2::template::param_set::ScanningMode(0b00000000).scans_positively_for_j(),
     ///     false
     /// );
     /// ```
@@ -155,7 +152,10 @@ impl ScanningMode {
     /// # Examples
     ///
     /// ```
-    /// assert_eq!(grib::ScanningMode(0b00000000).is_consecutive_for_i(), true);
+    /// assert_eq!(
+    ///     grib::def::grib2::template::param_set::ScanningMode(0b00000000).is_consecutive_for_i(),
+    ///     true
+    /// );
     /// ```
     pub fn is_consecutive_for_i(&self) -> bool {
         self.0 & 0b00100000 == 0
@@ -167,7 +167,7 @@ impl ScanningMode {
     ///
     /// ```
     /// assert_eq!(
-    ///     grib::ScanningMode(0b00000000).scans_alternating_rows(),
+    ///     grib::def::grib2::template::param_set::ScanningMode(0b00000000).scans_alternating_rows(),
     ///     false
     /// );
     /// ```
@@ -180,10 +180,7 @@ impl ScanningMode {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
-pub struct ProjectionCentreFlag(pub u8);
-
-impl ProjectionCentreFlag {
+impl crate::def::grib2::template::param_set::ProjectionCentreFlag {
     /// Returns `true` if North Pole is on the projection plane. Otherwise (i.e.
     /// if South Pole is on), returns `false`.
     ///
@@ -191,7 +188,8 @@ impl ProjectionCentreFlag {
     ///
     /// ```
     /// assert_eq!(
-    ///     grib::ProjectionCentreFlag(0b00000000).contains_north_pole_on_projection_plane(),
+    ///     grib::def::grib2::template::param_set::ProjectionCentreFlag(0b00000000)
+    ///         .contains_north_pole_on_projection_plane(),
     ///     true
     /// );
     /// ```
@@ -205,7 +203,10 @@ impl ProjectionCentreFlag {
     /// # Examples
     ///
     /// ```
-    /// assert_eq!(grib::ProjectionCentreFlag(0b00000000).is_bipolar(), false);
+    /// assert_eq!(
+    ///     grib::def::grib2::template::param_set::ProjectionCentreFlag(0b00000000).is_bipolar(),
+    ///     false
+    /// );
     /// ```
     pub fn is_bipolar(&self) -> bool {
         self.0 & 0b01000000 != 0

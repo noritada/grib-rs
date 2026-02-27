@@ -1,26 +1,12 @@
-use crate::helpers::read_as;
+use crate::def::grib2::template::param_set::EarthShape;
 
-#[derive(Debug, PartialEq, Eq)]
-pub struct EarthShapeDefinition {
-    pub shape_of_the_earth: u8,
-    pub scale_factor_of_radius_of_spherical_earth: u8,
-    pub scaled_value_of_radius_of_spherical_earth: u32,
-    pub scale_factor_of_earth_major_axis: u8,
-    pub scaled_value_of_earth_major_axis: u32,
-    pub scale_factor_of_earth_minor_axis: u8,
-    pub scaled_value_of_earth_minor_axis: u32,
-}
-
-impl EarthShapeDefinition {
+impl EarthShape {
     pub fn radii(&self) -> Option<(f64, f64)> {
-        let radii = match self.shape_of_the_earth {
+        let radii = match self.shape {
             0 => (6367470.0, 6367470.0),
             1 => {
-                let radius = f64::from(self.scaled_value_of_radius_of_spherical_earth)
-                    * f64::powf(
-                        10.,
-                        f64::from(self.scale_factor_of_radius_of_spherical_earth),
-                    );
+                let radius = f64::from(self.spherical_earth_radius_scaled_value)
+                    * f64::powf(10., f64::from(self.spherical_earth_radius_scale_factor));
                 (radius, radius)
             }
             2 => (6378160.0, 6356775.0),
@@ -39,30 +25,11 @@ impl EarthShapeDefinition {
     }
 
     fn radii_defined(&self) -> (f64, f64) {
-        let major = f64::from(self.scaled_value_of_earth_major_axis)
-            * f64::powf(10., f64::from(self.scale_factor_of_earth_major_axis));
-        let minor = f64::from(self.scaled_value_of_earth_minor_axis)
-            * f64::powf(10., f64::from(self.scale_factor_of_earth_minor_axis));
+        let major = f64::from(self.major_axis_scaled_value)
+            * f64::powf(10., f64::from(self.major_axis_scale_factor));
+        let minor = f64::from(self.minor_axis_scaled_value)
+            * f64::powf(10., f64::from(self.minor_axis_scale_factor));
         (major, minor)
-    }
-
-    pub(crate) fn from_buf(buf: &[u8]) -> Self {
-        let shape_of_the_earth = read_as!(u8, buf, 0);
-        let scale_factor_of_radius_of_spherical_earth = read_as!(u8, buf, 1);
-        let scaled_value_of_radius_of_spherical_earth = read_as!(u32, buf, 2);
-        let scale_factor_of_earth_major_axis = read_as!(u8, buf, 6);
-        let scaled_value_of_earth_major_axis = read_as!(u32, buf, 7);
-        let scale_factor_of_earth_minor_axis = read_as!(u8, buf, 11);
-        let scaled_value_of_earth_minor_axis = read_as!(u32, buf, 12);
-        Self {
-            shape_of_the_earth,
-            scale_factor_of_radius_of_spherical_earth,
-            scaled_value_of_radius_of_spherical_earth,
-            scale_factor_of_earth_major_axis,
-            scaled_value_of_earth_major_axis,
-            scale_factor_of_earth_minor_axis,
-            scaled_value_of_earth_minor_axis,
-        }
     }
 }
 
@@ -72,6 +39,8 @@ mod tests {
         fs::File,
         io::{BufReader, Read},
     };
+
+    use grib_template_helpers::TryFromSlice;
 
     use super::*;
 
@@ -103,15 +72,16 @@ mod tests {
     #[test]
     fn radii_for_shape_1() -> Result<(), Box<dyn std::error::Error>> {
         let buf = get_uncompressed("testdata/ds.critfireo.bin.xz")?;
-        let earth_actual = EarthShapeDefinition::from_buf(&buf[0x83..]);
-        let earth_expected = EarthShapeDefinition {
-            shape_of_the_earth: 1,
-            scale_factor_of_radius_of_spherical_earth: 0,
-            scaled_value_of_radius_of_spherical_earth: 6371200,
-            scale_factor_of_earth_major_axis: 0,
-            scaled_value_of_earth_major_axis: 0,
-            scale_factor_of_earth_minor_axis: 0,
-            scaled_value_of_earth_minor_axis: 0,
+        let mut pos = 0x83;
+        let earth_actual = EarthShape::try_from_slice(&buf, &mut pos)?;
+        let earth_expected = EarthShape {
+            shape: 1,
+            spherical_earth_radius_scale_factor: 0,
+            spherical_earth_radius_scaled_value: 6371200,
+            major_axis_scale_factor: 0,
+            major_axis_scaled_value: 0,
+            minor_axis_scale_factor: 0,
+            minor_axis_scaled_value: 0,
         };
         assert_eq!(earth_actual, earth_expected);
         assert_eq!(earth_actual.radii(), Some((6_371_200., 6_371_200.)));
@@ -124,15 +94,16 @@ mod tests {
         let buf = get_uncompressed(
             "testdata/MRMS_ReflectivityAtLowestAltitude_00.50_20230406-120039.grib2.gz",
         )?;
-        let earth_actual = EarthShapeDefinition::from_buf(&buf[0x33..]);
-        let earth_expected = EarthShapeDefinition {
-            shape_of_the_earth: 2,
-            scale_factor_of_radius_of_spherical_earth: 1,
-            scaled_value_of_radius_of_spherical_earth: 6367470,
-            scale_factor_of_earth_major_axis: 1,
-            scaled_value_of_earth_major_axis: 6378160,
-            scale_factor_of_earth_minor_axis: 1,
-            scaled_value_of_earth_minor_axis: 6356775,
+        let mut pos = 0x33;
+        let earth_actual = EarthShape::try_from_slice(&buf, &mut pos)?;
+        let earth_expected = EarthShape {
+            shape: 2,
+            spherical_earth_radius_scale_factor: 1,
+            spherical_earth_radius_scaled_value: 6367470,
+            major_axis_scale_factor: 1,
+            major_axis_scaled_value: 6378160,
+            minor_axis_scale_factor: 1,
+            minor_axis_scaled_value: 6356775,
         };
         assert_eq!(earth_actual, earth_expected);
         assert_eq!(earth_actual.radii(), Some((6_378_160.0, 6_356_775.0)));
@@ -145,15 +116,16 @@ mod tests {
         let buf = get_uncompressed(
             "testdata/Z__C_RJTD_20160822020000_NOWC_GPV_Ggis10km_Pphw10_FH0000-0100_grib2.bin",
         )?;
-        let earth_actual = EarthShapeDefinition::from_buf(&buf[0x33..]);
-        let earth_expected = EarthShapeDefinition {
-            shape_of_the_earth: 4,
-            scale_factor_of_radius_of_spherical_earth: 0xff,
-            scaled_value_of_radius_of_spherical_earth: 0xffffffff,
-            scale_factor_of_earth_major_axis: 1,
-            scaled_value_of_earth_major_axis: 63781370,
-            scale_factor_of_earth_minor_axis: 1,
-            scaled_value_of_earth_minor_axis: 63567523,
+        let mut pos = 0x33;
+        let earth_actual = EarthShape::try_from_slice(&buf, &mut pos)?;
+        let earth_expected = EarthShape {
+            shape: 4,
+            spherical_earth_radius_scale_factor: 0xff,
+            spherical_earth_radius_scaled_value: 0xffffffff,
+            major_axis_scale_factor: 1,
+            major_axis_scaled_value: 63781370,
+            minor_axis_scale_factor: 1,
+            minor_axis_scaled_value: 63567523,
         };
         assert_eq!(earth_actual, earth_expected);
         assert_eq!(earth_actual.radii(), Some((6_378_137.0, 6_356_752.314)));
@@ -164,15 +136,16 @@ mod tests {
     #[test]
     fn radii_for_shape_6() -> Result<(), Box<dyn std::error::Error>> {
         let buf = get_uncompressed("testdata/gdas.t12z.pgrb2.0p25.f000.0-10.xz")?;
-        let earth_actual = EarthShapeDefinition::from_buf(&buf[0x33..]);
-        let earth_expected = EarthShapeDefinition {
-            shape_of_the_earth: 6,
-            scale_factor_of_radius_of_spherical_earth: 0,
-            scaled_value_of_radius_of_spherical_earth: 0,
-            scale_factor_of_earth_major_axis: 0,
-            scaled_value_of_earth_major_axis: 0,
-            scale_factor_of_earth_minor_axis: 0,
-            scaled_value_of_earth_minor_axis: 0,
+        let mut pos = 0x33;
+        let earth_actual = EarthShape::try_from_slice(&buf, &mut pos)?;
+        let earth_expected = EarthShape {
+            shape: 6,
+            spherical_earth_radius_scale_factor: 0,
+            spherical_earth_radius_scaled_value: 0,
+            major_axis_scale_factor: 0,
+            major_axis_scaled_value: 0,
+            minor_axis_scale_factor: 0,
+            minor_axis_scaled_value: 0,
         };
         assert_eq!(earth_actual, earth_expected);
         assert_eq!(earth_actual.radii(), Some((6_371_229.0, 6_371_229.0)));

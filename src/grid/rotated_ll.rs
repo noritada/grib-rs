@@ -1,9 +1,9 @@
+use grib_template_helpers::TryFromSlice;
+
 use super::GridPointIndexIterator;
 use crate::{
-    LatLonGridDefinition,
-    error::GribError,
+    LatLonGridDefinition, def::grib2::template::param_set::Rotation, error::GribError,
     grid::helpers::RegularGridIterator,
-    helpers::{GribInt, read_as},
 };
 
 #[derive(Debug, PartialEq)]
@@ -46,26 +46,13 @@ impl RotatedLatLonGridDefinition {
 
     pub(crate) fn from_buf(buf: &[u8]) -> Self {
         let lat_lon = LatLonGridDefinition::from_buf(buf);
-        let south_pole_lat = read_as!(u32, buf, 42).as_grib_int();
-        let south_pole_lon = read_as!(u32, buf, 46).as_grib_int();
-        let rot_angle = read_as!(f32, buf, 50);
-        let rotation = Rotation {
-            south_pole_lat,
-            south_pole_lon,
-            rot_angle,
-        };
+        let mut pos = 42;
+        let rotation = Rotation::try_from_slice(buf, &mut pos).unwrap();
         Self {
             rotated: lat_lon,
             rotation,
         }
     }
-}
-
-#[derive(Debug, PartialEq, Clone)]
-pub struct Rotation {
-    pub south_pole_lat: i32,
-    pub south_pole_lon: i32,
-    pub rot_angle: f32,
 }
 
 #[derive(Clone)]
@@ -149,13 +136,21 @@ mod tests {
         let actual = RotatedLatLonGridDefinition::from_buf(&buf[0x43..]);
         let expected = RotatedLatLonGridDefinition {
             rotated: LatLonGridDefinition {
-                ni: 2540,
-                nj: 1290,
-                first_point_lat: -12302501,
-                first_point_lon: 345178780,
-                last_point_lat: 16700001,
-                last_point_lon: 42306283,
-                scanning_mode: crate::ScanningMode(0b01000000),
+                grid: crate::def::grib2::template::param_set::Grid {
+                    ni: 2540,
+                    nj: 1290,
+                    initial_production_domain_basic_angle: 0,
+                    basic_angle_subdivisions: 0xffffffff,
+                    first_point_lat: -12302501,
+                    first_point_lon: 345178780,
+                    resolution_and_component_flags:
+                        crate::def::grib2::template::param_set::ResolutionAndComponentFlags(
+                            0b00111000,
+                        ),
+                    last_point_lat: 16700001,
+                    last_point_lon: 42306283,
+                },
+                scanning_mode: crate::def::grib2::template::param_set::ScanningMode(0b01000000),
             },
             rotation: Rotation {
                 south_pole_lat: -36088520,

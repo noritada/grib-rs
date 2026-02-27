@@ -1095,7 +1095,8 @@ Data Representation:                    {}
     /// Computes and returns an iterator over `(i, j)` of grid points.
     ///
     /// The order of items is the same as the order of the grid point values,
-    /// defined by the scanning mode ([`ScanningMode`](`crate::ScanningMode`))
+    /// defined by the scanning mode
+    /// ([`ScanningMode`](`crate::def::grib2::template::param_set::ScanningMode`))
     /// in the data.
     ///
     /// This iterator allows users to perform their own coordinate calculations
@@ -1148,7 +1149,7 @@ Data Representation:                    {}
     ///
     /// The order of lat/lon data of grid points is the same as the order of the
     /// grid point values, defined by the scanning mode
-    /// ([`ScanningMode`](`crate::ScanningMode`)) in the data.
+    /// ([`ScanningMode`](`crate::def::grib2::template::param_set::ScanningMode`)) in the data.
     ///
     /// # Examples
     ///

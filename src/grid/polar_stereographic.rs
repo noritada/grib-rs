@@ -1,13 +1,15 @@
-use super::{GridPointIndexIterator, ScanningMode, earth::EarthShapeDefinition};
+use grib_template_helpers::TryFromSlice;
+
+use super::GridPointIndexIterator;
 use crate::{
-    ProjectionCentreFlag,
+    def::grib2::template::param_set::{EarthShape, ProjectionCentreFlag, ScanningMode},
     error::GribError,
     helpers::{GribInt, read_as},
 };
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct PolarStereographicGridDefinition {
-    pub earth_shape: EarthShapeDefinition,
+    pub earth_shape: EarthShape,
     pub ni: u32,
     pub nj: u32,
     pub first_point_lat: i32,
@@ -28,14 +30,14 @@ impl PolarStereographicGridDefinition {
     ///
     /// ```
     /// let def = grib::PolarStereographicGridDefinition {
-    ///     earth_shape: grib::EarthShapeDefinition {
-    ///         shape_of_the_earth: 6,
-    ///         scale_factor_of_radius_of_spherical_earth: 0xff,
-    ///         scaled_value_of_radius_of_spherical_earth: 0xffffffff,
-    ///         scale_factor_of_earth_major_axis: 0xff,
-    ///         scaled_value_of_earth_major_axis: 0xffffffff,
-    ///         scale_factor_of_earth_minor_axis: 0xff,
-    ///         scaled_value_of_earth_minor_axis: 0xffffffff,
+    ///     earth_shape: grib::def::grib2::template::param_set::EarthShape {
+    ///         shape: 6,
+    ///         spherical_earth_radius_scale_factor: 0xff,
+    ///         spherical_earth_radius_scaled_value: 0xffffffff,
+    ///         major_axis_scale_factor: 0xff,
+    ///         major_axis_scaled_value: 0xffffffff,
+    ///         minor_axis_scale_factor: 0xff,
+    ///         minor_axis_scaled_value: 0xffffffff,
     ///     },
     ///     ni: 2,
     ///     nj: 3,
@@ -45,8 +47,8 @@ impl PolarStereographicGridDefinition {
     ///     lov: 0,
     ///     dx: 1000,
     ///     dy: 1000,
-    ///     projection_centre: grib::ProjectionCentreFlag(0b00000000),
-    ///     scanning_mode: grib::ScanningMode(0b01000000),
+    ///     projection_centre: grib::def::grib2::template::param_set::ProjectionCentreFlag(0b00000000),
+    ///     scanning_mode: grib::def::grib2::template::param_set::ScanningMode(0b01000000),
     /// };
     /// let shape = def.grid_shape();
     /// assert_eq!(shape, (2, 3));
@@ -70,14 +72,14 @@ impl PolarStereographicGridDefinition {
     ///
     /// ```
     /// let def = grib::PolarStereographicGridDefinition {
-    ///     earth_shape: grib::EarthShapeDefinition {
-    ///         shape_of_the_earth: 6,
-    ///         scale_factor_of_radius_of_spherical_earth: 0xff,
-    ///         scaled_value_of_radius_of_spherical_earth: 0xffffffff,
-    ///         scale_factor_of_earth_major_axis: 0xff,
-    ///         scaled_value_of_earth_major_axis: 0xffffffff,
-    ///         scale_factor_of_earth_minor_axis: 0xff,
-    ///         scaled_value_of_earth_minor_axis: 0xffffffff,
+    ///     earth_shape: grib::def::grib2::template::param_set::EarthShape {
+    ///         shape: 6,
+    ///         spherical_earth_radius_scale_factor: 0xff,
+    ///         spherical_earth_radius_scaled_value: 0xffffffff,
+    ///         major_axis_scale_factor: 0xff,
+    ///         major_axis_scaled_value: 0xffffffff,
+    ///         minor_axis_scale_factor: 0xff,
+    ///         minor_axis_scaled_value: 0xffffffff,
     ///     },
     ///     ni: 2,
     ///     nj: 3,
@@ -87,8 +89,8 @@ impl PolarStereographicGridDefinition {
     ///     lov: 0,
     ///     dx: 1000,
     ///     dy: 1000,
-    ///     projection_centre: grib::ProjectionCentreFlag(0b00000000),
-    ///     scanning_mode: grib::ScanningMode(0b01000000),
+    ///     projection_centre: grib::def::grib2::template::param_set::ProjectionCentreFlag(0b00000000),
+    ///     scanning_mode: grib::def::grib2::template::param_set::ScanningMode(0b01000000),
     /// };
     /// let ij = def.ij();
     /// assert!(ij.is_ok());
@@ -123,7 +125,7 @@ impl PolarStereographicGridDefinition {
         let (a, b) = self.earth_shape.radii().ok_or_else(|| {
             GribError::NotSupported(format!(
                 "unknown value of Code Table 3.2 (shape of the Earth): {}",
-                self.earth_shape.shape_of_the_earth
+                self.earth_shape.shape
             ))
         })?;
 
@@ -168,7 +170,8 @@ impl PolarStereographicGridDefinition {
     }
 
     pub(crate) fn from_buf(buf: &[u8]) -> Self {
-        let earth_shape = EarthShapeDefinition::from_buf(buf);
+        let mut pos = 0;
+        let earth_shape = EarthShape::try_from_slice(buf, &mut pos).unwrap();
         let ni = read_as!(u32, buf, 16);
         let nj = read_as!(u32, buf, 20);
         let first_point_lat = read_as!(u32, buf, 24).as_grib_int();
@@ -177,8 +180,9 @@ impl PolarStereographicGridDefinition {
         let lov = read_as!(u32, buf, 37).as_grib_int();
         let dx = read_as!(u32, buf, 41);
         let dy = read_as!(u32, buf, 45);
-        let projection_centre = read_as!(u8, buf, 49);
-        let scanning_mode = read_as!(u8, buf, 50);
+        pos = 49;
+        let projection_centre = ProjectionCentreFlag::try_from_slice(buf, &mut pos).unwrap();
+        let scanning_mode = ScanningMode::try_from_slice(buf, &mut pos).unwrap();
         Self {
             earth_shape,
             ni,
@@ -189,8 +193,8 @@ impl PolarStereographicGridDefinition {
             lov,
             dx,
             dy,
-            projection_centre: ProjectionCentreFlag(projection_centre),
-            scanning_mode: ScanningMode(scanning_mode),
+            projection_centre,
+            scanning_mode,
         }
     }
 }
@@ -214,14 +218,14 @@ mod tests {
 
         let actual = PolarStereographicGridDefinition::from_buf(&buf[0x33..]);
         let expected = PolarStereographicGridDefinition {
-            earth_shape: EarthShapeDefinition {
-                shape_of_the_earth: 6,
-                scale_factor_of_radius_of_spherical_earth: 0xff,
-                scaled_value_of_radius_of_spherical_earth: 0xffffffff,
-                scale_factor_of_earth_major_axis: 0xff,
-                scaled_value_of_earth_major_axis: 0xffffffff,
-                scale_factor_of_earth_minor_axis: 0xff,
-                scaled_value_of_earth_minor_axis: 0xffffffff,
+            earth_shape: EarthShape {
+                shape: 6,
+                spherical_earth_radius_scale_factor: 0xff,
+                spherical_earth_radius_scaled_value: 0xffffffff,
+                major_axis_scale_factor: 0xff,
+                major_axis_scaled_value: 0xffffffff,
+                minor_axis_scale_factor: 0xff,
+                minor_axis_scaled_value: 0xffffffff,
             },
             ni: 935,
             nj: 824,
@@ -244,14 +248,14 @@ mod tests {
     fn polar_stereographic_grid_latlon_computation() -> Result<(), Box<dyn std::error::Error>> {
         use crate::grid::helpers::test_helpers::assert_coord_almost_eq;
         let grid_def = PolarStereographicGridDefinition {
-            earth_shape: EarthShapeDefinition {
-                shape_of_the_earth: 6,
-                scale_factor_of_radius_of_spherical_earth: 0xff,
-                scaled_value_of_radius_of_spherical_earth: 0xffffffff,
-                scale_factor_of_earth_major_axis: 0xff,
-                scaled_value_of_earth_major_axis: 0xffffffff,
-                scale_factor_of_earth_minor_axis: 0xff,
-                scaled_value_of_earth_minor_axis: 0xffffffff,
+            earth_shape: EarthShape {
+                shape: 6,
+                spherical_earth_radius_scale_factor: 0xff,
+                spherical_earth_radius_scaled_value: 0xffffffff,
+                major_axis_scale_factor: 0xff,
+                major_axis_scaled_value: 0xffffffff,
+                minor_axis_scale_factor: 0xff,
+                minor_axis_scaled_value: 0xffffffff,
             },
             ni: 935,
             nj: 824,
