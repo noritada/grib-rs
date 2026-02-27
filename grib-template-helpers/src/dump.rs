@@ -191,7 +191,7 @@ impl<T: OctetSize> OctetSize for Option<T> {
     }
 }
 
-fn write_position_column<W: Write>(
+pub fn write_position_column<W: Write>(
     output: &mut W,
     pos: &mut usize,
     size: usize,
