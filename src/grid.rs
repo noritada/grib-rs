@@ -180,10 +180,7 @@ impl ScanningMode {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
-pub struct ProjectionCentreFlag(pub u8);
-
-impl ProjectionCentreFlag {
+impl crate::def::grib2::template::param_set::ProjectionCentreFlag {
     /// Returns `true` if North Pole is on the projection plane. Otherwise (i.e.
     /// if South Pole is on), returns `false`.
     ///
@@ -191,7 +188,8 @@ impl ProjectionCentreFlag {
     ///
     /// ```
     /// assert_eq!(
-    ///     grib::ProjectionCentreFlag(0b00000000).contains_north_pole_on_projection_plane(),
+    ///     grib::def::grib2::template::param_set::ProjectionCentreFlag(0b00000000)
+    ///         .contains_north_pole_on_projection_plane(),
     ///     true
     /// );
     /// ```
@@ -205,7 +203,10 @@ impl ProjectionCentreFlag {
     /// # Examples
     ///
     /// ```
-    /// assert_eq!(grib::ProjectionCentreFlag(0b00000000).is_bipolar(), false);
+    /// assert_eq!(
+    ///     grib::def::grib2::template::param_set::ProjectionCentreFlag(0b00000000).is_bipolar(),
+    ///     false
+    /// );
     /// ```
     pub fn is_bipolar(&self) -> bool {
         self.0 & 0b01000000 != 0
