@@ -136,12 +136,20 @@ mod tests {
         let actual = RotatedLatLonGridDefinition::from_buf(&buf[0x43..]);
         let expected = RotatedLatLonGridDefinition {
             rotated: LatLonGridDefinition {
-                ni: 2540,
-                nj: 1290,
-                first_point_lat: -12302501,
-                first_point_lon: 345178780,
-                last_point_lat: 16700001,
-                last_point_lon: 42306283,
+                grid: crate::def::grib2::template::param_set::Grid {
+                    ni: 2540,
+                    nj: 1290,
+                    initial_production_domain_basic_angle: 0,
+                    basic_angle_subdivisions: 0xffffffff,
+                    first_point_lat: -12302501,
+                    first_point_lon: 345178780,
+                    resolution_and_component_flags:
+                        crate::def::grib2::template::param_set::ResolutionAndComponentFlags(
+                            0b00111000,
+                        ),
+                    last_point_lat: 16700001,
+                    last_point_lon: 42306283,
+                },
                 scanning_mode: crate::def::grib2::template::param_set::ScanningMode(0b01000000),
             },
             rotation: Rotation {

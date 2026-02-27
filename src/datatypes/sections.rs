@@ -558,12 +558,18 @@ mod tests {
 
         let actual = GridDefinitionTemplateValues::try_from(&data).unwrap();
         let expected = GridDefinitionTemplateValues::Template0(LatLonGridDefinition {
-            ni: 256,
-            nj: 336,
-            first_point_lat: 47958333,
-            first_point_lon: 118062500,
-            last_point_lat: 20041667,
-            last_point_lon: 149937500,
+            grid: crate::def::grib2::template::param_set::Grid {
+                ni: 256,
+                nj: 336,
+                initial_production_domain_basic_angle: 0,
+                basic_angle_subdivisions: 0xffffffff,
+                first_point_lat: 47958333,
+                first_point_lon: 118062500,
+                resolution_and_component_flags:
+                    crate::def::grib2::template::param_set::ResolutionAndComponentFlags(0b00110000),
+                last_point_lat: 20041667,
+                last_point_lon: 149937500,
+            },
             scanning_mode: crate::def::grib2::template::param_set::ScanningMode(0b00000000),
         });
         assert_eq!(actual, expected);

@@ -5,19 +5,13 @@ use super::{
     helpers::{RegularGridIterator, evenly_spaced_degrees, evenly_spaced_longitudes},
 };
 use crate::{
-    def::grib2::template::param_set::ScanningMode,
+    def::grib2::template::param_set::{Grid, ScanningMode},
     error::GribError,
-    helpers::{GribInt, read_as},
 };
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct LatLonGridDefinition {
-    pub ni: u32,
-    pub nj: u32,
-    pub first_point_lat: i32,
-    pub first_point_lon: i32,
-    pub last_point_lat: i32,
-    pub last_point_lon: i32,
+    pub grid: Grid,
     pub scanning_mode: ScanningMode,
 }
 
@@ -29,19 +23,25 @@ impl LatLonGridDefinition {
     ///
     /// ```
     /// let def = grib::LatLonGridDefinition {
-    ///     ni: 2,
-    ///     nj: 3,
-    ///     first_point_lat: 0,
-    ///     first_point_lon: 0,
-    ///     last_point_lat: 2_000_000,
-    ///     last_point_lon: 1_000_000,
+    ///     grid: grib::def::grib2::template::param_set::Grid {
+    ///         ni: 2,
+    ///         nj: 3,
+    ///         initial_production_domain_basic_angle: 0,
+    ///         basic_angle_subdivisions: 0xffffffff,
+    ///         first_point_lat: 0,
+    ///         first_point_lon: 0,
+    ///         resolution_and_component_flags:
+    ///             grib::def::grib2::template::param_set::ResolutionAndComponentFlags(0b00110000),
+    ///         last_point_lat: 2_000_000,
+    ///         last_point_lon: 1_000_000,
+    ///     },
     ///     scanning_mode: grib::def::grib2::template::param_set::ScanningMode(0b01000000),
     /// };
     /// let shape = def.grid_shape();
     /// assert_eq!(shape, (2, 3));
     /// ```
     pub fn grid_shape(&self) -> (usize, usize) {
-        (self.ni as usize, self.nj as usize)
+        (self.grid.ni as usize, self.grid.nj as usize)
     }
 
     /// Returns the grid type.
@@ -59,12 +59,18 @@ impl LatLonGridDefinition {
     ///
     /// ```
     /// let def = grib::LatLonGridDefinition {
-    ///     ni: 2,
-    ///     nj: 3,
-    ///     first_point_lat: 0,
-    ///     first_point_lon: 0,
-    ///     last_point_lat: 2_000_000,
-    ///     last_point_lon: 1_000_000,
+    ///     grid: grib::def::grib2::template::param_set::Grid {
+    ///         ni: 2,
+    ///         nj: 3,
+    ///         initial_production_domain_basic_angle: 0,
+    ///         basic_angle_subdivisions: 0xffffffff,
+    ///         first_point_lat: 0,
+    ///         first_point_lon: 0,
+    ///         resolution_and_component_flags:
+    ///             grib::def::grib2::template::param_set::ResolutionAndComponentFlags(0b00110000),
+    ///         last_point_lat: 2_000_000,
+    ///         last_point_lon: 1_000_000,
+    ///     },
     ///     scanning_mode: grib::def::grib2::template::param_set::ScanningMode(0b01000000),
     /// };
     /// let ij = def.ij();
@@ -81,8 +87,11 @@ impl LatLonGridDefinition {
             return Err(GribError::NotSupported(format!("scanning mode {mode}")));
         }
 
-        let iter =
-            GridPointIndexIterator::new(self.ni as usize, self.nj as usize, self.scanning_mode);
+        let iter = GridPointIndexIterator::new(
+            self.grid.ni as usize,
+            self.grid.nj as usize,
+            self.scanning_mode,
+        );
         Ok(iter)
     }
 
@@ -97,12 +106,18 @@ impl LatLonGridDefinition {
     ///
     /// ```
     /// let def = grib::LatLonGridDefinition {
-    ///     ni: 2,
-    ///     nj: 3,
-    ///     first_point_lat: 0,
-    ///     first_point_lon: 0,
-    ///     last_point_lat: 2_000_000,
-    ///     last_point_lon: 1_000_000,
+    ///     grid: grib::def::grib2::template::param_set::Grid {
+    ///         ni: 2,
+    ///         nj: 3,
+    ///         initial_production_domain_basic_angle: 0,
+    ///         basic_angle_subdivisions: 0xffffffff,
+    ///         first_point_lat: 0,
+    ///         first_point_lon: 0,
+    ///         resolution_and_component_flags:
+    ///             grib::def::grib2::template::param_set::ResolutionAndComponentFlags(0b00110000),
+    ///         last_point_lat: 2_000_000,
+    ///         last_point_lon: 1_000_000,
+    ///     },
     ///     scanning_mode: grib::def::grib2::template::param_set::ScanningMode(0b01000000),
     /// };
     /// let latlons = def.latlons();
@@ -123,14 +138,14 @@ impl LatLonGridDefinition {
 
         let ij = self.ij()?;
         let lat = evenly_spaced_degrees(
-            self.first_point_lat as f32,
-            self.last_point_lat as f32,
-            (self.nj - 1) as usize,
+            self.grid.first_point_lat as f32,
+            self.grid.last_point_lat as f32,
+            (self.grid.nj - 1) as usize,
         );
         let lon = evenly_spaced_longitudes(
-            self.first_point_lon,
-            self.last_point_lon,
-            (self.ni - 1) as usize,
+            self.grid.first_point_lon,
+            self.grid.last_point_lon,
+            (self.grid.ni - 1) as usize,
             self.scanning_mode,
         );
 
@@ -139,26 +154,17 @@ impl LatLonGridDefinition {
     }
 
     pub(crate) fn is_consistent_for_j(&self) -> bool {
-        let lat_diff = self.last_point_lat - self.first_point_lat;
+        let lat_diff = self.grid.last_point_lat - self.grid.first_point_lat;
         !((lat_diff > 0) ^ self.scanning_mode.scans_positively_for_j())
     }
 
     pub(crate) fn from_buf(buf: &[u8]) -> Self {
-        let ni = read_as!(u32, buf, 0);
-        let nj = read_as!(u32, buf, 4);
-        let first_point_lat = read_as!(u32, buf, 16).as_grib_int();
-        let first_point_lon = read_as!(u32, buf, 20).as_grib_int();
-        let last_point_lat = read_as!(u32, buf, 25).as_grib_int();
-        let last_point_lon = read_as!(u32, buf, 29).as_grib_int();
-        let mut pos = 41;
+        let mut pos = 0;
+        let grid = Grid::try_from_slice(buf, &mut pos).unwrap();
+        pos = 41;
         let scanning_mode = ScanningMode::try_from_slice(buf, &mut pos).unwrap();
         Self {
-            ni,
-            nj,
-            first_point_lat,
-            first_point_lon,
-            last_point_lat,
-            last_point_lon,
+            grid,
             scanning_mode,
         }
     }
@@ -167,6 +173,7 @@ impl LatLonGridDefinition {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::def::grib2::template::param_set::ResolutionAndComponentFlags;
 
     macro_rules! test_lat_lon_calculation_for_inconsistent_longitude_definitions {
         ($((
@@ -198,12 +205,17 @@ mod tests {
         (
             lat_lon_calculation_for_increasing_longitudes_and_positive_direction_scan,
             LatLonGridDefinition {
-                ni: 1500,
-                nj: 751,
-                first_point_lat: -90000000,
-                first_point_lon: 0,
-                last_point_lat: 90000000,
-                last_point_lon: 359760000,
+                grid: Grid {
+                    ni: 1500,
+                    nj: 751,
+                    initial_production_domain_basic_angle: 0,
+                    basic_angle_subdivisions: 0xffffffff,
+                    first_point_lat: -90000000,
+                    first_point_lon: 0,
+                    resolution_and_component_flags: ResolutionAndComponentFlags(0b00110000),
+                    last_point_lat: 90000000,
+                    last_point_lon: 359760000,
+                },
                 scanning_mode: ScanningMode(0b01000000),
             },
             vec![(-90.0, 0.0), (-90.0, 0.24), (-90.0, 0.48)],
@@ -214,12 +226,17 @@ mod tests {
             // testdata/CMC_glb_TMP_ISBL_1_latlon.24x.24_2021051800_P000.grib2
             lat_lon_calculation_for_decreasing_longitudes_and_positive_direction_scan,
             LatLonGridDefinition {
-                ni: 1500,
-                nj: 751,
-                first_point_lat: -90000000,
-                first_point_lon: 180000000,
-                last_point_lat: 90000000,
-                last_point_lon: 179760000,
+                grid: Grid {
+                    ni: 1500,
+                    nj: 751,
+                    initial_production_domain_basic_angle: 0,
+                    basic_angle_subdivisions: 0xffffffff,
+                    first_point_lat: -90000000,
+                    first_point_lon: 180000000,
+                    resolution_and_component_flags: ResolutionAndComponentFlags(0b00110000),
+                    last_point_lat: 90000000,
+                    last_point_lon: 179760000,
+                },
                 scanning_mode: ScanningMode(0b01000000),
             },
             vec![(-90.0, 180.0), (-90.0, 180.24), (-90.0, 180.48)],
@@ -228,12 +245,17 @@ mod tests {
         (
             lat_lon_calculation_for_decreasing_longitudes_and_negative_direction_scan,
             LatLonGridDefinition {
-                ni: 1500,
-                nj: 751,
-                first_point_lat: -90000000,
-                first_point_lon: 359760000,
-                last_point_lat: 90000000,
-                last_point_lon: 0,
+                grid: Grid {
+                    ni: 1500,
+                    nj: 751,
+                    initial_production_domain_basic_angle: 0,
+                    basic_angle_subdivisions: 0xffffffff,
+                    first_point_lat: -90000000,
+                    first_point_lon: 359760000,
+                    resolution_and_component_flags: ResolutionAndComponentFlags(0b00110000),
+                    last_point_lat: 90000000,
+                    last_point_lon: 0,
+                },
                 scanning_mode: ScanningMode(0b11000000),
             },
             vec![(-90.0, 359.76), (-90.0, 359.52), (-90.0, 359.28)],
@@ -242,12 +264,17 @@ mod tests {
         (
             lat_lon_calculation_for_increasing_longitudes_and_negative_direction_scan,
             LatLonGridDefinition {
-                ni: 1500,
-                nj: 751,
-                first_point_lat: -90000000,
-                first_point_lon: 179760000,
-                last_point_lat: 90000000,
-                last_point_lon: 180000000,
+                grid: Grid {
+                    ni: 1500,
+                    nj: 751,
+                    initial_production_domain_basic_angle: 0,
+                    basic_angle_subdivisions: 0xffffffff,
+                    first_point_lat: -90000000,
+                    first_point_lon: 179760000,
+                    resolution_and_component_flags: ResolutionAndComponentFlags(0b00110000),
+                    last_point_lat: 90000000,
+                    last_point_lon: 180000000,
+                },
                 scanning_mode: ScanningMode(0b11000000),
             },
             vec![(-90.0, 179.76001), (-90.0, 179.52002), (-90.0, 179.28003)],
@@ -268,12 +295,17 @@ mod tests {
             #[test]
             fn $name() {
                 let grid = LatLonGridDefinition {
-                    ni: 1,
-                    nj: 1,
-                    first_point_lat: $first_point_lat,
-                    first_point_lon: $first_point_lon,
-                    last_point_lat: $last_point_lat,
-                    last_point_lon: $last_point_lon,
+                    grid: Grid {
+                        ni: 1,
+                        nj: 1,
+                        initial_production_domain_basic_angle: 0,
+                        basic_angle_subdivisions: 0xffffffff,
+                        first_point_lat: $first_point_lat,
+                        first_point_lon: $first_point_lon,
+                        resolution_and_component_flags: ResolutionAndComponentFlags(0b00110000),
+                        last_point_lat: $last_point_lat,
+                        last_point_lon: $last_point_lon,
+                    },
                     scanning_mode: ScanningMode($scanning_mode),
                 };
                 assert_eq!(grid.is_consistent_for_j(), $expected_for_j);
