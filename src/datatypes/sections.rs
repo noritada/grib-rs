@@ -6,9 +6,9 @@ use crate::{
     GridPointIndexIterator,
     codetables::SUPPORTED_PROD_DEF_TEMPLATE_NUMBERS,
     datatypes::*,
-    def::grib2::template::{Template3_0, Template3_1, Template3_20, Template3_40},
+    def::grib2::template::{Template3_0, Template3_1, Template3_20, Template3_30, Template3_40},
     error::*,
-    grid::{GridPointIterator, LambertGridDefinition},
+    grid::GridPointIterator,
     helpers::{GribInt, read_as},
 };
 
@@ -173,7 +173,7 @@ pub enum GridDefinitionTemplateValues {
     Template0(Template3_0),
     Template1(Template3_1),
     Template20(Template3_20),
-    Template30(LambertGridDefinition),
+    Template30(Template3_30),
     Template40(Template3_40),
 }
 
@@ -289,8 +289,9 @@ impl TryFrom<&GridDefinition> for GridDefinitionTemplateValues {
             }
             30 => {
                 let buf = &value.payload;
+                let mut pos = 0;
                 Ok(GridDefinitionTemplateValues::Template30(
-                    LambertGridDefinition::from_buf(&buf[9..]),
+                    Template3_30::try_from_slice(&buf[9..], &mut pos).unwrap(),
                 ))
             }
             40 => {

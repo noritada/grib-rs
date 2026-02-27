@@ -42,6 +42,42 @@ pub struct Template3_20 {
     pub scanning_mode: param_set::ScanningMode,
 }
 
+/// Grid definition template 3.30 - Lambert conformal.
+#[derive(Debug, PartialEq, Eq, TryFromSlice, Dump)]
+pub struct Template3_30 {
+    pub earth_shape: param_set::EarthShape,
+    /// Nx - number of points along the x-axis.
+    pub ni: u32,
+    /// Ny - number of points along the y-axis.
+    pub nj: u32,
+    /// La1 - latitude of first grid point.
+    pub first_point_lat: i32,
+    /// Lo1 - longitude of first grid point.
+    pub first_point_lon: i32,
+    pub resolution_and_component_flags: param_set::ResolutionAndComponentFlags,
+    /// LaD - latitude where Dx and Dy are specified.
+    pub lad: i32,
+    /// LoV - longitude of meridian parallel to y-axis along which latitude
+    /// increases as the y-coordinate increases.
+    pub lov: i32,
+    /// Dx - x-direction grid length (see Note 1).
+    pub dx: u32,
+    /// Dy - y-direction grid length (see Note 1).
+    pub dy: u32,
+    pub projection_centre: param_set::ProjectionCentreFlag,
+    pub scanning_mode: param_set::ScanningMode,
+    /// Latin 1 - first latitude from the pole at which the secant cone cuts the
+    /// sphere.
+    pub latin1: i32,
+    /// Latin 2 - second latitude from the pole at which the secant cone cuts
+    /// the sphere.
+    pub latin2: i32,
+    /// Latitude of the southern pole of projection.
+    pub south_pole_lat: i32,
+    /// Longitude of the southern pole of projection.
+    pub south_pole_lon: i32,
+}
+
 /// Grid definition template 3.40 - Gaussian latitude/longitude.
 #[derive(Debug, PartialEq, TryFromSlice, Dump)]
 pub struct Template3_40 {

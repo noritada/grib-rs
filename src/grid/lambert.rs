@@ -1,36 +1,17 @@
-use grib_template_helpers::TryFromSlice;
-
 use super::GridPointIndexIterator;
 use crate::{
-    def::grib2::template::param_set::{EarthShape, ScanningMode},
+    def::grib2::template::{Template3_30, param_set::ScanningMode},
     error::GribError,
-    helpers::{GribInt, read_as},
 };
 
-#[derive(Debug, PartialEq, Eq)]
-pub struct LambertGridDefinition {
-    pub earth_shape: EarthShape,
-    pub ni: u32,
-    pub nj: u32,
-    pub first_point_lat: i32,
-    pub first_point_lon: i32,
-    pub lad: i32,
-    pub lov: i32,
-    pub dx: u32,
-    pub dy: u32,
-    pub scanning_mode: ScanningMode,
-    pub latin1: i32,
-    pub latin2: i32,
-}
-
-impl LambertGridDefinition {
+impl Template3_30 {
     /// Returns the shape of the grid, i.e. a tuple of the number of grids in
     /// the i and j directions.
     ///
     /// Examples
     ///
     /// ```
-    /// let def = grib::LambertGridDefinition {
+    /// let def = grib::def::grib2::template::Template3_30 {
     ///     earth_shape: grib::def::grib2::template::param_set::EarthShape {
     ///         shape: 1,
     ///         spherical_earth_radius_scale_factor: 0,
@@ -44,13 +25,18 @@ impl LambertGridDefinition {
     ///     nj: 3,
     ///     first_point_lat: 0,
     ///     first_point_lon: 0,
+    ///     resolution_and_component_flags:
+    ///         grib::def::grib2::template::param_set::ResolutionAndComponentFlags(0b00000000),
     ///     lad: 0,
     ///     lov: 0,
     ///     dx: 1000,
     ///     dy: 1000,
+    ///     projection_centre: grib::def::grib2::template::param_set::ProjectionCentreFlag(0b00000000),
     ///     scanning_mode: grib::def::grib2::template::param_set::ScanningMode(0b01000000),
     ///     latin1: 0,
     ///     latin2: 0,
+    ///     south_pole_lat: -90000000,
+    ///     south_pole_lon: 0,
     /// };
     /// let shape = def.grid_shape();
     /// assert_eq!(shape, (2, 3));
@@ -73,7 +59,7 @@ impl LambertGridDefinition {
     /// Examples
     ///
     /// ```
-    /// let def = grib::LambertGridDefinition {
+    /// let def = grib::def::grib2::template::Template3_30 {
     ///     earth_shape: grib::def::grib2::template::param_set::EarthShape {
     ///         shape: 1,
     ///         spherical_earth_radius_scale_factor: 0,
@@ -87,13 +73,18 @@ impl LambertGridDefinition {
     ///     nj: 3,
     ///     first_point_lat: 0,
     ///     first_point_lon: 0,
+    ///     resolution_and_component_flags:
+    ///         grib::def::grib2::template::param_set::ResolutionAndComponentFlags(0b00000000),
     ///     lad: 0,
     ///     lov: 0,
     ///     dx: 1000,
     ///     dy: 1000,
+    ///     projection_centre: grib::def::grib2::template::param_set::ProjectionCentreFlag(0b00000000),
     ///     scanning_mode: grib::def::grib2::template::param_set::ScanningMode(0b01000000),
     ///     latin1: 0,
     ///     latin2: 0,
+    ///     south_pole_lat: -90000000,
+    ///     south_pole_lon: 0,
     /// };
     /// let ij = def.ij();
     /// assert!(ij.is_ok());
@@ -160,44 +151,18 @@ impl LambertGridDefinition {
             self.ij()?,
         )
     }
-
-    pub(crate) fn from_buf(buf: &[u8]) -> Self {
-        let mut pos = 0;
-        let earth_shape = EarthShape::try_from_slice(buf, &mut pos).unwrap();
-        let ni = read_as!(u32, buf, 16);
-        let nj = read_as!(u32, buf, 20);
-        let first_point_lat = read_as!(u32, buf, 24).as_grib_int();
-        let first_point_lon = read_as!(u32, buf, 28).as_grib_int();
-        let lad = read_as!(u32, buf, 33).as_grib_int();
-        let lov = read_as!(u32, buf, 37).as_grib_int();
-        let dx = read_as!(u32, buf, 41);
-        let dy = read_as!(u32, buf, 45);
-        pos = 50;
-        let scanning_mode = ScanningMode::try_from_slice(buf, &mut pos).unwrap();
-        let latin1 = read_as!(u32, buf, 51).as_grib_int();
-        let latin2 = read_as!(u32, buf, 55).as_grib_int();
-        Self {
-            earth_shape,
-            ni,
-            nj,
-            first_point_lat,
-            first_point_lon,
-            lad,
-            lov,
-            dx,
-            dy,
-            scanning_mode,
-            latin1,
-            latin2,
-        }
-    }
 }
 
 #[cfg(test)]
 mod tests {
     use std::io::{BufReader, Read};
 
+    use grib_template_helpers::TryFromSlice;
+
     use super::*;
+    use crate::def::grib2::template::param_set::{
+        EarthShape, ProjectionCentreFlag, ResolutionAndComponentFlags,
+    };
 
     #[test]
     fn lambert_grid_definition_from_buf() -> Result<(), Box<dyn std::error::Error>> {
@@ -208,8 +173,9 @@ mod tests {
         let mut f = xz2::bufread::XzDecoder::new(f);
         f.read_to_end(&mut buf)?;
 
-        let actual = LambertGridDefinition::from_buf(&buf[0x83..]);
-        let expected = LambertGridDefinition {
+        let mut pos = 0x83;
+        let actual = Template3_30::try_from_slice(&buf, &mut pos)?;
+        let expected = Template3_30 {
             earth_shape: EarthShape {
                 shape: 1,
                 spherical_earth_radius_scale_factor: 0,
@@ -223,13 +189,17 @@ mod tests {
             nj: 1377,
             first_point_lat: 20190000,
             first_point_lon: 238449996,
+            resolution_and_component_flags: ResolutionAndComponentFlags(0b00000000),
             lad: 25000000,
             lov: 265000000,
             dx: 2539703,
             dy: 2539703,
+            projection_centre: ProjectionCentreFlag(0b00000000),
             scanning_mode: ScanningMode(0b01010000),
             latin1: 25000000,
             latin2: 25000000,
+            south_pole_lat: -90000000,
+            south_pole_lon: 0,
         };
         assert_eq!(actual, expected);
 
@@ -240,7 +210,7 @@ mod tests {
     #[test]
     fn lambert_grid_latlon_computation() -> Result<(), Box<dyn std::error::Error>> {
         use crate::grid::helpers::test_helpers::assert_coord_almost_eq;
-        let grid_def = LambertGridDefinition {
+        let grid_def = Template3_30 {
             earth_shape: EarthShape {
                 shape: 1,
                 spherical_earth_radius_scale_factor: 0,
@@ -254,13 +224,17 @@ mod tests {
             nj: 1377,
             first_point_lat: 20190000,
             first_point_lon: 238449996,
+            resolution_and_component_flags: ResolutionAndComponentFlags(0b00000000),
             lad: 25000000,
             lov: 265000000,
             dx: 2539703,
             dy: 2539703,
+            projection_centre: ProjectionCentreFlag(0b00000000),
             scanning_mode: ScanningMode(0b01010000),
             latin1: 25000000,
             latin2: 25000000,
+            south_pole_lat: -90000000,
+            south_pole_lon: 0,
         };
         let latlons = grid_def.latlons()?.collect::<Vec<_>>();
 
