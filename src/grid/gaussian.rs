@@ -1,26 +1,12 @@
-use grib_template_helpers::TryFromSlice;
-
 use super::{
     GridPointIndexIterator,
     helpers::{RegularGridIterator, evenly_spaced_longitudes},
 };
-use crate::{
-    def::grib2::template::param_set::{Grid, ScanningMode},
-    error::GribError,
-    helpers::read_as,
-};
-
-#[derive(Debug, PartialEq, Eq)]
-pub struct GaussianGridDefinition {
-    pub grid: Grid,
-    pub i_direction_inc: u32,
-    pub n: u32,
-    pub scanning_mode: ScanningMode,
-}
+use crate::{def::grib2::template::param_set::ScanningMode, error::GribError};
 
 const MAX_ITER: usize = 10;
 
-impl GaussianGridDefinition {
+impl crate::def::grib2::template::param_set::GaussianGrid {
     /// Returns the shape of the grid, i.e. a tuple of the number of grids in
     /// the i and j directions.
     pub fn grid_shape(&self) -> (usize, usize) {
@@ -86,21 +72,6 @@ impl GaussianGridDefinition {
     pub(crate) fn is_consistent_for_j(&self) -> bool {
         let lat_diff = self.grid.last_point_lat - self.grid.first_point_lat;
         !((lat_diff > 0) ^ self.scanning_mode.scans_positively_for_j())
-    }
-
-    pub(crate) fn from_buf(buf: &[u8]) -> Self {
-        let mut pos = 0;
-        let grid = Grid::try_from_slice(buf, &mut pos).unwrap();
-        let i_direction_inc = read_as!(u32, buf, 33);
-        let n = read_as!(u32, buf, 37);
-        pos = 41;
-        let scanning_mode = ScanningMode::try_from_slice(buf, &mut pos).unwrap();
-        Self {
-            grid,
-            i_direction_inc,
-            n,
-            scanning_mode,
-        }
     }
 }
 

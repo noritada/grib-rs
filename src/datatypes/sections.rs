@@ -6,9 +6,9 @@ use crate::{
     GridPointIndexIterator, PolarStereographicGridDefinition,
     codetables::SUPPORTED_PROD_DEF_TEMPLATE_NUMBERS,
     datatypes::*,
-    def::grib2::template::{Template3_0, Template3_1},
+    def::grib2::template::{Template3_0, Template3_1, Template3_40},
     error::*,
-    grid::{GaussianGridDefinition, GridPointIterator, LambertGridDefinition},
+    grid::{GridPointIterator, LambertGridDefinition},
     helpers::{GribInt, read_as},
 };
 
@@ -174,7 +174,7 @@ pub enum GridDefinitionTemplateValues {
     Template1(Template3_1),
     Template20(PolarStereographicGridDefinition),
     Template30(LambertGridDefinition),
-    Template40(GaussianGridDefinition),
+    Template40(Template3_40),
 }
 
 impl GridDefinitionTemplateValues {
@@ -186,7 +186,7 @@ impl GridDefinitionTemplateValues {
             Self::Template1(def) => def.grid_shape(),
             Self::Template20(def) => def.grid_shape(),
             Self::Template30(def) => def.grid_shape(),
-            Self::Template40(def) => def.grid_shape(),
+            Self::Template40(def) => def.gaussian.grid_shape(),
         }
     }
 
@@ -204,7 +204,7 @@ impl GridDefinitionTemplateValues {
             Self::Template1(def) => def.short_name(),
             Self::Template20(def) => def.short_name(),
             Self::Template30(def) => def.short_name(),
-            Self::Template40(def) => def.short_name(),
+            Self::Template40(def) => def.gaussian.short_name(),
         }
     }
 
@@ -219,7 +219,7 @@ impl GridDefinitionTemplateValues {
             Self::Template1(def) => def.ij(),
             Self::Template20(def) => def.ij(),
             Self::Template30(def) => def.ij(),
-            Self::Template40(def) => def.ij(),
+            Self::Template40(def) => def.gaussian.ij(),
         }
     }
 
@@ -237,7 +237,7 @@ impl GridDefinitionTemplateValues {
             Self::Template20(def) => GridPointIterator::Lambert(def.latlons()?),
             #[cfg(feature = "gridpoints-proj")]
             Self::Template30(def) => GridPointIterator::Lambert(def.latlons()?),
-            Self::Template40(def) => GridPointIterator::LatLon(def.latlons()?),
+            Self::Template40(def) => GridPointIterator::LatLon(def.gaussian.latlons()?),
             #[cfg(not(feature = "gridpoints-proj"))]
             _ => {
                 return Err(GribError::NotSupported(
@@ -299,8 +299,9 @@ impl TryFrom<&GridDefinition> for GridDefinitionTemplateValues {
                         "template {num} with list of number of points"
                     )));
                 }
+                let mut pos = 0;
                 Ok(GridDefinitionTemplateValues::Template40(
-                    GaussianGridDefinition::from_buf(&buf[25..]),
+                    Template3_40::try_from_slice(&buf[9..], &mut pos).unwrap(),
                 ))
             }
             _ => Err(GribError::NotSupported(format!("template {num}"))),

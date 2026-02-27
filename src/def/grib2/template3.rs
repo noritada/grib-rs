@@ -17,6 +17,13 @@ pub struct Template3_1 {
     pub rotation: param_set::Rotation,
 }
 
+/// Grid definition template 3.40 - Gaussian latitude/longitude.
+#[derive(Debug, PartialEq, TryFromSlice, Dump)]
+pub struct Template3_40 {
+    pub earth: param_set::EarthShape,
+    pub gaussian: param_set::GaussianGrid,
+}
+
 pub(crate) mod param_set {
     use grib_template_derive::{Dump, TryFromSlice};
 
@@ -45,6 +52,16 @@ pub(crate) mod param_set {
         pub i_direction_inc: u32,
         /// Dj - j direction increment (see Notes 1 and 5).
         pub j_direction_inc: u32,
+        pub scanning_mode: ScanningMode,
+    }
+
+    #[derive(Debug, PartialEq, Eq, TryFromSlice, Dump)]
+    pub struct GaussianGrid {
+        pub grid: Grid,
+        /// Di - i direction increment (see Notes 1 and 5).
+        pub i_direction_inc: u32,
+        /// N - number of parallels between a pole and the Equator (see Note 2).
+        pub n: u32,
         pub scanning_mode: ScanningMode,
     }
 
