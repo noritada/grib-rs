@@ -157,7 +157,7 @@ pub struct Section6Payload {
 pub mod template {
     //! GRIB2 template definitions.
 
-    pub use super::{template1::*, template5::*};
+    pub use super::{template1::*, template3::*, template5::*};
 
     pub mod param_set {
         //! Definitions of parameter sets used in GRIB2 templates.

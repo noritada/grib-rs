@@ -23,7 +23,7 @@ pub use crate::{
     error::*,
     grid::{
         GaussianGridDefinition, GridPointIndexIterator, GridPointIterator, LambertGridDefinition,
-        LatLonGridDefinition, PolarStereographicGridDefinition,
+        PolarStereographicGridDefinition,
     },
     parser::*,
     reader::*,

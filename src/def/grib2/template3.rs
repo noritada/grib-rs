@@ -1,3 +1,22 @@
+use grib_template_derive::{Dump, TryFromSlice};
+
+/// Grid definition template 3.0 - latitude/longitude (or equidistant
+/// cylindrical, or Plate Carrée).
+#[derive(Debug, PartialEq, TryFromSlice, Dump)]
+pub struct Template3_0 {
+    pub earth: param_set::EarthShape,
+    pub lat_lon: param_set::LatLonGrid,
+}
+
+/// Grid definition template 3.1 - rotated latitude/longitude (or equidistant
+/// cylindrical, or Plate Carrée).
+#[derive(Debug, PartialEq, TryFromSlice, Dump)]
+pub struct Template3_1 {
+    pub earth: param_set::EarthShape,
+    pub rotated: param_set::LatLonGrid,
+    pub rotation: param_set::Rotation,
+}
+
 pub(crate) mod param_set {
     use grib_template_derive::{Dump, TryFromSlice};
 
@@ -17,6 +36,16 @@ pub(crate) mod param_set {
         pub minor_axis_scale_factor: u8,
         /// Scaled value of minor axis of oblate spheroid Earth.
         pub minor_axis_scaled_value: u32,
+    }
+
+    #[derive(Debug, PartialEq, Eq, TryFromSlice, Dump)]
+    pub struct LatLonGrid {
+        pub grid: Grid,
+        /// Di - i direction increment (see Notes 1 and 5).
+        pub i_direction_inc: u32,
+        /// Dj - j direction increment (see Notes 1 and 5).
+        pub j_direction_inc: u32,
+        pub scanning_mode: ScanningMode,
     }
 
     #[derive(Debug, PartialEq, Eq, TryFromSlice, Dump)]
