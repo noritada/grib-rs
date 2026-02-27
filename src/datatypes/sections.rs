@@ -3,10 +3,10 @@ use std::slice::Iter;
 use grib_template_helpers::TryFromSlice;
 
 use crate::{
-    GridPointIndexIterator, PolarStereographicGridDefinition,
+    GridPointIndexIterator,
     codetables::SUPPORTED_PROD_DEF_TEMPLATE_NUMBERS,
     datatypes::*,
-    def::grib2::template::{Template3_0, Template3_1, Template3_40},
+    def::grib2::template::{Template3_0, Template3_1, Template3_20, Template3_40},
     error::*,
     grid::{GridPointIterator, LambertGridDefinition},
     helpers::{GribInt, read_as},
@@ -172,7 +172,7 @@ impl GridDefinition {
 pub enum GridDefinitionTemplateValues {
     Template0(Template3_0),
     Template1(Template3_1),
-    Template20(PolarStereographicGridDefinition),
+    Template20(Template3_20),
     Template30(LambertGridDefinition),
     Template40(Template3_40),
 }
@@ -282,8 +282,9 @@ impl TryFrom<&GridDefinition> for GridDefinitionTemplateValues {
             }
             20 => {
                 let buf = &value.payload;
+                let mut pos = 0;
                 Ok(GridDefinitionTemplateValues::Template20(
-                    PolarStereographicGridDefinition::from_buf(&buf[9..]),
+                    Template3_20::try_from_slice(&buf[9..], &mut pos).unwrap(),
                 ))
             }
             30 => {

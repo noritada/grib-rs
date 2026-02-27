@@ -17,6 +17,31 @@ pub struct Template3_1 {
     pub rotation: param_set::Rotation,
 }
 
+/// Grid definition template 3.20 - polar stereographic projection.
+#[derive(Debug, PartialEq, Eq, TryFromSlice, Dump)]
+pub struct Template3_20 {
+    pub earth_shape: param_set::EarthShape,
+    /// Nx - number of points along the x-axis.
+    pub ni: u32,
+    /// Ny - number of points along the y-axis.
+    pub nj: u32,
+    /// La1 - latitude of first grid point.
+    pub first_point_lat: i32,
+    /// Lo1 - longitude of first grid point.
+    pub first_point_lon: i32,
+    pub resolution_and_component_flags: param_set::ResolutionAndComponentFlags,
+    /// LaD - latitude where Dx and Dy are specified.
+    pub lad: i32,
+    /// LoV - orientation of the grid (see Note 2).
+    pub lov: i32,
+    /// Dx - x-direction grid length (see Note 3).
+    pub dx: u32,
+    /// Dy - y-direction grid length (see Note 3).
+    pub dy: u32,
+    pub projection_centre: param_set::ProjectionCentreFlag,
+    pub scanning_mode: param_set::ScanningMode,
+}
+
 /// Grid definition template 3.40 - Gaussian latitude/longitude.
 #[derive(Debug, PartialEq, TryFromSlice, Dump)]
 pub struct Template3_40 {

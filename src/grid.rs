@@ -1,8 +1,7 @@
 use helpers::RegularGridIterator;
 
 pub use self::{
-    gaussian::compute_gaussian_latitudes, lambert::LambertGridDefinition,
-    polar_stereographic::PolarStereographicGridDefinition, rotated_ll::Unrotate,
+    gaussian::compute_gaussian_latitudes, lambert::LambertGridDefinition, rotated_ll::Unrotate,
 };
 use crate::def::grib2::template::param_set::ScanningMode;
 
