@@ -210,6 +210,25 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 11        payload.num_point_list_octets = 0  // Number of octets for optional list of numbers (see Note 2).
 12        payload.point_list_interpretation = 0  // Interpretation of list of numbers (see Code table 3.11).
 13-14     payload.template_num = 0  // Grid definition template number (= N) (see Code table 3.1).
+15        payload.template.earth.shape = 4  // Shape of the Earth (see Code table 3.2).
+16        payload.template.earth.spherical_earth_radius_scale_factor = 255  // Scale factor of radius of spherical Earth.
+17-20     payload.template.earth.spherical_earth_radius_scaled_value = 4294967295  // Scaled value of radius of spherical Earth.
+21        payload.template.earth.major_axis_scale_factor = 1  // Scale factor of major axis of oblate spheroid Earth.
+22-25     payload.template.earth.major_axis_scaled_value = 63781370  // Scaled value of major axis of oblate spheroid Earth.
+26        payload.template.earth.minor_axis_scale_factor = 1  // Scale factor of minor axis of oblate spheroid Earth.
+27-30     payload.template.earth.minor_axis_scaled_value = 63567523  // Scaled value of minor axis of oblate spheroid Earth.
+31-34     payload.template.lat_lon.grid.ni = 256  // Ni - number of points along a parallel.
+35-38     payload.template.lat_lon.grid.nj = 336  // Nj - number of points along a meridian.
+39-42     payload.template.lat_lon.grid.initial_production_domain_basic_angle = 0  // Basic angle of the initial production domain (see Note 1).
+43-46     payload.template.lat_lon.grid.basic_angle_subdivisions = 4294967295  // Subdivisions of basic angle used to define extreme longitudes and latitudes, and direction increments (see Note 1).
+47-50     payload.template.lat_lon.grid.first_point_lat = 47958333  // La1 - latitude of first grid point (see Note 1).
+51-54     payload.template.lat_lon.grid.first_point_lon = 118062500  // Lo1 - longitude of first grid point (see Note 1).
+55        payload.template.lat_lon.grid.resolution_and_component_flags = 0b00110000  // Resolution and component flags (see Flag table 3.3).
+56-59     payload.template.lat_lon.grid.last_point_lat = 20041667  // La2 - latitude of last grid point (see Note 1).
+60-63     payload.template.lat_lon.grid.last_point_lon = 149937500  // Lo2 - longitude of last grid point (see Note 1).
+64-67     payload.template.lat_lon.i_direction_inc = 125000  // Di - i direction increment (see Notes 1 and 5).
+68-71     payload.template.lat_lon.j_direction_inc = 83333  // Dj - j direction increment (see Notes 1 and 5).
+72        payload.template.lat_lon.scanning_mode = 0b00000000  // Scanning mode (flags - see Flag table 3.4).
 ###  SECTION 4: PRODUCT DEFINITION SECTION (length = 34)
 1-4       header.len = 34  // Length of section in octets (nn).
 5         header.sect_num = 4  // Number of section.

@@ -1,18 +1,11 @@
-use grib_template_helpers::TryFromSlice;
-
 use super::GridPointIndexIterator;
 use crate::{
-    LatLonGridDefinition, def::grib2::template::param_set::Rotation, error::GribError,
+    def::grib2::template::{Template3_1, param_set::Rotation},
+    error::GribError,
     grid::helpers::RegularGridIterator,
 };
 
-#[derive(Debug, PartialEq)]
-pub struct RotatedLatLonGridDefinition {
-    pub rotated: LatLonGridDefinition,
-    pub rotation: Rotation,
-}
-
-impl RotatedLatLonGridDefinition {
+impl Template3_1 {
     /// Returns the shape of the grid, i.e. a tuple of the number of grids in
     /// the i and j directions.
     pub fn grid_shape(&self) -> (usize, usize) {
@@ -42,16 +35,6 @@ impl RotatedLatLonGridDefinition {
     pub fn latlons(&self) -> Result<Unrotate<RegularGridIterator>, GribError> {
         let iter = Unrotate::new(self.rotated.latlons()?, &self.rotation);
         Ok(iter)
-    }
-
-    pub(crate) fn from_buf(buf: &[u8]) -> Self {
-        let lat_lon = LatLonGridDefinition::from_buf(buf);
-        let mut pos = 42;
-        let rotation = Rotation::try_from_slice(buf, &mut pos).unwrap();
-        Self {
-            rotated: lat_lon,
-            rotation,
-        }
     }
 }
 
@@ -121,7 +104,10 @@ where
 mod tests {
     use std::io::Read;
 
+    use grib_template_helpers::TryFromSlice;
+
     use super::*;
+    use crate::def::grib2::template::param_set::EarthShape;
 
     #[test]
     fn rotated_latlon_grid_definition_from_buf() -> Result<(), Box<dyn std::error::Error>> {
@@ -133,9 +119,19 @@ mod tests {
         let mut f = std::io::BufReader::new(f);
         f.read_to_end(&mut buf)?;
 
-        let actual = RotatedLatLonGridDefinition::from_buf(&buf[0x43..]);
-        let expected = RotatedLatLonGridDefinition {
-            rotated: LatLonGridDefinition {
+        let mut pos = 0x33;
+        let actual = Template3_1::try_from_slice(&buf, &mut pos)?;
+        let expected = Template3_1 {
+            earth: EarthShape {
+                shape: 6,
+                spherical_earth_radius_scale_factor: 0xff,
+                spherical_earth_radius_scaled_value: 0xffffffff,
+                major_axis_scale_factor: 0xff,
+                major_axis_scaled_value: 0xffffffff,
+                minor_axis_scale_factor: 0xff,
+                minor_axis_scaled_value: 0xffffffff,
+            },
+            rotated: crate::def::grib2::template::param_set::LatLonGrid {
                 grid: crate::def::grib2::template::param_set::Grid {
                     ni: 2540,
                     nj: 1290,
@@ -151,6 +147,8 @@ mod tests {
                     last_point_lon: 42306283,
                 },
                 scanning_mode: crate::def::grib2::template::param_set::ScanningMode(0b01000000),
+                i_direction_inc: 22500,
+                j_direction_inc: 22500,
             },
             rotation: Rotation {
                 south_pole_lat: -36088520,

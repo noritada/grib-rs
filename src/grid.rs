@@ -1,12 +1,6 @@
 use helpers::RegularGridIterator;
 
-pub use self::{
-    gaussian::{GaussianGridDefinition, compute_gaussian_latitudes},
-    lambert::LambertGridDefinition,
-    latlon::LatLonGridDefinition,
-    polar_stereographic::PolarStereographicGridDefinition,
-    rotated_ll::{RotatedLatLonGridDefinition, Unrotate},
-};
+pub use self::{gaussian::compute_gaussian_latitudes, rotated_ll::Unrotate};
 use crate::def::grib2::template::param_set::ScanningMode;
 
 /// An iterator over latitudes and longitudes of grid points in a submessage.

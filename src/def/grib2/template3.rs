@@ -1,3 +1,90 @@
+use grib_template_derive::{Dump, TryFromSlice};
+
+/// Grid definition template 3.0 - latitude/longitude (or equidistant
+/// cylindrical, or Plate Carrée).
+#[derive(Debug, PartialEq, TryFromSlice, Dump)]
+pub struct Template3_0 {
+    pub earth: param_set::EarthShape,
+    pub lat_lon: param_set::LatLonGrid,
+}
+
+/// Grid definition template 3.1 - rotated latitude/longitude (or equidistant
+/// cylindrical, or Plate Carrée).
+#[derive(Debug, PartialEq, TryFromSlice, Dump)]
+pub struct Template3_1 {
+    pub earth: param_set::EarthShape,
+    pub rotated: param_set::LatLonGrid,
+    pub rotation: param_set::Rotation,
+}
+
+/// Grid definition template 3.20 - polar stereographic projection.
+#[derive(Debug, PartialEq, Eq, TryFromSlice, Dump)]
+pub struct Template3_20 {
+    pub earth_shape: param_set::EarthShape,
+    /// Nx - number of points along the x-axis.
+    pub ni: u32,
+    /// Ny - number of points along the y-axis.
+    pub nj: u32,
+    /// La1 - latitude of first grid point.
+    pub first_point_lat: i32,
+    /// Lo1 - longitude of first grid point.
+    pub first_point_lon: i32,
+    pub resolution_and_component_flags: param_set::ResolutionAndComponentFlags,
+    /// LaD - latitude where Dx and Dy are specified.
+    pub lad: i32,
+    /// LoV - orientation of the grid (see Note 2).
+    pub lov: i32,
+    /// Dx - x-direction grid length (see Note 3).
+    pub dx: u32,
+    /// Dy - y-direction grid length (see Note 3).
+    pub dy: u32,
+    pub projection_centre: param_set::ProjectionCentreFlag,
+    pub scanning_mode: param_set::ScanningMode,
+}
+
+/// Grid definition template 3.30 - Lambert conformal.
+#[derive(Debug, PartialEq, Eq, TryFromSlice, Dump)]
+pub struct Template3_30 {
+    pub earth_shape: param_set::EarthShape,
+    /// Nx - number of points along the x-axis.
+    pub ni: u32,
+    /// Ny - number of points along the y-axis.
+    pub nj: u32,
+    /// La1 - latitude of first grid point.
+    pub first_point_lat: i32,
+    /// Lo1 - longitude of first grid point.
+    pub first_point_lon: i32,
+    pub resolution_and_component_flags: param_set::ResolutionAndComponentFlags,
+    /// LaD - latitude where Dx and Dy are specified.
+    pub lad: i32,
+    /// LoV - longitude of meridian parallel to y-axis along which latitude
+    /// increases as the y-coordinate increases.
+    pub lov: i32,
+    /// Dx - x-direction grid length (see Note 1).
+    pub dx: u32,
+    /// Dy - y-direction grid length (see Note 1).
+    pub dy: u32,
+    pub projection_centre: param_set::ProjectionCentreFlag,
+    pub scanning_mode: param_set::ScanningMode,
+    /// Latin 1 - first latitude from the pole at which the secant cone cuts the
+    /// sphere.
+    pub latin1: i32,
+    /// Latin 2 - second latitude from the pole at which the secant cone cuts
+    /// the sphere.
+    pub latin2: i32,
+    /// Latitude of the southern pole of projection.
+    pub south_pole_lat: i32,
+    /// Longitude of the southern pole of projection.
+    pub south_pole_lon: i32,
+}
+
+/// Grid definition template 3.40 - Gaussian latitude/longitude.
+#[derive(Debug, PartialEq, TryFromSlice, Dump)]
+pub struct Template3_40 {
+    pub earth: param_set::EarthShape,
+    pub gaussian: param_set::GaussianGrid,
+}
+
 pub(crate) mod param_set {
     use grib_template_derive::{Dump, TryFromSlice};
 
@@ -17,6 +104,26 @@ pub(crate) mod param_set {
         pub minor_axis_scale_factor: u8,
         /// Scaled value of minor axis of oblate spheroid Earth.
         pub minor_axis_scaled_value: u32,
+    }
+
+    #[derive(Debug, PartialEq, Eq, TryFromSlice, Dump)]
+    pub struct LatLonGrid {
+        pub grid: Grid,
+        /// Di - i direction increment (see Notes 1 and 5).
+        pub i_direction_inc: u32,
+        /// Dj - j direction increment (see Notes 1 and 5).
+        pub j_direction_inc: u32,
+        pub scanning_mode: ScanningMode,
+    }
+
+    #[derive(Debug, PartialEq, Eq, TryFromSlice, Dump)]
+    pub struct GaussianGrid {
+        pub grid: Grid,
+        /// Di - i direction increment (see Notes 1 and 5).
+        pub i_direction_inc: u32,
+        /// N - number of parallels between a pole and the Equator (see Note 2).
+        pub n: u32,
+        pub scanning_mode: ScanningMode,
     }
 
     #[derive(Debug, PartialEq, Eq, TryFromSlice, Dump)]
