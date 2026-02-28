@@ -96,6 +96,20 @@ pub struct Section3Payload {
     pub point_list_interpretation: u8,
     /// Grid definition template number (= N) (see Code table 3.1).
     pub template_num: u16,
+    /// Grid Definition Template (see Template 3.N, where N is the Grid
+    /// Definition Template Number given in octets 13-14).
+    #[grib_template(variant = "template_num")]
+    pub template: GridDefinitionTemplate,
+}
+
+#[derive(Debug, PartialEq, TryFromSlice, Dump)]
+#[repr(u16)]
+pub enum GridDefinitionTemplate {
+    _3_0(template3::Template3_0) = 0,
+    _3_1(template3::Template3_1) = 1,
+    _3_20(template3::Template3_20) = 20,
+    _3_30(template3::Template3_30) = 30,
+    _3_40(template3::Template3_40) = 40,
 }
 
 /// Section 4 - Product definition section.
