@@ -21,7 +21,7 @@ pub use crate::{
     datatypes::*,
     decoder::*,
     error::*,
-    grid::{GridPointIndexIterator, GridPointIterator},
+    grid::{GridDefinitionTemplateValues, GridPointIndexIterator, GridPointIterator},
     parser::*,
     reader::*,
     time::*,
