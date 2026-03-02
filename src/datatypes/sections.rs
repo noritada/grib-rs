@@ -254,60 +254,57 @@ impl TryFrom<&GridDefinition> for GridDefinitionTemplateValues {
     type Error = GribError;
 
     fn try_from(value: &GridDefinition) -> Result<Self, Self::Error> {
+        // In the future, we should switch the implementation like this:
+        //
+        // ```
+        // let buf = &value.payload;
+        // let mut pos = 0;
+        // let payload = crate::def::grib2::Section3Payload::try_from_slice(buf, &mut pos)
+        //     .map_err(|e| GribError::Unknown(e.to_owned()))?;
+        // let template = match payload.template {
+        // ..
+        // }
+        // ```
+        //
+        // However, since the current implementation of the templates has many
+        // limitations, to prevent errors, the template reading process is implemented
+        // as follows.
+        let buf = &value.payload[9..];
+        let mut pos = 0;
         let num = value.grid_tmpl_num();
-        match num {
-            0 => {
-                let buf = &value.payload;
-                if buf.len() > 67 {
-                    return Err(GribError::NotSupported(format!(
-                        "template {num} with list of number of points"
-                    )));
-                }
-                let mut pos = 0;
-                Ok(GridDefinitionTemplateValues::Template0(
-                    Template3_0::try_from_slice(&buf[9..], &mut pos).unwrap(),
-                ))
+        let template = match num {
+            0 => GridDefinitionTemplateValues::Template0(
+                Template3_0::try_from_slice(buf, &mut pos)
+                    .map_err(|e| GribError::Unknown(e.to_owned()))?,
+            ),
+            1 => GridDefinitionTemplateValues::Template1(
+                Template3_1::try_from_slice(buf, &mut pos)
+                    .map_err(|e| GribError::Unknown(e.to_owned()))?,
+            ),
+            20 => GridDefinitionTemplateValues::Template20(
+                Template3_20::try_from_slice(buf, &mut pos)
+                    .map_err(|e| GribError::Unknown(e.to_owned()))?,
+            ),
+            30 => GridDefinitionTemplateValues::Template30(
+                Template3_30::try_from_slice(buf, &mut pos)
+                    .map_err(|e| GribError::Unknown(e.to_owned()))?,
+            ),
+            40 => GridDefinitionTemplateValues::Template40(
+                Template3_40::try_from_slice(buf, &mut pos)
+                    .map_err(|e| GribError::Unknown(e.to_owned()))?,
+            ),
+            _ => {
+                return Err(GribError::NotSupported(format!(
+                    "lat/lon computation support for the template {num} is dropped in this build"
+                )));
             }
-            1 => {
-                let buf = &value.payload;
-                if buf.len() > 79 {
-                    return Err(GribError::NotSupported(format!(
-                        "template {num} with list of number of points"
-                    )));
-                }
-                let mut pos = 0;
-                Ok(GridDefinitionTemplateValues::Template1(
-                    Template3_1::try_from_slice(&buf[9..], &mut pos).unwrap(),
-                ))
-            }
-            20 => {
-                let buf = &value.payload;
-                let mut pos = 0;
-                Ok(GridDefinitionTemplateValues::Template20(
-                    Template3_20::try_from_slice(&buf[9..], &mut pos).unwrap(),
-                ))
-            }
-            30 => {
-                let buf = &value.payload;
-                let mut pos = 0;
-                Ok(GridDefinitionTemplateValues::Template30(
-                    Template3_30::try_from_slice(&buf[9..], &mut pos).unwrap(),
-                ))
-            }
-            40 => {
-                let buf = &value.payload;
-                if buf.len() > 67 {
-                    return Err(GribError::NotSupported(format!(
-                        "template {num} with list of number of points"
-                    )));
-                }
-                let mut pos = 0;
-                Ok(GridDefinitionTemplateValues::Template40(
-                    Template3_40::try_from_slice(&buf[9..], &mut pos).unwrap(),
-                ))
-            }
-            _ => Err(GribError::NotSupported(format!("template {num}"))),
+        };
+        if buf.len() > pos {
+            return Err(GribError::NotSupported(
+                "template with list of number of points".to_owned(),
+            ));
         }
+        Ok(template)
     }
 }
 
