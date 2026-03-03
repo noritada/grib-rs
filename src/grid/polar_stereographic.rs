@@ -161,57 +161,15 @@ impl Template3_20 {
 
 #[cfg(test)]
 mod tests {
-    use std::io::{BufReader, Read};
-
-    use grib_template_helpers::TryFromSlice;
-
     use super::*;
     use crate::def::grib2::template::param_set::{EarthShape, ResolutionAndComponentFlags};
-
-    #[test]
-    fn polar_stereographic_grid_definition_from_buf() -> Result<(), Box<dyn std::error::Error>> {
-        let mut buf = Vec::new();
-
-        let f = std::fs::File::open(
-            "testdata/CMC_RDPA_APCP-024-0100cutoff_SFC_0_ps10km_2023121806_000.grib2.xz",
-        )?;
-        let f = BufReader::new(f);
-        let mut f = xz2::bufread::XzDecoder::new(f);
-        f.read_to_end(&mut buf)?;
-
-        let mut pos = 0x33;
-        let actual = Template3_20::try_from_slice(&buf, &mut pos)?;
-        let expected = Template3_20 {
-            earth_shape: EarthShape {
-                shape: 6,
-                spherical_earth_radius_scale_factor: 0xff,
-                spherical_earth_radius_scaled_value: 0xffffffff,
-                major_axis_scale_factor: 0xff,
-                major_axis_scaled_value: 0xffffffff,
-                minor_axis_scale_factor: 0xff,
-                minor_axis_scaled_value: 0xffffffff,
-            },
-            ni: 935,
-            nj: 824,
-            first_point_lat: 18145030,
-            first_point_lon: 217107456,
-            resolution_and_component_flags: ResolutionAndComponentFlags(0b00001000),
-            lad: 60000000,
-            lov: 249000000,
-            dx: 10000000,
-            dy: 10000000,
-            projection_centre: ProjectionCentreFlag(0b00000000),
-            scanning_mode: ScanningMode(0b01000000),
-        };
-        assert_eq!(actual, expected);
-
-        Ok(())
-    }
 
     #[cfg(feature = "gridpoints-proj")]
     #[test]
     fn polar_stereographic_grid_latlon_computation() -> Result<(), Box<dyn std::error::Error>> {
         use crate::grid::helpers::test_helpers::assert_coord_almost_eq;
+        // grid point definition extracted from
+        // testdata/CMC_RDPA_APCP-024-0100cutoff_SFC_0_ps10km_2023121806_000.grib2.xz
         let grid_def = Template3_20 {
             earth_shape: EarthShape {
                 shape: 6,

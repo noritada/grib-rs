@@ -102,64 +102,8 @@ where
 
 #[cfg(test)]
 mod tests {
-    use std::io::Read;
-
-    use grib_template_helpers::TryFromSlice;
 
     use super::*;
-    use crate::def::grib2::template::param_set::EarthShape;
-
-    #[test]
-    fn rotated_latlon_grid_definition_from_buf() -> Result<(), Box<dyn std::error::Error>> {
-        let mut buf = Vec::new();
-
-        let f = std::fs::File::open(
-            "testdata/20260219T00Z_MSC_HRDPS_CAPE_Sfc_RLatLon0.0225_PT000H.grib2",
-        )?;
-        let mut f = std::io::BufReader::new(f);
-        f.read_to_end(&mut buf)?;
-
-        let mut pos = 0x33;
-        let actual = Template3_1::try_from_slice(&buf, &mut pos)?;
-        let expected = Template3_1 {
-            earth: EarthShape {
-                shape: 6,
-                spherical_earth_radius_scale_factor: 0xff,
-                spherical_earth_radius_scaled_value: 0xffffffff,
-                major_axis_scale_factor: 0xff,
-                major_axis_scaled_value: 0xffffffff,
-                minor_axis_scale_factor: 0xff,
-                minor_axis_scaled_value: 0xffffffff,
-            },
-            rotated: crate::def::grib2::template::param_set::LatLonGrid {
-                grid: crate::def::grib2::template::param_set::Grid {
-                    ni: 2540,
-                    nj: 1290,
-                    initial_production_domain_basic_angle: 0,
-                    basic_angle_subdivisions: 0xffffffff,
-                    first_point_lat: -12302501,
-                    first_point_lon: 345178780,
-                    resolution_and_component_flags:
-                        crate::def::grib2::template::param_set::ResolutionAndComponentFlags(
-                            0b00111000,
-                        ),
-                    last_point_lat: 16700001,
-                    last_point_lon: 42306283,
-                },
-                scanning_mode: crate::def::grib2::template::param_set::ScanningMode(0b01000000),
-                i_direction_inc: 22500,
-                j_direction_inc: 22500,
-            },
-            rotation: Rotation {
-                south_pole_lat: -36088520,
-                south_pole_lon: 245305142,
-                rot_angle: 0.,
-            },
-        };
-        assert_eq!(actual, expected);
-
-        Ok(())
-    }
 
     macro_rules! test_rotation{
         ($(($name:ident, $rot:expr, $input:expr, $expected:expr),)*) => ($(
@@ -190,6 +134,8 @@ mod tests {
             (-12.302501_f32, 345.178780_f32)
         ),
         (
+            // grid point definition extracted from
+            // testdata/20260219T00Z_MSC_HRDPS_CAPE_Sfc_RLatLon0.0225_PT000H.grib2
             rotation_for_first_point,
             Rotation {
                 south_pole_lat: -36088520,

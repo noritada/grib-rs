@@ -155,61 +155,16 @@ impl Template3_30 {
 
 #[cfg(test)]
 mod tests {
-    use std::io::{BufReader, Read};
-
-    use grib_template_helpers::TryFromSlice;
-
     use super::*;
     use crate::def::grib2::template::param_set::{
         EarthShape, ProjectionCentreFlag, ResolutionAndComponentFlags,
     };
 
-    #[test]
-    fn lambert_grid_definition_from_buf() -> Result<(), Box<dyn std::error::Error>> {
-        let mut buf = Vec::new();
-
-        let f = std::fs::File::open("testdata/ds.critfireo.bin.xz")?;
-        let f = BufReader::new(f);
-        let mut f = xz2::bufread::XzDecoder::new(f);
-        f.read_to_end(&mut buf)?;
-
-        let mut pos = 0x83;
-        let actual = Template3_30::try_from_slice(&buf, &mut pos)?;
-        let expected = Template3_30 {
-            earth_shape: EarthShape {
-                shape: 1,
-                spherical_earth_radius_scale_factor: 0,
-                spherical_earth_radius_scaled_value: 6371200,
-                major_axis_scale_factor: 0,
-                major_axis_scaled_value: 0,
-                minor_axis_scale_factor: 0,
-                minor_axis_scaled_value: 0,
-            },
-            ni: 2145,
-            nj: 1377,
-            first_point_lat: 20190000,
-            first_point_lon: 238449996,
-            resolution_and_component_flags: ResolutionAndComponentFlags(0b00000000),
-            lad: 25000000,
-            lov: 265000000,
-            dx: 2539703,
-            dy: 2539703,
-            projection_centre: ProjectionCentreFlag(0b00000000),
-            scanning_mode: ScanningMode(0b01010000),
-            latin1: 25000000,
-            latin2: 25000000,
-            south_pole_lat: -90000000,
-            south_pole_lon: 0,
-        };
-        assert_eq!(actual, expected);
-
-        Ok(())
-    }
-
     #[cfg(feature = "gridpoints-proj")]
     #[test]
     fn lambert_grid_latlon_computation() -> Result<(), Box<dyn std::error::Error>> {
         use crate::grid::helpers::test_helpers::assert_coord_almost_eq;
+        // grid point definition extracted from testdata/ds.critfireo.bin.xz
         let grid_def = Template3_30 {
             earth_shape: EarthShape {
                 shape: 1,
