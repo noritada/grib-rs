@@ -188,7 +188,7 @@ impl Iterator for GridPointIterator {
 /// This `struct` is created by the [`ij`] method. See its documentation for
 /// more.
 ///
-/// [`ij`]: LatLonGridDefinition::ij
+/// [`ij`]: crate::def::grib2::template::param_set::LatLonGrid::ij
 #[derive(Clone)]
 pub struct GridPointIndexIterator {
     major_len: usize,
