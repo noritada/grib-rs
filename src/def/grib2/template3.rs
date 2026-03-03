@@ -16,7 +16,7 @@ pub struct Template3_0 {
 /// ```
 /// use std::io::Read;
 ///
-/// use grib::def::grib2::template::Template3_1;
+/// use grib::def::grib2::template::{Template3_1, param_set};
 /// use grib_template_helpers::TryFromSlice;
 ///
 /// fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -31,7 +31,7 @@ pub struct Template3_0 {
 ///     let mut pos = 0x33;
 ///     let actual = Template3_1::try_from_slice(&buf, &mut pos)?;
 ///     let expected = Template3_1 {
-///         earth: grib::def::grib2::template::param_set::EarthShape {
+///         earth: param_set::EarthShape {
 ///             shape: 6,
 ///             spherical_earth_radius_scale_factor: 0xff,
 ///             spherical_earth_radius_scaled_value: 0xffffffff,
@@ -40,26 +40,25 @@ pub struct Template3_0 {
 ///             minor_axis_scale_factor: 0xff,
 ///             minor_axis_scaled_value: 0xffffffff,
 ///         },
-///         rotated: grib::def::grib2::template::param_set::LatLonGrid {
-///             grid: grib::def::grib2::template::param_set::Grid {
+///         rotated: param_set::LatLonGrid {
+///             grid: param_set::Grid {
 ///                 ni: 2540,
 ///                 nj: 1290,
 ///                 initial_production_domain_basic_angle: 0,
 ///                 basic_angle_subdivisions: 0xffffffff,
 ///                 first_point_lat: -12302501,
 ///                 first_point_lon: 345178780,
-///                 resolution_and_component_flags:
-///                     grib::def::grib2::template::param_set::ResolutionAndComponentFlags(
-///                         0b00111000,
-///                     ),
+///                 resolution_and_component_flags: param_set::ResolutionAndComponentFlags(
+///                     0b00111000,
+///                 ),
 ///                 last_point_lat: 16700001,
 ///                 last_point_lon: 42306283,
 ///             },
-///             scanning_mode: grib::def::grib2::template::param_set::ScanningMode(0b01000000),
+///             scanning_mode: param_set::ScanningMode(0b01000000),
 ///             i_direction_inc: 22500,
 ///             j_direction_inc: 22500,
 ///         },
-///         rotation: grib::def::grib2::template::param_set::Rotation {
+///         rotation: param_set::Rotation {
 ///             south_pole_lat: -36088520,
 ///             south_pole_lon: 245305142,
 ///             rot_angle: 0.,
@@ -84,7 +83,7 @@ pub struct Template3_1 {
 /// ```
 /// use std::io::{BufReader, Read};
 ///
-/// use grib::def::grib2::template::Template3_20;
+/// use grib::def::grib2::template::{Template3_20, param_set};
 /// use grib_template_helpers::TryFromSlice;
 ///
 /// fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -100,7 +99,7 @@ pub struct Template3_1 {
 ///     let mut pos = 0x33;
 ///     let actual = Template3_20::try_from_slice(&buf, &mut pos)?;
 ///     let expected = Template3_20 {
-///         earth_shape: grib::def::grib2::template::param_set::EarthShape {
+///         earth_shape: param_set::EarthShape {
 ///             shape: 6,
 ///             spherical_earth_radius_scale_factor: 0xff,
 ///             spherical_earth_radius_scaled_value: 0xffffffff,
@@ -113,16 +112,13 @@ pub struct Template3_1 {
 ///         nj: 824,
 ///         first_point_lat: 18145030,
 ///         first_point_lon: 217107456,
-///         resolution_and_component_flags:
-///             grib::def::grib2::template::param_set::ResolutionAndComponentFlags(0b00001000),
+///         resolution_and_component_flags: param_set::ResolutionAndComponentFlags(0b00001000),
 ///         lad: 60000000,
 ///         lov: 249000000,
 ///         dx: 10000000,
 ///         dy: 10000000,
-///         projection_centre: grib::def::grib2::template::param_set::ProjectionCentreFlag(
-///             0b00000000,
-///         ),
-///         scanning_mode: grib::def::grib2::template::param_set::ScanningMode(0b01000000),
+///         projection_centre: param_set::ProjectionCentreFlag(0b00000000),
+///         scanning_mode: param_set::ScanningMode(0b01000000),
 ///     };
 ///     assert_eq!(actual, expected);
 ///
@@ -160,7 +156,7 @@ pub struct Template3_20 {
 /// ```
 /// use std::io::{BufReader, Read};
 ///
-/// use grib::def::grib2::template::Template3_30;
+/// use grib::def::grib2::template::{Template3_30, param_set};
 /// use grib_template_helpers::TryFromSlice;
 ///
 /// fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -174,7 +170,7 @@ pub struct Template3_20 {
 ///     let mut pos = 0x83;
 ///     let actual = Template3_30::try_from_slice(&buf, &mut pos)?;
 ///     let expected = Template3_30 {
-///         earth_shape: grib::def::grib2::template::param_set::EarthShape {
+///         earth_shape: param_set::EarthShape {
 ///             shape: 1,
 ///             spherical_earth_radius_scale_factor: 0,
 ///             spherical_earth_radius_scaled_value: 6371200,
@@ -187,16 +183,13 @@ pub struct Template3_20 {
 ///         nj: 1377,
 ///         first_point_lat: 20190000,
 ///         first_point_lon: 238449996,
-///         resolution_and_component_flags:
-///             grib::def::grib2::template::param_set::ResolutionAndComponentFlags(0b00000000),
+///         resolution_and_component_flags: param_set::ResolutionAndComponentFlags(0b00000000),
 ///         lad: 25000000,
 ///         lov: 265000000,
 ///         dx: 2539703,
 ///         dy: 2539703,
-///         projection_centre: grib::def::grib2::template::param_set::ProjectionCentreFlag(
-///             0b00000000,
-///         ),
-///         scanning_mode: grib::def::grib2::template::param_set::ScanningMode(0b01010000),
+///         projection_centre: param_set::ProjectionCentreFlag(0b00000000),
+///         scanning_mode: param_set::ScanningMode(0b01010000),
 ///         latin1: 25000000,
 ///         latin2: 25000000,
 ///         south_pole_lat: -90000000,

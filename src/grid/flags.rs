@@ -1,4 +1,6 @@
-impl crate::def::grib2::template::param_set::ScanningMode {
+use crate::def::grib2::template::param_set;
+
+impl param_set::ScanningMode {
     /// Returns `true` if points of the first row or column scan in the `+i`
     /// (`+x`) direction.
     ///
@@ -63,7 +65,7 @@ impl crate::def::grib2::template::param_set::ScanningMode {
     }
 }
 
-impl crate::def::grib2::template::param_set::ProjectionCentreFlag {
+impl param_set::ProjectionCentreFlag {
     /// Returns `true` if North Pole is on the projection plane. Otherwise (i.e.
     /// if South Pole is on), returns `false`.
     ///

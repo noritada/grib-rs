@@ -1,9 +1,6 @@
 use super::GridPointIndexIterator;
 use crate::{
-    def::grib2::template::{
-        Template3_20,
-        param_set::{ProjectionCentreFlag, ScanningMode},
-    },
+    def::grib2::template::{Template3_20, param_set},
     error::GribError,
 };
 
@@ -14,8 +11,10 @@ impl Template3_20 {
     /// Examples
     ///
     /// ```
+    /// use grib::def::grib2::template::param_set;
+    ///
     /// let def = grib::def::grib2::template::Template3_20 {
-    ///     earth_shape: grib::def::grib2::template::param_set::EarthShape {
+    ///     earth_shape: param_set::EarthShape {
     ///         shape: 6,
     ///         spherical_earth_radius_scale_factor: 0xff,
     ///         spherical_earth_radius_scaled_value: 0xffffffff,
@@ -28,14 +27,13 @@ impl Template3_20 {
     ///     nj: 3,
     ///     first_point_lat: 0,
     ///     first_point_lon: 0,
-    ///     resolution_and_component_flags:
-    ///         grib::def::grib2::template::param_set::ResolutionAndComponentFlags(0b00001000),
+    ///     resolution_and_component_flags: param_set::ResolutionAndComponentFlags(0b00001000),
     ///     lad: 0,
     ///     lov: 0,
     ///     dx: 1000,
     ///     dy: 1000,
-    ///     projection_centre: grib::def::grib2::template::param_set::ProjectionCentreFlag(0b00000000),
-    ///     scanning_mode: grib::def::grib2::template::param_set::ScanningMode(0b01000000),
+    ///     projection_centre: param_set::ProjectionCentreFlag(0b00000000),
+    ///     scanning_mode: param_set::ScanningMode(0b01000000),
     /// };
     /// let shape = def.grid_shape();
     /// assert_eq!(shape, (2, 3));
@@ -58,8 +56,10 @@ impl Template3_20 {
     /// Examples
     ///
     /// ```
+    /// use grib::def::grib2::template::param_set;
+    ///
     /// let def = grib::def::grib2::template::Template3_20 {
-    ///     earth_shape: grib::def::grib2::template::param_set::EarthShape {
+    ///     earth_shape: param_set::EarthShape {
     ///         shape: 6,
     ///         spherical_earth_radius_scale_factor: 0xff,
     ///         spherical_earth_radius_scaled_value: 0xffffffff,
@@ -72,14 +72,13 @@ impl Template3_20 {
     ///     nj: 3,
     ///     first_point_lat: 0,
     ///     first_point_lon: 0,
-    ///     resolution_and_component_flags:
-    ///         grib::def::grib2::template::param_set::ResolutionAndComponentFlags(0b00001000),
+    ///     resolution_and_component_flags: param_set::ResolutionAndComponentFlags(0b00001000),
     ///     lad: 0,
     ///     lov: 0,
     ///     dx: 1000,
     ///     dy: 1000,
-    ///     projection_centre: grib::def::grib2::template::param_set::ProjectionCentreFlag(0b00000000),
-    ///     scanning_mode: grib::def::grib2::template::param_set::ScanningMode(0b01000000),
+    ///     projection_centre: param_set::ProjectionCentreFlag(0b00000000),
+    ///     scanning_mode: param_set::ScanningMode(0b01000000),
     /// };
     /// let ij = def.ij();
     /// assert!(ij.is_ok());
@@ -91,7 +90,7 @@ impl Template3_20 {
     /// ```
     pub fn ij(&self) -> Result<GridPointIndexIterator, GribError> {
         if self.scanning_mode.has_unsupported_flags() {
-            let ScanningMode(mode) = self.scanning_mode;
+            let param_set::ScanningMode(mode) = self.scanning_mode;
             return Err(GribError::NotSupported(format!("scanning mode {mode}")));
         }
 
@@ -119,7 +118,7 @@ impl Template3_20 {
         })?;
 
         if self.projection_centre.has_unsupported_flags() {
-            let ProjectionCentreFlag(flag) = self.projection_centre;
+            let param_set::ProjectionCentreFlag(flag) = self.projection_centre;
             return Err(GribError::NotSupported(format!("projection centre {flag}")));
         }
         let lat_origin = if self
@@ -162,7 +161,6 @@ impl Template3_20 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::def::grib2::template::param_set::{EarthShape, ResolutionAndComponentFlags};
 
     #[cfg(feature = "gridpoints-proj")]
     #[test]
@@ -171,7 +169,7 @@ mod tests {
         // grid point definition extracted from
         // testdata/CMC_RDPA_APCP-024-0100cutoff_SFC_0_ps10km_2023121806_000.grib2.xz
         let grid_def = Template3_20 {
-            earth_shape: EarthShape {
+            earth_shape: param_set::EarthShape {
                 shape: 6,
                 spherical_earth_radius_scale_factor: 0xff,
                 spherical_earth_radius_scaled_value: 0xffffffff,
@@ -184,13 +182,13 @@ mod tests {
             nj: 824,
             first_point_lat: 18145030,
             first_point_lon: 217107456,
-            resolution_and_component_flags: ResolutionAndComponentFlags(0b00001000),
+            resolution_and_component_flags: param_set::ResolutionAndComponentFlags(0b00001000),
             lad: 60000000,
             lov: 249000000,
             dx: 10000000,
             dy: 10000000,
-            projection_centre: ProjectionCentreFlag(0b00000000),
-            scanning_mode: ScanningMode(0b01000000),
+            projection_centre: param_set::ProjectionCentreFlag(0b00000000),
+            scanning_mode: param_set::ScanningMode(0b01000000),
         };
         let latlons = grid_def.latlons()?.collect::<Vec<_>>();
 

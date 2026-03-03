@@ -1,6 +1,6 @@
 use super::GridPointIndexIterator;
 use crate::{
-    def::grib2::template::{Template3_30, param_set::ScanningMode},
+    def::grib2::template::{Template3_30, param_set},
     error::GribError,
 };
 
@@ -11,8 +11,10 @@ impl Template3_30 {
     /// Examples
     ///
     /// ```
+    /// use grib::def::grib2::template::param_set;
+    ///
     /// let def = grib::def::grib2::template::Template3_30 {
-    ///     earth_shape: grib::def::grib2::template::param_set::EarthShape {
+    ///     earth_shape: param_set::EarthShape {
     ///         shape: 1,
     ///         spherical_earth_radius_scale_factor: 0,
     ///         spherical_earth_radius_scaled_value: 6371200,
@@ -25,14 +27,13 @@ impl Template3_30 {
     ///     nj: 3,
     ///     first_point_lat: 0,
     ///     first_point_lon: 0,
-    ///     resolution_and_component_flags:
-    ///         grib::def::grib2::template::param_set::ResolutionAndComponentFlags(0b00000000),
+    ///     resolution_and_component_flags: param_set::ResolutionAndComponentFlags(0b00000000),
     ///     lad: 0,
     ///     lov: 0,
     ///     dx: 1000,
     ///     dy: 1000,
-    ///     projection_centre: grib::def::grib2::template::param_set::ProjectionCentreFlag(0b00000000),
-    ///     scanning_mode: grib::def::grib2::template::param_set::ScanningMode(0b01000000),
+    ///     projection_centre: param_set::ProjectionCentreFlag(0b00000000),
+    ///     scanning_mode: param_set::ScanningMode(0b01000000),
     ///     latin1: 0,
     ///     latin2: 0,
     ///     south_pole_lat: -90000000,
@@ -59,8 +60,10 @@ impl Template3_30 {
     /// Examples
     ///
     /// ```
+    /// use grib::def::grib2::template::param_set;
+    ///
     /// let def = grib::def::grib2::template::Template3_30 {
-    ///     earth_shape: grib::def::grib2::template::param_set::EarthShape {
+    ///     earth_shape: param_set::EarthShape {
     ///         shape: 1,
     ///         spherical_earth_radius_scale_factor: 0,
     ///         spherical_earth_radius_scaled_value: 6371200,
@@ -73,14 +76,13 @@ impl Template3_30 {
     ///     nj: 3,
     ///     first_point_lat: 0,
     ///     first_point_lon: 0,
-    ///     resolution_and_component_flags:
-    ///         grib::def::grib2::template::param_set::ResolutionAndComponentFlags(0b00000000),
+    ///     resolution_and_component_flags: param_set::ResolutionAndComponentFlags(0b00000000),
     ///     lad: 0,
     ///     lov: 0,
     ///     dx: 1000,
     ///     dy: 1000,
-    ///     projection_centre: grib::def::grib2::template::param_set::ProjectionCentreFlag(0b00000000),
-    ///     scanning_mode: grib::def::grib2::template::param_set::ScanningMode(0b01000000),
+    ///     projection_centre: param_set::ProjectionCentreFlag(0b00000000),
+    ///     scanning_mode: param_set::ScanningMode(0b01000000),
     ///     latin1: 0,
     ///     latin2: 0,
     ///     south_pole_lat: -90000000,
@@ -96,7 +98,7 @@ impl Template3_30 {
     /// ```
     pub fn ij(&self) -> Result<GridPointIndexIterator, GribError> {
         if self.scanning_mode.has_unsupported_flags() {
-            let ScanningMode(mode) = self.scanning_mode;
+            let param_set::ScanningMode(mode) = self.scanning_mode;
             return Err(GribError::NotSupported(format!("scanning mode {mode}")));
         }
 
@@ -156,9 +158,6 @@ impl Template3_30 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::def::grib2::template::param_set::{
-        EarthShape, ProjectionCentreFlag, ResolutionAndComponentFlags,
-    };
 
     #[cfg(feature = "gridpoints-proj")]
     #[test]
@@ -166,7 +165,7 @@ mod tests {
         use crate::grid::helpers::test_helpers::assert_coord_almost_eq;
         // grid point definition extracted from testdata/ds.critfireo.bin.xz
         let grid_def = Template3_30 {
-            earth_shape: EarthShape {
+            earth_shape: param_set::EarthShape {
                 shape: 1,
                 spherical_earth_radius_scale_factor: 0,
                 spherical_earth_radius_scaled_value: 6371200,
@@ -179,13 +178,13 @@ mod tests {
             nj: 1377,
             first_point_lat: 20190000,
             first_point_lon: 238449996,
-            resolution_and_component_flags: ResolutionAndComponentFlags(0b00000000),
+            resolution_and_component_flags: param_set::ResolutionAndComponentFlags(0b00000000),
             lad: 25000000,
             lov: 265000000,
             dx: 2539703,
             dy: 2539703,
-            projection_centre: ProjectionCentreFlag(0b00000000),
-            scanning_mode: ScanningMode(0b01010000),
+            projection_centre: param_set::ProjectionCentreFlag(0b00000000),
+            scanning_mode: param_set::ScanningMode(0b01010000),
             latin1: 25000000,
             latin2: 25000000,
             south_pole_lat: -90000000,
