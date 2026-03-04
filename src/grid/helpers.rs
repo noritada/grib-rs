@@ -216,7 +216,7 @@ mod tests {
                 let lat = (0..3).into_iter().map(|i| i as f32).collect::<Vec<_>>();
                 let lon = (10..12).into_iter().map(|i| i as f32).collect::<Vec<_>>();
                 let scanning_mode = ScanningMode($scanning_mode);
-                let ij= GridPointIndexIterator::new(lon.len(), lat.len(), scanning_mode);
+                let ij = GridPointIndexIterator::new((lon.len(), lat.len()), scanning_mode).unwrap();
                 let actual = RegularGridIterator::new(lat, lon, ij).collect::<Vec<_>>();
                 assert_eq!(actual, $expected);
             }
@@ -279,7 +279,7 @@ mod tests {
         let lat = (0..3).map(|i| i as f32).collect::<Vec<_>>();
         let lon = (10..12).map(|i| i as f32).collect::<Vec<_>>();
         let scanning_mode = ScanningMode(0b00000000);
-        let ij = GridPointIndexIterator::new(lon.len(), lat.len(), scanning_mode);
+        let ij = GridPointIndexIterator::new((lon.len(), lat.len()), scanning_mode).unwrap();
         let mut iter = RegularGridIterator::new(lat, lon, ij);
 
         assert_eq!(iter.size_hint(), (6, Some(6)));

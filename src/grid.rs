@@ -232,15 +232,7 @@ pub trait GridPointIndex {
     /// of iterator iterations is consistent with the number of grid points
     /// defined in the data.
     fn ij(&self) -> Result<GridPointIndexIterator, GribError> {
-        let scanning_mode = self.scanning_mode();
-        if scanning_mode.has_unsupported_flags() {
-            let ScanningMode(mode) = scanning_mode;
-            return Err(GribError::NotSupported(format!("scanning mode {mode}")));
-        }
-
-        let (ni, nj) = self.grid_shape();
-        let iter = GridPointIndexIterator::new(ni, nj, *scanning_mode);
-        Ok(iter)
+        GridPointIndexIterator::new(self.grid_shape(), *self.scanning_mode())
     }
 }
 
@@ -259,21 +251,29 @@ pub struct GridPointIndexIterator {
 }
 
 impl GridPointIndexIterator {
-    pub(crate) fn new(i_len: usize, j_len: usize, scanning_mode: ScanningMode) -> Self {
+    pub(crate) fn new(
+        (i_len, j_len): (usize, usize),
+        scanning_mode: ScanningMode,
+    ) -> Result<Self, GribError> {
+        if scanning_mode.has_unsupported_flags() {
+            let ScanningMode(mode) = scanning_mode;
+            return Err(GribError::NotSupported(format!("scanning mode {mode}")));
+        }
+
         let (major_len, minor_len) = if scanning_mode.is_consecutive_for_i() {
             (j_len, i_len)
         } else {
             (i_len, j_len)
         };
 
-        Self {
+        Ok(Self {
             major_len,
             minor_len,
             scanning_mode,
             minor_pos: 0,
             major_pos: 0,
             increments: true,
-        }
+        })
     }
 }
 
