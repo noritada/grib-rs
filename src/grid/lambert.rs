@@ -4,6 +4,12 @@ use crate::{
     error::GribError,
 };
 
+impl crate::GridShortName for Template3_30 {
+    fn short_name(&self) -> &'static str {
+        "lambert"
+    }
+}
+
 impl GridPointIndex for Template3_30 {
     fn grid_shape(&self) -> (usize, usize) {
         (self.ni as usize, self.nj as usize)
@@ -15,11 +21,6 @@ impl GridPointIndex for Template3_30 {
 }
 
 impl Template3_30 {
-    /// Returns the grid type.
-    pub fn short_name(&self) -> &'static str {
-        "lambert"
-    }
-
     /// Returns an iterator over latitudes and longitudes of grid points in
     /// degrees.
     ///

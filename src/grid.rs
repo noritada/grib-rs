@@ -18,6 +18,18 @@ pub enum GridDefinitionTemplateValues {
     Template40(Template3_40),
 }
 
+impl GridShortName for GridDefinitionTemplateValues {
+    fn short_name(&self) -> &'static str {
+        match self {
+            Self::Template0(def) => def.lat_lon.short_name(),
+            Self::Template1(def) => def.short_name(),
+            Self::Template20(def) => def.short_name(),
+            Self::Template30(def) => def.short_name(),
+            Self::Template40(def) => def.gaussian.short_name(),
+        }
+    }
+}
+
 impl GridPointIndex for GridDefinitionTemplateValues {
     fn grid_shape(&self) -> (usize, usize) {
         match self {
@@ -41,24 +53,6 @@ impl GridPointIndex for GridDefinitionTemplateValues {
 }
 
 impl GridDefinitionTemplateValues {
-    /// Returns the grid type.
-    ///
-    /// The grid types are denoted as short strings based on `gridType` used in
-    /// ecCodes.
-    ///
-    /// This is provided primarily for debugging and simple notation purposes.
-    /// It is better to use enum variants instead of the string notation to
-    /// determine the grid type.
-    pub fn short_name(&self) -> &'static str {
-        match self {
-            Self::Template0(def) => def.lat_lon.short_name(),
-            Self::Template1(def) => def.short_name(),
-            Self::Template20(def) => def.short_name(),
-            Self::Template30(def) => def.short_name(),
-            Self::Template40(def) => def.gaussian.short_name(),
-        }
-    }
-
     /// Returns an iterator over latitudes and longitudes of grid points in
     /// degrees.
     ///
@@ -142,6 +136,19 @@ impl TryFrom<&GridDefinition> for GridDefinitionTemplateValues {
         }
         Ok(template)
     }
+}
+
+/// A functionality to return a short name of the grid system.
+pub trait GridShortName {
+    /// Returns the grid type.
+    ///
+    /// The grid types are denoted as short strings based on `gridType` used in
+    /// ecCodes.
+    ///
+    /// This is provided primarily for debugging and simple notation purposes.
+    /// It is better to use enum variants instead of the string notation to
+    /// determine the grid type.
+    fn short_name(&self) -> &'static str;
 }
 
 /// An iterator over latitudes and longitudes of grid points in a submessage.

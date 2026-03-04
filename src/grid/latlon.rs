@@ -1,6 +1,12 @@
 use super::helpers::{RegularGridIterator, evenly_spaced_degrees, evenly_spaced_longitudes};
 use crate::{GridPointIndex, def::grib2::template::param_set, error::GribError};
 
+impl crate::GridShortName for param_set::LatLonGrid {
+    fn short_name(&self) -> &'static str {
+        "regular_ll"
+    }
+}
+
 impl GridPointIndex for param_set::LatLonGrid {
     fn grid_shape(&self) -> (usize, usize) {
         (self.grid.ni as usize, self.grid.nj as usize)
@@ -12,11 +18,6 @@ impl GridPointIndex for param_set::LatLonGrid {
 }
 
 impl param_set::LatLonGrid {
-    /// Returns the grid type.
-    pub fn short_name(&self) -> &'static str {
-        "regular_ll"
-    }
-
     /// Returns an iterator over latitudes and longitudes of grid points in
     /// degrees.
     ///

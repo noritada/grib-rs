@@ -5,6 +5,12 @@ use crate::{
     def::grib2::template::{Template3_20, param_set},
 };
 
+impl crate::GridShortName for Template3_20 {
+    fn short_name(&self) -> &'static str {
+        "polar_stereographic"
+    }
+}
+
 impl GridPointIndex for Template3_20 {
     fn grid_shape(&self) -> (usize, usize) {
         (self.ni as usize, self.nj as usize)
@@ -16,11 +22,6 @@ impl GridPointIndex for Template3_20 {
 }
 
 impl Template3_20 {
-    /// Returns the grid type.
-    pub fn short_name(&self) -> &'static str {
-        "polar_stereographic"
-    }
-
     /// Returns an iterator over latitudes and longitudes of grid points in
     /// degrees.
     ///

@@ -23,6 +23,7 @@ pub use crate::{
     error::*,
     grid::{
         GridDefinitionTemplateValues, GridPointIndex, GridPointIndexIterator, GridPointIterator,
+        GridShortName,
     },
     parser::*,
     reader::*,

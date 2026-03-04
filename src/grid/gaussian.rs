@@ -3,6 +3,12 @@ use crate::{GridPointIndex, def::grib2::template::param_set, error::GribError};
 
 const MAX_ITER: usize = 10;
 
+impl crate::GridShortName for param_set::GaussianGrid {
+    fn short_name(&self) -> &'static str {
+        "regular_gg"
+    }
+}
+
 impl GridPointIndex for param_set::GaussianGrid {
     fn grid_shape(&self) -> (usize, usize) {
         (self.grid.ni as usize, self.grid.nj as usize)
@@ -14,11 +20,6 @@ impl GridPointIndex for param_set::GaussianGrid {
 }
 
 impl param_set::GaussianGrid {
-    /// Returns the grid type.
-    pub fn short_name(&self) -> &'static str {
-        "regular_gg"
-    }
-
     /// Returns an iterator over latitudes and longitudes of grid points in
     /// degrees.
     ///

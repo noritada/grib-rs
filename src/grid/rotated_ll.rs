@@ -6,6 +6,12 @@ use crate::{
     grid::helpers::RegularGridIterator,
 };
 
+impl crate::GridShortName for Template3_1 {
+    fn short_name(&self) -> &'static str {
+        "rotated_ll"
+    }
+}
+
 impl GridPointIndex for Template3_1 {
     fn grid_shape(&self) -> (usize, usize) {
         self.rotated.grid_shape()
@@ -21,11 +27,6 @@ impl GridPointIndex for Template3_1 {
 }
 
 impl Template3_1 {
-    /// Returns the grid type.
-    pub fn short_name(&self) -> &'static str {
-        "rotated_ll"
-    }
-
     /// Returns an iterator over latitudes and longitudes of grid points in
     /// degrees.
     ///
