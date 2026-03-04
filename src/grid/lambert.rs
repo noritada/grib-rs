@@ -1,3 +1,5 @@
+#[cfg(feature = "gridpoints-proj")]
+use crate::LatLons;
 use crate::{
     GridPointIndex,
     def::grib2::template::{Template3_30, param_set},
@@ -20,16 +22,12 @@ impl GridPointIndex for Template3_30 {
     }
 }
 
-impl Template3_30 {
-    /// Returns an iterator over latitudes and longitudes of grid points in
-    /// degrees.
-    ///
-    /// Note that this is a low-level API and it is not checked that the number
-    /// of iterator iterations is consistent with the number of grid points
-    /// defined in the data.
-    #[cfg(feature = "gridpoints-proj")]
-    #[cfg_attr(docsrs, doc(cfg(feature = "gridpoints-proj")))]
-    pub fn latlons(&self) -> Result<std::vec::IntoIter<(f32, f32)>, GribError> {
+#[cfg(feature = "gridpoints-proj")]
+#[cfg_attr(docsrs, doc(cfg(feature = "gridpoints-proj")))]
+impl LatLons for Template3_30 {
+    type Iter<'a> = std::vec::IntoIter<(f32, f32)>;
+
+    fn latlons<'a>(&'a self) -> Result<Self::Iter<'a>, GribError> {
         let lad = self.lad as f64 * 1e-6;
         let lov = self.lov as f64 * 1e-6;
         let latin1 = self.latin1 as f64 * 1e-6;

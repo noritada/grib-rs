@@ -1,6 +1,6 @@
 use super::GridPointIndexIterator;
 use crate::{
-    GridPointIndex,
+    GridPointIndex, LatLons,
     def::grib2::template::{Template3_1, param_set::Rotation},
     error::GribError,
     grid::helpers::RegularGridIterator,
@@ -26,14 +26,13 @@ impl GridPointIndex for Template3_1 {
     }
 }
 
-impl Template3_1 {
-    /// Returns an iterator over latitudes and longitudes of grid points in
-    /// degrees.
-    ///
-    /// Note that this is a low-level API and it is not checked that the number
-    /// of iterator iterations is consistent with the number of grid points
-    /// defined in the data.
-    pub fn latlons(&self) -> Result<Unrotate<RegularGridIterator>, GribError> {
+impl LatLons for Template3_1 {
+    type Iter<'a>
+        = Unrotate<RegularGridIterator>
+    where
+        Self: 'a;
+
+    fn latlons<'a>(&'a self) -> Result<Self::Iter<'a>, GribError> {
         let iter = Unrotate::new(self.rotated.latlons()?, &self.rotation);
         Ok(iter)
     }

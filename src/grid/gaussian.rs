@@ -19,14 +19,10 @@ impl GridPointIndex for param_set::GaussianGrid {
     }
 }
 
-impl param_set::GaussianGrid {
-    /// Returns an iterator over latitudes and longitudes of grid points in
-    /// degrees.
-    ///
-    /// Note that this is a low-level API and it is not checked that the number
-    /// of iterator iterations is consistent with the number of grid points
-    /// defined in the data.
-    pub fn latlons(&self) -> Result<RegularGridIterator, GribError> {
+impl crate::LatLons for param_set::GaussianGrid {
+    type Iter<'a> = RegularGridIterator;
+
+    fn latlons<'a>(&'a self) -> Result<Self::Iter<'a>, GribError> {
         if !self.is_consistent_for_j() {
             return Err(GribError::InvalidValueError(
                 "Latitudes for first/last grid points are not consistent with scanning mode"
@@ -51,7 +47,9 @@ impl param_set::GaussianGrid {
         let iter = RegularGridIterator::new(lat, lon, ij);
         Ok(iter)
     }
+}
 
+impl param_set::GaussianGrid {
     pub(crate) fn is_consistent_for_j(&self) -> bool {
         let lat_diff = self.grid.last_point_lat - self.grid.first_point_lat;
         !((lat_diff > 0) ^ self.scanning_mode.scans_positively_for_j())

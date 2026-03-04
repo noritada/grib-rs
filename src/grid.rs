@@ -52,14 +52,13 @@ impl GridPointIndex for GridDefinitionTemplateValues {
     }
 }
 
-impl GridDefinitionTemplateValues {
-    /// Returns an iterator over latitudes and longitudes of grid points in
-    /// degrees.
-    ///
-    /// Note that this is a low-level API and it is not checked that the number
-    /// of iterator iterations is consistent with the number of grid points
-    /// defined in the data.
-    pub fn latlons(&self) -> Result<GridPointIterator, GribError> {
+impl LatLons for GridDefinitionTemplateValues {
+    type Iter<'a>
+        = GridPointIterator
+    where
+        Self: 'a;
+
+    fn latlons<'a>(&'a self) -> Result<Self::Iter<'a>, GribError> {
         let iter = match self {
             Self::Template0(def) => GridPointIterator::LatLon(def.lat_lon.latlons()?),
             Self::Template1(def) => GridPointIterator::RotatedLatLon(def.latlons()?),
@@ -149,6 +148,22 @@ pub trait GridShortName {
     /// It is better to use enum variants instead of the string notation to
     /// determine the grid type.
     fn short_name(&self) -> &'static str;
+}
+
+/// A functionality to generate an iterator over latitude/longitude of grid
+/// points.
+pub trait LatLons {
+    type Iter<'a>: Iterator<Item = (f32, f32)>
+    where
+        Self: 'a;
+
+    /// Returns an iterator over latitudes and longitudes of grid points in
+    /// degrees.
+    ///
+    /// Note that this is a low-level API and it is not checked that the number
+    /// of iterator iterations is consistent with the number of grid points
+    /// defined in the data.
+    fn latlons<'a>(&'a self) -> Result<Self::Iter<'a>, GribError>;
 }
 
 /// An iterator over latitudes and longitudes of grid points in a submessage.

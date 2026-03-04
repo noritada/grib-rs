@@ -1,7 +1,7 @@
 #[cfg(feature = "gridpoints-proj")]
 use crate::error::GribError;
 use crate::{
-    GridPointIndex,
+    GridPointIndex, LatLons,
     def::grib2::template::{Template3_20, param_set},
 };
 
@@ -21,16 +21,15 @@ impl GridPointIndex for Template3_20 {
     }
 }
 
-impl Template3_20 {
-    /// Returns an iterator over latitudes and longitudes of grid points in
-    /// degrees.
-    ///
-    /// Note that this is a low-level API and it is not checked that the number
-    /// of iterator iterations is consistent with the number of grid points
-    /// defined in the data.
-    #[cfg(feature = "gridpoints-proj")]
-    #[cfg_attr(docsrs, doc(cfg(feature = "gridpoints-proj")))]
-    pub fn latlons(&self) -> Result<std::vec::IntoIter<(f32, f32)>, GribError> {
+#[cfg(feature = "gridpoints-proj")]
+#[cfg_attr(docsrs, doc(cfg(feature = "gridpoints-proj")))]
+impl LatLons for Template3_20 {
+    type Iter<'a>
+        = std::vec::IntoIter<(f32, f32)>
+    where
+        Self: 'a;
+
+    fn latlons<'a>(&'a self) -> Result<Self::Iter<'a>, GribError> {
         let lad = self.lad as f64 * 1e-6;
         let lov = self.lov as f64 * 1e-6;
         let (a, b) = self.earth_shape.radii().ok_or_else(|| {
