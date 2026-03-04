@@ -1,102 +1,24 @@
-use super::GridPointIndexIterator;
+#[cfg(feature = "gridpoints-proj")]
+use crate::error::GribError;
 use crate::{
+    GridPointIndex,
     def::grib2::template::{Template3_20, param_set},
-    error::GribError,
 };
 
-impl Template3_20 {
-    /// Returns the shape of the grid, i.e. a tuple of the number of grids in
-    /// the i and j directions.
-    ///
-    /// Examples
-    ///
-    /// ```
-    /// use grib::def::grib2::template::param_set;
-    ///
-    /// let def = grib::def::grib2::template::Template3_20 {
-    ///     earth_shape: param_set::EarthShape {
-    ///         shape: 6,
-    ///         spherical_earth_radius_scale_factor: 0xff,
-    ///         spherical_earth_radius_scaled_value: 0xffffffff,
-    ///         major_axis_scale_factor: 0xff,
-    ///         major_axis_scaled_value: 0xffffffff,
-    ///         minor_axis_scale_factor: 0xff,
-    ///         minor_axis_scaled_value: 0xffffffff,
-    ///     },
-    ///     ni: 2,
-    ///     nj: 3,
-    ///     first_point_lat: 0,
-    ///     first_point_lon: 0,
-    ///     resolution_and_component_flags: param_set::ResolutionAndComponentFlags(0b00001000),
-    ///     lad: 0,
-    ///     lov: 0,
-    ///     dx: 1000,
-    ///     dy: 1000,
-    ///     projection_centre: param_set::ProjectionCentreFlag(0b00000000),
-    ///     scanning_mode: param_set::ScanningMode(0b01000000),
-    /// };
-    /// let shape = def.grid_shape();
-    /// assert_eq!(shape, (2, 3));
-    /// ```
-    pub fn grid_shape(&self) -> (usize, usize) {
+impl GridPointIndex for Template3_20 {
+    fn grid_shape(&self) -> (usize, usize) {
         (self.ni as usize, self.nj as usize)
     }
 
+    fn scanning_mode(&self) -> &param_set::ScanningMode {
+        &self.scanning_mode
+    }
+}
+
+impl Template3_20 {
     /// Returns the grid type.
     pub fn short_name(&self) -> &'static str {
         "polar_stereographic"
-    }
-
-    /// Returns an iterator over `(i, j)` of grid points.
-    ///
-    /// Note that this is a low-level API and it is not checked that the number
-    /// of iterator iterations is consistent with the number of grid points
-    /// defined in the data.
-    ///
-    /// Examples
-    ///
-    /// ```
-    /// use grib::def::grib2::template::param_set;
-    ///
-    /// let def = grib::def::grib2::template::Template3_20 {
-    ///     earth_shape: param_set::EarthShape {
-    ///         shape: 6,
-    ///         spherical_earth_radius_scale_factor: 0xff,
-    ///         spherical_earth_radius_scaled_value: 0xffffffff,
-    ///         major_axis_scale_factor: 0xff,
-    ///         major_axis_scaled_value: 0xffffffff,
-    ///         minor_axis_scale_factor: 0xff,
-    ///         minor_axis_scaled_value: 0xffffffff,
-    ///     },
-    ///     ni: 2,
-    ///     nj: 3,
-    ///     first_point_lat: 0,
-    ///     first_point_lon: 0,
-    ///     resolution_and_component_flags: param_set::ResolutionAndComponentFlags(0b00001000),
-    ///     lad: 0,
-    ///     lov: 0,
-    ///     dx: 1000,
-    ///     dy: 1000,
-    ///     projection_centre: param_set::ProjectionCentreFlag(0b00000000),
-    ///     scanning_mode: param_set::ScanningMode(0b01000000),
-    /// };
-    /// let ij = def.ij();
-    /// assert!(ij.is_ok());
-    ///
-    /// let mut ij = ij.unwrap();
-    /// assert_eq!(ij.next(), Some((0, 0)));
-    /// assert_eq!(ij.next(), Some((1, 0)));
-    /// assert_eq!(ij.next(), Some((0, 1)));
-    /// ```
-    pub fn ij(&self) -> Result<GridPointIndexIterator, GribError> {
-        if self.scanning_mode.has_unsupported_flags() {
-            let param_set::ScanningMode(mode) = self.scanning_mode;
-            return Err(GribError::NotSupported(format!("scanning mode {mode}")));
-        }
-
-        let iter =
-            GridPointIndexIterator::new(self.ni as usize, self.nj as usize, self.scanning_mode);
-        Ok(iter)
     }
 
     /// Returns an iterator over latitudes and longitudes of grid points in

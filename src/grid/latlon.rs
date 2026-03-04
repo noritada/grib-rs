@@ -1,93 +1,20 @@
-use super::{
-    GridPointIndexIterator,
-    helpers::{RegularGridIterator, evenly_spaced_degrees, evenly_spaced_longitudes},
-};
-use crate::{def::grib2::template::param_set, error::GribError};
+use super::helpers::{RegularGridIterator, evenly_spaced_degrees, evenly_spaced_longitudes};
+use crate::{GridPointIndex, def::grib2::template::param_set, error::GribError};
 
-impl param_set::LatLonGrid {
-    /// Returns the shape of the grid, i.e. a tuple of the number of grids in
-    /// the i and j directions.
-    ///
-    /// Examples
-    ///
-    /// ```
-    /// use grib::def::grib2::template::param_set;
-    ///
-    /// let def = param_set::LatLonGrid {
-    ///     grid: param_set::Grid {
-    ///         ni: 2,
-    ///         nj: 3,
-    ///         initial_production_domain_basic_angle: 0,
-    ///         basic_angle_subdivisions: 0xffffffff,
-    ///         first_point_lat: 0,
-    ///         first_point_lon: 0,
-    ///         resolution_and_component_flags: param_set::ResolutionAndComponentFlags(0b00110000),
-    ///         last_point_lat: 2_000_000,
-    ///         last_point_lon: 1_000_000,
-    ///     },
-    ///     i_direction_inc: 0xffffffff,
-    ///     j_direction_inc: 0xffffffff,
-    ///     scanning_mode: param_set::ScanningMode(0b01000000),
-    /// };
-    /// let shape = def.grid_shape();
-    /// assert_eq!(shape, (2, 3));
-    /// ```
-    pub fn grid_shape(&self) -> (usize, usize) {
+impl GridPointIndex for param_set::LatLonGrid {
+    fn grid_shape(&self) -> (usize, usize) {
         (self.grid.ni as usize, self.grid.nj as usize)
     }
 
+    fn scanning_mode(&self) -> &param_set::ScanningMode {
+        &self.scanning_mode
+    }
+}
+
+impl param_set::LatLonGrid {
     /// Returns the grid type.
     pub fn short_name(&self) -> &'static str {
         "regular_ll"
-    }
-
-    /// Returns an iterator over `(i, j)` of grid points.
-    ///
-    /// Note that this is a low-level API and it is not checked that the number
-    /// of iterator iterations is consistent with the number of grid points
-    /// defined in the data.
-    ///
-    /// Examples
-    ///
-    /// ```
-    /// use grib::def::grib2::template::param_set;
-    ///
-    /// let def = param_set::LatLonGrid {
-    ///     grid: param_set::Grid {
-    ///         ni: 2,
-    ///         nj: 3,
-    ///         initial_production_domain_basic_angle: 0,
-    ///         basic_angle_subdivisions: 0xffffffff,
-    ///         first_point_lat: 0,
-    ///         first_point_lon: 0,
-    ///         resolution_and_component_flags: param_set::ResolutionAndComponentFlags(0b00110000),
-    ///         last_point_lat: 2_000_000,
-    ///         last_point_lon: 1_000_000,
-    ///     },
-    ///     i_direction_inc: 0xffffffff,
-    ///     j_direction_inc: 0xffffffff,
-    ///     scanning_mode: param_set::ScanningMode(0b01000000),
-    /// };
-    /// let ij = def.ij();
-    /// assert!(ij.is_ok());
-    ///
-    /// let mut ij = ij.unwrap();
-    /// assert_eq!(ij.next(), Some((0, 0)));
-    /// assert_eq!(ij.next(), Some((1, 0)));
-    /// assert_eq!(ij.next(), Some((0, 1)));
-    /// ```
-    pub fn ij(&self) -> Result<GridPointIndexIterator, GribError> {
-        if self.scanning_mode.has_unsupported_flags() {
-            let param_set::ScanningMode(mode) = self.scanning_mode;
-            return Err(GribError::NotSupported(format!("scanning mode {mode}")));
-        }
-
-        let iter = GridPointIndexIterator::new(
-            self.grid.ni as usize,
-            self.grid.nj as usize,
-            self.scanning_mode,
-        );
-        Ok(iter)
     }
 
     /// Returns an iterator over latitudes and longitudes of grid points in

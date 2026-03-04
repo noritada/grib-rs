@@ -1,40 +1,22 @@
-use super::{
-    GridPointIndexIterator,
-    helpers::{RegularGridIterator, evenly_spaced_longitudes},
-};
-use crate::{def::grib2::template::param_set, error::GribError};
+use super::helpers::{RegularGridIterator, evenly_spaced_longitudes};
+use crate::{GridPointIndex, def::grib2::template::param_set, error::GribError};
 
 const MAX_ITER: usize = 10;
 
-impl param_set::GaussianGrid {
-    /// Returns the shape of the grid, i.e. a tuple of the number of grids in
-    /// the i and j directions.
-    pub fn grid_shape(&self) -> (usize, usize) {
+impl GridPointIndex for param_set::GaussianGrid {
+    fn grid_shape(&self) -> (usize, usize) {
         (self.grid.ni as usize, self.grid.nj as usize)
     }
 
+    fn scanning_mode(&self) -> &super::ScanningMode {
+        &self.scanning_mode
+    }
+}
+
+impl param_set::GaussianGrid {
     /// Returns the grid type.
     pub fn short_name(&self) -> &'static str {
         "regular_gg"
-    }
-
-    /// Returns an iterator over `(i, j)` of grid points.
-    ///
-    /// Note that this is a low-level API and it is not checked that the number
-    /// of iterator iterations is consistent with the number of grid points
-    /// defined in the data.
-    pub fn ij(&self) -> Result<GridPointIndexIterator, GribError> {
-        if self.scanning_mode.has_unsupported_flags() {
-            let param_set::ScanningMode(mode) = self.scanning_mode;
-            return Err(GribError::NotSupported(format!("scanning mode {mode}")));
-        }
-
-        let iter = GridPointIndexIterator::new(
-            self.grid.ni as usize,
-            self.grid.nj as usize,
-            self.scanning_mode,
-        );
-        Ok(iter)
     }
 
     /// Returns an iterator over latitudes and longitudes of grid points in
