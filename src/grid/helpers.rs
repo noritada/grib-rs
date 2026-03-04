@@ -1,10 +1,9 @@
 #[cfg(feature = "gridpoints-proj")]
 use proj::Proj;
 
-use super::ScanningMode;
 #[allow(unused_imports)]
 use crate::GribError;
-use crate::GridPointIndexIterator;
+use crate::{GridPointIndexIterator, def::grib2::template::param_set::ScanningMode};
 
 pub(crate) fn evenly_spaced_longitudes(
     start_microdegree: i32,
@@ -208,7 +207,7 @@ pub(crate) mod test_helpers {
 
 #[cfg(test)]
 mod tests {
-    use super::{super::ScanningMode, *};
+    use super::*;
 
     macro_rules! test_lat_lon_grid_iter {
         ($(($name:ident, $scanning_mode:expr, $expected:expr),)*) => ($(

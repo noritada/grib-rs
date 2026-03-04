@@ -2,11 +2,11 @@ use super::{
     GridPointIndexIterator,
     helpers::{RegularGridIterator, evenly_spaced_longitudes},
 };
-use crate::{def::grib2::template::param_set::ScanningMode, error::GribError};
+use crate::{def::grib2::template::param_set, error::GribError};
 
 const MAX_ITER: usize = 10;
 
-impl crate::def::grib2::template::param_set::GaussianGrid {
+impl param_set::GaussianGrid {
     /// Returns the shape of the grid, i.e. a tuple of the number of grids in
     /// the i and j directions.
     pub fn grid_shape(&self) -> (usize, usize) {
@@ -25,7 +25,7 @@ impl crate::def::grib2::template::param_set::GaussianGrid {
     /// defined in the data.
     pub fn ij(&self) -> Result<GridPointIndexIterator, GribError> {
         if self.scanning_mode.has_unsupported_flags() {
-            let ScanningMode(mode) = self.scanning_mode;
+            let param_set::ScanningMode(mode) = self.scanning_mode;
             return Err(GribError::NotSupported(format!("scanning mode {mode}")));
         }
 

@@ -10,6 +10,65 @@ pub struct Template3_0 {
 
 /// Grid definition template 3.1 - rotated latitude/longitude (or equidistant
 /// cylindrical, or Plate Carrée).
+///
+/// # Examples
+///
+/// ```
+/// use std::io::Read;
+///
+/// use grib::def::grib2::template::{Template3_1, param_set};
+/// use grib_template_helpers::TryFromSlice;
+///
+/// fn main() -> Result<(), Box<dyn std::error::Error>> {
+///     let mut buf = Vec::new();
+///
+///     let f = std::fs::File::open(
+///         "testdata/20260219T00Z_MSC_HRDPS_CAPE_Sfc_RLatLon0.0225_PT000H.grib2",
+///     )?;
+///     let mut f = std::io::BufReader::new(f);
+///     f.read_to_end(&mut buf)?;
+///
+///     let mut pos = 0x33;
+///     let actual = Template3_1::try_from_slice(&buf, &mut pos)?;
+///     let expected = Template3_1 {
+///         earth: param_set::EarthShape {
+///             shape: 6,
+///             spherical_earth_radius_scale_factor: 0xff,
+///             spherical_earth_radius_scaled_value: 0xffffffff,
+///             major_axis_scale_factor: 0xff,
+///             major_axis_scaled_value: 0xffffffff,
+///             minor_axis_scale_factor: 0xff,
+///             minor_axis_scaled_value: 0xffffffff,
+///         },
+///         rotated: param_set::LatLonGrid {
+///             grid: param_set::Grid {
+///                 ni: 2540,
+///                 nj: 1290,
+///                 initial_production_domain_basic_angle: 0,
+///                 basic_angle_subdivisions: 0xffffffff,
+///                 first_point_lat: -12302501,
+///                 first_point_lon: 345178780,
+///                 resolution_and_component_flags: param_set::ResolutionAndComponentFlags(
+///                     0b00111000,
+///                 ),
+///                 last_point_lat: 16700001,
+///                 last_point_lon: 42306283,
+///             },
+///             scanning_mode: param_set::ScanningMode(0b01000000),
+///             i_direction_inc: 22500,
+///             j_direction_inc: 22500,
+///         },
+///         rotation: param_set::Rotation {
+///             south_pole_lat: -36088520,
+///             south_pole_lon: 245305142,
+///             rot_angle: 0.,
+///         },
+///     };
+///     assert_eq!(actual, expected);
+///
+///     Ok(())
+/// }
+/// ```
 #[derive(Debug, PartialEq, TryFromSlice, Dump)]
 pub struct Template3_1 {
     pub earth: param_set::EarthShape,
@@ -18,6 +77,54 @@ pub struct Template3_1 {
 }
 
 /// Grid definition template 3.20 - polar stereographic projection.
+///
+/// # Examples
+///
+/// ```
+/// use std::io::{BufReader, Read};
+///
+/// use grib::def::grib2::template::{Template3_20, param_set};
+/// use grib_template_helpers::TryFromSlice;
+///
+/// fn main() -> Result<(), Box<dyn std::error::Error>> {
+///     let mut buf = Vec::new();
+///
+///     let f = std::fs::File::open(
+///         "testdata/CMC_RDPA_APCP-024-0100cutoff_SFC_0_ps10km_2023121806_000.grib2.xz",
+///     )?;
+///     let f = BufReader::new(f);
+///     let mut f = xz2::bufread::XzDecoder::new(f);
+///     f.read_to_end(&mut buf)?;
+///
+///     let mut pos = 0x33;
+///     let actual = Template3_20::try_from_slice(&buf, &mut pos)?;
+///     let expected = Template3_20 {
+///         earth_shape: param_set::EarthShape {
+///             shape: 6,
+///             spherical_earth_radius_scale_factor: 0xff,
+///             spherical_earth_radius_scaled_value: 0xffffffff,
+///             major_axis_scale_factor: 0xff,
+///             major_axis_scaled_value: 0xffffffff,
+///             minor_axis_scale_factor: 0xff,
+///             minor_axis_scaled_value: 0xffffffff,
+///         },
+///         ni: 935,
+///         nj: 824,
+///         first_point_lat: 18145030,
+///         first_point_lon: 217107456,
+///         resolution_and_component_flags: param_set::ResolutionAndComponentFlags(0b00001000),
+///         lad: 60000000,
+///         lov: 249000000,
+///         dx: 10000000,
+///         dy: 10000000,
+///         projection_centre: param_set::ProjectionCentreFlag(0b00000000),
+///         scanning_mode: param_set::ScanningMode(0b01000000),
+///     };
+///     assert_eq!(actual, expected);
+///
+///     Ok(())
+/// }
+/// ```
 #[derive(Debug, PartialEq, Eq, TryFromSlice, Dump)]
 pub struct Template3_20 {
     pub earth_shape: param_set::EarthShape,
@@ -43,6 +150,56 @@ pub struct Template3_20 {
 }
 
 /// Grid definition template 3.30 - Lambert conformal.
+///
+/// # Examples
+///
+/// ```
+/// use std::io::{BufReader, Read};
+///
+/// use grib::def::grib2::template::{Template3_30, param_set};
+/// use grib_template_helpers::TryFromSlice;
+///
+/// fn main() -> Result<(), Box<dyn std::error::Error>> {
+///     let mut buf = Vec::new();
+///
+///     let f = std::fs::File::open("testdata/ds.critfireo.bin.xz")?;
+///     let f = BufReader::new(f);
+///     let mut f = xz2::bufread::XzDecoder::new(f);
+///     f.read_to_end(&mut buf)?;
+///
+///     let mut pos = 0x83;
+///     let actual = Template3_30::try_from_slice(&buf, &mut pos)?;
+///     let expected = Template3_30 {
+///         earth_shape: param_set::EarthShape {
+///             shape: 1,
+///             spherical_earth_radius_scale_factor: 0,
+///             spherical_earth_radius_scaled_value: 6371200,
+///             major_axis_scale_factor: 0,
+///             major_axis_scaled_value: 0,
+///             minor_axis_scale_factor: 0,
+///             minor_axis_scaled_value: 0,
+///         },
+///         ni: 2145,
+///         nj: 1377,
+///         first_point_lat: 20190000,
+///         first_point_lon: 238449996,
+///         resolution_and_component_flags: param_set::ResolutionAndComponentFlags(0b00000000),
+///         lad: 25000000,
+///         lov: 265000000,
+///         dx: 2539703,
+///         dy: 2539703,
+///         projection_centre: param_set::ProjectionCentreFlag(0b00000000),
+///         scanning_mode: param_set::ScanningMode(0b01010000),
+///         latin1: 25000000,
+///         latin2: 25000000,
+///         south_pole_lat: -90000000,
+///         south_pole_lon: 0,
+///     };
+///     assert_eq!(actual, expected);
+///
+///     Ok(())
+/// }
+/// ```
 #[derive(Debug, PartialEq, Eq, TryFromSlice, Dump)]
 pub struct Template3_30 {
     pub earth_shape: param_set::EarthShape,
