@@ -1119,6 +1119,13 @@ Data Representation:                    {}
             )))
         }
     }
+}
+
+impl<'s, R> LatLons for SubMessage<'s, R> {
+    type Iter<'a>
+        = GridPointIterator
+    where
+        Self: 'a;
 
     /// Computes and returns an iterator over latitudes and longitudes of grid
     /// points.
@@ -1134,6 +1141,8 @@ Data Representation:                    {}
     ///     fs::File,
     ///     io::{BufReader, Read},
     /// };
+    ///
+    /// use grib::LatLons;
     ///
     /// fn main() -> Result<(), Box<dyn std::error::Error>> {
     ///     let mut buf = Vec::new();
@@ -1155,7 +1164,7 @@ Data Representation:                    {}
     ///     Ok(())
     /// }
     /// ```
-    pub fn latlons(&self) -> Result<GridPointIterator, GribError> {
+    fn latlons<'a>(&'a self) -> Result<Self::Iter<'a>, GribError> {
         let grid_def = self.grid_def();
         let num_defined = grid_def.num_points() as usize;
         let latlons = GridDefinitionTemplateValues::try_from(grid_def)?.latlons()?;

@@ -149,7 +149,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::grid::helpers::test_helpers::assert_almost_eq;
+    use crate::{LatLons, grid::helpers::test_helpers::assert_almost_eq};
 
     #[test]
     fn latlon_computation_for_real_world_gaussian_grid_compared_with_results_from_eccodes()

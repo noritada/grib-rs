@@ -96,7 +96,7 @@ If you feel a feature is missing, please send us your suggestions through the [G
 This is an example of accessing the grid point values and latitude/longitude coordinates for a specific submessage within a GRIB2 file.
 
 ```rust
-use grib::{codetables::grib2::*, ForecastTime, Grib2SubmessageDecoder, Name};
+use grib::{codetables::grib2::*, ForecastTime, Grib2SubmessageDecoder, LatLons, Name};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let fname = "testdata/Z__C_RJTD_20160822020000_NOWC_GPV_Ggis10km_Pphw10_FH0000-0100_grib2.bin";
