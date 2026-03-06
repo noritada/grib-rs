@@ -3,7 +3,7 @@ use std::{fmt, path::PathBuf};
 use anyhow::Result;
 use clap::{ArgMatches, Command, arg};
 use console::Style;
-use grib::GribError;
+use grib::{GribError, LatLons};
 
 use crate::cli;
 

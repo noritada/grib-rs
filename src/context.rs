@@ -10,7 +10,7 @@ use grib_template_helpers::{Dump as _, TryFromSlice as _};
 #[cfg(feature = "time-calculation")]
 use crate::TemporalInfo;
 use crate::{
-    GridDefinitionTemplateValues, GridPointIndexIterator, TemporalRawInfo,
+    GridDefinitionTemplateValues, GridPointIndex, GridPointIndexIterator, LatLons, TemporalRawInfo,
     codetables::{
         CodeTable3_1, CodeTable4_0, CodeTable4_1, CodeTable4_2, CodeTable4_3, CodeTable5_0, Lookup,
     },
@@ -1189,13 +1189,16 @@ Data Representation:                    {}
             )))
         }
     }
+}
+
+impl<'s, R> LatLons for SubMessage<'s, R> {
+    type Iter<'a>
+        = GridPointIterator
+    where
+        Self: 'a;
 
     /// Computes and returns an iterator over latitudes and longitudes of grid
-    /// points.
-    ///
-    /// The order of lat/lon data of grid points is the same as the order of the
-    /// grid point values, defined by the scanning mode
-    /// ([`ScanningMode`](`crate::def::grib2::template::param_set::ScanningMode`)) in the data.
+    /// points in degrees. [Read more](`crate::LatLons::latlons`)
     ///
     /// # Examples
     ///
@@ -1204,6 +1207,8 @@ Data Representation:                    {}
     ///     fs::File,
     ///     io::{BufReader, Read},
     /// };
+    ///
+    /// use grib::LatLons;
     ///
     /// fn main() -> Result<(), Box<dyn std::error::Error>> {
     ///     let mut buf = Vec::new();
@@ -1225,7 +1230,7 @@ Data Representation:                    {}
     ///     Ok(())
     /// }
     /// ```
-    pub fn latlons(&self) -> Result<GridPointIterator, GribError> {
+    fn latlons<'a>(&'a self) -> Result<Self::Iter<'a>, GribError> {
         let grid_def = self.grid_def();
         let num_defined = grid_def.num_points() as usize;
         let latlons = GridDefinitionTemplateValues::try_from(grid_def)?.latlons()?;

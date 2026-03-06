@@ -18,10 +18,20 @@ pub enum GridDefinitionTemplateValues {
     Template40(Template3_40),
 }
 
-impl GridDefinitionTemplateValues {
-    /// Returns the shape of the grid, i.e. a tuple of the number of grids in
-    /// the i and j directions.
-    pub fn grid_shape(&self) -> (usize, usize) {
+impl GridShortName for GridDefinitionTemplateValues {
+    fn short_name(&self) -> &'static str {
+        match self {
+            Self::Template0(def) => def.lat_lon.short_name(),
+            Self::Template1(def) => def.short_name(),
+            Self::Template20(def) => def.short_name(),
+            Self::Template30(def) => def.short_name(),
+            Self::Template40(def) => def.gaussian.short_name(),
+        }
+    }
+}
+
+impl GridPointIndex for GridDefinitionTemplateValues {
+    fn grid_shape(&self) -> (usize, usize) {
         match self {
             Self::Template0(def) => def.lat_lon.grid_shape(),
             Self::Template1(def) => def.grid_shape(),
@@ -31,46 +41,24 @@ impl GridDefinitionTemplateValues {
         }
     }
 
-    /// Returns the grid type.
-    ///
-    /// The grid types are denoted as short strings based on `gridType` used in
-    /// ecCodes.
-    ///
-    /// This is provided primarily for debugging and simple notation purposes.
-    /// It is better to use enum variants instead of the string notation to
-    /// determine the grid type.
-    pub fn short_name(&self) -> &'static str {
+    fn scanning_mode(&self) -> &ScanningMode {
         match self {
-            Self::Template0(def) => def.lat_lon.short_name(),
-            Self::Template1(def) => def.short_name(),
-            Self::Template20(def) => def.short_name(),
-            Self::Template30(def) => def.short_name(),
-            Self::Template40(def) => def.gaussian.short_name(),
+            Self::Template0(def) => def.lat_lon.scanning_mode(),
+            Self::Template1(def) => def.scanning_mode(),
+            Self::Template20(def) => def.scanning_mode(),
+            Self::Template30(def) => def.scanning_mode(),
+            Self::Template40(def) => def.gaussian.scanning_mode(),
         }
     }
+}
 
-    /// Returns an iterator over `(i, j)` of grid points.
-    ///
-    /// Note that this is a low-level API and it is not checked that the number
-    /// of iterator iterations is consistent with the number of grid points
-    /// defined in the data.
-    pub fn ij(&self) -> Result<GridPointIndexIterator, GribError> {
-        match self {
-            Self::Template0(def) => def.lat_lon.ij(),
-            Self::Template1(def) => def.ij(),
-            Self::Template20(def) => def.ij(),
-            Self::Template30(def) => def.ij(),
-            Self::Template40(def) => def.gaussian.ij(),
-        }
-    }
+impl LatLons for GridDefinitionTemplateValues {
+    type Iter<'a>
+        = GridPointIterator
+    where
+        Self: 'a;
 
-    /// Returns an iterator over latitudes and longitudes of grid points in
-    /// degrees.
-    ///
-    /// Note that this is a low-level API and it is not checked that the number
-    /// of iterator iterations is consistent with the number of grid points
-    /// defined in the data.
-    pub fn latlons(&self) -> Result<GridPointIterator, GribError> {
+    fn latlons<'a>(&'a self) -> Result<Self::Iter<'a>, GribError> {
         let iter = match self {
             Self::Template0(def) => GridPointIterator::LatLon(def.lat_lon.latlons()?),
             Self::Template1(def) => GridPointIterator::RotatedLatLon(def.latlons()?),
@@ -149,6 +137,35 @@ impl TryFrom<&GridDefinition> for GridDefinitionTemplateValues {
     }
 }
 
+/// A functionality to return a short name of the grid system.
+pub trait GridShortName {
+    /// Returns the grid type.
+    ///
+    /// The grid types are denoted as short strings based on `gridType` used in
+    /// ecCodes.
+    ///
+    /// This is provided primarily for debugging and simple notation purposes.
+    /// It is better to use enum variants instead of the string notation to
+    /// determine the grid type.
+    fn short_name(&self) -> &'static str;
+}
+
+/// A functionality to generate an iterator over latitude/longitude of grid
+/// points.
+pub trait LatLons {
+    type Iter<'a>: Iterator<Item = (f32, f32)>
+    where
+        Self: 'a;
+
+    /// Computes and returns an iterator over latitudes and longitudes of grid
+    /// points in degrees.
+    ///
+    /// The order of lat/lon data of grid points is the same as the order of the
+    /// grid point values, defined by the scanning mode
+    /// ([`ScanningMode`](`crate::def::grib2::template::param_set::ScanningMode`)) in the data.
+    fn latlons<'a>(&'a self) -> Result<Self::Iter<'a>, GribError>;
+}
+
 /// An iterator over latitudes and longitudes of grid points in a submessage.
 ///
 /// This `enum` is created by the [`latlons`] method on [`SubMessage`]. See its
@@ -183,12 +200,64 @@ impl Iterator for GridPointIterator {
     }
 }
 
-/// An iterator over `(i, j)` of grid points.
+/// A functionality to generate an iterator over 2D index `(i, j)` of grid
+/// points.
 ///
-/// This `struct` is created by the [`ij`] method. See its documentation for
-/// more.
+/// # Examples
 ///
-/// [`ij`]: crate::def::grib2::template::param_set::LatLonGrid::ij
+/// ```
+/// use grib::{GridPointIndex, def::grib2::template::param_set::ScanningMode};
+///
+/// struct Grid {
+///     ni: u32,
+///     nj: u32,
+///     scanning_mode: ScanningMode,
+/// }
+///
+/// impl GridPointIndex for Grid {
+///     fn grid_shape(&self) -> (usize, usize) {
+///         (self.ni as usize, self.nj as usize)
+///     }
+///
+///     fn scanning_mode(&self) -> &ScanningMode {
+///         &self.scanning_mode
+///     }
+/// }
+///
+/// let grid_2x3 = Grid {
+///     ni: 2,
+///     nj: 3,
+///     scanning_mode: ScanningMode(0b01000000),
+/// };
+/// assert_eq!(grid_2x3.grid_shape(), (2, 3));
+///
+/// let mut iter = grid_2x3.ij().unwrap();
+/// assert_eq!(iter.next(), Some((0, 0)));
+/// assert_eq!(iter.next(), Some((1, 0)));
+/// assert_eq!(iter.next(), Some((0, 1)));
+/// assert_eq!(iter.next(), Some((1, 1)));
+/// assert_eq!(iter.next(), Some((0, 2)));
+/// assert_eq!(iter.next(), Some((1, 2)));
+/// assert_eq!(iter.next(), None);
+/// ```
+pub trait GridPointIndex {
+    /// Returns the shape of the grid, i.e. a tuple of the number of grids in
+    /// the i and j directions.
+    fn grid_shape(&self) -> (usize, usize);
+
+    /// Returns [`ScanningMode`] used for the iteration.
+    fn scanning_mode(&self) -> &ScanningMode;
+
+    /// Returns an iterator over 2D index `(i, j)` of grid points.
+    fn ij(&self) -> Result<GridPointIndexIterator, GribError> {
+        GridPointIndexIterator::new(self.grid_shape(), *self.scanning_mode())
+    }
+}
+
+/// An iterator over 2D index `(i, j)` of grid points.
+///
+/// This `struct` is created by the [`GridPointIndex::ij`] method. See its
+/// documentation for more.
 #[derive(Clone)]
 pub struct GridPointIndexIterator {
     major_len: usize,
@@ -200,21 +269,29 @@ pub struct GridPointIndexIterator {
 }
 
 impl GridPointIndexIterator {
-    pub(crate) fn new(i_len: usize, j_len: usize, scanning_mode: ScanningMode) -> Self {
+    pub(crate) fn new(
+        (i_len, j_len): (usize, usize),
+        scanning_mode: ScanningMode,
+    ) -> Result<Self, GribError> {
+        if scanning_mode.has_unsupported_flags() {
+            let ScanningMode(mode) = scanning_mode;
+            return Err(GribError::NotSupported(format!("scanning mode {mode}")));
+        }
+
         let (major_len, minor_len) = if scanning_mode.is_consecutive_for_i() {
             (j_len, i_len)
         } else {
             (i_len, j_len)
         };
 
-        Self {
+        Ok(Self {
             major_len,
             minor_len,
             scanning_mode,
             minor_pos: 0,
             major_pos: 0,
             increments: true,
-        }
+        })
     }
 }
 

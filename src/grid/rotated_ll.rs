@@ -1,38 +1,38 @@
 use super::GridPointIndexIterator;
 use crate::{
+    GridPointIndex, LatLons,
     def::grib2::template::{Template3_1, param_set::Rotation},
     error::GribError,
     grid::helpers::RegularGridIterator,
 };
 
-impl Template3_1 {
-    /// Returns the shape of the grid, i.e. a tuple of the number of grids in
-    /// the i and j directions.
-    pub fn grid_shape(&self) -> (usize, usize) {
+impl crate::GridShortName for Template3_1 {
+    fn short_name(&self) -> &'static str {
+        "rotated_ll"
+    }
+}
+
+impl GridPointIndex for Template3_1 {
+    fn grid_shape(&self) -> (usize, usize) {
         self.rotated.grid_shape()
     }
 
-    /// Returns the grid type.
-    pub fn short_name(&self) -> &'static str {
-        "rotated_ll"
+    fn scanning_mode(&self) -> &crate::def::grib2::template::param_set::ScanningMode {
+        self.rotated.scanning_mode()
     }
 
-    /// Returns an iterator over `(i, j)` of grid points.
-    ///
-    /// Note that this is a low-level API and it is not checked that the number
-    /// of iterator iterations is consistent with the number of grid points
-    /// defined in the data.
-    pub fn ij(&self) -> Result<GridPointIndexIterator, GribError> {
+    fn ij(&self) -> Result<GridPointIndexIterator, GribError> {
         self.rotated.ij()
     }
+}
 
-    /// Returns an iterator over latitudes and longitudes of grid points in
-    /// degrees.
-    ///
-    /// Note that this is a low-level API and it is not checked that the number
-    /// of iterator iterations is consistent with the number of grid points
-    /// defined in the data.
-    pub fn latlons(&self) -> Result<Unrotate<RegularGridIterator>, GribError> {
+impl LatLons for Template3_1 {
+    type Iter<'a>
+        = Unrotate<RegularGridIterator>
+    where
+        Self: 'a;
+
+    fn latlons<'a>(&'a self) -> Result<Self::Iter<'a>, GribError> {
         let iter = Unrotate::new(self.rotated.latlons()?, &self.rotation);
         Ok(iter)
     }

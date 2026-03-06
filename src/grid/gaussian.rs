@@ -1,49 +1,28 @@
-use super::{
-    GridPointIndexIterator,
-    helpers::{RegularGridIterator, evenly_spaced_longitudes},
-};
-use crate::{def::grib2::template::param_set, error::GribError};
+use super::helpers::{RegularGridIterator, evenly_spaced_longitudes};
+use crate::{GridPointIndex, def::grib2::template::param_set, error::GribError};
 
 const MAX_ITER: usize = 10;
 
-impl param_set::GaussianGrid {
-    /// Returns the shape of the grid, i.e. a tuple of the number of grids in
-    /// the i and j directions.
-    pub fn grid_shape(&self) -> (usize, usize) {
+impl crate::GridShortName for param_set::GaussianGrid {
+    fn short_name(&self) -> &'static str {
+        "regular_gg"
+    }
+}
+
+impl GridPointIndex for param_set::GaussianGrid {
+    fn grid_shape(&self) -> (usize, usize) {
         (self.grid.ni as usize, self.grid.nj as usize)
     }
 
-    /// Returns the grid type.
-    pub fn short_name(&self) -> &'static str {
-        "regular_gg"
+    fn scanning_mode(&self) -> &super::ScanningMode {
+        &self.scanning_mode
     }
+}
 
-    /// Returns an iterator over `(i, j)` of grid points.
-    ///
-    /// Note that this is a low-level API and it is not checked that the number
-    /// of iterator iterations is consistent with the number of grid points
-    /// defined in the data.
-    pub fn ij(&self) -> Result<GridPointIndexIterator, GribError> {
-        if self.scanning_mode.has_unsupported_flags() {
-            let param_set::ScanningMode(mode) = self.scanning_mode;
-            return Err(GribError::NotSupported(format!("scanning mode {mode}")));
-        }
+impl crate::LatLons for param_set::GaussianGrid {
+    type Iter<'a> = RegularGridIterator;
 
-        let iter = GridPointIndexIterator::new(
-            self.grid.ni as usize,
-            self.grid.nj as usize,
-            self.scanning_mode,
-        );
-        Ok(iter)
-    }
-
-    /// Returns an iterator over latitudes and longitudes of grid points in
-    /// degrees.
-    ///
-    /// Note that this is a low-level API and it is not checked that the number
-    /// of iterator iterations is consistent with the number of grid points
-    /// defined in the data.
-    pub fn latlons(&self) -> Result<RegularGridIterator, GribError> {
+    fn latlons<'a>(&'a self) -> Result<Self::Iter<'a>, GribError> {
         if !self.is_consistent_for_j() {
             return Err(GribError::InvalidValueError(
                 "Latitudes for first/last grid points are not consistent with scanning mode"
@@ -68,7 +47,9 @@ impl param_set::GaussianGrid {
         let iter = RegularGridIterator::new(lat, lon, ij);
         Ok(iter)
     }
+}
 
+impl param_set::GaussianGrid {
     pub(crate) fn is_consistent_for_j(&self) -> bool {
         let lat_diff = self.grid.last_point_lat - self.grid.first_point_lat;
         !((lat_diff > 0) ^ self.scanning_mode.scans_positively_for_j())
@@ -168,7 +149,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::grid::helpers::test_helpers::assert_almost_eq;
+    use crate::{LatLons, grid::helpers::test_helpers::assert_almost_eq};
 
     #[test]
     fn latlon_computation_for_real_world_gaussian_grid_compared_with_results_from_eccodes()

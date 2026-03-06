@@ -7,7 +7,7 @@ use std::{
 use clap::{ArgAction, ArgMatches, Command, arg};
 use console::Style;
 use grib::{
-    SubmessageIterator,
+    GridShortName, SubmessageIterator,
     codetables::{CodeTable4_2, CodeTable4_3, Lookup},
 };
 
