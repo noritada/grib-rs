@@ -1128,11 +1128,7 @@ impl<'s, R> LatLons for SubMessage<'s, R> {
         Self: 'a;
 
     /// Computes and returns an iterator over latitudes and longitudes of grid
-    /// points.
-    ///
-    /// The order of lat/lon data of grid points is the same as the order of the
-    /// grid point values, defined by the scanning mode
-    /// ([`ScanningMode`](`crate::def::grib2::template::param_set::ScanningMode`)) in the data.
+    /// points in degrees. [Read more](`crate::LatLons::latlons`)
     ///
     /// # Examples
     ///

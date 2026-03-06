@@ -157,12 +157,12 @@ pub trait LatLons {
     where
         Self: 'a;
 
-    /// Returns an iterator over latitudes and longitudes of grid points in
-    /// degrees.
+    /// Computes and returns an iterator over latitudes and longitudes of grid
+    /// points in degrees.
     ///
-    /// Note that this is a low-level API and it is not checked that the number
-    /// of iterator iterations is consistent with the number of grid points
-    /// defined in the data.
+    /// The order of lat/lon data of grid points is the same as the order of the
+    /// grid point values, defined by the scanning mode
+    /// ([`ScanningMode`](`crate::def::grib2::template::param_set::ScanningMode`)) in the data.
     fn latlons<'a>(&'a self) -> Result<Self::Iter<'a>, GribError>;
 }
 
@@ -249,10 +249,6 @@ pub trait GridPointIndex {
     fn scanning_mode(&self) -> &ScanningMode;
 
     /// Returns an iterator over 2D index `(i, j)` of grid points.
-    ///
-    /// Note that this is a low-level API and it is not checked that the number
-    /// of iterator iterations is consistent with the number of grid points
-    /// defined in the data.
     fn ij(&self) -> Result<GridPointIndexIterator, GribError> {
         GridPointIndexIterator::new(self.grid_shape(), *self.scanning_mode())
     }
