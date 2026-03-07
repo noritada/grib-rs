@@ -17,7 +17,7 @@ use crate::{
     datatypes::*,
     def::grib2::{Section1, Section3, Section4, Section5, Section6, SectionHeader},
     error::*,
-    grid::GridPointIterator,
+    grid::GridPointLatLons,
     parser::Grib2SubmessageIndexStream,
     reader::{Grib2Read, Grib2SectionStream, SECT8_ES_SIZE, SeekableGrib2Reader},
 };
@@ -1193,7 +1193,7 @@ Data Representation:                    {}
 
 impl<'s, R> LatLons for SubMessage<'s, R> {
     type Iter<'a>
-        = GridPointIterator
+        = GridPointLatLons
     where
         Self: 'a;
 

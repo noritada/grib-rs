@@ -22,7 +22,7 @@ pub use crate::{
     decoder::*,
     error::*,
     grid::{
-        GridDefinitionTemplateValues, GridPointIndex, GridPointIndexIterator, GridPointIterator,
+        GridDefinitionTemplateValues, GridPointIndex, GridPointIndexIterator, GridPointLatLons,
         GridShortName, LatLons,
     },
     parser::*,

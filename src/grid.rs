@@ -54,19 +54,19 @@ impl GridPointIndex for GridDefinitionTemplateValues {
 
 impl LatLons for GridDefinitionTemplateValues {
     type Iter<'a>
-        = GridPointIterator
+        = GridPointLatLons
     where
         Self: 'a;
 
     fn latlons<'a>(&'a self) -> Result<Self::Iter<'a>, GribError> {
         let iter = match self {
-            Self::Template0(def) => GridPointIterator::LatLon(def.lat_lon.latlons()?),
-            Self::Template1(def) => GridPointIterator::RotatedLatLon(def.latlons()?),
+            Self::Template0(def) => GridPointLatLons::from(def.lat_lon.latlons()?),
+            Self::Template1(def) => GridPointLatLons::from(def.latlons()?),
             #[cfg(feature = "gridpoints-proj")]
-            Self::Template20(def) => GridPointIterator::Lambert(def.latlons()?),
+            Self::Template20(def) => GridPointLatLons::from(def.latlons()?),
             #[cfg(feature = "gridpoints-proj")]
-            Self::Template30(def) => GridPointIterator::Lambert(def.latlons()?),
-            Self::Template40(def) => GridPointIterator::LatLon(def.gaussian.latlons()?),
+            Self::Template30(def) => GridPointLatLons::from(def.latlons()?),
+            Self::Template40(def) => GridPointLatLons::from(def.gaussian.latlons()?),
             #[cfg(not(feature = "gridpoints-proj"))]
             _ => {
                 return Err(GribError::NotSupported(
@@ -168,36 +168,57 @@ pub trait LatLons {
 
 /// An iterator over latitudes and longitudes of grid points in a submessage.
 ///
-/// This `enum` is created by the [`latlons`] method on [`SubMessage`]. See its
-/// documentation for more.
+/// This `struct` is created by the [`latlons`] method on [`LatLons`]
+/// implemented for [`SubMessage`]. See its documentation for more.
 ///
 /// [`latlons`]: crate::context::SubMessage::latlons
 /// [`SubMessage`]: crate::context::SubMessage
 #[derive(Clone)]
-pub enum GridPointIterator {
-    LatLon(RegularGridIterator),
-    RotatedLatLon(Unrotate<RegularGridIterator>),
-    Lambert(std::vec::IntoIter<(f32, f32)>),
-}
+pub struct GridPointLatLons(LatLonsWrapper);
 
-impl Iterator for GridPointIterator {
+impl Iterator for GridPointLatLons {
     type Item = (f32, f32);
 
     fn next(&mut self) -> Option<Self::Item> {
         match self {
-            Self::LatLon(iter) => iter.next(),
-            Self::RotatedLatLon(iter) => iter.next(),
-            Self::Lambert(iter) => iter.next(),
+            Self(LatLonsWrapper::SigR(iter)) => iter.next(),
+            Self(LatLonsWrapper::SigUR(iter)) => iter.next(),
+            Self(LatLonsWrapper::SigIf(iter)) => iter.next(),
         }
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
         match self {
-            Self::LatLon(iter) => iter.size_hint(),
-            Self::RotatedLatLon(iter) => iter.size_hint(),
-            Self::Lambert(iter) => iter.size_hint(),
+            Self(LatLonsWrapper::SigR(iter)) => iter.size_hint(),
+            Self(LatLonsWrapper::SigUR(iter)) => iter.size_hint(),
+            Self(LatLonsWrapper::SigIf(iter)) => iter.size_hint(),
         }
     }
+}
+
+impl From<RegularGridIterator> for GridPointLatLons {
+    fn from(value: RegularGridIterator) -> Self {
+        Self(LatLonsWrapper::SigR(value))
+    }
+}
+
+impl From<Unrotate<RegularGridIterator>> for GridPointLatLons {
+    fn from(value: Unrotate<RegularGridIterator>) -> Self {
+        Self(LatLonsWrapper::SigUR(value))
+    }
+}
+
+impl From<std::vec::IntoIter<(f32, f32)>> for GridPointLatLons {
+    fn from(value: std::vec::IntoIter<(f32, f32)>) -> Self {
+        Self(LatLonsWrapper::SigIf(value))
+    }
+}
+
+#[derive(Clone)]
+enum LatLonsWrapper {
+    SigR(RegularGridIterator),
+    SigUR(Unrotate<RegularGridIterator>),
+    SigIf(std::vec::IntoIter<(f32, f32)>),
 }
 
 /// A functionality to generate an iterator over 2D index `(i, j)` of grid
