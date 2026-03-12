@@ -1,5 +1,6 @@
+use grib_template_helpers::WriteToBuffer;
+
 use crate::def::grib2::template::param_set::SimplePacking;
-pub use crate::encoder::writer::WriteToBuffer;
 
 /// A serializer that writes the byte sequence of sections concerning GPV data
 /// to the output buffer
@@ -272,7 +273,6 @@ pub fn write_section8(buf: &mut [u8]) -> Result<usize, &'static str> {
     SIGNATURE.write_to_buffer(buf)
 }
 
-mod to_grib_signed;
 mod writer;
 
 #[cfg(test)]
