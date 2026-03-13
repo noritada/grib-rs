@@ -1,7 +1,57 @@
 use to_grib_signed::ToGribSigned as _;
 
+/// A writer that serializes a struct and writes the byte sequence to a buffer.
+///
+/// # Examples
+///
+/// ```
+/// use grib_template_helpers::WriteToBuffer;
+///
+/// #[derive(Debug, PartialEq, Eq)]
+/// struct VariableLength {
+///     len: u8,
+///     seq: Vec<u8>,
+/// }
+///
+/// impl WriteToBuffer for VariableLength {
+///     fn write_to_buffer(&self, buf: &mut [u8]) -> Result<usize, &'static str> {
+///         if buf.len() < self.num_bytes_required() {
+///             return Err("destination buffer is too small");
+///         }
+///
+///         let mut pos = 0;
+///         pos += self.len.write_to_buffer(&mut buf[pos..])?;
+///         for val in self.seq.iter() {
+///             pos += val.write_to_buffer(&mut buf[pos..])?;
+///         }
+///         Ok(pos)
+///     }
+///
+///     fn num_bytes_required(&self) -> usize {
+///         1 + self.seq.len()
+///     }
+/// }
+///
+/// let obj = VariableLength {
+///     len: 8,
+///     seq: (0..8).collect::<Vec<_>>(),
+/// };
+///
+/// let mut buf = vec![0_u8; 12];
+/// let result = obj.write_to_buffer(&mut buf);
+/// assert_eq!(result, Ok(9));
+/// assert_eq!(buf, vec![8, 0, 1, 2, 3, 4, 5, 6, 7, 0, 0, 0]);
+///
+/// let mut buf = vec![0_u8; 8];
+/// let result = obj.write_to_buffer(&mut buf);
+/// assert_eq!(result, Err("destination buffer is too small"));
+/// assert_eq!(buf, vec![0; 8]);
+/// ```
 pub trait WriteToBuffer {
+    /// Performs writing and returns the number of bytes used.
     fn write_to_buffer(&self, buf: &mut [u8]) -> Result<usize, &'static str>;
+
+    /// Returns the number of bytes that are expected to be used for writing.
     fn num_bytes_required(&self) -> usize;
 }
 
