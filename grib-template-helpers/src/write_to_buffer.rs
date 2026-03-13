@@ -121,6 +121,24 @@ impl<const N: usize> WriteToBuffer for [u8; N] {
     }
 }
 
+impl<T: WriteToBuffer> WriteToBuffer for Option<T> {
+    fn write_to_buffer(&self, buf: &mut [u8]) -> Result<usize, &'static str> {
+        if let Some(inner) = self {
+            inner.write_to_buffer(buf)
+        } else {
+            Ok(0)
+        }
+    }
+
+    fn num_bytes_required(&self) -> usize {
+        if let Some(inner) = self {
+            inner.num_bytes_required()
+        } else {
+            0
+        }
+    }
+}
+
 mod to_grib_signed;
 
 #[cfg(test)]
