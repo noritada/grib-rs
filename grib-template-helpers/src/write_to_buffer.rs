@@ -139,6 +139,24 @@ impl<T: WriteToBuffer> WriteToBuffer for Option<T> {
     }
 }
 
+impl<T: WriteToBuffer> WriteToBuffer for Vec<T> {
+    fn write_to_buffer(&self, buf: &mut [u8]) -> Result<usize, &'static str> {
+        let mut pos = 0;
+        for val in self.iter() {
+            pos += val.write_to_buffer(&mut buf[pos..])?;
+        }
+        Ok(pos)
+    }
+
+    fn num_bytes_required(&self) -> usize {
+        if self.len() == 0 {
+            0
+        } else {
+            self[0].num_bytes_required() * self.len()
+        }
+    }
+}
+
 mod to_grib_signed;
 
 #[cfg(test)]
