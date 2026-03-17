@@ -254,7 +254,8 @@ pub fn derive_write_to_buffer(input: TokenStream) -> TokenStream {
 
     match &input.data {
         syn::Data::Struct(data) => impl_write_to_buffer_for_struct(&input, data),
-        _ => unimplemented!("`WriteToBuffer` can only be derived for structs"),
+        syn::Data::Enum(data) => impl_write_to_buffer_for_enum(&input, data),
+        _ => unimplemented!("`WriteToBuffer` can only be derived for structs/enums"),
     }
     .into()
 }
@@ -307,6 +308,58 @@ fn impl_write_to_buffer_for_struct(
                 let mut size = 0;
                 #(#sizes)*;
                 size
+            }
+        }
+    }
+}
+
+fn impl_write_to_buffer_for_enum(
+    input: &syn::DeriveInput,
+    data: &syn::DataEnum,
+) -> proc_macro2::TokenStream {
+    let name = &input.ident;
+    let (impl_generics, type_generics, where_clause) = input.generics.split_for_impl();
+
+    let mut writes = Vec::new();
+    let mut sizes = Vec::new();
+
+    for variant in &data.variants {
+        let variant_ident = &variant.ident;
+
+        if let syn::Fields::Unnamed(fields) = &variant.fields
+            && fields.unnamed.len() == 1
+        {
+            let inner_ty = &fields.unnamed.first().unwrap().ty;
+
+            writes.push(quote! {
+                #name::#variant_ident(inner) => <#inner_ty as grib_template_helpers::WriteToBuffer>::write_to_buffer(
+                    inner,
+                    buf,
+                )
+            });
+
+            sizes.push(quote! {
+                #name::#variant_ident(inner) => <#inner_ty as grib_template_helpers::WriteToBuffer>::num_bytes_required(
+                    inner,
+                )
+            });
+        } else {
+            unimplemented!("`WriteToBuffer` only supports single-field tuple variants");
+        }
+    }
+
+    quote! {
+        impl #impl_generics grib_template_helpers::WriteToBuffer for #name #type_generics #where_clause {
+            fn write_to_buffer(&self, buf: &mut [u8]) -> Result<usize, &'static str> {
+                match self {
+                    #(#writes),*,
+                }
+            }
+
+            fn num_bytes_required(&self) -> usize {
+                match self {
+                    #(#sizes),*,
+                }
             }
         }
     }

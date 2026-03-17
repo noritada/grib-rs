@@ -12,6 +12,8 @@ pub struct Params {
     field4: f32,
     /// Field 5
     field5: InnerParams0,
+    /// Field 6
+    field6: Enum,
     /// Field 7
     field7: Vec<i16>,
     /// Field 8
@@ -20,11 +22,26 @@ pub struct Params {
 }
 
 #[derive(Debug, PartialEq, Eq, grib_template_derive::WriteToBuffer)]
+#[repr(u8)]
+pub enum Enum {
+    /// Field 1
+    Type0(InnerParams0) = 0,
+    /// Field 2
+    Type1(InnerParams1) = 1,
+}
+
+#[derive(Debug, PartialEq, Eq, grib_template_derive::WriteToBuffer)]
 pub struct InnerParams0 {
     /// Field 1
     field1: u8,
     /// Field 2
     field2: u8,
+}
+
+#[derive(Debug, PartialEq, Eq, grib_template_derive::WriteToBuffer)]
+pub struct InnerParams1 {
+    /// Field 1
+    field1: u8,
 }
 
 #[derive(Debug, PartialEq, Eq, grib_template_derive::WriteToBuffer)]
@@ -45,16 +62,17 @@ fn main() {
             field1: 0xf0,
             field2: 0x0f,
         },
+        field6: Enum::Type1(InnerParams1 { field1: 0x01 }),
         field7: vec![-0x70f1, -0x72f3, -0x74f5, -0x76f7],
         field8: vec![-0x70f1],
         field9: ParamsWithGenerics { field1: -0x70f1 },
     };
     let mut buf = vec![0_u8; 24];
     let result = params.write_to_buffer(&mut buf);
-    assert_eq!(result, Ok(23));
+    assert_eq!(result, Ok(24));
     let expected_buf = vec![
-        0x01_u8, 0xff, 0x00, 0xff, 0x00, 0x3f, 0x80, 0x00, 0x00, 0xf0, 0x0f, 0xf0, 0xf1, 0xf2,
-        0xf3, 0xf4, 0xf5, 0xf6, 0xf7, 0xf0, 0xf1, 0xf0, 0xf1, 0,
+        0x01_u8, 0xff, 0x00, 0xff, 0x00, 0x3f, 0x80, 0x00, 0x00, 0xf0, 0x0f, 0x01, 0xf0, 0xf1,
+        0xf2, 0xf3, 0xf4, 0xf5, 0xf6, 0xf7, 0xf0, 0xf1, 0xf0, 0xf1,
     ];
     assert_eq!(buf, expected_buf);
 }
