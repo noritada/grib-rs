@@ -102,10 +102,7 @@ impl WriteGrib2DataSections for SimplePackingEncoded {
         pos += 5_u8.write_to_buffer(&mut buf[pos..])?; // header.sect_num
         pos += (self.coded.num_values() as u32).write_to_buffer(&mut buf[pos..])?; // payload.num_encoded_points
         pos += 0_u16.write_to_buffer(&mut buf[pos..])?; // payload.template_num
-        pos += self.params.ref_val.write_to_buffer(&mut buf[pos..])?;
-        pos += self.params.exp.write_to_buffer(&mut buf[pos..])?;
-        pos += self.params.dec.write_to_buffer(&mut buf[pos..])?;
-        pos += self.params.num_bits.write_to_buffer(&mut buf[pos..])?;
+        pos += self.params.write_to_buffer(&mut buf[pos..])?;
         pos += 0_u8.write_to_buffer(&mut buf[pos..])?; // payload.template.orig_field_type
 
         Ok(pos)
@@ -243,25 +240,7 @@ pub fn write_section1(
     let mut pos = 0;
     pos += (LEN as u32).write_to_buffer(&mut buf[pos..])?;
     pos += 1_u8.write_to_buffer(&mut buf[pos..])?;
-    pos += payload.centre_id.write_to_buffer(&mut buf[pos..])?;
-    pos += payload.subcentre_id.write_to_buffer(&mut buf[pos..])?;
-    pos += payload
-        .master_table_version
-        .write_to_buffer(&mut buf[pos..])?;
-    pos += payload
-        .local_table_version
-        .write_to_buffer(&mut buf[pos..])?;
-    pos += payload
-        .ref_time_significance
-        .write_to_buffer(&mut buf[pos..])?;
-    pos += payload.ref_time.year.write_to_buffer(&mut buf[pos..])?;
-    pos += payload.ref_time.month.write_to_buffer(&mut buf[pos..])?;
-    pos += payload.ref_time.day.write_to_buffer(&mut buf[pos..])?;
-    pos += payload.ref_time.hour.write_to_buffer(&mut buf[pos..])?;
-    pos += payload.ref_time.minute.write_to_buffer(&mut buf[pos..])?;
-    pos += payload.ref_time.second.write_to_buffer(&mut buf[pos..])?;
-    pos += payload.prod_status.write_to_buffer(&mut buf[pos..])?;
-    pos += payload.data_type.write_to_buffer(&mut buf[pos..])?;
+    pos += payload.write_to_buffer(&mut buf[pos..])?;
     Ok(pos)
 }
 
