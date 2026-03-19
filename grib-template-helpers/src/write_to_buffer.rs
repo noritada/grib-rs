@@ -149,7 +149,7 @@ impl<T: WriteToBuffer> WriteToBuffer for Vec<T> {
     }
 
     fn num_bytes_required(&self) -> usize {
-        if self.len() == 0 {
+        if self.is_empty() {
             0
         } else {
             self[0].num_bytes_required() * self.len()
