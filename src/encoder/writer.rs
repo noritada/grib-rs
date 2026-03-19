@@ -25,7 +25,7 @@ impl<B: AsRef<[u32]>> WriteToBuffer for NBitwise<B> {
         let (mut current_pos, mut current_offset) = (0, 0);
 
         const BYTE_MASK: u32 = 0xff;
-        if self.num_bits % 8 == 0 {
+        if self.num_bits.is_multiple_of(8) {
             for item in self.data.as_ref() {
                 let mut num_bits = self.num_bits;
                 while num_bits > 0 {
