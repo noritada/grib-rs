@@ -29,7 +29,7 @@ impl LatLons for Template3_20 {
     where
         Self: 'a;
 
-    fn latlons<'a>(&'a self) -> Result<Self::Iter<'a>, GribError> {
+    fn latlons_unchecked<'a>(&'a self) -> Result<Self::Iter<'a>, GribError> {
         let lad = self.lad as f64 * 1e-6;
         let lov = self.lov as f64 * 1e-6;
         let (a, b) = self.earth_shape.radii().ok_or_else(|| {

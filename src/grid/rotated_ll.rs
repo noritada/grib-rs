@@ -32,8 +32,8 @@ impl LatLons for Template3_1 {
     where
         Self: 'a;
 
-    fn latlons<'a>(&'a self) -> Result<Self::Iter<'a>, GribError> {
-        let iter = Unrotate::new(self.rotated.latlons()?, &self.rotation);
+    fn latlons_unchecked<'a>(&'a self) -> Result<Self::Iter<'a>, GribError> {
+        let iter = Unrotate::new(self.rotated.latlons_unchecked()?, &self.rotation);
         Ok(iter)
     }
 }

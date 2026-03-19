@@ -27,7 +27,7 @@ impl GridPointIndex for Template3_30 {
 impl LatLons for Template3_30 {
     type Iter<'a> = std::vec::IntoIter<(f32, f32)>;
 
-    fn latlons<'a>(&'a self) -> Result<Self::Iter<'a>, GribError> {
+    fn latlons_unchecked<'a>(&'a self) -> Result<Self::Iter<'a>, GribError> {
         let lad = self.lad as f64 * 1e-6;
         let lov = self.lov as f64 * 1e-6;
         let latin1 = self.latin1 as f64 * 1e-6;

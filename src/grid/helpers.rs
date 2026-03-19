@@ -109,6 +109,11 @@ pub(crate) fn latlons_from_projection_definition_and_first_point(
     Ok(latlon.into_iter())
 }
 
+pub(crate) fn normalize_latlon((lat, lon): (f32, f32)) -> (f32, f32) {
+    let lon = (lon + 540.) % 360. - 180.;
+    (lat, lon)
+}
+
 #[cfg(test)]
 pub(crate) mod test_helpers {
     macro_rules! assert_almost_eq {
@@ -285,5 +290,15 @@ mod tests {
         assert_eq!(iter.size_hint(), (6, Some(6)));
         let _ = iter.next();
         assert_eq!(iter.size_hint(), (5, Some(5)));
+    }
+
+    #[test]
+    fn latlon_normalization() {
+        assert_eq!(normalize_latlon((90., -180.)), (90., -180.));
+        assert_eq!(normalize_latlon((90., 0.)), (90., 0.));
+        assert_eq!(normalize_latlon((90., 179.)), (90., 179.));
+        assert_eq!(normalize_latlon((90., 180.)), (90., -180.));
+        assert_eq!(normalize_latlon((90., 360.)), (90., 0.));
+        assert_eq!(normalize_latlon((90., 540.)), (90., -180.));
     }
 }

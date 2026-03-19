@@ -58,15 +58,15 @@ impl LatLons for GridDefinitionTemplateValues {
     where
         Self: 'a;
 
-    fn latlons<'a>(&'a self) -> Result<Self::Iter<'a>, GribError> {
+    fn latlons_unchecked<'a>(&'a self) -> Result<Self::Iter<'a>, GribError> {
         let iter = match self {
-            Self::Template0(def) => GridPointLatLons::from(def.lat_lon.latlons()?),
-            Self::Template1(def) => GridPointLatLons::from(def.latlons()?),
+            Self::Template0(def) => GridPointLatLons::from(def.lat_lon.latlons_unchecked()?),
+            Self::Template1(def) => GridPointLatLons::from(def.latlons_unchecked()?),
             #[cfg(feature = "gridpoints-proj")]
-            Self::Template20(def) => GridPointLatLons::from(def.latlons()?),
+            Self::Template20(def) => GridPointLatLons::from(def.latlons_unchecked()?),
             #[cfg(feature = "gridpoints-proj")]
-            Self::Template30(def) => GridPointLatLons::from(def.latlons()?),
-            Self::Template40(def) => GridPointLatLons::from(def.gaussian.latlons()?),
+            Self::Template30(def) => GridPointLatLons::from(def.latlons_unchecked()?),
+            Self::Template40(def) => GridPointLatLons::from(def.gaussian.latlons_unchecked()?),
             #[cfg(not(feature = "gridpoints-proj"))]
             _ => {
                 return Err(GribError::NotSupported(
@@ -158,12 +158,27 @@ pub trait LatLons {
         Self: 'a;
 
     /// Computes and returns an iterator over latitudes and longitudes of grid
-    /// points in degrees.
+    /// points in degrees. Unlike the return values from [`LatLons::latlons`],
+    /// the longitude values from thie method do not necessarily fall within
+    /// the range `[-180°, 180°]`.
+    fn latlons_unchecked<'a>(&'a self) -> Result<Self::Iter<'a>, GribError>;
+
+    /// Computes and returns an iterator over latitudes and longitudes of grid
+    /// points in degrees. The returned longitude values are converted to fall
+    /// within the range `[-180°, 180°]`.
     ///
     /// The order of lat/lon data of grid points is the same as the order of the
     /// grid point values, defined by the scanning mode
     /// ([`ScanningMode`](`crate::def::grib2::template::param_set::ScanningMode`)) in the data.
-    fn latlons<'a>(&'a self) -> Result<Self::Iter<'a>, GribError>;
+    #[allow(clippy::type_complexity)]
+    fn latlons<'a>(
+        &'a self,
+    ) -> Result<std::iter::Map<Self::Iter<'a>, fn((f32, f32)) -> (f32, f32)>, GribError> {
+        let iter = self
+            .latlons_unchecked()?
+            .map(helpers::normalize_latlon as fn((f32, f32)) -> (f32, f32));
+        Ok(iter)
+    }
 }
 
 /// An iterator over latitudes and longitudes of grid points in a submessage.
