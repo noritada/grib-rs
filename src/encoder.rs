@@ -159,18 +159,13 @@ impl WriteGrib2DataSections for SimplePackingEncoded {
 }
 
 fn determine_simple_packing_params(values: &[f64], dec: i16) -> (SimplePacking, Vec<f64>) {
-    let mut min = 0.;
-    let mut max = 0.;
+    let mut min = f64::MAX;
+    let mut max = f64::MIN;
     let scaled = values
         .iter()
-        .enumerate()
-        .map(|(i, value)| {
+        .map(|value| {
             let scaled = value * 10_f64.powf(dec as f64);
-            (min, max) = if i == 0 {
-                (scaled, scaled)
-            } else {
-                (scaled.min(min), scaled.max(max))
-            };
+            (min, max) = (scaled.min(min), scaled.max(max));
             scaled
         })
         .collect::<Vec<_>>();
