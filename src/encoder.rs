@@ -1,6 +1,6 @@
 use grib_template_helpers::WriteToBuffer;
 
-use crate::def::grib2::template::param_set::SimplePacking;
+use crate::{def::grib2::template::param_set::SimplePacking, encoder::helpers::BitsRequired};
 
 /// A serializer that writes the byte sequence of sections concerning GPV data
 /// to the output buffer
@@ -181,7 +181,7 @@ fn determine_simple_packing_params(values: &[f64], dec: i16) -> (SimplePacking, 
     } else {
         let range = max - min;
         let exp = 0;
-        let num_bits = (range + 1.).log2().ceil() as u8;
+        let num_bits = range.bits_required();
         // TODO: if `num_bits` is too large, increase `exp` to reduce `num_bits`.
         let params = SimplePacking {
             ref_val,
@@ -247,6 +247,7 @@ pub fn write_section8(buf: &mut [u8]) -> Result<usize, &'static str> {
     SIGNATURE.write_to_buffer(buf)
 }
 
+mod helpers;
 mod writer;
 
 #[cfg(test)]
