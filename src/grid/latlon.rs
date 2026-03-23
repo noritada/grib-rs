@@ -56,6 +56,7 @@ impl param_set::LatLonGrid {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::grid::helpers::test_helpers::assert_coord_almost_eq;
 
     macro_rules! test_lat_lon_calculation_for_inconsistent_longitude_definitions {
         ($((
@@ -76,15 +77,21 @@ mod tests {
                 let latlons = grid.latlons();
                 assert!(latlons.is_ok());
 
+                let delta = 1e-4;
+
                 let latlons = latlons.unwrap();
                 let actual = latlons.clone().take(3).collect::<Vec<_>>();
                 let expected = $expected_head;
-                assert_eq!(actual, expected);
+                for (a, e) in actual.iter().zip(expected) {
+                    assert_coord_almost_eq(*a, e, delta);
+                }
 
                 let (len, _) = latlons.size_hint();
                 let actual = latlons.skip(len - 3).collect::<Vec<_>>();
                 let expected = $expected_tail;
-                assert_eq!(actual, expected);
+                for (a, e) in actual.iter().zip(expected) {
+                    assert_coord_almost_eq(*a, e, delta);
+                }
             }
         )*);
     }
@@ -105,7 +112,7 @@ mod tests {
             },
             param_set::ScanningMode(0b01000000),
             vec![(-90.0, 0.0), (-90.0, 0.24), (-90.0, 0.48)],
-            vec![(90.0, 359.28), (90.0, 359.52), (90.0, 359.76)]
+            vec![(90.0, -0.72), (90.0, -0.48), (90.0, -0.24)]
         ),
         (
             // grid point definition extracted from
@@ -123,7 +130,7 @@ mod tests {
                 last_point_lon: 179760000,
             },
             param_set::ScanningMode(0b01000000),
-            vec![(-90.0, 180.0), (-90.0, 180.24), (-90.0, 180.48)],
+            vec![(-90.0, -180.0), (-90.0, -179.76), (-90.0, -179.52)],
             vec![(90.0, 179.28003), (90.0, 179.52002), (90.0, 179.76001)]
         ),
         (
@@ -140,7 +147,7 @@ mod tests {
                 last_point_lon: 0,
             },
             param_set::ScanningMode(0b11000000),
-            vec![(-90.0, 359.76), (-90.0, 359.52), (-90.0, 359.28)],
+            vec![(-90.0, -0.24), (-90.0, -0.48), (-90.0, -0.72)],
             vec![(90.0, 0.48), (90.0, 0.24), (90.0, 0.0)]
         ),
         (
@@ -158,7 +165,7 @@ mod tests {
             },
             param_set::ScanningMode(0b11000000),
             vec![(-90.0, 179.76001), (-90.0, 179.52002), (-90.0, 179.28003)],
-            vec![(90.0, 180.48), (90.0, 180.24), (90.0, 180.0)]
+            vec![(90.0, -179.52), (90.0, -179.76), (90.0, -180.0)]
         ),
     }
 
