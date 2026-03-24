@@ -22,7 +22,7 @@ impl GridPointIndex for param_set::GaussianGrid {
 impl crate::LatLons for param_set::GaussianGrid {
     type Iter<'a> = RegularGridIterator;
 
-    fn latlons<'a>(&'a self) -> Result<Self::Iter<'a>, GribError> {
+    fn latlons_unchecked<'a>(&'a self) -> Result<Self::Iter<'a>, GribError> {
         if !self.is_consistent_for_j() {
             return Err(GribError::InvalidValueError(
                 "Latitudes for first/last grid points are not consistent with scanning mode"

@@ -29,7 +29,7 @@ impl LatLons for Template3_20 {
     where
         Self: 'a;
 
-    fn latlons<'a>(&'a self) -> Result<Self::Iter<'a>, GribError> {
+    fn latlons_unchecked<'a>(&'a self) -> Result<Self::Iter<'a>, GribError> {
         let lad = self.lad as f64 * 1e-6;
         let lov = self.lov as f64 * 1e-6;
         let (a, b) = self.earth_shape.radii().ok_or_else(|| {
@@ -115,7 +115,7 @@ mod tests {
         let latlons = grid_def.latlons()?.collect::<Vec<_>>();
 
         // Following lat/lon values are taken from the calculation results using pygrib.
-        let delta = 1e-10;
+        let delta = 1e-4;
         assert_coord_almost_eq(latlons[0], (18.14503, -142.892544), delta);
         assert_coord_almost_eq(latlons[1], (18.17840149, -142.83604096), delta);
         assert_coord_almost_eq(

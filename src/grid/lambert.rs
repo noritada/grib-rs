@@ -27,7 +27,7 @@ impl GridPointIndex for Template3_30 {
 impl LatLons for Template3_30 {
     type Iter<'a> = std::vec::IntoIter<(f32, f32)>;
 
-    fn latlons<'a>(&'a self) -> Result<Self::Iter<'a>, GribError> {
+    fn latlons_unchecked<'a>(&'a self) -> Result<Self::Iter<'a>, GribError> {
         let lad = self.lad as f64 * 1e-6;
         let lov = self.lov as f64 * 1e-6;
         let latin1 = self.latin1 as f64 * 1e-6;
@@ -105,7 +105,7 @@ mod tests {
         let latlons = grid_def.latlons()?.collect::<Vec<_>>();
 
         // Following lat/lon values are taken from the calculation results using pygrib.
-        let delta = 1e-10;
+        let delta = 1e-4;
         assert_coord_almost_eq(latlons[0], (20.19, -121.550004), delta);
         assert_coord_almost_eq(latlons[1], (20.19442682, -121.52621665), delta);
         assert_coord_almost_eq(

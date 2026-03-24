@@ -1226,14 +1226,14 @@ impl<'s, R> LatLons for SubMessage<'s, R> {
     ///
     ///     let mut latlons = message.latlons()?;
     ///     assert_eq!(latlons.next(), Some((90.0, 0.0)));
-    ///     assert_eq!(latlons.next(), Some((90.0, 0.25000003)));
+    ///     assert_eq!(latlons.next(), Some((90.0, 0.25)));
     ///     Ok(())
     /// }
     /// ```
-    fn latlons<'a>(&'a self) -> Result<Self::Iter<'a>, GribError> {
+    fn latlons_unchecked<'a>(&'a self) -> Result<Self::Iter<'a>, GribError> {
         let grid_def = self.grid_def();
         let num_defined = grid_def.num_points() as usize;
-        let latlons = GridDefinitionTemplateValues::try_from(grid_def)?.latlons()?;
+        let latlons = GridDefinitionTemplateValues::try_from(grid_def)?.latlons_unchecked()?;
         let (num_decoded, _) = latlons.size_hint();
         if num_defined == num_decoded {
             Ok(latlons)
