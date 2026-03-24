@@ -1,10 +1,9 @@
 #[cfg(feature = "gridpoints-proj")]
 use proj::Proj;
 
-use super::ScanningMode;
 #[allow(unused_imports)]
 use crate::GribError;
-use crate::GridPointIndexIterator;
+use crate::{GridPointIndexIterator, def::grib2::template::param_set::ScanningMode};
 
 pub(crate) fn evenly_spaced_longitudes(
     start_microdegree: i32,
@@ -110,6 +109,11 @@ pub(crate) fn latlons_from_projection_definition_and_first_point(
     Ok(latlon.into_iter())
 }
 
+pub(crate) fn normalize_latlon((lat, lon): (f32, f32)) -> (f32, f32) {
+    let lon = (lon + 540.) % 360. - 180.;
+    (lat, lon)
+}
+
 #[cfg(test)]
 pub(crate) mod test_helpers {
     macro_rules! assert_almost_eq {
@@ -208,7 +212,7 @@ pub(crate) mod test_helpers {
 
 #[cfg(test)]
 mod tests {
-    use super::{super::ScanningMode, *};
+    use super::*;
 
     macro_rules! test_lat_lon_grid_iter {
         ($(($name:ident, $scanning_mode:expr, $expected:expr),)*) => ($(
@@ -217,7 +221,7 @@ mod tests {
                 let lat = (0..3).into_iter().map(|i| i as f32).collect::<Vec<_>>();
                 let lon = (10..12).into_iter().map(|i| i as f32).collect::<Vec<_>>();
                 let scanning_mode = ScanningMode($scanning_mode);
-                let ij= GridPointIndexIterator::new(lon.len(), lat.len(), scanning_mode);
+                let ij = GridPointIndexIterator::new((lon.len(), lat.len()), scanning_mode).unwrap();
                 let actual = RegularGridIterator::new(lat, lon, ij).collect::<Vec<_>>();
                 assert_eq!(actual, $expected);
             }
@@ -280,11 +284,21 @@ mod tests {
         let lat = (0..3).map(|i| i as f32).collect::<Vec<_>>();
         let lon = (10..12).map(|i| i as f32).collect::<Vec<_>>();
         let scanning_mode = ScanningMode(0b00000000);
-        let ij = GridPointIndexIterator::new(lon.len(), lat.len(), scanning_mode);
+        let ij = GridPointIndexIterator::new((lon.len(), lat.len()), scanning_mode).unwrap();
         let mut iter = RegularGridIterator::new(lat, lon, ij);
 
         assert_eq!(iter.size_hint(), (6, Some(6)));
         let _ = iter.next();
         assert_eq!(iter.size_hint(), (5, Some(5)));
+    }
+
+    #[test]
+    fn latlon_normalization() {
+        assert_eq!(normalize_latlon((90., -180.)), (90., -180.));
+        assert_eq!(normalize_latlon((90., 0.)), (90., 0.));
+        assert_eq!(normalize_latlon((90., 179.)), (90., 179.));
+        assert_eq!(normalize_latlon((90., 180.)), (90., -180.));
+        assert_eq!(normalize_latlon((90., 360.)), (90., 0.));
+        assert_eq!(normalize_latlon((90., 540.)), (90., -180.));
     }
 }

@@ -18,6 +18,9 @@ pub struct Params {
     field7: Vec<i16>,
     /// Field 8
     field8: Vec<i16>,
+    /// Field 9
+    field9: TypeWithGenerics,
+    field10: TupleStruct,
 }
 
 #[derive(grib_template_derive::Dump)]
@@ -58,5 +61,11 @@ pub struct ParamsWithGenerics<T: grib_template_helpers::DumpField> {
 }
 
 pub type TypeWithGenerics = ParamsWithGenerics<i16>;
+
+#[derive(Debug, PartialEq, Eq, grib_template_derive::Dump)]
+pub struct TupleStruct(
+    /// Tuple struct
+    u8,
+);
 
 fn main() {}

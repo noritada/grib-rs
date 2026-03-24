@@ -198,7 +198,10 @@
 //!     path::Path,
 //! };
 //!
-//! use grib::codetables::{grib2::*, *};
+//! use grib::{
+//!     LatLons,
+//!     codetables::{grib2::*, *},
+//! };
 //!
 //! fn decode_layer<P>(path: P, message_index: (usize, usize))
 //! where

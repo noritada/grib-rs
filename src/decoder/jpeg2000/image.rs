@@ -32,7 +32,6 @@ impl Image {
         unsafe { std::slice::from_raw_parts(img.comps as *mut ImageComponent, numcomps as usize) }
     }
 
-    #[cfg(feature = "jpeg2000-unpack-with-openjpeg-experimental")]
     pub(crate) fn try_into_iter(self) -> Result<ImageIntoIter, DecodeError> {
         let slice = if let [comp_gray] = self.components() {
             comp_gray.data()
@@ -66,7 +65,6 @@ impl ImageComponent {
     }
 }
 
-#[cfg(feature = "jpeg2000-unpack-with-openjpeg-experimental")]
 pub(crate) struct ImageIntoIter {
     #[allow(dead_code)]
     inner: Image,
@@ -75,7 +73,6 @@ pub(crate) struct ImageIntoIter {
     index: usize,
 }
 
-#[cfg(feature = "jpeg2000-unpack-with-openjpeg-experimental")]
 impl Iterator for ImageIntoIter {
     type Item = i32;
 

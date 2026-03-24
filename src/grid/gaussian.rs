@@ -1,62 +1,28 @@
-use super::{
-    GridPointIndexIterator, ScanningMode,
-    helpers::{RegularGridIterator, evenly_spaced_longitudes},
-};
-use crate::{
-    error::GribError,
-    helpers::{GribInt, read_as},
-};
-
-#[derive(Debug, PartialEq, Eq)]
-pub struct GaussianGridDefinition {
-    pub ni: u32,
-    pub nj: u32,
-    pub first_point_lat: i32,
-    pub first_point_lon: i32,
-    pub last_point_lat: i32,
-    pub last_point_lon: i32,
-    pub i_direction_inc: u32,
-    pub n: u32,
-    pub scanning_mode: ScanningMode,
-}
+use super::helpers::{RegularGridIterator, evenly_spaced_longitudes};
+use crate::{GridPointIndex, def::grib2::template::param_set, error::GribError};
 
 const MAX_ITER: usize = 10;
 
-impl GaussianGridDefinition {
-    /// Returns the shape of the grid, i.e. a tuple of the number of grids in
-    /// the i and j directions.
-    pub fn grid_shape(&self) -> (usize, usize) {
-        (self.ni as usize, self.nj as usize)
-    }
-
-    /// Returns the grid type.
-    pub fn short_name(&self) -> &'static str {
+impl crate::GridShortName for param_set::GaussianGrid {
+    fn short_name(&self) -> &'static str {
         "regular_gg"
     }
+}
 
-    /// Returns an iterator over `(i, j)` of grid points.
-    ///
-    /// Note that this is a low-level API and it is not checked that the number
-    /// of iterator iterations is consistent with the number of grid points
-    /// defined in the data.
-    pub fn ij(&self) -> Result<GridPointIndexIterator, GribError> {
-        if self.scanning_mode.has_unsupported_flags() {
-            let ScanningMode(mode) = self.scanning_mode;
-            return Err(GribError::NotSupported(format!("scanning mode {mode}")));
-        }
-
-        let iter =
-            GridPointIndexIterator::new(self.ni as usize, self.nj as usize, self.scanning_mode);
-        Ok(iter)
+impl GridPointIndex for param_set::GaussianGrid {
+    fn grid_shape(&self) -> (usize, usize) {
+        (self.grid.ni as usize, self.grid.nj as usize)
     }
 
-    /// Returns an iterator over latitudes and longitudes of grid points in
-    /// degrees.
-    ///
-    /// Note that this is a low-level API and it is not checked that the number
-    /// of iterator iterations is consistent with the number of grid points
-    /// defined in the data.
-    pub fn latlons(&self) -> Result<RegularGridIterator, GribError> {
+    fn scanning_mode(&self) -> &super::ScanningMode {
+        &self.scanning_mode
+    }
+}
+
+impl crate::LatLons for param_set::GaussianGrid {
+    type Iter<'a> = RegularGridIterator;
+
+    fn latlons_unchecked<'a>(&'a self) -> Result<Self::Iter<'a>, GribError> {
         if !self.is_consistent_for_j() {
             return Err(GribError::InvalidValueError(
                 "Latitudes for first/last grid points are not consistent with scanning mode"
@@ -65,49 +31,28 @@ impl GaussianGridDefinition {
         }
 
         let ij = self.ij()?;
-        let mut lat = compute_gaussian_latitudes_in_degrees(self.nj as usize)
+        let mut lat = compute_gaussian_latitudes_in_degrees(self.grid.nj as usize)
             .map_err(|e| GribError::Unknown(e.to_owned()))?;
         if self.scanning_mode.scans_positively_for_j() {
             lat.reverse()
         };
         let lat = lat.into_iter().map(|v| v as f32).collect();
         let lon = evenly_spaced_longitudes(
-            self.first_point_lon,
-            self.last_point_lon,
-            (self.ni - 1) as usize,
+            self.grid.first_point_lon,
+            self.grid.last_point_lon,
+            (self.grid.ni - 1) as usize,
             self.scanning_mode,
         );
 
         let iter = RegularGridIterator::new(lat, lon, ij);
         Ok(iter)
     }
+}
 
+impl param_set::GaussianGrid {
     pub(crate) fn is_consistent_for_j(&self) -> bool {
-        let lat_diff = self.last_point_lat - self.first_point_lat;
+        let lat_diff = self.grid.last_point_lat - self.grid.first_point_lat;
         !((lat_diff > 0) ^ self.scanning_mode.scans_positively_for_j())
-    }
-
-    pub(crate) fn from_buf(buf: &[u8]) -> Self {
-        let ni = read_as!(u32, buf, 0);
-        let nj = read_as!(u32, buf, 4);
-        let first_point_lat = read_as!(u32, buf, 16).as_grib_int();
-        let first_point_lon = read_as!(u32, buf, 20).as_grib_int();
-        let last_point_lat = read_as!(u32, buf, 25).as_grib_int();
-        let last_point_lon = read_as!(u32, buf, 29).as_grib_int();
-        let i_direction_inc = read_as!(u32, buf, 33);
-        let n = read_as!(u32, buf, 37);
-        let scanning_mode = read_as!(u8, buf, 41);
-        Self {
-            ni,
-            nj,
-            first_point_lat,
-            first_point_lon,
-            last_point_lat,
-            last_point_lon,
-            i_direction_inc,
-            n,
-            scanning_mode: ScanningMode(scanning_mode),
-        }
     }
 }
 
@@ -204,7 +149,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::grid::helpers::test_helpers::assert_almost_eq;
+    use crate::{LatLons, grid::helpers::test_helpers::assert_almost_eq};
 
     #[test]
     fn latlon_computation_for_real_world_gaussian_grid_compared_with_results_from_eccodes()

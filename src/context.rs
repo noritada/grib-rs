@@ -10,14 +10,14 @@ use grib_template_helpers::{Dump as _, TryFromSlice as _};
 #[cfg(feature = "time-calculation")]
 use crate::TemporalInfo;
 use crate::{
-    GridPointIndexIterator, TemporalRawInfo,
+    GridDefinitionTemplateValues, GridPointIndex, GridPointIndexIterator, LatLons, TemporalRawInfo,
     codetables::{
         CodeTable3_1, CodeTable4_0, CodeTable4_1, CodeTable4_2, CodeTable4_3, CodeTable5_0, Lookup,
     },
     datatypes::*,
     def::grib2::{Section1, Section3, Section4, Section5, Section6, SectionHeader},
     error::*,
-    grid::GridPointIterator,
+    grid::GridPointLatLons,
     parser::Grib2SubmessageIndexStream,
     reader::{Grib2Read, Grib2SectionStream, SECT8_ES_SIZE, SeekableGrib2Reader},
 };
@@ -590,6 +590,33 @@ Data Representation:                    {}
     ///             num_point_list_octets: 0,
     ///             point_list_interpretation: 0,
     ///             template_num: 0,
+    ///             template: grib::def::grib2::GridDefinitionTemplate::_3_0(grib::def::grib2::template::Template3_0 {
+    ///                 earth: grib::def::grib2::template::param_set::EarthShape {
+    ///                     shape: 4,
+    ///                     spherical_earth_radius_scale_factor: 0xff,
+    ///                     spherical_earth_radius_scaled_value: 0xffffffff,
+    ///                     major_axis_scale_factor: 1,
+    ///                     major_axis_scaled_value: 63781370,
+    ///                     minor_axis_scale_factor: 1,
+    ///                     minor_axis_scaled_value: 63567523,
+    ///                 },
+    ///                 lat_lon: grib::def::grib2::template::param_set::LatLonGrid {
+    ///                     grid: grib::def::grib2::template::param_set::Grid {
+    ///                         ni: 256,
+    ///                         nj: 336,
+    ///                         initial_production_domain_basic_angle: 0,
+    ///                         basic_angle_subdivisions: 0xffffffff,
+    ///                         first_point_lat: 47958333,
+    ///                         first_point_lon: 118062500,
+    ///                         resolution_and_component_flags: grib::def::grib2::template::param_set::ResolutionAndComponentFlags(0b00110000),
+    ///                         last_point_lat: 20041667,
+    ///                         last_point_lon: 149937500,
+    ///                     },
+    ///                     i_direction_inc: 125000,
+    ///                     j_direction_inc: 83333,
+    ///                     scanning_mode: grib::def::grib2::template::param_set::ScanningMode(0b00000000),
+    ///                 },
+    ///             }),
     ///         },
     ///     });
     ///     assert_eq!(actual, expected);
@@ -798,6 +825,25 @@ Data Representation:                    {}
     /// 11        payload.num_point_list_octets = 0  // Number of octets for optional list of numbers (see Note 2).
     /// 12        payload.point_list_interpretation = 0  // Interpretation of list of numbers (see Code table 3.11).
     /// 13-14     payload.template_num = 0  // Grid definition template number (= N) (see Code table 3.1).
+    /// 15        payload.template.earth.shape = 4  // Shape of the Earth (see Code table 3.2).
+    /// 16        payload.template.earth.spherical_earth_radius_scale_factor = 255  // Scale factor of radius of spherical Earth.
+    /// 17-20     payload.template.earth.spherical_earth_radius_scaled_value = 4294967295  // Scaled value of radius of spherical Earth.
+    /// 21        payload.template.earth.major_axis_scale_factor = 1  // Scale factor of major axis of oblate spheroid Earth.
+    /// 22-25     payload.template.earth.major_axis_scaled_value = 63781370  // Scaled value of major axis of oblate spheroid Earth.
+    /// 26        payload.template.earth.minor_axis_scale_factor = 1  // Scale factor of minor axis of oblate spheroid Earth.
+    /// 27-30     payload.template.earth.minor_axis_scaled_value = 63567523  // Scaled value of minor axis of oblate spheroid Earth.
+    /// 31-34     payload.template.lat_lon.grid.ni = 256  // Ni - number of points along a parallel.
+    /// 35-38     payload.template.lat_lon.grid.nj = 336  // Nj - number of points along a meridian.
+    /// 39-42     payload.template.lat_lon.grid.initial_production_domain_basic_angle = 0  // Basic angle of the initial production domain (see Note 1).
+    /// 43-46     payload.template.lat_lon.grid.basic_angle_subdivisions = 4294967295  // Subdivisions of basic angle used to define extreme longitudes and latitudes, and direction increments (see Note 1).
+    /// 47-50     payload.template.lat_lon.grid.first_point_lat = 47958333  // La1 - latitude of first grid point (see Note 1).
+    /// 51-54     payload.template.lat_lon.grid.first_point_lon = 118062500  // Lo1 - longitude of first grid point (see Note 1).
+    /// 55        payload.template.lat_lon.grid.resolution_and_component_flags = 0b00110000  // Resolution and component flags (see Flag table 3.3).
+    /// 56-59     payload.template.lat_lon.grid.last_point_lat = 20041667  // La2 - latitude of last grid point (see Note 1).
+    /// 60-63     payload.template.lat_lon.grid.last_point_lon = 149937500  // Lo2 - longitude of last grid point (see Note 1).
+    /// 64-67     payload.template.lat_lon.i_direction_inc = 125000  // Di - i direction increment (see Notes 1 and 5).
+    /// 68-71     payload.template.lat_lon.j_direction_inc = 83333  // Dj - j direction increment (see Notes 1 and 5).
+    /// 72        payload.template.lat_lon.scanning_mode = 0b00000000  // Scanning mode (flags - see Flag table 3.4).
     /// ###  SECTION 4: PRODUCT DEFINITION SECTION (length = 34)
     /// 1-4       header.len = 34  // Length of section in octets (nn).
     /// 5         header.sect_num = 4  // Number of section.
@@ -825,9 +871,7 @@ Data Representation:                    {}
     ///     Ok(())
     /// }
     /// ```
-    pub fn dump<W: std::io::Write>(&self, writer: &mut W) -> Result<(), GribError> {
-        // TODO: return `Result<(), std::io::Error>` instead.
-
+    pub fn dump<W: std::io::Write>(&self, writer: &mut W) -> Result<(), std::io::Error> {
         let write_heading =
             |writer: &mut W, sect: &SectionInfo, sect_name: &str| -> Result<(), std::io::Error> {
                 let SectionInfo { num, size, .. } = sect;
@@ -880,8 +924,9 @@ Data Representation:                    {}
     /// };
     ///
     /// use grib::{
-    ///     Code, ForecastTime, TemporalRawInfo, UtcDateTime,
+    ///     Code, ForecastTime, TemporalRawInfo,
     ///     codetables::grib2::{Table1_2, Table4_4},
+    ///     def::grib2::RefTime,
     /// };
     ///
     /// fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -898,7 +943,7 @@ Data Representation:                    {}
     ///         let actual = message.temporal_raw_info();
     ///         let expected = TemporalRawInfo {
     ///             ref_time_significance: Code::Name(Table1_2::Analysis),
-    ///             ref_time_unchecked: UtcDateTime::new(2016, 8, 22, 2, 0, 0),
+    ///             ref_time_unchecked: RefTime::new(2016, 8, 22, 2, 0, 0),
     ///             forecast_time_diff: Some(ForecastTime {
     ///                 unit: Code::Name(Table4_4::Minute),
     ///                 value: 0,
@@ -912,7 +957,7 @@ Data Representation:                    {}
     ///         let actual = message.temporal_raw_info();
     ///         let expected = TemporalRawInfo {
     ///             ref_time_significance: Code::Name(Table1_2::Analysis),
-    ///             ref_time_unchecked: UtcDateTime::new(2016, 8, 22, 2, 0, 0),
+    ///             ref_time_unchecked: RefTime::new(2016, 8, 22, 2, 0, 0),
     ///             forecast_time_diff: Some(ForecastTime {
     ///                 unit: Code::Name(Table4_4::Minute),
     ///                 value: 10,
@@ -946,7 +991,7 @@ Data Representation:                    {}
     ///
     /// use chrono::{TimeZone, Utc};
     /// use grib::{
-    ///     Code, ForecastTime, TemporalInfo, UtcDateTime,
+    ///     Code, ForecastTime, TemporalInfo,
     ///     codetables::grib2::{Table1_2, Table4_4},
     /// };
     ///
@@ -1026,7 +1071,8 @@ Data Representation:                    {}
     /// Computes and returns an iterator over `(i, j)` of grid points.
     ///
     /// The order of items is the same as the order of the grid point values,
-    /// defined by the scanning mode ([`ScanningMode`](`crate::ScanningMode`))
+    /// defined by the scanning mode
+    /// ([`ScanningMode`](`crate::def::grib2::template::param_set::ScanningMode`))
     /// in the data.
     ///
     /// This iterator allows users to perform their own coordinate calculations
@@ -1073,13 +1119,16 @@ Data Representation:                    {}
             )))
         }
     }
+}
+
+impl<'s, R> LatLons for SubMessage<'s, R> {
+    type Iter<'a>
+        = GridPointLatLons
+    where
+        Self: 'a;
 
     /// Computes and returns an iterator over latitudes and longitudes of grid
-    /// points.
-    ///
-    /// The order of lat/lon data of grid points is the same as the order of the
-    /// grid point values, defined by the scanning mode
-    /// ([`ScanningMode`](`crate::ScanningMode`)) in the data.
+    /// points in degrees. [Read more](`crate::LatLons::latlons`)
     ///
     /// # Examples
     ///
@@ -1088,6 +1137,8 @@ Data Representation:                    {}
     ///     fs::File,
     ///     io::{BufReader, Read},
     /// };
+    ///
+    /// use grib::LatLons;
     ///
     /// fn main() -> Result<(), Box<dyn std::error::Error>> {
     ///     let mut buf = Vec::new();
@@ -1105,14 +1156,14 @@ Data Representation:                    {}
     ///
     ///     let mut latlons = message.latlons()?;
     ///     assert_eq!(latlons.next(), Some((90.0, 0.0)));
-    ///     assert_eq!(latlons.next(), Some((90.0, 0.25000003)));
+    ///     assert_eq!(latlons.next(), Some((90.0, 0.25)));
     ///     Ok(())
     /// }
     /// ```
-    pub fn latlons(&self) -> Result<GridPointIterator, GribError> {
+    fn latlons_unchecked<'a>(&'a self) -> Result<Self::Iter<'a>, GribError> {
         let grid_def = self.grid_def();
         let num_defined = grid_def.num_points() as usize;
-        let latlons = GridDefinitionTemplateValues::try_from(grid_def)?.latlons()?;
+        let latlons = GridDefinitionTemplateValues::try_from(grid_def)?.latlons_unchecked()?;
         let (num_decoded, _) = latlons.size_hint();
         if num_defined == num_decoded {
             Ok(latlons)

@@ -47,7 +47,12 @@ pub fn exec(args: &ArgMatches) -> anyhow::Result<()> {
     Ok(())
 }
 
-struct InfoView<'i>(usize, &'i Indicator, &'i Identification, grib::UtcDateTime);
+struct InfoView<'i>(
+    usize,
+    &'i Indicator,
+    &'i Identification,
+    grib::def::grib2::RefTime,
+);
 
 impl<'i> Display for InfoView<'i> {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {

@@ -1,4 +1,3 @@
-#[cfg(feature = "jpeg2000-unpack-with-openjpeg-experimental")]
 pub(crate) use self::image::ImageIntoIter;
 use crate::{
     Grib2GpvUnpack,
@@ -40,10 +39,7 @@ impl<'d> Grib2GpvUnpack for Jpeg2000<'d> {
     }
 }
 
-#[cfg(feature = "jpeg2000-unpack-with-openjpeg-experimental")]
 type Jpeg2000Iter = ImageIntoIter;
-#[cfg(not(feature = "jpeg2000-unpack-with-openjpeg-experimental"))]
-type Jpeg2000Iter = std::vec::IntoIter<i32>;
 
 fn decode_j2k(bytes: &[u8]) -> Result<Jpeg2000Iter, DecodeError> {
     let stream = stream::Stream::from_bytes(bytes)?;
@@ -52,15 +48,6 @@ fn decode_j2k(bytes: &[u8]) -> Result<Jpeg2000Iter, DecodeError> {
     let image = decoder.read_header()?;
     decoder.decode(&image)?;
 
-    #[cfg(not(feature = "jpeg2000-unpack-with-openjpeg-experimental"))]
-    if let [comp_gray] = image.components() {
-        Ok(comp_gray.data().to_vec().into_iter())
-    } else {
-        Err(DecodeError::from(
-            "unexpected non-gray-scale image components",
-        ))
-    }
-    #[cfg(feature = "jpeg2000-unpack-with-openjpeg-experimental")]
     image.try_into_iter()
 }
 

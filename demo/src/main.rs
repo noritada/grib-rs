@@ -1,7 +1,10 @@
 use std::{borrow::Cow, ops::Deref};
 
 use gloo_file::{Blob, futures::read_as_bytes};
-use grib::codetables::{CodeTable4_2, CodeTable4_3, Lookup};
+use grib::{
+    GridShortName,
+    codetables::{CodeTable4_2, CodeTable4_3, Lookup},
+};
 use web_sys::ImageData;
 use yew::prelude::*;
 mod drop_area;
