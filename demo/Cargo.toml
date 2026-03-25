@@ -6,7 +6,7 @@ edition = "2024"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-gloo-file = { version = "0.3", features = ["futures"] }
+gloo-file = { version = "0.4", features = ["futures"] }
 grib = { path = "..", version = "0.14.0", default-features = false, features = [
     "png-unpack-with-png-crate",
 ] }
