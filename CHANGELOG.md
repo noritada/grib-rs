@@ -7,6 +7,54 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.14.0] - 2026-03-25
+### New supports
+
+- Rotated latitude/longitude grids (Template 3.1)
+  (#154 (thanks @g1mv), PR #157)
+- Reading, accessing, and dumping section/template parameters:
+  - Templates 3.0, 3.1, 3.20, 3.30, 3.40
+    (#140, PR #162, PR #163)
+
+### Enhancements
+
+- `GridShortName`, `GridPointIndex`, and `LatLons` traits are newly introduced for grid-related functionalities.
+  (PR #165)
+
+### Breaking changes
+
+- Type improvements:
+  - `UtcDateTime` has now been replaced by its equivalent type `def::grib2::RefTime`.
+    (PR #159)
+  - `SubMessage::dump` now returns `std::io::Error` instead of `GribError` since this method has been returning only standard IO errors since v0.13.3.
+    (PR #159)
+  - Types for grid definition parameters are replaced by ones under `def::grib2`. For example, `EarthShapeDefinitions` is replaced by `def::grib2::template::param_set::EarthShape`.
+    (PR #162)
+  - Methods `short_name`, `grid_shape`, `ij`, and `latlons` defined for each grids has been replaced by trait methods `GridShortName::short_name`, `GridPointIndex::grid_shape`, `GridPointIndex::ij`, and `LatLons::latlons`, respectively.
+    (PR #165)
+  - `SubMessage::latlons` has been replaced by a trait method `LatLons::latlons`.
+    (PR #165)
+  - `GridPointIterator`, a simple enum that merely wrapped multiple iterator instances into one, has been replaced by enum `GridPointLatLons`.
+    (PR #166)
+- Experimental feature `jpeg2000-unpack-with-openjpeg-experimental` has now been removed. That implementation is now available in `jpeg2000-unpack-with-openjpeg`.
+  (#93 (thanks @sawyerzhu), PR #159)
+- Latitude values returned from `latlons` methods, which are redefined as a trait method `LatLons::latlons` as mentioned above, are now normalized to the range `[-180°, 180°]`. If you want to use unnormalized values, please use `LatLons::latlons_unchecked` instead.
+  (#106 (thanks @coredoesdev), #114 (thanks @ejd), PR #168)
+
+### Enhancements to helper crates
+
+- grib-template-derive now supports tuple structs, which are used for implementation of GRIB2 flags in the main crate.
+  (PR #161)
+
+### Versions
+
+```
+grib 0.14.0
+grib-cli 0.14.0
+grib-template-derive 0.1.3
+grib-template-helpers 0.1.2
+```
+
 ## [0.13.7] - 2026-02-26
 ### Enhancements
 
@@ -809,7 +857,8 @@ grib-build 0.1.0
 grib 0.1.0
 ```
 
-[unreleased]: https://github.com/noritada/grib-rs/compare/v0.13.7...HEAD
+[unreleased]: https://github.com/noritada/grib-rs/compare/v0.14.0...HEAD
+[0.14.0]: https://github.com/noritada/grib-rs/compare/v0.13.7...v0.14.0
 [0.13.7]: https://github.com/noritada/grib-rs/compare/v0.13.6...v0.13.7
 [0.13.6]: https://github.com/noritada/grib-rs/compare/v0.13.5...v0.13.6
 [0.13.5]: https://github.com/noritada/grib-rs/compare/v0.13.4...v0.13.5
