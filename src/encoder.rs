@@ -1,3 +1,4 @@
+pub use complex::*;
 use grib_template_helpers::WriteToBuffer;
 pub use simple::*;
 
@@ -63,6 +64,7 @@ pub fn write_section8(buf: &mut [u8]) -> Result<usize, &'static str> {
     SIGNATURE.write_to_buffer(buf)
 }
 
+mod complex;
 mod helpers;
 mod simple;
 mod writer;
