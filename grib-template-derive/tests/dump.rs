@@ -21,6 +21,8 @@ pub struct Params {
     /// Field 9
     field9: TypeWithGenerics,
     field10: TupleStruct,
+    /// Field 11
+    field11: [u8; 5],
 }
 
 #[derive(grib_template_derive::Dump)]
@@ -84,6 +86,7 @@ fn main() {
         field8: vec![1],
         field9: TypeWithGenerics { field1: -1 },
         field10: TupleStruct(0x08),
+        field11: [1, 2, 3, 4, 5],
     };
 
     let mut buf = std::io::Cursor::new(Vec::with_capacity(1024));
@@ -104,6 +107,7 @@ fn main() {
 23-24     field8 = [1]  // Field 8
 25-26     field9.field1 = -1  // Field 1
 27        field10 = 0b00001000  // Tuple struct
+28-32     field11 = [1, 2, 3, 4, 5]  // Field 11
 "
     )
 }

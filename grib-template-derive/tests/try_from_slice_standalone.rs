@@ -23,6 +23,8 @@ pub struct Params {
     field8: Vec<i16>,
     field9: TypeWithGenerics,
     field10: TupleStruct,
+    /// Field 11
+    field11: [u8; 5],
 }
 
 #[derive(Debug, PartialEq, Eq, grib_template_derive::TryFromSlice)]

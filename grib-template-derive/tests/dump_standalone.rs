@@ -21,6 +21,8 @@ pub struct Params {
     /// Field 9
     field9: TypeWithGenerics,
     field10: TupleStruct,
+    /// Field 11
+    field11: [u8; 5],
 }
 
 #[derive(grib_template_derive::Dump)]

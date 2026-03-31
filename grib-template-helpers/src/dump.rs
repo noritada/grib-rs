@@ -118,6 +118,24 @@ add_impl_of_dump_field_for_number_types![
     Vec<f64>,
 ];
 
+impl<const N: usize> DumpField for [u8; N] {
+    fn dump_field<W: Write>(
+        &self,
+        name: &str,
+        parent: Option<&Cow<str>>,
+        doc: &str,
+        pos: &mut usize,
+        output: &mut W,
+    ) -> Result<(), Error> {
+        let size = self.octet_size();
+        write_position_column(output, pos, size)?;
+        if let Some(parent) = parent {
+            write!(output, "{}.", parent)?;
+        }
+        writeln!(output, "{} = {:?}{}", name, self, doc,)
+    }
+}
+
 impl<T: OctetSize + DumpField> DumpField for Option<T>
 where
     Self: OctetSize,
@@ -188,6 +206,12 @@ impl<T: OctetSize> OctetSize for Option<T> {
         } else {
             0
         }
+    }
+}
+
+impl<const N: usize> OctetSize for [u8; N] {
+    fn octet_size(&self) -> usize {
+        N
     }
 }
 
