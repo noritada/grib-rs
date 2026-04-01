@@ -135,7 +135,7 @@ pub struct Template3_20 {
     /// La1 - latitude of first grid point.
     pub first_point_lat: i32,
     /// Lo1 - longitude of first grid point.
-    pub first_point_lon: i32,
+    pub first_point_lon: u32,
     pub resolution_and_component_flags: param_set::ResolutionAndComponentFlags,
     /// LaD - latitude where Dx and Dy are specified.
     pub lad: i32,
@@ -210,13 +210,13 @@ pub struct Template3_30 {
     /// La1 - latitude of first grid point.
     pub first_point_lat: i32,
     /// Lo1 - longitude of first grid point.
-    pub first_point_lon: i32,
+    pub first_point_lon: u32,
     pub resolution_and_component_flags: param_set::ResolutionAndComponentFlags,
     /// LaD - latitude where Dx and Dy are specified.
     pub lad: i32,
     /// LoV - longitude of meridian parallel to y-axis along which latitude
     /// increases as the y-coordinate increases.
-    pub lov: i32,
+    pub lov: u32,
     /// Dx - x-direction grid length (see Note 1).
     pub dx: u32,
     /// Dy - y-direction grid length (see Note 1).
@@ -232,7 +232,7 @@ pub struct Template3_30 {
     /// Latitude of the southern pole of projection.
     pub south_pole_lat: i32,
     /// Longitude of the southern pole of projection.
-    pub south_pole_lon: i32,
+    pub south_pole_lon: u32,
 }
 
 /// Grid definition template 3.40 - Gaussian latitude/longitude.
@@ -297,12 +297,12 @@ pub(crate) mod param_set {
         /// La1 - latitude of first grid point (see Note 1).
         pub first_point_lat: i32,
         /// Lo1 - longitude of first grid point (see Note 1).
-        pub first_point_lon: i32,
+        pub first_point_lon: u32,
         pub resolution_and_component_flags: ResolutionAndComponentFlags,
         /// La2 - latitude of last grid point (see Note 1).
         pub last_point_lat: i32,
         /// Lo2 - longitude of last grid point (see Note 1).
-        pub last_point_lon: i32,
+        pub last_point_lon: u32,
     }
 
     #[derive(Debug, PartialEq, Eq, Clone, Copy, TryFromSlice, Dump)]
@@ -322,7 +322,7 @@ pub(crate) mod param_set {
         /// Latitude of the southern pole of projection.
         pub south_pole_lat: i32,
         /// Longitude of the southern pole of projection.
-        pub south_pole_lon: i32,
+        pub south_pole_lon: u32,
         /// Angle of rotation of projection.
         pub rot_angle: f32,
     }
