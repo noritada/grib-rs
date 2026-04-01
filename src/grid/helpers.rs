@@ -6,13 +6,13 @@ use crate::GribError;
 use crate::{GridPointIndexIterator, def::grib2::template::param_set::ScanningMode};
 
 pub(crate) fn evenly_spaced_longitudes(
-    start_microdegree: i32,
-    end_microdegree: i32,
+    start_microdegree: u32,
+    end_microdegree: u32,
     div: usize,
     scanning_mode: ScanningMode,
 ) -> Vec<f32> {
-    let diff = end_microdegree - start_microdegree;
-    let is_consistent = !((diff > 0) ^ scanning_mode.scans_positively_for_i());
+    let is_consistent =
+        !((end_microdegree > start_microdegree) ^ scanning_mode.scans_positively_for_i());
 
     let (start, end) = (start_microdegree as f32, end_microdegree as f32);
     let (start, end) = if is_consistent {
