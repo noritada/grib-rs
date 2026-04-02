@@ -44,6 +44,21 @@ impl Groups {
 
         Self(groups)
     }
+
+    fn optimal_length_params(&self) -> Option<OptimalLengthParams> {
+        let Self(inner) = self;
+        let num_lengths = inner.len() - 1; // the last group is treated separately
+        if num_lengths == 0 {
+            None
+        } else {
+            let lengths = inner
+                .iter()
+                .take(num_lengths)
+                .map(|g| g.values.len())
+                .collect::<Vec<_>>();
+            Some(OptimalLengthParams::from(&lengths[..]))
+        }
+    }
 }
 
 fn group_cost(len: usize, width: u8) -> usize {
@@ -97,6 +112,48 @@ impl Group {
     }
 }
 
+#[derive(Debug, PartialEq, Eq)]
+struct OptimalLengthParams {
+    ref_: usize,
+    inc: usize,
+    num_bits: u8,
+    total_bits: usize,
+}
+
+impl OptimalLengthParams {
+    fn new(ref_: usize, inc: usize, num_bits: u8, total_bits: usize) -> Self {
+        Self {
+            ref_,
+            inc,
+            num_bits,
+            total_bits,
+        }
+    }
+}
+
+impl From<&[usize]> for OptimalLengthParams {
+    fn from(value: &[usize]) -> Self {
+        let ref_ = value.iter().min().unwrap();
+        let diffs = value.iter().map(|&l| l - ref_).collect::<Vec<_>>();
+        let gcd_ = diffs.iter().copied().reduce(gcd).unwrap_or(0);
+
+        if gcd_ == 0 {
+            return Self::new(*ref_, 0, 0, 0);
+        }
+
+        let max_code = diffs.iter().map(|d| d / gcd_).max().unwrap();
+        let num_bits = max_code.bits_required();
+        let total_bits = num_bits as usize * value.len();
+
+        Self::new(*ref_, gcd_, num_bits, total_bits)
+    }
+}
+
+fn gcd(m: usize, n: usize) -> usize {
+    let (m, n) = if m > n { (m, n) } else { (n, m) };
+    if n == 0 { m } else { gcd(n, m % n) }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -136,5 +193,44 @@ mod tests {
             },
         ]);
         assert_eq!(actual, expected);
+    }
+
+    macro_rules! test_optimal_length_params {
+        ($((
+            $name:ident,
+            $input:expr,
+            $expected:expr,
+        ),)*) => ($(
+            #[test]
+            fn $name() {
+                let lengths = $input;
+                let actual = OptimalLengthParams::from(&lengths[..]);
+                let expected = $expected;
+                assert_eq!(actual, expected);
+            }
+        )*);
+    }
+
+    test_optimal_length_params! {
+        (
+            optimal_length_params_for_all_zero,
+            vec![0, 0, 0, 0, 0],
+            OptimalLengthParams::new(0, 0, 0, 0),
+        ),
+        (
+            optimal_length_params_for_all_same_nonzero,
+            vec![5, 5, 5, 5, 5],
+            OptimalLengthParams::new(5, 0, 0, 0),
+        ),
+        (
+            optimal_length_params_for_gcd_being_one,
+            vec![26, 24, 20, 14, 13],
+            OptimalLengthParams::new(13, 1, 4, 20),
+        ),
+        (
+            optimal_length_params_for_gcd_being_integer_other_than_zero_and_one,
+            vec![13, 19, 22, 16, 25],
+            OptimalLengthParams::new(13, 3, 3, 15),
+        ),
     }
 }

@@ -2,11 +2,17 @@ pub(crate) trait BitsRequired {
     fn bits_required(&self) -> u8;
 }
 
-impl BitsRequired for u32 {
-    fn bits_required(&self) -> u8 {
-        (Self::BITS - self.leading_zeros()) as u8
-    }
+macro_rules! add_impl_for_integer_types {
+    ($($ty:ty,)*) => ($(
+        impl BitsRequired for $ty {
+            fn bits_required(&self) -> u8 {
+                (Self::BITS - self.leading_zeros()) as u8
+            }
+        }
+    )*);
 }
+
+add_impl_for_integer_types![u32, usize,];
 
 impl BitsRequired for f64 {
     fn bits_required(&self) -> u8 {
