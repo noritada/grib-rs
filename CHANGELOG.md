@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Type improvements:
   - The type of longitude parameters such as `def::grib2::template::param_set::Grid::first_point_lon` has been changed from a 32-bit signed integer to a 32-bit unsigned integer, in accordance with GRIB2 regulations.
+    (PR #169)
 
 ### Versions
 
