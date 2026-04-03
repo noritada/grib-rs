@@ -140,7 +140,10 @@ impl WriteGrib2DataSections for SimplePackingEncoded {
     }
 }
 
-fn determine_simple_packing_params(values: &[f64], dec: i16) -> (SimplePacking, Vec<f64>) {
+pub(crate) fn determine_simple_packing_params(
+    values: &[f64],
+    dec: i16,
+) -> (SimplePacking, Vec<f64>) {
     let mut min = f64::MAX;
     let mut max = f64::MIN;
     let scaled = values

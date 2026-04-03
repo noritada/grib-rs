@@ -1,4 +1,72 @@
-use crate::encoder::helpers::BitsRequired;
+use crate::{def::grib2::template::param_set::SimplePacking, encoder::helpers::BitsRequired};
+
+/// Strategies applied when performing complex packing on numerical sequences.
+/// Complex packing is a method that divides a sequence of numbers into groups
+/// and efficiently compresses each group to improve the overall compression
+/// ratio of the data.
+pub enum ComplexPackingStrategy {
+    /// A strategy that pre-reads a specified number of elements to determine
+    /// whether to add an element to the current group.
+    LookAhead(usize),
+}
+
+/// Complex packing encoder.
+pub struct ComplexPackingEncoder<'a> {
+    data: &'a [f64],
+    decimal: i16,
+    strategy: ComplexPackingStrategy,
+}
+
+impl<'a> ComplexPackingEncoder<'a> {
+    pub fn new(data: &'a [f64], decimal: i16, strategy: ComplexPackingStrategy) -> Self {
+        Self {
+            data,
+            decimal,
+            strategy,
+        }
+    }
+
+    /// Performs data encoding.
+    pub fn encode(&self) -> ComplexPackingEncoded {
+        match self.strategy {
+            ComplexPackingStrategy::LookAhead(num) => {
+                let (params, scaled) =
+                    super::determine_simple_packing_params(self.data, self.decimal);
+                let coded = if params.num_bits == 0 {
+                    CodedValues::Unique(self.data.len())
+                } else {
+                    let exp = 2_f64.powf(params.exp as f64);
+                    let integers = scaled
+                        .iter()
+                        .map(|value| ((value - params.ref_val as f64) / exp).round() as i32)
+                        .collect::<Vec<_>>();
+                    let groups = Groups::from_values(&integers, num);
+                    CodedValues::NonUnique(groups)
+                };
+                ComplexPackingEncoded::new(params, coded)
+            }
+        }
+    }
+}
+
+/// Data obtained through encoding using simple packing. Instances are typically
+/// used to write GRIB2 data via the methods defined in
+/// [`WriteGrib2DataSections`].
+pub struct ComplexPackingEncoded {
+    params: SimplePacking,
+    coded: CodedValues,
+}
+
+impl ComplexPackingEncoded {
+    pub fn new(params: SimplePacking, coded: CodedValues) -> Self {
+        Self { params, coded }
+    }
+}
+
+enum CodedValues {
+    NonUnique(Groups),
+    Unique(usize),
+}
 
 #[derive(Debug, PartialEq, Eq)]
 struct Groups(Vec<Group>);
