@@ -1,4 +1,7 @@
-use crate::{def::grib2::template::param_set::SimplePacking, encoder::helpers::BitsRequired};
+use crate::{
+    def::grib2::template::param_set::{ComplexPacking, SimplePacking},
+    encoder::helpers::BitsRequired,
+};
 
 /// Strategies applied when performing complex packing on numerical sequences.
 /// Complex packing is a method that divides a sequence of numbers into groups
@@ -63,9 +66,42 @@ impl ComplexPackingEncoded {
     }
 }
 
+impl From<&ComplexPackingEncoded> for ComplexPacking {
+    fn from(value: &ComplexPackingEncoded) -> Self {
+        match &value.coded {
+            CodedValues::NonUnique(groups) => Self::from(groups),
+            CodedValues::Unique(_) => {
+                let group_len = value.coded.num_values() as u32;
+                Self {
+                    group_splitting_method: 1,
+                    missing_value_management: 0,
+                    primary_missing_value: 0xffffffff,
+                    secondary_missing_value: 0xffffffff,
+                    num_groups: 1,
+                    group_width_ref: 0,
+                    num_group_width_bits: 0,
+                    group_len_ref: group_len,
+                    group_len_inc: 1,
+                    group_len_last: group_len,
+                    num_group_len_bits: 0,
+                }
+            }
+        }
+    }
+}
+
 enum CodedValues {
     NonUnique(Groups),
     Unique(usize),
+}
+
+impl CodedValues {
+    pub(crate) fn num_values(&self) -> usize {
+        match self {
+            Self::NonUnique(vec) => vec.num_values(),
+            Self::Unique(size) => *size,
+        }
+    }
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -127,6 +163,11 @@ impl Groups {
             Some(OptimalLengthParams::from(&lengths[..]))
         }
     }
+
+    fn num_values(&self) -> usize {
+        let Self(inner) = self;
+        inner.iter().map(|g| g.values.len()).sum()
+    }
 }
 
 fn group_cost(len: usize, width: u8) -> usize {
@@ -149,6 +190,38 @@ fn new_group_cost_estimated(values: &[i32], num_lookahead: usize) -> usize {
     }
     let width = ((max - min) as u32).bits_required();
     group_cost(len, width)
+}
+
+impl From<&Groups> for ComplexPacking {
+    fn from(value: &Groups) -> Self {
+        let Groups(inner) = value;
+        let group_width_ref = inner.iter().map(|g| g.width).min().unwrap();
+        let max_width = inner.iter().map(|g| g.width).max().unwrap();
+        let num_group_width_bits = (max_width - group_width_ref).bits_required();
+        let (group_len_ref, group_len_inc, num_group_len_bits) =
+            if let Some(length_params) = value.optimal_length_params() {
+                (
+                    length_params.ref_ as u32,
+                    length_params.inc as u8,
+                    length_params.num_bits,
+                )
+            } else {
+                (0, 0, 0)
+            };
+        Self {
+            group_splitting_method: 1,
+            missing_value_management: 0,
+            primary_missing_value: 0xffffffff,
+            secondary_missing_value: 0xffffffff,
+            num_groups: inner.len() as u32,
+            group_width_ref,
+            num_group_width_bits,
+            group_len_ref,
+            group_len_inc,
+            group_len_last: inner.last().unwrap().values.len() as u32,
+            num_group_len_bits,
+        }
+    }
 }
 
 #[derive(Debug, PartialEq, Eq)]

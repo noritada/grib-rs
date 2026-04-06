@@ -12,7 +12,7 @@ macro_rules! add_impl_for_integer_types {
     )*);
 }
 
-add_impl_for_integer_types![u32, usize,];
+add_impl_for_integer_types![u8, u32, usize,];
 
 impl BitsRequired for f64 {
     fn bits_required(&self) -> u8 {
