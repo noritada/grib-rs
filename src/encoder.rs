@@ -2,6 +2,15 @@ pub use complex::*;
 use grib_template_helpers::WriteToBuffer;
 pub use simple::*;
 
+/// An encoder that encodes a sequence of numerical values as GRIB2 data
+/// sections
+pub trait Encode {
+    type Output;
+
+    /// Performs data encoding.
+    fn encode(&self) -> Self::Output;
+}
+
 /// A serializer that writes the byte sequence of sections concerning GPV data
 /// to the output buffer
 pub trait WriteGrib2DataSections {

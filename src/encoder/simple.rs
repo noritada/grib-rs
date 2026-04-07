@@ -1,7 +1,7 @@
 use grib_template_helpers::WriteToBuffer;
 
 use crate::{
-    WriteGrib2DataSections,
+    Encode, WriteGrib2DataSections,
     def::grib2::template::param_set::SimplePacking,
     encoder::{helpers::BitsRequired, writer},
 };
@@ -27,9 +27,12 @@ impl<'a> SimplePackingEncoder<'a> {
     pub fn new(data: &'a [f64], strategy: SimplePackingStrategy) -> Self {
         Self { data, strategy }
     }
+}
 
-    /// Performs data encoding.
-    pub fn encode(&self) -> SimplePackingEncoded {
+impl<'a> Encode for SimplePackingEncoder<'a> {
+    type Output = SimplePackingEncoded;
+
+    fn encode(&self) -> Self::Output {
         match self.strategy {
             SimplePackingStrategy::Decimal(dec) => {
                 let (params, scaled) = determine_simple_packing_params(self.data, dec);

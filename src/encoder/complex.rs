@@ -1,4 +1,5 @@
 use crate::{
+    Encode,
     def::grib2::template::param_set::{ComplexPacking, SimplePacking},
     encoder::helpers::BitsRequired,
 };
@@ -28,9 +29,12 @@ impl<'a> ComplexPackingEncoder<'a> {
             strategy,
         }
     }
+}
 
-    /// Performs data encoding.
-    pub fn encode(&self) -> ComplexPackingEncoded {
+impl<'a> Encode for ComplexPackingEncoder<'a> {
+    type Output = ComplexPackingEncoded;
+
+    fn encode(&self) -> Self::Output {
         match self.strategy {
             ComplexPackingStrategy::LookAhead(num) => {
                 let (params, scaled) =
