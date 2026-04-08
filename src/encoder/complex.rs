@@ -49,7 +49,7 @@ impl<'a> Encode for ComplexPackingEncoder<'a> {
                     let exp = 2_f64.powf(simple.exp as f64);
                     let integers = scaled
                         .iter()
-                        .map(|value| ((value - simple.ref_val as f64) / exp).round() as i32)
+                        .map(|value| ((value - simple.ref_val as f64) / exp).round() as u32)
                         .collect::<Vec<_>>();
                     let num_bits = integers.iter().max().unwrap().num_bytes_required() as u8;
                     simple.num_bits = num_bits;
@@ -125,7 +125,7 @@ impl Groups {
         Self(groups)
     }
 
-    fn from_values(values: &[i32], num_lookahead: usize) -> Self {
+    fn from_values(values: &[u32], num_lookahead: usize) -> Self {
         let mut groups = Vec::new();
         let mut start = 0;
 
@@ -187,14 +187,14 @@ fn group_cost(len: usize, width: u8) -> usize {
     len * width as usize
 }
 
-fn new_group_cost_estimated(values: &[i32], num_lookahead: usize) -> usize {
+fn new_group_cost_estimated(values: &[u32], num_lookahead: usize) -> usize {
     if values.is_empty() {
         return 0;
     }
 
     let lookahead = values.iter().take(num_lookahead);
 
-    let (mut min, mut max) = (i32::MAX, i32::MIN);
+    let (mut min, mut max) = (u32::MAX, u32::MIN);
     let mut len = 0;
 
     for &v in lookahead {
@@ -239,19 +239,19 @@ impl From<&Groups> for ComplexPacking {
 
 #[derive(Debug, PartialEq, Eq)]
 struct Group {
-    pub ref_val: i32,
+    pub ref_val: u32,
     pub width: u8,
     pub values: Vec<u32>,
 }
 
 impl Group {
-    fn from_values(values: &[i32]) -> Self {
+    fn from_values(values: &[u32]) -> Self {
         let ref_val = *values.iter().min().unwrap();
         let mut max_diff = u32::MIN;
         let diffs = values
             .iter()
             .map(|v| {
-                let diff = (v - ref_val) as u32;
+                let diff = v - ref_val;
                 max_diff = max_diff.max(diff);
                 diff
             })
@@ -314,7 +314,7 @@ mod tests {
 
     #[test]
     fn grouping() {
-        let mut values = (0_i32..24).collect::<Vec<_>>();
+        let mut values = (0_u32..24).collect::<Vec<_>>();
         values[10] = 64;
         values[21] = 128;
         values[22] = 256;
