@@ -37,23 +37,49 @@ impl<'a> Encode for ComplexPackingEncoder<'a> {
     fn encode(&self) -> Self::Output {
         match self.strategy {
             ComplexPackingStrategy::LookAhead(num) => {
-                let (mut params, scaled) =
+                let (mut simple, scaled) =
                     super::determine_simple_packing_params(self.data, self.decimal);
-                let coded = if params.num_bits == 0 {
-                    CodedValues::Unique(self.data.len())
+                let (complex, coded) = if simple.num_bits == 0 {
+                    let len = self.data.len();
+                    (
+                        ComplexPacking::for_unique_values(len),
+                        CodedValues::Unique(len),
+                    )
                 } else {
-                    let exp = 2_f64.powf(params.exp as f64);
+                    let exp = 2_f64.powf(simple.exp as f64);
                     let integers = scaled
                         .iter()
-                        .map(|value| ((value - params.ref_val as f64) / exp).round() as i32)
+                        .map(|value| ((value - simple.ref_val as f64) / exp).round() as i32)
                         .collect::<Vec<_>>();
                     let num_bits = integers.iter().max().unwrap().num_bytes_required() as u8;
-                    params.num_bits = num_bits;
+                    simple.num_bits = num_bits;
                     let groups = Groups::from_values(&integers, num);
-                    CodedValues::NonUnique(groups)
+                    (
+                        ComplexPacking::from(&groups),
+                        CodedValues::NonUnique(groups),
+                    )
                 };
-                ComplexPackingEncoded::new(params, coded)
+                ComplexPackingEncoded::new(simple, complex, coded)
             }
+        }
+    }
+}
+
+impl ComplexPacking {
+    fn for_unique_values(len: usize) -> Self {
+        let len = len as u32;
+        Self {
+            group_splitting_method: 1,
+            missing_value_management: 0,
+            primary_missing_value: 0xffffffff,
+            secondary_missing_value: 0xffffffff,
+            num_groups: 1,
+            group_width_ref: 0,
+            num_group_width_bits: 0,
+            group_len_ref: len,
+            group_len_inc: 1,
+            group_len_last: len,
+            num_group_len_bits: 0,
         }
     }
 }
@@ -62,36 +88,17 @@ impl<'a> Encode for ComplexPackingEncoder<'a> {
 /// used to write GRIB2 data via the methods defined in
 /// [`WriteGrib2DataSections`].
 pub struct ComplexPackingEncoded {
-    params: SimplePacking,
+    simple: SimplePacking,
+    complex: ComplexPacking,
     coded: CodedValues,
 }
 
 impl ComplexPackingEncoded {
-    pub fn new(params: SimplePacking, coded: CodedValues) -> Self {
-        Self { params, coded }
-    }
-}
-
-impl From<&ComplexPackingEncoded> for ComplexPacking {
-    fn from(value: &ComplexPackingEncoded) -> Self {
-        match &value.coded {
-            CodedValues::NonUnique(groups) => Self::from(groups),
-            CodedValues::Unique(_) => {
-                let group_len = value.coded.num_values() as u32;
-                Self {
-                    group_splitting_method: 1,
-                    missing_value_management: 0,
-                    primary_missing_value: 0xffffffff,
-                    secondary_missing_value: 0xffffffff,
-                    num_groups: 1,
-                    group_width_ref: 0,
-                    num_group_width_bits: 0,
-                    group_len_ref: group_len,
-                    group_len_inc: 1,
-                    group_len_last: group_len,
-                    num_group_len_bits: 0,
-                }
-            }
+    pub fn new(simple: SimplePacking, complex: ComplexPacking, coded: CodedValues) -> Self {
+        Self {
+            simple,
+            complex,
+            coded,
         }
     }
 }
