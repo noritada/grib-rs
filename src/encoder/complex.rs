@@ -37,7 +37,7 @@ impl<'a> Encode for ComplexPackingEncoder<'a> {
     fn encode(&self) -> Self::Output {
         match self.strategy {
             ComplexPackingStrategy::LookAhead(num) => {
-                let (params, scaled) =
+                let (mut params, scaled) =
                     super::determine_simple_packing_params(self.data, self.decimal);
                 let coded = if params.num_bits == 0 {
                     CodedValues::Unique(self.data.len())
@@ -47,6 +47,8 @@ impl<'a> Encode for ComplexPackingEncoder<'a> {
                         .iter()
                         .map(|value| ((value - params.ref_val as f64) / exp).round() as i32)
                         .collect::<Vec<_>>();
+                    let num_bits = integers.iter().max().unwrap().num_bytes_required() as u8;
+                    params.num_bits = num_bits;
                     let groups = Groups::from_values(&integers, num);
                     CodedValues::NonUnique(groups)
                 };
