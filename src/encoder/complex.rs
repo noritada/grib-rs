@@ -51,7 +51,7 @@ impl<'a> Encode for ComplexPackingEncoder<'a> {
                         .iter()
                         .map(|value| ((value - simple.ref_val as f64) / exp).round() as u32)
                         .collect::<Vec<_>>();
-                    let num_bits = integers.iter().max().unwrap().num_bytes_required() as u8;
+                    let num_bits = integers.iter().max().unwrap().bits_required() as u8;
                     simple.num_bits = num_bits;
                     let groups = Groups::from_values(&integers, num);
                     (
