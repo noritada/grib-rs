@@ -191,7 +191,7 @@ impl WriteGrib2DataSections for ComplexPackingEncoded {
                     pos += nbitwise.write_to_buffer(&mut buf[pos..])?;
                 }
 
-                if self.complex.num_group_len_bits != 0 {
+                if self.complex.group_len_inc != 0 && self.complex.num_group_len_bits != 0 {
                     let lengths = inner
                         .iter()
                         .take(self.complex.num_groups as usize - 1)
@@ -534,6 +534,10 @@ mod tests {
         (
             grib2_coded_values_roundtrip_test_with_nonunique_values,
             (2..11).map(|val| val as f64).collect::<Vec<_>>()
+        ),
+        (
+            grib2_coded_values_roundtrip_test_with_nonunique_values_and_group_len_inc_being_0,
+            (2..5).map(|val| val as f64).collect::<Vec<_>>()
         ),
         (
             grib2_coded_values_roundtrip_test_with_unique_values,
