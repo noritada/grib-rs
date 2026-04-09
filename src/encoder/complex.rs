@@ -96,7 +96,7 @@ pub struct ComplexPackingEncoded {
 }
 
 impl ComplexPackingEncoded {
-    pub fn new(simple: SimplePacking, complex: ComplexPacking, coded: CodedValues) -> Self {
+    fn new(simple: SimplePacking, complex: ComplexPacking, coded: CodedValues) -> Self {
         Self {
             simple,
             complex,
@@ -229,10 +229,6 @@ impl CodedValues {
 struct Groups(Vec<Group>);
 
 impl Groups {
-    fn new(groups: Vec<Group>) -> Self {
-        Self(groups)
-    }
-
     fn from_values(values: &[u32], num_lookahead: usize) -> Self {
         let mut groups = Vec::new();
         let mut start = 0;
@@ -431,7 +427,7 @@ mod tests {
         values[21] = 128;
         values[22] = 256;
         let actual = Groups::from_values(&values, 4);
-        let expected = Groups::new(vec![
+        let expected = Groups(vec![
             Group {
                 ref_val: 0,
                 width: 4,
