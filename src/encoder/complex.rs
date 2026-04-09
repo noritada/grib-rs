@@ -1,7 +1,9 @@
+use grib_template_helpers::WriteToBuffer;
+
 use crate::{
-    Encode,
+    Encode, WriteGrib2DataSections,
     def::grib2::template::param_set::{ComplexPacking, SimplePacking},
-    encoder::helpers::BitsRequired,
+    encoder::{helpers::BitsRequired, writer},
 };
 
 /// Strategies applied when performing complex packing on numerical sequences.
@@ -100,6 +102,112 @@ impl ComplexPackingEncoded {
             complex,
             coded,
         }
+    }
+}
+
+impl WriteGrib2DataSections for ComplexPackingEncoded {
+    fn section5_len(&self) -> usize {
+        47
+    }
+
+    fn write_section5(&self, buf: &mut [u8]) -> Result<usize, &'static str> {
+        let len = self.section5_len();
+        if buf.len() < len {
+            return Err("destination buffer is too small");
+        }
+
+        let mut pos = 0;
+        pos += (len as u32).write_to_buffer(&mut buf[pos..])?; // header.len
+        pos += 5_u8.write_to_buffer(&mut buf[pos..])?; // header.sect_num
+        pos += (self.coded.num_values() as u32).write_to_buffer(&mut buf[pos..])?; // payload.num_encoded_points
+        pos += 2_u16.write_to_buffer(&mut buf[pos..])?; // payload.template_num
+        pos += self.simple.write_to_buffer(&mut buf[pos..])?;
+        pos += 0_u8.write_to_buffer(&mut buf[pos..])?; // payload.template.orig_field_type
+        pos += self.complex.write_to_buffer(&mut buf[pos..])?;
+
+        Ok(pos)
+    }
+
+    fn section6_len(&self) -> usize {
+        6
+    }
+
+    fn write_section6(&self, buf: &mut [u8]) -> Result<usize, &'static str> {
+        let len = self.section6_len();
+        if buf.len() < len {
+            return Err("destination buffer is too small");
+        }
+
+        let mut pos = 0;
+        pos += (len as u32).write_to_buffer(&mut buf[pos..])?;
+        pos += 6_u8.write_to_buffer(&mut buf[pos..])?;
+        pos += 255_u8.write_to_buffer(&mut buf[pos..])?;
+
+        Ok(pos)
+    }
+
+    fn section7_len(&self) -> usize {
+        let len = match &self.coded {
+            CodedValues::NonUnique(Groups(inner)) => {
+                let num_groups = self.complex.num_groups as usize;
+                let bits_refs = self.simple.num_bits as usize * num_groups;
+                let bits_widths = self.complex.num_group_width_bits as usize * num_groups;
+                let bits_lengths = self.complex.num_group_len_bits as usize * (num_groups - 1);
+                let bits_values: usize = inner.iter().map(|g| g.len() * g.width as usize).sum();
+                bits_refs.div_ceil(8)
+                    + bits_widths.div_ceil(8)
+                    + bits_lengths.div_ceil(8)
+                    + bits_values.div_ceil(8)
+            }
+            CodedValues::Unique(_) => 0,
+        };
+        5 + len
+    }
+
+    fn write_section7(&self, buf: &mut [u8]) -> Result<usize, &'static str> {
+        let len = self.section7_len();
+        if buf.len() < len {
+            return Err("destination buffer is too small");
+        }
+
+        let mut pos = 0;
+        pos += (len as u32).write_to_buffer(&mut buf[pos..])?;
+        pos += 7_u8.write_to_buffer(&mut buf[pos..])?;
+        match &self.coded {
+            CodedValues::NonUnique(Groups(inner)) => {
+                let refs = inner.iter().map(|g| g.ref_val).collect::<Vec<_>>();
+                let nbitwise = writer::NBitwise::new(&refs, self.simple.num_bits as usize);
+                pos += nbitwise.write_to_buffer(&mut buf[pos..])?;
+
+                let widths = inner
+                    .iter()
+                    .map(|g| (g.width - self.complex.group_width_ref) as u32)
+                    .collect::<Vec<_>>();
+                let nbitwise =
+                    writer::NBitwise::new(&widths, self.complex.num_group_width_bits as usize);
+                pos += nbitwise.write_to_buffer(&mut buf[pos..])?;
+
+                let lengths = inner
+                    .iter()
+                    .take(self.complex.num_groups as usize - 1)
+                    .map(|g| {
+                        (g.len() as u32 - self.complex.group_len_ref)
+                            / self.complex.group_len_inc as u32
+                    })
+                    .collect::<Vec<_>>();
+                let nbitwise =
+                    writer::NBitwise::new(&lengths, self.complex.num_group_len_bits as usize);
+                pos += nbitwise.write_to_buffer(&mut buf[pos..])?;
+
+                for group in inner {
+                    let nbitwise = writer::NBitwise::new(&group.values, group.width as usize);
+                    pos += nbitwise.write_to_buffer(&mut buf[pos..])?;
+                }
+            }
+            CodedValues::Unique(_) => {}
+        }
+
+        Ok(pos)
     }
 }
 
@@ -264,6 +372,10 @@ impl Group {
             values: diffs,
         }
     }
+
+    fn len(&self) -> usize {
+        self.values.len()
+    }
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -385,6 +497,43 @@ mod tests {
             optimal_length_params_for_gcd_being_integer_other_than_zero_and_one,
             vec![13, 19, 22, 16, 25],
             OptimalLengthParams::new(13, 3, 3, 15),
+        ),
+    }
+
+    macro_rules! grib2_coded_values_roundtrip_tests {
+        ($(($name:ident, $input:expr),)*) => ($(
+            #[test]
+            fn $name() -> Result<(), Box<dyn std::error::Error>> {
+                let values = $input;
+                let encoder = ComplexPackingEncoder::new(
+                    &values,
+                    0,
+                    ComplexPackingStrategy::LookAhead(4),
+                );
+                let encoded = encoder.encode();
+                let mut sect5 = vec![0; encoded.section5_len()];
+                encoded.write_section5(&mut sect5)?;
+                let mut sect6 = vec![0; encoded.section6_len()];
+                encoded.write_section6(&mut sect6)?;
+                let mut sect7 = vec![0; encoded.section7_len()];
+                encoded.write_section7(&mut sect7)?;
+                let decoder = crate::Grib2SubmessageDecoder::new(values.len(), sect5, sect6, sect7)?;
+                let actual = decoder.dispatch()?.collect::<Vec<_>>();
+                let expected = values.iter().map(|val| *val as f32).collect::<Vec<_>>();
+                assert_eq!(actual, expected);
+                Ok(())
+            }
+        )*);
+    }
+
+    grib2_coded_values_roundtrip_tests! {
+        (
+            grib2_coded_values_roundtrip_test_with_nonunique_values,
+            (2..11).map(|val| val as f64).collect::<Vec<_>>()
+        ),
+        (
+            grib2_coded_values_roundtrip_test_with_unique_values,
+            vec![10.0_f64; 256]
         ),
     }
 }
