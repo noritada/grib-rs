@@ -175,33 +175,41 @@ impl WriteGrib2DataSections for ComplexPackingEncoded {
         pos += 7_u8.write_to_buffer(&mut buf[pos..])?;
         match &self.coded {
             CodedValues::NonUnique(Groups(inner)) => {
-                let refs = inner.iter().map(|g| g.ref_val).collect::<Vec<_>>();
-                let nbitwise = writer::NBitwise::new(&refs, self.simple.num_bits as usize);
-                pos += nbitwise.write_to_buffer(&mut buf[pos..])?;
+                if self.simple.num_bits != 0 {
+                    let refs = inner.iter().map(|g| g.ref_val).collect::<Vec<_>>();
+                    let nbitwise = writer::NBitwise::new(&refs, self.simple.num_bits as usize);
+                    pos += nbitwise.write_to_buffer(&mut buf[pos..])?;
+                }
 
-                let widths = inner
-                    .iter()
-                    .map(|g| (g.width - self.complex.group_width_ref) as u32)
-                    .collect::<Vec<_>>();
-                let nbitwise =
-                    writer::NBitwise::new(&widths, self.complex.num_group_width_bits as usize);
-                pos += nbitwise.write_to_buffer(&mut buf[pos..])?;
+                if self.complex.num_group_width_bits != 0 {
+                    let widths = inner
+                        .iter()
+                        .map(|g| (g.width - self.complex.group_width_ref) as u32)
+                        .collect::<Vec<_>>();
+                    let nbitwise =
+                        writer::NBitwise::new(&widths, self.complex.num_group_width_bits as usize);
+                    pos += nbitwise.write_to_buffer(&mut buf[pos..])?;
+                }
 
-                let lengths = inner
-                    .iter()
-                    .take(self.complex.num_groups as usize - 1)
-                    .map(|g| {
-                        (g.len() as u32 - self.complex.group_len_ref)
-                            / self.complex.group_len_inc as u32
-                    })
-                    .collect::<Vec<_>>();
-                let nbitwise =
-                    writer::NBitwise::new(&lengths, self.complex.num_group_len_bits as usize);
-                pos += nbitwise.write_to_buffer(&mut buf[pos..])?;
+                if self.complex.num_group_len_bits != 0 {
+                    let lengths = inner
+                        .iter()
+                        .take(self.complex.num_groups as usize - 1)
+                        .map(|g| {
+                            (g.len() as u32 - self.complex.group_len_ref)
+                                / self.complex.group_len_inc as u32
+                        })
+                        .collect::<Vec<_>>();
+                    let nbitwise =
+                        writer::NBitwise::new(&lengths, self.complex.num_group_len_bits as usize);
+                    pos += nbitwise.write_to_buffer(&mut buf[pos..])?;
+                }
 
                 for group in inner {
-                    let nbitwise = writer::NBitwise::new(&group.values, group.width as usize);
-                    pos += nbitwise.write_to_buffer(&mut buf[pos..])?;
+                    if group.width != 0 {
+                        let nbitwise = writer::NBitwise::new(&group.values, group.width as usize);
+                        pos += nbitwise.write_to_buffer(&mut buf[pos..])?;
+                    }
                 }
             }
             CodedValues::Unique(_) => {}
