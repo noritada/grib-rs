@@ -51,7 +51,7 @@ impl<I> Unrotate<I> {
     fn new(latlons: I, rot: &Rotation) -> Self {
         let φp = (rot.south_pole_lat as f32 * 1e-6).to_radians();
         let λp = (rot.south_pole_lon as f32 * 1e-6).to_radians();
-        let gamma = rot.rot_angle.to_radians();
+        let gamma = (rot.rot_angle * 1e-6).to_radians();
 
         // south pole to north pole
         let φp = -φp;
