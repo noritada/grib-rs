@@ -1,7 +1,7 @@
 use grib_template_helpers::WriteToBuffer;
 
 use crate::{
-    Encode, WriteGrib2DataSections,
+    Encode, SimplePackingStrategy, WriteGrib2DataSections,
     def::grib2::template::param_set::{ComplexPacking, SimplePacking},
     encoder::{helpers::BitsRequired, writer},
 };
@@ -19,16 +19,20 @@ pub enum ComplexPackingStrategy {
 /// Complex packing encoder.
 pub struct ComplexPackingEncoder<'a> {
     data: &'a [f64],
-    decimal: i16,
-    strategy: ComplexPackingStrategy,
+    simple_packing_strategy: SimplePackingStrategy,
+    complex_packing_strategy: ComplexPackingStrategy,
 }
 
 impl<'a> ComplexPackingEncoder<'a> {
-    pub fn new(data: &'a [f64], decimal: i16, strategy: ComplexPackingStrategy) -> Self {
+    pub fn new(
+        data: &'a [f64],
+        simple_packing_strategy: SimplePackingStrategy,
+        complex_packing_strategy: ComplexPackingStrategy,
+    ) -> Self {
         Self {
             data,
-            decimal,
-            strategy,
+            simple_packing_strategy,
+            complex_packing_strategy,
         }
     }
 }
@@ -37,10 +41,13 @@ impl<'a> Encode for ComplexPackingEncoder<'a> {
     type Output = ComplexPackingEncoded;
 
     fn encode(&self) -> Self::Output {
-        match self.strategy {
+        match self.complex_packing_strategy {
             ComplexPackingStrategy::LookAhead(num) => {
-                let (mut simple, scaled) =
-                    super::determine_simple_packing_params(self.data, self.decimal);
+                let (mut simple, scaled) = match self.simple_packing_strategy {
+                    SimplePackingStrategy::Decimal(decimal) => {
+                        super::determine_simple_packing_params(self.data, decimal)
+                    }
+                };
                 let (complex, coded) = if simple.num_bits == 0 {
                     let len = self.data.len();
                     (
@@ -511,7 +518,7 @@ mod tests {
                 let values = $input;
                 let encoder = ComplexPackingEncoder::new(
                     &values,
-                    0,
+                    SimplePackingStrategy::Decimal(0),
                     ComplexPackingStrategy::LookAhead(4),
                 );
                 let encoded = encoder.encode();
