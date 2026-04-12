@@ -12,24 +12,24 @@ pub trait Encode {
 }
 
 /// A serializer that writes the byte sequence of sections concerning GPV data
-/// to the output buffer
+/// to the output buffer.
 pub trait WriteGrib2DataSections {
     /// Returns the length of the byte sequence in Section 5.
     fn section5_len(&self) -> usize;
 
-    /// Writes the byte sequence of Section 5 to the output buffer
+    /// Writes the byte sequence of Section 5 to the output buffer.
     fn write_section5(&self, buf: &mut [u8]) -> Result<usize, &'static str>;
 
     /// Returns the length of the byte sequence in Section 6.
     fn section6_len(&self) -> usize;
 
-    /// Writes the byte sequence of Section 6 to the output buffer
+    /// Writes the byte sequence of Section 6 to the output buffer.
     fn write_section6(&self, buf: &mut [u8]) -> Result<usize, &'static str>;
 
     /// Returns the length of the byte sequence in Section 7.
     fn section7_len(&self) -> usize;
 
-    /// Writes the byte sequence of Section 7 to the output buffer
+    /// Writes the byte sequence of Section 7 to the output buffer.
     fn write_section7(&self, buf: &mut [u8]) -> Result<usize, &'static str>;
 }
 
