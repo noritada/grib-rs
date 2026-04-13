@@ -60,7 +60,7 @@ impl<'a> Encode for ComplexPackingEncoder<'a> {
                         .iter()
                         .map(|value| ((value - simple.ref_val as f64) / exp).round() as u32)
                         .collect::<Vec<_>>();
-                    let num_bits = integers.iter().max().unwrap().bits_required() as u8;
+                    let num_bits = integers.iter().max().unwrap().bits_required();
                     simple.num_bits = num_bits;
                     let groups = Groups::from_values(&integers, num);
                     (
@@ -258,7 +258,7 @@ impl Groups {
             while end < values.len() {
                 let v = values[end];
                 let (new_min, new_max) = (min.min(v), max.max(v));
-                let new_width = ((new_max - new_min) as u32).bits_required();
+                let new_width = (new_max - new_min).bits_required();
 
                 let len = end - start;
                 let cost_extend = group_cost(len + 1, new_width);
@@ -320,7 +320,7 @@ fn new_group_cost_estimated(values: &[u32], num_lookahead: usize) -> usize {
         (min, max) = (min.min(v), max.max(v));
         len += 1;
     }
-    let width = ((max - min) as u32).bits_required();
+    let width = (max - min).bits_required();
     group_cost(len, width)
 }
 
