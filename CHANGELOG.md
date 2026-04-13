@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.15.1] - 2026-04-13
+### Fixes
+
+- Correct wrong multipliers used for latitudes and longitudes.
+  The behavior has now been corrected for following conditions:
+  - rotated latitude/longitude grids with `def::grib2::template::param_set::Rotation::rot_angle` being non-zero
+  - latitude/longitude, rotated latitude/longitude, and Gaussian latitude/longitude grids with `def::grib2::template::param_set::Grid::initial_production_domain_basic_angle` being non-zero
+   (#170 (thanks @CraigglesO), PR #171)
+
+### Versions
+
+```
+grib 0.15.1
+grib-cli 0.15.1
+```
+
 ## [0.15.0] - 2026-04-01
 ### Breaking changes
 
@@ -871,7 +887,8 @@ grib-build 0.1.0
 grib 0.1.0
 ```
 
-[unreleased]: https://github.com/noritada/grib-rs/compare/v0.15.0...HEAD
+[unreleased]: https://github.com/noritada/grib-rs/compare/v0.15.1...HEAD
+[0.15.1]: https://github.com/noritada/grib-rs/compare/v0.15.0...v0.15.1
 [0.15.0]: https://github.com/noritada/grib-rs/compare/v0.14.0...v0.15.0
 [0.14.0]: https://github.com/noritada/grib-rs/compare/v0.13.7...v0.14.0
 [0.13.7]: https://github.com/noritada/grib-rs/compare/v0.13.6...v0.13.7
