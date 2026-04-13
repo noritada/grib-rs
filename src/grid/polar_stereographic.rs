@@ -3,6 +3,7 @@ use crate::error::GribError;
 use crate::{
     GridPointIndex, LatLons,
     def::grib2::template::{Template3_20, param_set},
+    grid::AngleUnit,
 };
 
 impl crate::GridShortName for Template3_20 {
@@ -30,8 +31,9 @@ impl LatLons for Template3_20 {
         Self: 'a;
 
     fn latlons_unchecked<'a>(&'a self) -> Result<Self::Iter<'a>, GribError> {
-        let lad = self.lad as f64 * 1e-6;
-        let lov = self.lov as f64 * 1e-6;
+        let angle_units = self.angle_unit();
+        let lad = self.lad as f64 * angle_units;
+        let lov = self.lov as f64 * angle_units;
         let (a, b) = self.earth_shape.radii().ok_or_else(|| {
             GribError::NotSupported(format!(
                 "unknown value of Code Table 3.2 (shape of the Earth): {}",
@@ -71,12 +73,18 @@ impl LatLons for Template3_20 {
         super::helpers::latlons_from_projection_definition_and_first_point(
             &proj_def,
             (
-                self.first_point_lat as f64 * 1e-6,
-                self.first_point_lon as f64 * 1e-6,
+                self.first_point_lat as f64 * angle_units,
+                self.first_point_lon as f64 * angle_units,
             ),
             (dx, dy),
             self.ij()?,
         )
+    }
+}
+
+impl AngleUnit for Template3_20 {
+    fn angle_unit(&self) -> f64 {
+        1e-6
     }
 }
 

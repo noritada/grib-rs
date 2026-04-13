@@ -1,5 +1,5 @@
 use super::helpers::{RegularGridIterator, evenly_spaced_longitudes};
-use crate::{GridPointIndex, def::grib2::template::param_set, error::GribError};
+use crate::{GridPointIndex, def::grib2::template::param_set, error::GribError, grid::AngleUnit};
 
 const MAX_ITER: usize = 10;
 
@@ -41,11 +41,18 @@ impl crate::LatLons for param_set::GaussianGrid {
             self.grid.first_point_lon,
             self.grid.last_point_lon,
             (self.grid.ni - 1) as usize,
+            self.angle_unit() as f32,
             self.scanning_mode,
         );
 
         let iter = RegularGridIterator::new(lat, lon, ij);
         Ok(iter)
+    }
+}
+
+impl AngleUnit for param_set::GaussianGrid {
+    fn angle_unit(&self) -> f64 {
+        self.grid.angle_unit()
     }
 }
 

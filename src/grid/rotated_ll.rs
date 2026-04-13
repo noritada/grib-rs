@@ -3,7 +3,7 @@ use crate::{
     GridPointIndex, LatLons,
     def::grib2::template::{Template3_1, param_set::Rotation},
     error::GribError,
-    grid::helpers::RegularGridIterator,
+    grid::{AngleUnit, helpers::RegularGridIterator},
 };
 
 impl crate::GridShortName for Template3_1 {
@@ -33,8 +33,18 @@ impl LatLons for Template3_1 {
         Self: 'a;
 
     fn latlons_unchecked<'a>(&'a self) -> Result<Self::Iter<'a>, GribError> {
-        let iter = Unrotate::new(self.rotated.latlons_unchecked()?, &self.rotation);
+        let iter = Unrotate::new(
+            self.rotated.latlons_unchecked()?,
+            &self.rotation,
+            self.angle_unit() as f32,
+        );
         Ok(iter)
+    }
+}
+
+impl AngleUnit for Template3_1 {
+    fn angle_unit(&self) -> f64 {
+        self.rotated.grid.angle_unit()
     }
 }
 
@@ -48,10 +58,10 @@ pub struct Unrotate<I> {
 }
 
 impl<I> Unrotate<I> {
-    fn new(latlons: I, rot: &Rotation) -> Self {
-        let φp = (rot.south_pole_lat as f32 * 1e-6).to_radians();
-        let λp = (rot.south_pole_lon as f32 * 1e-6).to_radians();
-        let gamma = rot.rot_angle.to_radians();
+    fn new(latlons: I, rot: &Rotation, angle_units: f32) -> Self {
+        let φp = (rot.south_pole_lat as f32 * angle_units).to_radians();
+        let λp = (rot.south_pole_lon as f32 * angle_units).to_radians();
+        let gamma = (rot.rot_angle * angle_units).to_radians();
 
         // south pole to north pole
         let φp = -φp;
@@ -111,7 +121,7 @@ mod tests {
             fn $name() {
                 let rot = $rot;
                 let latlons = vec![$input];
-                let mut iter = Unrotate::new(latlons.into_iter(), &rot);
+                let mut iter = Unrotate::new(latlons.into_iter(), &rot, 1e-6);
                 let actual = iter.next().unwrap();
                 let expected = $expected;
                 dbg!(actual);
