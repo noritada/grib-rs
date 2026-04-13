@@ -160,11 +160,14 @@ impl WriteGrib2DataSections for ComplexPackingEncoded {
                 let bits_refs = self.simple.num_bits as usize * num_groups;
                 let bits_widths = self.complex.num_group_width_bits as usize * num_groups;
                 let bits_lengths = self.complex.num_group_len_bits as usize * (num_groups - 1);
-                let bits_values: usize = inner.iter().map(|g| g.len() * g.width as usize).sum();
+                let octets_values: usize = inner
+                    .iter()
+                    .map(|g| (g.len() * g.width as usize).div_ceil(8))
+                    .sum();
                 bits_refs.div_ceil(8)
                     + bits_widths.div_ceil(8)
                     + bits_lengths.div_ceil(8)
-                    + bits_values.div_ceil(8)
+                    + octets_values
             }
             CodedValues::Unique(_) => 0,
         };
