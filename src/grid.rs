@@ -5,7 +5,8 @@ pub use self::{gaussian::compute_gaussian_latitudes, rotated_ll::Unrotate};
 use crate::{
     GribError, GridDefinition,
     def::grib2::template::{
-        Template3_0, Template3_1, Template3_20, Template3_30, Template3_40, param_set::ScanningMode,
+        Template3_0, Template3_1, Template3_20, Template3_30, Template3_40,
+        param_set::{Grid, ScanningMode},
     },
 };
 
@@ -365,6 +366,22 @@ impl Iterator for GridPointIndexIterator {
     fn size_hint(&self) -> (usize, Option<usize>) {
         let len = (self.major_len - self.major_pos) * self.minor_len - self.minor_pos;
         (len, Some(len))
+    }
+}
+
+pub(crate) trait AngleUnit {
+    fn angle_unit(&self) -> f64;
+}
+
+impl AngleUnit for Grid {
+    fn angle_unit(&self) -> f64 {
+        let basic_angle = self.initial_production_domain_basic_angle;
+        let sub_angle = self.basic_angle_subdivisions;
+        if basic_angle == 0 {
+            1e-6
+        } else {
+            basic_angle as f64 / sub_angle as f64
+        }
     }
 }
 

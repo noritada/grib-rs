@@ -9,6 +9,7 @@ pub(crate) fn evenly_spaced_longitudes(
     start_microdegree: u32,
     end_microdegree: u32,
     div: usize,
+    angle_units: f32,
     scanning_mode: ScanningMode,
 ) -> Vec<f32> {
     let is_consistent =
@@ -23,7 +24,7 @@ pub(crate) fn evenly_spaced_longitudes(
         (start + 360_000_000_f32, end)
     };
 
-    let lons = evenly_spaced_degrees(start, end, div);
+    let lons = evenly_spaced_degrees(start, end, div, angle_units);
 
     if is_consistent {
         lons
@@ -38,10 +39,11 @@ pub(crate) fn evenly_spaced_degrees(
     start_microdegree: f32,
     end_microdegree: f32,
     div: usize,
+    angle_units: f32,
 ) -> Vec<f32> {
     let delta = (end_microdegree - start_microdegree) / div as f32;
     (0..=div)
-        .map(move |x| (start_microdegree + x as f32 * delta) / 1_000_000_f32)
+        .map(move |x| (start_microdegree + x as f32 * delta) * angle_units)
         .collect()
 }
 

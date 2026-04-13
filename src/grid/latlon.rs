@@ -1,5 +1,7 @@
 use super::helpers::{RegularGridIterator, evenly_spaced_degrees, evenly_spaced_longitudes};
-use crate::{GridPointIndex, LatLons, def::grib2::template::param_set, error::GribError};
+use crate::{
+    GridPointIndex, LatLons, def::grib2::template::param_set, error::GribError, grid::AngleUnit,
+};
 
 impl crate::GridShortName for param_set::LatLonGrid {
     fn short_name(&self) -> &'static str {
@@ -29,20 +31,29 @@ impl LatLons for param_set::LatLonGrid {
         }
 
         let ij = self.ij()?;
+        let angle_units = self.angle_unit() as f32;
         let lat = evenly_spaced_degrees(
             self.grid.first_point_lat as f32,
             self.grid.last_point_lat as f32,
             (self.grid.nj - 1) as usize,
+            angle_units,
         );
         let lon = evenly_spaced_longitudes(
             self.grid.first_point_lon,
             self.grid.last_point_lon,
             (self.grid.ni - 1) as usize,
+            angle_units,
             self.scanning_mode,
         );
 
         let iter = RegularGridIterator::new(lat, lon, ij);
         Ok(iter)
+    }
+}
+
+impl AngleUnit for param_set::LatLonGrid {
+    fn angle_unit(&self) -> f64 {
+        self.grid.angle_unit()
     }
 }
 
