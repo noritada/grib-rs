@@ -1,30 +1,35 @@
 use grib_template_helpers::WriteToBuffer;
 
 use crate::{
-    Encode, SimplePackingStrategy, WriteGrib2DataSections,
+    SimplePackingStrategy, WriteGrib2DataSections,
     def::grib2::template::param_set::{ComplexPacking, SimplePacking},
-    encoder::{helpers::BitsRequired, writer},
+    encoder::{Encode, helpers::BitsRequired, writer},
 };
 
 /// Strategies applied when performing complex packing on numerical sequences.
 /// Complex packing is a method that divides a sequence of numbers into groups
 /// and efficiently compresses each group to improve the overall compression
 /// ratio of the data.
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum ComplexPackingStrategy {
     /// A strategy that pre-reads a specified number of elements to determine
     /// whether to add an element to the current group.
     LookAhead(usize),
 }
 
-/// Complex packing encoder.
-pub struct ComplexPackingEncoder<'a> {
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub enum SpatialDifferencingOption {
+    None,
+}
+
+pub(crate) struct ComplexPackingEncoder<'a> {
     data: &'a [f64],
     simple_packing_strategy: SimplePackingStrategy,
     complex_packing_strategy: ComplexPackingStrategy,
 }
 
 impl<'a> ComplexPackingEncoder<'a> {
-    pub fn new(
+    pub(crate) fn new(
         data: &'a [f64],
         simple_packing_strategy: SimplePackingStrategy,
         complex_packing_strategy: ComplexPackingStrategy,
@@ -93,10 +98,7 @@ impl ComplexPacking {
     }
 }
 
-/// Data obtained through encoding using simple packing. Instances are typically
-/// used to write GRIB2 data via the methods defined in
-/// [`WriteGrib2DataSections`].
-pub struct ComplexPackingEncoded {
+pub(crate) struct ComplexPackingEncoded {
     simple: SimplePacking,
     complex: ComplexPacking,
     coded: CodedValues,
@@ -109,6 +111,10 @@ impl ComplexPackingEncoded {
             complex,
             coded,
         }
+    }
+
+    pub(crate) fn params(&self) -> (&SimplePacking, &ComplexPacking) {
+        (&self.simple, &self.complex)
     }
 }
 

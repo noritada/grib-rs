@@ -1,14 +1,15 @@
 use grib_template_helpers::WriteToBuffer;
 
 use crate::{
-    Encode, WriteGrib2DataSections,
+    WriteGrib2DataSections,
     def::grib2::template::param_set::SimplePacking,
-    encoder::{helpers::BitsRequired, writer},
+    encoder::{Encode, helpers::BitsRequired, writer},
 };
 
 /// Strategies applied when performing simple packing on numerical sequences.
 /// Simple packing is a method for discretizing continuous numerical values as
 /// integers, and various approaches can be taken during this process.
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum SimplePackingStrategy {
     /// A strategy specifying how many decimal places to consider valid for the
     /// numbers. This strategy is effective for various types of data, such as
@@ -17,14 +18,13 @@ pub enum SimplePackingStrategy {
     Decimal(i16),
 }
 
-/// Simple packing encoder.
-pub struct SimplePackingEncoder<'a> {
+pub(crate) struct SimplePackingEncoder<'a> {
     data: &'a [f64],
     strategy: SimplePackingStrategy,
 }
 
 impl<'a> SimplePackingEncoder<'a> {
-    pub fn new(data: &'a [f64], strategy: SimplePackingStrategy) -> Self {
+    pub(crate) fn new(data: &'a [f64], strategy: SimplePackingStrategy) -> Self {
         Self { data, strategy }
     }
 }
@@ -52,10 +52,7 @@ impl<'a> Encode for SimplePackingEncoder<'a> {
     }
 }
 
-/// Data obtained through encoding using simple packing. Instances are typically
-/// used to write GRIB2 data via the methods defined in
-/// [`WriteGrib2DataSections`].
-pub struct SimplePackingEncoded {
+pub(crate) struct SimplePackingEncoded {
     params: SimplePacking,
     coded: CodedValues,
 }
@@ -65,8 +62,7 @@ impl SimplePackingEncoded {
         Self { params, coded }
     }
 
-    /// Returns the parameter set for simple packing.
-    pub fn params(&self) -> &SimplePacking {
+    pub(crate) fn params(&self) -> &SimplePacking {
         &self.params
     }
 }
