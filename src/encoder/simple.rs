@@ -18,19 +18,19 @@ pub enum SimplePackingStrategy {
     Decimal(i16),
 }
 
-pub(crate) struct SimplePackingEncoder<'a> {
+pub(crate) struct Encoder<'a> {
     data: &'a [f64],
     strategy: SimplePackingStrategy,
 }
 
-impl<'a> SimplePackingEncoder<'a> {
+impl<'a> Encoder<'a> {
     pub(crate) fn new(data: &'a [f64], strategy: SimplePackingStrategy) -> Self {
         Self { data, strategy }
     }
 }
 
-impl<'a> Encode for SimplePackingEncoder<'a> {
-    type Output = SimplePackingEncoded;
+impl<'a> Encode for Encoder<'a> {
+    type Output = Encoded;
 
     fn encode(&self) -> Self::Output {
         match self.strategy {
@@ -46,18 +46,18 @@ impl<'a> Encode for SimplePackingEncoder<'a> {
                         .collect::<Vec<_>>();
                     CodedValues::NonUnique(coded)
                 };
-                SimplePackingEncoded::new(params, coded)
+                Encoded::new(params, coded)
             }
         }
     }
 }
 
-pub(crate) struct SimplePackingEncoded {
+pub(crate) struct Encoded {
     params: SimplePacking,
     coded: CodedValues,
 }
 
-impl SimplePackingEncoded {
+impl Encoded {
     fn new(params: SimplePacking, coded: CodedValues) -> Self {
         Self { params, coded }
     }
@@ -67,7 +67,7 @@ impl SimplePackingEncoded {
     }
 }
 
-impl WriteGrib2DataSections for SimplePackingEncoded {
+impl WriteGrib2DataSections for Encoded {
     fn section5_len(&self) -> usize {
         21
     }
@@ -205,8 +205,7 @@ mod tests {
             #[test]
             fn $name() {
                 let values = $input;
-                let encoder =
-                    SimplePackingEncoder::new(&values, SimplePackingStrategy::Decimal($decimal));
+                let encoder = Encoder::new(&values, SimplePackingStrategy::Decimal($decimal));
                 let encoded = encoder.encode();
                 let actual_params = encoded.params();
                 let expected_params = $expected_params;
@@ -258,8 +257,7 @@ mod tests {
             #[test]
             fn $name() -> Result<(), Box<dyn std::error::Error>> {
                 let values = $input;
-                let encoder =
-                    SimplePackingEncoder::new(&values, SimplePackingStrategy::Decimal($decimal));
+                let encoder = Encoder::new(&values, SimplePackingStrategy::Decimal($decimal));
                 let encoded = encoder.encode();
                 let mut sect5 = vec![0; encoded.section5_len()];
                 encoded.write_section5(&mut sect5)?;

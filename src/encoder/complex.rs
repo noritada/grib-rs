@@ -22,13 +22,13 @@ pub enum SpatialDifferencingOption {
     None,
 }
 
-pub(crate) struct ComplexPackingEncoder<'a> {
+pub(crate) struct Encoder<'a> {
     data: &'a [f64],
     simple_packing_strategy: SimplePackingStrategy,
     complex_packing_strategy: ComplexPackingStrategy,
 }
 
-impl<'a> ComplexPackingEncoder<'a> {
+impl<'a> Encoder<'a> {
     pub(crate) fn new(
         data: &'a [f64],
         simple_packing_strategy: SimplePackingStrategy,
@@ -42,8 +42,8 @@ impl<'a> ComplexPackingEncoder<'a> {
     }
 }
 
-impl<'a> Encode for ComplexPackingEncoder<'a> {
-    type Output = ComplexPackingEncoded;
+impl<'a> Encode for Encoder<'a> {
+    type Output = Encoded;
 
     fn encode(&self) -> Self::Output {
         match self.complex_packing_strategy {
@@ -73,7 +73,7 @@ impl<'a> Encode for ComplexPackingEncoder<'a> {
                         CodedValues::NonUnique(groups),
                     )
                 };
-                ComplexPackingEncoded::new(simple, complex, coded)
+                Encoded::new(simple, complex, coded)
             }
         }
     }
@@ -98,13 +98,13 @@ impl ComplexPacking {
     }
 }
 
-pub(crate) struct ComplexPackingEncoded {
+pub(crate) struct Encoded {
     simple: SimplePacking,
     complex: ComplexPacking,
     coded: CodedValues,
 }
 
-impl ComplexPackingEncoded {
+impl Encoded {
     fn new(simple: SimplePacking, complex: ComplexPacking, coded: CodedValues) -> Self {
         Self {
             simple,
@@ -118,7 +118,7 @@ impl ComplexPackingEncoded {
     }
 }
 
-impl WriteGrib2DataSections for ComplexPackingEncoded {
+impl WriteGrib2DataSections for Encoded {
     fn section5_len(&self) -> usize {
         47
     }
@@ -525,7 +525,7 @@ mod tests {
             #[test]
             fn $name() -> Result<(), Box<dyn std::error::Error>> {
                 let values = $input;
-                let encoder = ComplexPackingEncoder::new(
+                let encoder = Encoder::new(
                     &values,
                     SimplePackingStrategy::Decimal(0),
                     ComplexPackingStrategy::LookAhead(4),

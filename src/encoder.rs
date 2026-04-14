@@ -8,7 +8,7 @@ use crate::def::grib2::template::param_set;
 pub fn encode_gpv(data: &[f64], method: EncodingMethod) -> EncodeOutput {
     let output = match method {
         EncodingMethod::SimplePacking(simple_packing_strategy) => {
-            let encoder = SimplePackingEncoder::new(data, simple_packing_strategy);
+            let encoder = simple::Encoder::new(data, simple_packing_strategy);
             EncodeOutputInner::SimplePacking(encoder.encode())
         }
         EncodingMethod::ComplexPacking(
@@ -17,7 +17,7 @@ pub fn encode_gpv(data: &[f64], method: EncodingMethod) -> EncodeOutput {
             _spatial_differencing_option,
         ) => {
             let encoder =
-                ComplexPackingEncoder::new(data, simple_packing_strategy, complex_packing_strategy);
+                complex::Encoder::new(data, simple_packing_strategy, complex_packing_strategy);
             EncodeOutputInner::ComplexPacking(encoder.encode())
         }
     };
@@ -105,8 +105,8 @@ pub enum EncodeOutputParams<'a> {
 }
 
 enum EncodeOutputInner {
-    SimplePacking(SimplePackingEncoded),
-    ComplexPacking(ComplexPackingEncoded),
+    SimplePacking(simple::Encoded),
+    ComplexPacking(complex::Encoded),
 }
 
 trait Encode {
