@@ -165,7 +165,7 @@ impl WriteGrib2DataSections for Encoded {
                 let num_groups = self.complex.num_groups as usize;
                 let bits_refs = self.simple.num_bits as usize * num_groups;
                 let bits_widths = self.complex.num_group_width_bits as usize * num_groups;
-                let bits_lengths = self.complex.num_group_len_bits as usize * (num_groups - 1);
+                let bits_lengths = self.complex.num_group_len_bits as usize * num_groups;
                 let octets_values: usize = inner
                     .iter()
                     .map(|g| (g.len() * g.width as usize).div_ceil(8))
@@ -215,6 +215,7 @@ impl WriteGrib2DataSections for Encoded {
                             (g.len() as u32 - self.complex.group_len_ref)
                                 / self.complex.group_len_inc as u32
                         })
+                        .chain(std::iter::once(0))
                         .collect::<Vec<_>>();
                     let nbitwise =
                         writer::NBitwise::new(&lengths, self.complex.num_group_len_bits as usize);
@@ -558,6 +559,13 @@ mod tests {
         (
             grib2_coded_values_roundtrip_test_with_unique_values,
             vec![10.0_f64; 256]
+        ),
+        (
+            grib2_coded_values_roundtrip_test_with_zero_only_groups,
+            vec![0, 0, 0, 100, 10, 2, 2, 1]
+                .into_iter()
+                .flat_map(|val| [val as f64; 8])
+                .collect::<Vec<_>>()
         ),
     }
 }
