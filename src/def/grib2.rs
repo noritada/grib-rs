@@ -1,6 +1,6 @@
 //! Definitions of parameters contained in GRIB2 data.
 
-use grib_template_derive::{Dump, TryFromSlice};
+use grib_template_derive::{Dump, TryFromSlice, WriteToBuffer};
 
 #[derive(Debug, PartialEq, TryFromSlice, Dump)]
 pub struct Section<T>
@@ -11,7 +11,7 @@ where
     pub payload: T,
 }
 
-#[derive(Debug, PartialEq, TryFromSlice, Dump)]
+#[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
 pub struct SectionHeader {
     /// Length of section in octets (nn).
     pub len: u32,
@@ -22,7 +22,7 @@ pub struct SectionHeader {
 /// Section 1 - Identification section.
 pub type Section1 = Section<Section1Payload>;
 
-#[derive(Debug, PartialEq, TryFromSlice, Dump)]
+#[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
 pub struct Section1Payload {
     /// Identification of originating/generating centre (see Common Code table
     /// C-11).
@@ -47,7 +47,7 @@ pub struct Section1Payload {
     pub optional: Option<Section1PayloadOptional>,
 }
 
-#[derive(Debug, PartialEq, Eq, TryFromSlice, Dump)]
+#[derive(Debug, PartialEq, Eq, TryFromSlice, WriteToBuffer, Dump)]
 pub struct RefTime {
     /// Year (4 digits).
     pub year: u16,
@@ -63,7 +63,7 @@ pub struct RefTime {
     pub second: u8,
 }
 
-#[derive(Debug, PartialEq, TryFromSlice, Dump)]
+#[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
 pub struct Section1PayloadOptional {
     /// Identification template number (optional, see Code table 1.5).
     pub template_num: u16,
@@ -73,7 +73,7 @@ pub struct Section1PayloadOptional {
     pub template: IdentificationTemplate,
 }
 
-#[derive(Debug, PartialEq, TryFromSlice, Dump)]
+#[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
 #[repr(u16)]
 pub enum IdentificationTemplate {
     _1_0(template1::Template1_0) = 0,
@@ -127,7 +127,7 @@ pub struct Section4Payload {
 /// Section 5 - Data representation section.
 pub type Section5 = Section<Section5Payload>;
 
-#[derive(Debug, PartialEq, TryFromSlice, Dump)]
+#[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
 pub struct Section5Payload {
     /// Number of data points where one or more values are specified in Section
     /// 7 when a bit map is present, total number of data points when a bit map
@@ -141,7 +141,7 @@ pub struct Section5Payload {
     pub template: DataRepresentationTemplate,
 }
 
-#[derive(Debug, PartialEq, TryFromSlice, Dump)]
+#[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
 #[repr(u16)]
 pub enum DataRepresentationTemplate {
     _5_0(template5::Template5_0) = 0,
