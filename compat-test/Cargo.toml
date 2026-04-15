@@ -1,0 +1,13 @@
+[package]
+name = "compat-test"
+version = "0.13.5"
+authors = ["Noritada Kobayashi <noritada.kobayashi@gmail.com>"]
+edition = "2024"
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+eccodes-sys = "0.6.0"
+grib = { path = "..", version = "=0.13.5" }
+tempfile = "3"
+
+[workspace]
