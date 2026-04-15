@@ -1,6 +1,6 @@
 [package]
 name = "grib"
-description = "GRIB format parser for Rust"
+description = "GRIB format parser & writer for Rust"
 version.workspace = true
 authors.workspace = true
 edition.workspace = true

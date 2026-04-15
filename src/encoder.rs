@@ -2,12 +2,116 @@ pub use complex::*;
 use grib_template_helpers::WriteToBuffer;
 pub use simple::*;
 
-/// An encoder that encodes a sequence of numerical values as GRIB2 data
-/// sections
-pub trait Encode {
+use crate::def::grib2::template::param_set;
+
+/// Encodes a sequence of numerical values as GRIB2 data sections.
+pub fn encode_gpv(data: &[f64], method: EncodingMethod) -> EncodeOutput {
+    let output = match method {
+        EncodingMethod::SimplePacking(simple_packing_strategy) => {
+            let encoder = simple::Encoder::new(data, simple_packing_strategy);
+            EncodeOutputInner::SimplePacking(encoder.encode())
+        }
+        EncodingMethod::ComplexPacking(
+            simple_packing_strategy,
+            complex_packing_strategy,
+            _spatial_differencing_option,
+        ) => {
+            let encoder =
+                complex::Encoder::new(data, simple_packing_strategy, complex_packing_strategy);
+            EncodeOutputInner::ComplexPacking(encoder.encode())
+        }
+    };
+    EncodeOutput(output)
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub enum EncodingMethod {
+    /// Simple packing.
+    SimplePacking(SimplePackingStrategy),
+    /// Complex packing.
+    ComplexPacking(
+        SimplePackingStrategy,
+        ComplexPackingStrategy,
+        SpatialDifferencingOption,
+    ),
+}
+
+/// Data obtained through encoding. Instances are typically used to write GRIB2
+/// data via the methods defined in [`WriteGrib2DataSections`].
+pub struct EncodeOutput(EncodeOutputInner);
+
+impl EncodeOutput {
+    /// Returns the parameter set.
+    pub fn params(&self) -> EncodeOutputParams<'_> {
+        match &self.0 {
+            EncodeOutputInner::SimplePacking(encoded) => {
+                EncodeOutputParams::SimplePacking(encoded.params())
+            }
+            EncodeOutputInner::ComplexPacking(encoded) => {
+                let (simple, complex) = encoded.params();
+                EncodeOutputParams::ComplexPacking(simple, complex)
+            }
+        }
+    }
+}
+
+impl WriteGrib2DataSections for EncodeOutput {
+    fn section5_len(&self) -> usize {
+        match &self.0 {
+            EncodeOutputInner::SimplePacking(encoded) => encoded.section5_len(),
+            EncodeOutputInner::ComplexPacking(encoded) => encoded.section5_len(),
+        }
+    }
+
+    fn write_section5(&self, buf: &mut [u8]) -> Result<usize, &'static str> {
+        match &self.0 {
+            EncodeOutputInner::SimplePacking(encoded) => encoded.write_section5(buf),
+            EncodeOutputInner::ComplexPacking(encoded) => encoded.write_section5(buf),
+        }
+    }
+
+    fn section6_len(&self) -> usize {
+        match &self.0 {
+            EncodeOutputInner::SimplePacking(encoded) => encoded.section6_len(),
+            EncodeOutputInner::ComplexPacking(encoded) => encoded.section6_len(),
+        }
+    }
+
+    fn write_section6(&self, buf: &mut [u8]) -> Result<usize, &'static str> {
+        match &self.0 {
+            EncodeOutputInner::SimplePacking(encoded) => encoded.write_section6(buf),
+            EncodeOutputInner::ComplexPacking(encoded) => encoded.write_section6(buf),
+        }
+    }
+
+    fn section7_len(&self) -> usize {
+        match &self.0 {
+            EncodeOutputInner::SimplePacking(encoded) => encoded.section7_len(),
+            EncodeOutputInner::ComplexPacking(encoded) => encoded.section7_len(),
+        }
+    }
+
+    fn write_section7(&self, buf: &mut [u8]) -> Result<usize, &'static str> {
+        match &self.0 {
+            EncodeOutputInner::SimplePacking(encoded) => encoded.write_section7(buf),
+            EncodeOutputInner::ComplexPacking(encoded) => encoded.write_section7(buf),
+        }
+    }
+}
+
+pub enum EncodeOutputParams<'a> {
+    SimplePacking(&'a param_set::SimplePacking),
+    ComplexPacking(&'a param_set::SimplePacking, &'a param_set::ComplexPacking),
+}
+
+enum EncodeOutputInner {
+    SimplePacking(simple::Encoded),
+    ComplexPacking(complex::Encoded),
+}
+
+trait Encode {
     type Output;
 
-    /// Performs data encoding.
     fn encode(&self) -> Self::Output;
 }
 

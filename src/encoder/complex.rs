@@ -1,30 +1,35 @@
 use grib_template_helpers::WriteToBuffer;
 
 use crate::{
-    Encode, SimplePackingStrategy, WriteGrib2DataSections,
+    SimplePackingStrategy, WriteGrib2DataSections,
     def::grib2::template::param_set::{ComplexPacking, SimplePacking},
-    encoder::{helpers::BitsRequired, writer},
+    encoder::{Encode, helpers::BitsRequired, writer},
 };
 
 /// Strategies applied when performing complex packing on numerical sequences.
 /// Complex packing is a method that divides a sequence of numbers into groups
 /// and efficiently compresses each group to improve the overall compression
 /// ratio of the data.
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum ComplexPackingStrategy {
     /// A strategy that pre-reads a specified number of elements to determine
     /// whether to add an element to the current group.
     LookAhead(usize),
 }
 
-/// Complex packing encoder.
-pub struct ComplexPackingEncoder<'a> {
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub enum SpatialDifferencingOption {
+    None,
+}
+
+pub(crate) struct Encoder<'a> {
     data: &'a [f64],
     simple_packing_strategy: SimplePackingStrategy,
     complex_packing_strategy: ComplexPackingStrategy,
 }
 
-impl<'a> ComplexPackingEncoder<'a> {
-    pub fn new(
+impl<'a> Encoder<'a> {
+    pub(crate) fn new(
         data: &'a [f64],
         simple_packing_strategy: SimplePackingStrategy,
         complex_packing_strategy: ComplexPackingStrategy,
@@ -37,8 +42,8 @@ impl<'a> ComplexPackingEncoder<'a> {
     }
 }
 
-impl<'a> Encode for ComplexPackingEncoder<'a> {
-    type Output = ComplexPackingEncoded;
+impl<'a> Encode for Encoder<'a> {
+    type Output = Encoded;
 
     fn encode(&self) -> Self::Output {
         match self.complex_packing_strategy {
@@ -68,7 +73,7 @@ impl<'a> Encode for ComplexPackingEncoder<'a> {
                         CodedValues::NonUnique(groups),
                     )
                 };
-                ComplexPackingEncoded::new(simple, complex, coded)
+                Encoded::new(simple, complex, coded)
             }
         }
     }
@@ -93,16 +98,13 @@ impl ComplexPacking {
     }
 }
 
-/// Data obtained through encoding using simple packing. Instances are typically
-/// used to write GRIB2 data via the methods defined in
-/// [`WriteGrib2DataSections`].
-pub struct ComplexPackingEncoded {
+pub(crate) struct Encoded {
     simple: SimplePacking,
     complex: ComplexPacking,
     coded: CodedValues,
 }
 
-impl ComplexPackingEncoded {
+impl Encoded {
     fn new(simple: SimplePacking, complex: ComplexPacking, coded: CodedValues) -> Self {
         Self {
             simple,
@@ -110,9 +112,13 @@ impl ComplexPackingEncoded {
             coded,
         }
     }
+
+    pub(crate) fn params(&self) -> (&SimplePacking, &ComplexPacking) {
+        (&self.simple, &self.complex)
+    }
 }
 
-impl WriteGrib2DataSections for ComplexPackingEncoded {
+impl WriteGrib2DataSections for Encoded {
     fn section5_len(&self) -> usize {
         47
     }
@@ -519,7 +525,7 @@ mod tests {
             #[test]
             fn $name() -> Result<(), Box<dyn std::error::Error>> {
                 let values = $input;
-                let encoder = ComplexPackingEncoder::new(
+                let encoder = Encoder::new(
                     &values,
                     SimplePackingStrategy::Decimal(0),
                     ComplexPackingStrategy::LookAhead(4),

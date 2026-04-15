@@ -1,14 +1,15 @@
 use grib_template_helpers::WriteToBuffer;
 
 use crate::{
-    Encode, WriteGrib2DataSections,
+    WriteGrib2DataSections,
     def::grib2::template::param_set::SimplePacking,
-    encoder::{helpers::BitsRequired, writer},
+    encoder::{Encode, helpers::BitsRequired, writer},
 };
 
 /// Strategies applied when performing simple packing on numerical sequences.
 /// Simple packing is a method for discretizing continuous numerical values as
 /// integers, and various approaches can be taken during this process.
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum SimplePackingStrategy {
     /// A strategy specifying how many decimal places to consider valid for the
     /// numbers. This strategy is effective for various types of data, such as
@@ -17,20 +18,19 @@ pub enum SimplePackingStrategy {
     Decimal(i16),
 }
 
-/// Simple packing encoder.
-pub struct SimplePackingEncoder<'a> {
+pub(crate) struct Encoder<'a> {
     data: &'a [f64],
     strategy: SimplePackingStrategy,
 }
 
-impl<'a> SimplePackingEncoder<'a> {
-    pub fn new(data: &'a [f64], strategy: SimplePackingStrategy) -> Self {
+impl<'a> Encoder<'a> {
+    pub(crate) fn new(data: &'a [f64], strategy: SimplePackingStrategy) -> Self {
         Self { data, strategy }
     }
 }
 
-impl<'a> Encode for SimplePackingEncoder<'a> {
-    type Output = SimplePackingEncoded;
+impl<'a> Encode for Encoder<'a> {
+    type Output = Encoded;
 
     fn encode(&self) -> Self::Output {
         match self.strategy {
@@ -46,32 +46,28 @@ impl<'a> Encode for SimplePackingEncoder<'a> {
                         .collect::<Vec<_>>();
                     CodedValues::NonUnique(coded)
                 };
-                SimplePackingEncoded::new(params, coded)
+                Encoded::new(params, coded)
             }
         }
     }
 }
 
-/// Data obtained through encoding using simple packing. Instances are typically
-/// used to write GRIB2 data via the methods defined in
-/// [`WriteGrib2DataSections`].
-pub struct SimplePackingEncoded {
+pub(crate) struct Encoded {
     params: SimplePacking,
     coded: CodedValues,
 }
 
-impl SimplePackingEncoded {
+impl Encoded {
     fn new(params: SimplePacking, coded: CodedValues) -> Self {
         Self { params, coded }
     }
 
-    /// Returns the parameter set for simple packing.
-    pub fn params(&self) -> &SimplePacking {
+    pub(crate) fn params(&self) -> &SimplePacking {
         &self.params
     }
 }
 
-impl WriteGrib2DataSections for SimplePackingEncoded {
+impl WriteGrib2DataSections for Encoded {
     fn section5_len(&self) -> usize {
         21
     }
@@ -209,8 +205,7 @@ mod tests {
             #[test]
             fn $name() {
                 let values = $input;
-                let encoder =
-                    SimplePackingEncoder::new(&values, SimplePackingStrategy::Decimal($decimal));
+                let encoder = Encoder::new(&values, SimplePackingStrategy::Decimal($decimal));
                 let encoded = encoder.encode();
                 let actual_params = encoded.params();
                 let expected_params = $expected_params;
@@ -262,8 +257,7 @@ mod tests {
             #[test]
             fn $name() -> Result<(), Box<dyn std::error::Error>> {
                 let values = $input;
-                let encoder =
-                    SimplePackingEncoder::new(&values, SimplePackingStrategy::Decimal($decimal));
+                let encoder = Encoder::new(&values, SimplePackingStrategy::Decimal($decimal));
                 let encoded = encoder.encode();
                 let mut sect5 = vec![0; encoded.section5_len()];
                 encoded.write_section5(&mut sect5)?;
