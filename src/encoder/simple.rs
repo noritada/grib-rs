@@ -52,6 +52,7 @@ impl<'a> Encode for Encoder<'a> {
     }
 }
 
+#[derive(Debug)]
 pub(crate) struct Encoded {
     params: SimplePacking,
     coded: CodedValues,
@@ -177,6 +178,7 @@ pub(crate) fn determine_simple_packing_params(
     }
 }
 
+#[derive(Debug)]
 enum CodedValues {
     NonUnique(Vec<u32>),
     Unique(usize),

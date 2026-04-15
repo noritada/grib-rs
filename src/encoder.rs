@@ -38,6 +38,7 @@ pub enum EncodingMethod {
 
 /// Data obtained through encoding. Instances are typically used to write GRIB2
 /// data via the methods defined in [`WriteGrib2DataSections`].
+#[derive(Debug)]
 pub struct EncodeOutput(EncodeOutputInner);
 
 impl EncodeOutput {
@@ -104,6 +105,7 @@ pub enum EncodeOutputParams<'a> {
     ComplexPacking(&'a param_set::SimplePacking, &'a param_set::ComplexPacking),
 }
 
+#[derive(Debug)]
 enum EncodeOutputInner {
     SimplePacking(simple::Encoded),
     ComplexPacking(complex::Encoded),

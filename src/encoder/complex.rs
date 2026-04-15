@@ -98,6 +98,7 @@ impl ComplexPacking {
     }
 }
 
+#[derive(Debug)]
 pub(crate) struct Encoded {
     simple: SimplePacking,
     complex: ComplexPacking,
@@ -236,6 +237,7 @@ impl WriteGrib2DataSections for Encoded {
     }
 }
 
+#[derive(Debug)]
 enum CodedValues {
     NonUnique(Groups),
     Unique(usize),
