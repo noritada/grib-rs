@@ -21,7 +21,7 @@ rustdoc-args = ["--cfg", "docsrs"]
 members = ["grib-template-derive", "grib-template-helpers", "gen", "cli", "demo"]
 
 [workspace.package]
-version = "0.13.5"
+version = "0.15.1"
 authors = ["Noritada Kobayashi <noritada.kobayashi@gmail.com>"]
 edition = "2024"
 license = "MIT OR Apache-2.0"
@@ -33,8 +33,8 @@ keywords = ["GRIB", "weather", "meteorology"]
 
 [dependencies]
 chrono = { version = "0.4.34", optional = true }
-grib-template-derive = { path = "grib-template-derive", version = "0.1.1" }
-grib-template-helpers = { path = "grib-template-helpers", version = "0.1.1" }
+grib-template-derive = { path = "grib-template-derive", version = "0.1.3" }
+grib-template-helpers = { path = "grib-template-helpers", version = "0.1.2" }
 num = "0.4"
 num_enum = "0.7"
 proj = { version = "0.31", optional = true }
@@ -50,7 +50,7 @@ xz2 = "0.1"
 
 [build-dependencies]
 grib-build = { path = "gen", version = "0.4.4" }
-toml_edit = "0.23"
+toml_edit = "0.25"
 
 [features]
 default = [
@@ -63,10 +63,6 @@ default = [
 # Enable JPEG 2000 code stream format support in the GPV decoder with the help
 # of OpenJPEG written in C.
 jpeg2000-unpack-with-openjpeg = ["dep:openjpeg-sys"]
-
-# Enable experimental performance improvements in the JPEG 2000 code stream
-# format decoder.
-jpeg2000-unpack-with-openjpeg-experimental = ["jpeg2000-unpack-with-openjpeg"]
 
 # Enable Portable Network Graphics (PNG) support in the GPV decoder with the
 # help of png crate.

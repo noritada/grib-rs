@@ -21,10 +21,31 @@ fn impl_try_from_slice_for_struct(
 ) -> proc_macro2::TokenStream {
     let name = &input.ident;
     let (impl_generics, type_generics, where_clause) = input.generics.split_for_impl();
-    let fields = match &data.fields {
-        syn::Fields::Named(fields) => &fields.named,
-        _ => unimplemented!("`TryFromSlice` can only be derived for structs with named fields"),
+    let Some((kind, fields)) = extract_struct_info(data) else {
+        unimplemented!(
+            "`TryFromSlice` can only be derived for structs with named fields or with a single unnamed `u8` field"
+        )
     };
+
+    if kind == StructKind::TupleStruct {
+        let field_reads = fields.iter().map(|field| {
+            let ty = &field.ty;
+            quote! {
+                <#ty as grib_template_helpers::TryFromSlice>::try_from_slice(slice, pos)?
+            }
+        });
+
+        return quote! {
+            impl #impl_generics grib_template_helpers::TryFromSlice for #name #type_generics #where_clause {
+                fn try_from_slice(
+                    slice: &[u8],
+                    pos: &mut usize,
+                ) -> grib_template_helpers::TryFromSliceResult<Self> {
+                    Ok(Self(#(#field_reads),*))
+                }
+            }
+        };
+    }
 
     let mut field_reads = Vec::new();
     let mut idents = Vec::new();
@@ -366,7 +387,7 @@ fn impl_write_to_buffer_for_enum(
 }
 
 /// Derive macro generating an impl of the trait `grib_template_helpers::Dump`.
-#[proc_macro_derive(Dump, attributes(doc))]
+#[proc_macro_derive(Dump)]
 pub fn derive_dump(input: TokenStream) -> TokenStream {
     let input = syn::parse_macro_input!(input as syn::DeriveInput);
 
@@ -384,10 +405,38 @@ fn impl_dump_for_struct(
 ) -> proc_macro2::TokenStream {
     let name = &input.ident;
     let (impl_generics, type_generics, where_clause) = input.generics.split_for_impl();
-    let fields = match &data.fields {
-        syn::Fields::Named(fields) => &fields.named,
-        _ => unimplemented!("`Dump` can only be derived for structs with named fields"),
+    let Some((kind, fields)) = extract_struct_info(data) else {
+        unimplemented!(
+            "`Dump` can only be derived for structs with named fields or with a single unnamed `u8` field"
+        )
     };
+
+    if kind == StructKind::TupleStruct {
+        let doc = get_doc(&fields[0].attrs)
+            .map(|s| format!("  // {}", s.trim()))
+            .unwrap_or_default();
+
+        return quote! {
+            impl #impl_generics grib_template_helpers::Dump for #name #type_generics #where_clause {
+                fn dump<W: std::io::Write>(
+                    &self,
+                    parent: Option<&std::borrow::Cow<str>>,
+                    pos: &mut usize,
+                    output: &mut W,
+                ) -> Result<(), std::io::Error> {
+                    let size = 1;
+                    grib_template_helpers::write_position_column(output, pos, size)?;
+                    if let Some(parent) = parent {
+                        write!(output, "{}", parent)?;
+                    }
+                    writeln!(output, " = {:#010b}{}",
+                        self.0,
+                        #doc,
+                    )
+                }
+            }
+        };
+    }
 
     let mut dumps = Vec::new();
 
@@ -482,4 +531,39 @@ fn get_doc(attrs: &[syn::Attribute]) -> Option<String> {
         }
     }
     if doc.is_empty() { None } else { Some(doc) }
+}
+
+fn extract_struct_info(
+    data: &syn::DataStruct,
+) -> Option<(
+    StructKind,
+    &syn::punctuated::Punctuated<syn::Field, syn::token::Comma>,
+)> {
+    match &data.fields {
+        syn::Fields::Named(fields) => Some((StructKind::NamedStruct, &fields.named)),
+        syn::Fields::Unnamed(fields) => {
+            let fields = &fields.unnamed;
+            if fields.len() == 1 && is_type_u8(&fields.first().unwrap().ty) {
+                Some((StructKind::TupleStruct, fields))
+            } else {
+                None
+            }
+        }
+        _ => None,
+    }
+}
+
+#[derive(PartialEq)]
+enum StructKind {
+    TupleStruct,
+    NamedStruct,
+}
+
+fn is_type_u8(ty: &syn::Type) -> bool {
+    if let syn::Type::Path(syn::TypePath { path, .. }) = ty
+        && let Some(segment) = path.segments.last()
+    {
+        return segment.ident == "u8";
+    }
+    false
 }

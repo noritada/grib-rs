@@ -6,8 +6,8 @@ edition = "2024"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-gloo-file = { version = "0.3", features = ["futures"] }
-grib = { path = "..", version = "0.13.5", default-features = false, features = [
+gloo-file = { version = "0.4", features = ["futures"] }
+grib = { path = "..", version = "0.15.1", default-features = false, features = [
     "png-unpack-with-png-crate",
 ] }
 wasm-bindgen = "0.2"
@@ -23,4 +23,4 @@ web-sys = { version = "0.3", features = [
     "CanvasRenderingContext2d",
     "ImageData",
 ] }
-yew = { version = "0.21", features = ["csr"] }
+yew = { version = "0.23", features = ["csr"] }

@@ -1,15 +1,10 @@
 use std::slice::Iter;
 
 use crate::{
-    GridPointIndexIterator, PolarStereographicGridDefinition,
     codetables::SUPPORTED_PROD_DEF_TEMPLATE_NUMBERS,
     datatypes::*,
     error::*,
-    grid::{
-        GaussianGridDefinition, GridPointIterator, LambertGridDefinition, LatLonGridDefinition,
-    },
     helpers::{GribInt, read_as},
-    time::UtcDateTime,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -95,9 +90,9 @@ impl Identification {
     /// This method returns unchecked data, so for example, if the data contains
     /// a "date and time" such as "2000-13-32 25:61:62", it will be returned as
     /// is.
-    pub fn ref_time_unchecked(&self) -> UtcDateTime {
+    pub fn ref_time_unchecked(&self) -> crate::def::grib2::RefTime {
         let payload = &self.payload;
-        UtcDateTime::new(
+        crate::def::grib2::RefTime::new(
             read_as!(u16, payload, 7),
             payload[9],
             payload[10],
@@ -165,128 +160,6 @@ impl GridDefinition {
     pub fn grid_tmpl_num(&self) -> u16 {
         let payload = &self.payload;
         read_as!(u16, payload, 7)
-    }
-}
-
-#[derive(Debug, PartialEq, Eq)]
-pub enum GridDefinitionTemplateValues {
-    Template0(LatLonGridDefinition),
-    Template20(PolarStereographicGridDefinition),
-    Template30(LambertGridDefinition),
-    Template40(GaussianGridDefinition),
-}
-
-impl GridDefinitionTemplateValues {
-    /// Returns the shape of the grid, i.e. a tuple of the number of grids in
-    /// the i and j directions.
-    pub fn grid_shape(&self) -> (usize, usize) {
-        match self {
-            Self::Template0(def) => def.grid_shape(),
-            Self::Template20(def) => def.grid_shape(),
-            Self::Template30(def) => def.grid_shape(),
-            Self::Template40(def) => def.grid_shape(),
-        }
-    }
-
-    /// Returns the grid type.
-    ///
-    /// The grid types are denoted as short strings based on `gridType` used in
-    /// ecCodes.
-    ///
-    /// This is provided primarily for debugging and simple notation purposes.
-    /// It is better to use enum variants instead of the string notation to
-    /// determine the grid type.
-    pub fn short_name(&self) -> &'static str {
-        match self {
-            Self::Template0(def) => def.short_name(),
-            Self::Template20(def) => def.short_name(),
-            Self::Template30(def) => def.short_name(),
-            Self::Template40(def) => def.short_name(),
-        }
-    }
-
-    /// Returns an iterator over `(i, j)` of grid points.
-    ///
-    /// Note that this is a low-level API and it is not checked that the number
-    /// of iterator iterations is consistent with the number of grid points
-    /// defined in the data.
-    pub fn ij(&self) -> Result<GridPointIndexIterator, GribError> {
-        match self {
-            Self::Template0(def) => def.ij(),
-            Self::Template20(def) => def.ij(),
-            Self::Template30(def) => def.ij(),
-            Self::Template40(def) => def.ij(),
-        }
-    }
-
-    /// Returns an iterator over latitudes and longitudes of grid points in
-    /// degrees.
-    ///
-    /// Note that this is a low-level API and it is not checked that the number
-    /// of iterator iterations is consistent with the number of grid points
-    /// defined in the data.
-    pub fn latlons(&self) -> Result<GridPointIterator, GribError> {
-        let iter = match self {
-            Self::Template0(def) => GridPointIterator::LatLon(def.latlons()?),
-            #[cfg(feature = "gridpoints-proj")]
-            Self::Template20(def) => GridPointIterator::Lambert(def.latlons()?),
-            #[cfg(feature = "gridpoints-proj")]
-            Self::Template30(def) => GridPointIterator::Lambert(def.latlons()?),
-            Self::Template40(def) => GridPointIterator::LatLon(def.latlons()?),
-            #[cfg(not(feature = "gridpoints-proj"))]
-            _ => {
-                return Err(GribError::NotSupported(
-                    "lat/lon computation support for the template is dropped in this build"
-                        .to_owned(),
-                ));
-            }
-        };
-        Ok(iter)
-    }
-}
-
-impl TryFrom<&GridDefinition> for GridDefinitionTemplateValues {
-    type Error = GribError;
-
-    fn try_from(value: &GridDefinition) -> Result<Self, Self::Error> {
-        let num = value.grid_tmpl_num();
-        match num {
-            0 => {
-                let buf = &value.payload;
-                if buf.len() > 67 {
-                    return Err(GribError::NotSupported(format!(
-                        "template {num} with list of number of points"
-                    )));
-                }
-                Ok(GridDefinitionTemplateValues::Template0(
-                    LatLonGridDefinition::from_buf(&buf[25..]),
-                ))
-            }
-            20 => {
-                let buf = &value.payload;
-                Ok(GridDefinitionTemplateValues::Template20(
-                    PolarStereographicGridDefinition::from_buf(&buf[9..]),
-                ))
-            }
-            30 => {
-                let buf = &value.payload;
-                Ok(GridDefinitionTemplateValues::Template30(
-                    LambertGridDefinition::from_buf(&buf[9..]),
-                ))
-            }
-            40 => {
-                let buf = &value.payload;
-                if buf.len() > 67 {
-                    return Err(GribError::NotSupported(format!(
-                        "template {num} with list of number of points"
-                    )));
-                }
-                Ok(GridDefinitionTemplateValues::Template40(
-                    GaussianGridDefinition::from_buf(&buf[25..]),
-                ))
-            }
-            _ => Err(GribError::NotSupported(format!("template {num}"))),
-        }
     }
 }
 
@@ -522,36 +395,6 @@ pub struct BitMap {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn grid_definition_template_0() {
-        // data taken from submessage #0.0 of
-        // `Z__C_RJTD_20160822020000_NOWC_GPV_Ggis10km_Pphw10_FH0000-0100_grib2.bin.xz`
-        // in `testdata`
-        let data = GridDefinition::from_payload(
-            vec![
-                0x00, 0x00, 0x01, 0x50, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0xff, 0xff, 0xff, 0xff,
-                0xff, 0x01, 0x03, 0xcd, 0x39, 0xfa, 0x01, 0x03, 0xc9, 0xf6, 0xa3, 0x00, 0x00, 0x01,
-                0x00, 0x00, 0x00, 0x01, 0x50, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x02,
-                0xdb, 0xc9, 0x3d, 0x07, 0x09, 0x7d, 0xa4, 0x30, 0x01, 0x31, 0xcf, 0xc3, 0x08, 0xef,
-                0xdd, 0x5c, 0x00, 0x01, 0xe8, 0x48, 0x00, 0x01, 0x45, 0x85, 0x00,
-            ]
-            .into_boxed_slice(),
-        )
-        .unwrap();
-
-        let actual = GridDefinitionTemplateValues::try_from(&data).unwrap();
-        let expected = GridDefinitionTemplateValues::Template0(LatLonGridDefinition {
-            ni: 256,
-            nj: 336,
-            first_point_lat: 47958333,
-            first_point_lon: 118062500,
-            last_point_lat: 20041667,
-            last_point_lon: 149937500,
-            scanning_mode: crate::grid::ScanningMode(0b00000000),
-        });
-        assert_eq!(actual, expected);
-    }
 
     #[test]
     fn prod_definition_parameters() {

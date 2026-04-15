@@ -24,9 +24,8 @@ pub use crate::{
     encoder::*,
     error::*,
     grid::{
-        EarthShapeDefinition, GaussianGridDefinition, GridPointIndexIterator, GridPointIterator,
-        LambertGridDefinition, LatLonGridDefinition, PolarStereographicGridDefinition,
-        ProjectionCentreFlag, ScanningMode,
+        GridDefinitionTemplateValues, GridPointIndex, GridPointIndexIterator, GridPointLatLons,
+        GridShortName, LatLons,
     },
     parser::*,
     reader::*,

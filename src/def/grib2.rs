@@ -47,7 +47,7 @@ pub struct Section1Payload {
     pub optional: Option<Section1PayloadOptional>,
 }
 
-#[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
+#[derive(Debug, PartialEq, Eq, TryFromSlice, WriteToBuffer, Dump)]
 pub struct RefTime {
     /// Year (4 digits).
     pub year: u16,
@@ -96,6 +96,20 @@ pub struct Section3Payload {
     pub point_list_interpretation: u8,
     /// Grid definition template number (= N) (see Code table 3.1).
     pub template_num: u16,
+    /// Grid Definition Template (see Template 3.N, where N is the Grid
+    /// Definition Template Number given in octets 13-14).
+    #[grib_template(variant = "template_num")]
+    pub template: GridDefinitionTemplate,
+}
+
+#[derive(Debug, PartialEq, TryFromSlice, Dump)]
+#[repr(u16)]
+pub enum GridDefinitionTemplate {
+    _3_0(template3::Template3_0) = 0,
+    _3_1(template3::Template3_1) = 1,
+    _3_20(template3::Template3_20) = 20,
+    _3_30(template3::Template3_30) = 30,
+    _3_40(template3::Template3_40) = 40,
 }
 
 /// Section 4 - Product definition section.
@@ -157,14 +171,15 @@ pub struct Section6Payload {
 pub mod template {
     //! GRIB2 template definitions.
 
-    pub use super::{template1::*, template5::*};
+    pub use super::{template1::*, template3::*, template5::*};
 
     pub mod param_set {
         //! Definitions of parameter sets used in GRIB2 templates.
 
-        pub use super::super::template5::param_set::*;
+        pub use super::super::{template3::param_set::*, template5::param_set::*};
     }
 }
 
 mod template1;
+mod template3;
 mod template5;
