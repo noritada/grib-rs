@@ -223,10 +223,15 @@ impl WriteGrib2DataSections for Encoded {
                     pos += nbitwise.write_to_buffer(&mut buf[pos..])?;
                 }
 
+                let mut start_offset_bits = 0;
                 for group in inner {
                     if group.width != 0 {
-                        let nbitwise = writer::NBitwise::new(&group.values, group.width as usize);
-                        pos += nbitwise.write_to_buffer(&mut buf[pos..])?;
+                        let nbitwise = writer::NBitwise::new(&group.values, group.width as usize)
+                            .with_offset_bits(start_offset_bits);
+                        nbitwise.write_to_buffer(&mut buf[pos..])?;
+                        let (pos_shifted, new_offset) = nbitwise.new_pos();
+                        pos += pos_shifted;
+                        start_offset_bits = new_offset;
                     }
                 }
             }
@@ -567,6 +572,17 @@ mod tests {
             vec![0, 0, 0, 100, 10, 2, 2, 1]
                 .into_iter()
                 .flat_map(|val| [val as f64; 8])
+                .collect::<Vec<_>>()
+        ),
+        (
+            grib2_coded_values_roundtrip_test_with_body_data_affected_by_offsets,
+            vec![0.; 32]
+                .into_iter()
+                .chain([7., 15., 90.].into_iter())
+                .chain([0.; 32].into_iter())
+                .chain([114., 104., 92., 225.].into_iter())
+                .chain([0.; 32].into_iter())
+                .chain([114., 104., 92., 225.].into_iter())
                 .collect::<Vec<_>>()
         ),
     }
