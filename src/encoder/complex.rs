@@ -98,6 +98,7 @@ impl ComplexPacking {
     }
 }
 
+#[derive(Debug)]
 pub(crate) struct Encoded {
     simple: SimplePacking,
     complex: ComplexPacking,
@@ -165,15 +166,12 @@ impl WriteGrib2DataSections for Encoded {
                 let num_groups = self.complex.num_groups as usize;
                 let bits_refs = self.simple.num_bits as usize * num_groups;
                 let bits_widths = self.complex.num_group_width_bits as usize * num_groups;
-                let bits_lengths = self.complex.num_group_len_bits as usize * (num_groups - 1);
-                let octets_values: usize = inner
-                    .iter()
-                    .map(|g| (g.len() * g.width as usize).div_ceil(8))
-                    .sum();
+                let bits_lengths = self.complex.num_group_len_bits as usize * num_groups;
+                let bits_values: usize = inner.iter().map(|g| g.len() * g.width as usize).sum();
                 bits_refs.div_ceil(8)
                     + bits_widths.div_ceil(8)
                     + bits_lengths.div_ceil(8)
-                    + octets_values
+                    + bits_values.div_ceil(8)
             }
             CodedValues::Unique(_) => 0,
         };
@@ -215,17 +213,26 @@ impl WriteGrib2DataSections for Encoded {
                             (g.len() as u32 - self.complex.group_len_ref)
                                 / self.complex.group_len_inc as u32
                         })
+                        .chain(std::iter::once(0))
                         .collect::<Vec<_>>();
                     let nbitwise =
                         writer::NBitwise::new(&lengths, self.complex.num_group_len_bits as usize);
                     pos += nbitwise.write_to_buffer(&mut buf[pos..])?;
                 }
 
+                let mut start_offset_bits = 0;
                 for group in inner {
                     if group.width != 0 {
-                        let nbitwise = writer::NBitwise::new(&group.values, group.width as usize);
-                        pos += nbitwise.write_to_buffer(&mut buf[pos..])?;
+                        let nbitwise = writer::NBitwise::new(&group.values, group.width as usize)
+                            .with_offset_bits(start_offset_bits);
+                        nbitwise.write_to_buffer(&mut buf[pos..])?;
+                        let (pos_shifted, new_offset) = nbitwise.new_pos();
+                        pos += pos_shifted;
+                        start_offset_bits = new_offset;
                     }
+                }
+                if start_offset_bits != 0 {
+                    pos += 1;
                 }
             }
             CodedValues::Unique(_) => {}
@@ -235,6 +242,7 @@ impl WriteGrib2DataSections for Encoded {
     }
 }
 
+#[derive(Debug)]
 enum CodedValues {
     NonUnique(Groups),
     Unique(usize),
@@ -532,11 +540,14 @@ mod tests {
                 );
                 let encoded = encoder.encode();
                 let mut sect5 = vec![0; encoded.section5_len()];
-                encoded.write_section5(&mut sect5)?;
+                let pos = encoded.write_section5(&mut sect5)?;
+                assert_eq!(pos, sect5.len());
                 let mut sect6 = vec![0; encoded.section6_len()];
-                encoded.write_section6(&mut sect6)?;
+                let pos = encoded.write_section6(&mut sect6)?;
+                assert_eq!(pos, sect6.len());
                 let mut sect7 = vec![0; encoded.section7_len()];
-                encoded.write_section7(&mut sect7)?;
+                let pos = encoded.write_section7(&mut sect7)?;
+                assert_eq!(pos, sect7.len());
                 let decoder = crate::Grib2SubmessageDecoder::new(values.len(), sect5, sect6, sect7)?;
                 let actual = decoder.dispatch()?.collect::<Vec<_>>();
                 let expected = values.iter().map(|val| *val as f32).collect::<Vec<_>>();
@@ -558,6 +569,24 @@ mod tests {
         (
             grib2_coded_values_roundtrip_test_with_unique_values,
             vec![10.0_f64; 256]
+        ),
+        (
+            grib2_coded_values_roundtrip_test_with_zero_only_groups,
+            vec![0, 0, 0, 100, 10, 2, 2, 1]
+                .into_iter()
+                .flat_map(|val| [val as f64; 8])
+                .collect::<Vec<_>>()
+        ),
+        (
+            grib2_coded_values_roundtrip_test_with_body_data_affected_by_offsets,
+            vec![0.; 32]
+                .into_iter()
+                .chain([7., 15., 90.].into_iter())
+                .chain([0.; 32].into_iter())
+                .chain([114., 104., 92., 225.].into_iter())
+                .chain([0.; 32].into_iter())
+                .chain([114., 104., 92., 225.].into_iter())
+                .collect::<Vec<_>>()
         ),
     }
 }
