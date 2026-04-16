@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.15.2] - 2026-04-16
+### New supports
+
+- Data encoding methods:
+  - simple packing
+    (PR #172)
+  - complex packing
+    (PR #174, PR #176)
+
+### Enhancements
+
+- Data encoding API is newly available.
+  (PR #172, PR #173, PR #175)
+
+### Versions
+
+```
+grib 0.15.2
+grib-cli 0.15.2
+grib-template-derive 0.1.4
+grib-template-helpers 0.1.3
+```
+
 ## [0.15.1] - 2026-04-13
 ### Fixes
 
@@ -887,7 +910,8 @@ grib-build 0.1.0
 grib 0.1.0
 ```
 
-[unreleased]: https://github.com/noritada/grib-rs/compare/v0.15.1...HEAD
+[unreleased]: https://github.com/noritada/grib-rs/compare/v0.15.2...HEAD
+[0.15.2]: https://github.com/noritada/grib-rs/compare/v0.15.1...v0.15.2
 [0.15.1]: https://github.com/noritada/grib-rs/compare/v0.15.0...v0.15.1
 [0.15.0]: https://github.com/noritada/grib-rs/compare/v0.14.0...v0.15.0
 [0.14.0]: https://github.com/noritada/grib-rs/compare/v0.13.7...v0.14.0
