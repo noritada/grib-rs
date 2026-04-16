@@ -262,11 +262,14 @@ mod tests {
                 let encoder = Encoder::new(&values, SimplePackingStrategy::Decimal($decimal));
                 let encoded = encoder.encode();
                 let mut sect5 = vec![0; encoded.section5_len()];
-                encoded.write_section5(&mut sect5)?;
+                let pos = encoded.write_section5(&mut sect5)?;
+                assert_eq!(pos, sect5.len());
                 let mut sect6 = vec![0; encoded.section6_len()];
-                encoded.write_section6(&mut sect6)?;
+                let pos = encoded.write_section6(&mut sect6)?;
+                assert_eq!(pos, sect6.len());
                 let mut sect7 = vec![0; encoded.section7_len()];
-                encoded.write_section7(&mut sect7)?;
+                let pos = encoded.write_section7(&mut sect7)?;
+                assert_eq!(pos, sect7.len());
                 let decoder = crate::Grib2SubmessageDecoder::new(values.len(), sect5, sect6, sect7)?;
                 let actual = decoder.dispatch()?.collect::<Vec<_>>();
                 let expected = values.iter().map(|val| *val as f32).collect::<Vec<_>>();
