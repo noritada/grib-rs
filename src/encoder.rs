@@ -171,6 +171,22 @@ pub fn write_section1(
     Ok(pos)
 }
 
+pub fn write_section3(
+    payload: &crate::def::grib2::Section3Payload,
+    buf: &mut [u8],
+) -> Result<usize, &'static str> {
+    let len: usize = 5 + payload.num_bytes_required();
+    if buf.len() < len {
+        return Err("destination buffer is too small");
+    }
+
+    let mut pos = 0;
+    pos += (len as u32).write_to_buffer(&mut buf[pos..])?;
+    pos += 3_u8.write_to_buffer(&mut buf[pos..])?;
+    pos += payload.write_to_buffer(&mut buf[pos..])?;
+    Ok(pos)
+}
+
 pub fn write_section8(buf: &mut [u8]) -> Result<usize, &'static str> {
     const SIGNATURE: [u8; 4] = [0x37, 0x37, 0x37, 0x37];
     if buf.len() < SIGNATURE.num_bytes_required() {
