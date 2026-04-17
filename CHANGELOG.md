@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.15.3] - 2026-04-17
+### Enhancements
+
+- As with the struct for Section 1 (`def::grib2::Section1Payload`), users can now configure parameters for the struct for Section 3 (`def::grib2::Section3Payload`) and export them as binary data that forms part of the GRIB2 data.
+  (PR #177)
+
+### Versions
+
+```
+grib 0.15.3
+grib-cli 0.15.3
+grib-template-derive 0.1.5
+```
+
 ## [0.15.2] - 2026-04-16
 ### New supports
 
@@ -910,7 +924,8 @@ grib-build 0.1.0
 grib 0.1.0
 ```
 
-[unreleased]: https://github.com/noritada/grib-rs/compare/v0.15.2...HEAD
+[unreleased]: https://github.com/noritada/grib-rs/compare/v0.15.3...HEAD
+[0.15.3]: https://github.com/noritada/grib-rs/compare/v0.15.2...v0.15.3
 [0.15.2]: https://github.com/noritada/grib-rs/compare/v0.15.1...v0.15.2
 [0.15.1]: https://github.com/noritada/grib-rs/compare/v0.15.0...v0.15.1
 [0.15.0]: https://github.com/noritada/grib-rs/compare/v0.14.0...v0.15.0
