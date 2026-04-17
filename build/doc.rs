@@ -10,8 +10,11 @@ pub(crate) fn generate() -> Result<String, String> {
         .parse::<ReadMeSections>()?;
     let about = readme.get("About")?;
     let template_support = readme.get("Template support")?;
-    let gds_template_support = readme.get("Supported grid definition templates")?;
-    let drs_template_support = readme.get("Supported data representation templates")?;
+    let gds_template_support =
+        readme.get("Support for computation of latitudes/longitudes of grid points")?;
+    let drs_template_decoding_support =
+        readme.get("Support for extraction of grid point values")?;
+    let drs_template_encoding_support = readme.get("Support for encoding of grid point values")?;
     let examples = readme.get("Usage examples")?;
 
     let manifest = read_manifest()
@@ -26,13 +29,17 @@ pub(crate) fn generate() -> Result<String, String> {
 
 {template_support}
 
-## Supported grid definition templates
+## Support for computation of latitudes/longitudes of grid points
 
 {gds_template_support}
 
-## Supported data representation templates
+## Support for extraction of grid point values
 
-{drs_template_support}
+{drs_template_decoding_support}
+
+## Support for encoding of grid point values
+
+{drs_template_encoding_support}
 
 # Examples
 

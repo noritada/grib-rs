@@ -55,7 +55,7 @@ Also, since the best encoding method for values varies from data to data, there 
 
 These definitions of grid systems and data representation are represented by sequences of bytes called templates, which should be supported in order for the reader to read GRIB2 data. grib-rs supports the following templates. We would love to support other templates as well, so please let us know if there is any data that is not readable.
 
-#### Supported grid definition templates
+#### Support for computation of latitudes/longitudes of grid points
 
 For data using the following grid systems, latitudes and longitudes of grid points can be computed.
 
@@ -67,7 +67,7 @@ For data using the following grid systems, latitudes and longitudes of grid poin
 | 3.30 | Lambert conformal | enabling feature `gridpoints-proj` required |
 | 3.40 | Gaussian latitude/longitude | supporting only regular grids |
 
-#### Supported data representation templates
+#### Support for extraction of grid point values
 
 For data using the following encoding methods, grid point values can be extracted.
 
@@ -80,6 +80,15 @@ For data using the following encoding methods, grid point values can be extracte
 | 5.41 | Portable Network Graphics (PNG) | enabling feature `png-unpack-with-png-crate` required |
 | 5.42 | CCSDS recommended lossless compression | enabling feature `ccsds-unpack-with-libaec` required |
 | 5.200 | run length packing with level values ||
+
+#### Support for encoding of grid point values
+
+Grid point values can be encoded and written using the following encoding methods.
+
+| Template number | Encoding method | Notes |
+| --- | --- | --- |
+| 5.0 | simple packing ||
+| 5.2 | complex packing ||
 
 ## Planned features
 
