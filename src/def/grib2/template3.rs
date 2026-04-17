@@ -1,8 +1,8 @@
-use grib_template_derive::{Dump, TryFromSlice};
+use grib_template_derive::{Dump, TryFromSlice, WriteToBuffer};
 
 /// Grid definition template 3.0 - latitude/longitude (or equidistant
 /// cylindrical, or Plate Carrée).
-#[derive(Debug, PartialEq, TryFromSlice, Dump)]
+#[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
 pub struct Template3_0 {
     pub earth: param_set::EarthShape,
     pub lat_lon: param_set::LatLonGrid,
@@ -69,7 +69,7 @@ pub struct Template3_0 {
 ///     Ok(())
 /// }
 /// ```
-#[derive(Debug, PartialEq, TryFromSlice, Dump)]
+#[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
 pub struct Template3_1 {
     pub earth: param_set::EarthShape,
     pub rotated: param_set::LatLonGrid,
@@ -125,7 +125,7 @@ pub struct Template3_1 {
 ///     Ok(())
 /// }
 /// ```
-#[derive(Debug, PartialEq, Eq, TryFromSlice, Dump)]
+#[derive(Debug, PartialEq, Eq, TryFromSlice, WriteToBuffer, Dump)]
 pub struct Template3_20 {
     pub earth_shape: param_set::EarthShape,
     /// Nx - number of points along the x-axis.
@@ -200,7 +200,7 @@ pub struct Template3_20 {
 ///     Ok(())
 /// }
 /// ```
-#[derive(Debug, PartialEq, Eq, TryFromSlice, Dump)]
+#[derive(Debug, PartialEq, Eq, TryFromSlice, WriteToBuffer, Dump)]
 pub struct Template3_30 {
     pub earth_shape: param_set::EarthShape,
     /// Nx - number of points along the x-axis.
@@ -236,16 +236,16 @@ pub struct Template3_30 {
 }
 
 /// Grid definition template 3.40 - Gaussian latitude/longitude.
-#[derive(Debug, PartialEq, TryFromSlice, Dump)]
+#[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
 pub struct Template3_40 {
     pub earth: param_set::EarthShape,
     pub gaussian: param_set::GaussianGrid,
 }
 
 pub(crate) mod param_set {
-    use grib_template_derive::{Dump, TryFromSlice};
+    use grib_template_derive::{Dump, TryFromSlice, WriteToBuffer};
 
-    #[derive(Debug, PartialEq, Eq, TryFromSlice, Dump)]
+    #[derive(Debug, PartialEq, Eq, TryFromSlice, WriteToBuffer, Dump)]
     pub struct EarthShape {
         /// Shape of the Earth (see Code table 3.2).
         pub shape: u8,
@@ -263,7 +263,7 @@ pub(crate) mod param_set {
         pub minor_axis_scaled_value: u32,
     }
 
-    #[derive(Debug, PartialEq, Eq, TryFromSlice, Dump)]
+    #[derive(Debug, PartialEq, Eq, TryFromSlice, WriteToBuffer, Dump)]
     pub struct LatLonGrid {
         pub grid: Grid,
         /// Di - i direction increment (see Notes 1 and 5).
@@ -273,7 +273,7 @@ pub(crate) mod param_set {
         pub scanning_mode: ScanningMode,
     }
 
-    #[derive(Debug, PartialEq, Eq, TryFromSlice, Dump)]
+    #[derive(Debug, PartialEq, Eq, TryFromSlice, WriteToBuffer, Dump)]
     pub struct GaussianGrid {
         pub grid: Grid,
         /// Di - i direction increment (see Notes 1 and 5).
@@ -283,7 +283,7 @@ pub(crate) mod param_set {
         pub scanning_mode: ScanningMode,
     }
 
-    #[derive(Debug, PartialEq, Eq, TryFromSlice, Dump)]
+    #[derive(Debug, PartialEq, Eq, TryFromSlice, WriteToBuffer, Dump)]
     pub struct Grid {
         /// Ni - number of points along a parallel.
         pub ni: u32,
@@ -305,19 +305,19 @@ pub(crate) mod param_set {
         pub last_point_lon: u32,
     }
 
-    #[derive(Debug, PartialEq, Eq, Clone, Copy, TryFromSlice, Dump)]
+    #[derive(Debug, PartialEq, Eq, Clone, Copy, TryFromSlice, WriteToBuffer, Dump)]
     pub struct ProjectionCentreFlag(
         /// Projection centre flag (see Flag table 3.5).
         pub u8,
     );
 
-    #[derive(Debug, PartialEq, Eq, Clone, Copy, TryFromSlice, Dump)]
+    #[derive(Debug, PartialEq, Eq, Clone, Copy, TryFromSlice, WriteToBuffer, Dump)]
     pub struct ResolutionAndComponentFlags(
         /// Resolution and component flags (see Flag table 3.3).
         pub u8,
     );
 
-    #[derive(Debug, PartialEq, TryFromSlice, Dump)]
+    #[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
     pub struct Rotation {
         /// Latitude of the southern pole of projection.
         pub south_pole_lat: i32,
@@ -327,7 +327,7 @@ pub(crate) mod param_set {
         pub rot_angle: f32,
     }
 
-    #[derive(Debug, PartialEq, Eq, Clone, Copy, TryFromSlice, Dump)]
+    #[derive(Debug, PartialEq, Eq, Clone, Copy, TryFromSlice, WriteToBuffer, Dump)]
     pub struct ScanningMode(
         /// Scanning mode (flags - see Flag table 3.4).
         pub u8,

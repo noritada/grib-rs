@@ -287,10 +287,27 @@ fn impl_write_to_buffer_for_struct(
 ) -> proc_macro2::TokenStream {
     let name = &input.ident;
     let (impl_generics, type_generics, where_clause) = input.generics.split_for_impl();
-    let fields = match &data.fields {
-        syn::Fields::Named(fields) => &fields.named,
-        _ => unimplemented!("`WriteToBuffer` can only be derived for structs with named fields"),
+    let Some((kind, fields)) = extract_struct_info(data) else {
+        unimplemented!(
+            "`WriteToBuffer` can only be derived for structs with named fields or with a single unnamed `u8` field"
+        )
     };
+
+    if kind == StructKind::TupleStruct {
+        let ty = &fields[0].ty;
+
+        return quote! {
+            impl #impl_generics grib_template_helpers::WriteToBuffer for #name #type_generics #where_clause {
+                fn write_to_buffer(&self, buf: &mut [u8]) -> Result<usize, &'static str> {
+                    <#ty as grib_template_helpers::WriteToBuffer>::write_to_buffer(&self.0, buf)
+                }
+
+                fn num_bytes_required(&self) -> usize {
+                    <#ty as grib_template_helpers::WriteToBuffer>::num_bytes_required(&self.0)
+                }
+            }
+        };
+    }
 
     let mut writes = Vec::new();
     let mut sizes = Vec::new();
