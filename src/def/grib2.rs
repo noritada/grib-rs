@@ -84,7 +84,7 @@ pub enum IdentificationTemplate {
 /// Section 3 - Grid definition section.
 pub type Section3 = Section<Section3Payload>;
 
-#[derive(Debug, PartialEq, TryFromSlice, Dump)]
+#[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
 pub struct Section3Payload {
     /// Source of grid definition (see Code table 3.0 and Note 1).
     pub grid_def_source: u8,
@@ -102,7 +102,7 @@ pub struct Section3Payload {
     pub template: GridDefinitionTemplate,
 }
 
-#[derive(Debug, PartialEq, TryFromSlice, Dump)]
+#[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
 #[repr(u16)]
 pub enum GridDefinitionTemplate {
     _3_0(template3::Template3_0) = 0,
