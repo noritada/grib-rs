@@ -190,7 +190,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // To dump to standard output, use the following instead:
     //
     //     first_submessage.dump(&mut std::io::stdout())?;
-    let mut buf = std::io::Cursor::new(Vec::with_capacity(1024));
+    let mut buf = std::io::Cursor::new(Vec::with_capacity(10240));
     first_submessage.dump(&mut buf)?;
     let expected = "\
 ##  SUBMESSAGE (total_length = 10321)
