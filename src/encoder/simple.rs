@@ -3,7 +3,7 @@ use grib_template_helpers::WriteToBuffer;
 use crate::{
     WriteGrib2DataSections,
     def::grib2::template::param_set::SimplePacking,
-    encoder::{Encode, helpers::BitsRequired, writer},
+    encoder::{Encode, bitmap::Bitmap, helpers::BitsRequired, writer},
 };
 
 /// Strategies applied when performing simple packing on numerical sequences.
@@ -35,7 +35,7 @@ impl<'a> Encode for Encoder<'a> {
     fn encode(&self) -> Self::Output {
         match self.strategy {
             SimplePackingStrategy::Decimal(dec) => {
-                let (params, scaled) = determine_simple_packing_params(self.data, dec);
+                let (params, scaled, bitmap) = determine_simple_packing_params(self.data, dec);
                 let coded = if params.num_bits == 0 {
                     CodedValues::Unique(self.data.len())
                 } else {
@@ -46,7 +46,7 @@ impl<'a> Encode for Encoder<'a> {
                         .collect::<Vec<_>>();
                     CodedValues::NonUnique(coded)
                 };
-                Encoded::new(params, coded)
+                Encoded::new(params, coded, bitmap)
             }
         }
     }
@@ -56,11 +56,16 @@ impl<'a> Encode for Encoder<'a> {
 pub(crate) struct Encoded {
     params: SimplePacking,
     coded: CodedValues,
+    bitmap: Bitmap,
 }
 
 impl Encoded {
-    fn new(params: SimplePacking, coded: CodedValues) -> Self {
-        Self { params, coded }
+    fn new(params: SimplePacking, coded: CodedValues, bitmap: Bitmap) -> Self {
+        Self {
+            params,
+            coded,
+            bitmap,
+        }
     }
 
     pub(crate) fn params(&self) -> &SimplePacking {
@@ -91,7 +96,12 @@ impl WriteGrib2DataSections for Encoded {
     }
 
     fn section6_len(&self) -> usize {
-        6
+        let bitmap_size = if self.bitmap.has_nan() {
+            self.bitmap.num_bytes_required()
+        } else {
+            0
+        };
+        6 + bitmap_size
     }
 
     fn write_section6(&self, buf: &mut [u8]) -> Result<usize, &'static str> {
@@ -103,7 +113,12 @@ impl WriteGrib2DataSections for Encoded {
         let mut pos = 0;
         pos += (len as u32).write_to_buffer(&mut buf[pos..])?;
         pos += 6_u8.write_to_buffer(&mut buf[pos..])?;
-        pos += 255_u8.write_to_buffer(&mut buf[pos..])?;
+        if self.bitmap.has_nan() {
+            pos += 0_u8.write_to_buffer(&mut buf[pos..])?;
+            pos += self.bitmap.write_to_buffer(&mut buf[pos..])?;
+        } else {
+            pos += 255_u8.write_to_buffer(&mut buf[pos..])?;
+        }
 
         Ok(pos)
     }
@@ -143,15 +158,22 @@ impl WriteGrib2DataSections for Encoded {
 pub(crate) fn determine_simple_packing_params(
     values: &[f64],
     dec: i16,
-) -> (SimplePacking, Vec<f64>) {
+) -> (SimplePacking, Vec<f64>, Bitmap) {
     let mut min = f64::MAX;
     let mut max = f64::MIN;
+    let mut bitmap = Bitmap::for_values(values);
     let scaled = values
         .iter()
-        .map(|value| {
-            let scaled = value * 10_f64.powf(dec as f64);
-            (min, max) = (scaled.min(min), scaled.max(max));
-            scaled
+        .filter_map(|value| {
+            if value.is_nan() {
+                bitmap.push(false);
+                None
+            } else {
+                bitmap.push(true);
+                let scaled = value * 10_f64.powf(dec as f64);
+                (min, max) = (scaled.min(min), scaled.max(max));
+                Some(scaled)
+            }
         })
         .collect::<Vec<_>>();
     let ref_val = min as f32;
@@ -162,7 +184,7 @@ pub(crate) fn determine_simple_packing_params(
             dec,
             num_bits: 0,
         };
-        (params, Vec::new())
+        (params, Vec::new(), bitmap)
     } else {
         let range = max - min;
         let exp = 0;
@@ -174,7 +196,7 @@ pub(crate) fn determine_simple_packing_params(
             dec,
             num_bits,
         };
-        (params, scaled)
+        (params, scaled, bitmap)
     }
 }
 
@@ -273,7 +295,11 @@ mod tests {
                 let decoder = crate::Grib2SubmessageDecoder::new(values.len(), sect5, sect6, sect7)?;
                 let actual = decoder.dispatch()?.collect::<Vec<_>>();
                 let expected = values.iter().map(|val| *val as f32).collect::<Vec<_>>();
-                assert_eq!(actual, expected);
+                assert_eq!(actual.len(), expected.len());
+                actual
+                    .iter()
+                    .zip(expected.iter())
+                    .all(|(a, b)| (a.is_nan() && b.is_nan()) || (a == b));
                 Ok(())
             }
         )*);
@@ -288,6 +314,18 @@ mod tests {
         (
             grib2_coded_values_roundtrip_test_with_decimal_0_and_unique_values,
             vec![10.0_f64; 256],
+            0
+        ),
+        (
+            grib2_coded_values_roundtrip_test_with_data_containing_nan_values,
+            [f64::NAN; 32]
+                .into_iter()
+                .chain([1., 2., 3.].into_iter())
+                .chain([f64::NAN; 32].into_iter())
+                .chain([4., 5., 6., 7.].into_iter())
+                .chain([f64::NAN; 32].into_iter())
+                .chain([8., 9., 10., 11.].into_iter())
+                .collect::<Vec<_>>(),
             0
         ),
     }

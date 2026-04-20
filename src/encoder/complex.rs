@@ -3,7 +3,7 @@ use grib_template_helpers::WriteToBuffer;
 use crate::{
     SimplePackingStrategy, WriteGrib2DataSections,
     def::grib2::template::param_set::{ComplexPacking, SimplePacking},
-    encoder::{Encode, helpers::BitsRequired, writer},
+    encoder::{Encode, bitmap::Bitmap, helpers::BitsRequired, writer},
 };
 
 /// Strategies applied when performing complex packing on numerical sequences.
@@ -48,7 +48,7 @@ impl<'a> Encode for Encoder<'a> {
     fn encode(&self) -> Self::Output {
         match self.complex_packing_strategy {
             ComplexPackingStrategy::LookAhead(num) => {
-                let (mut simple, scaled) = match self.simple_packing_strategy {
+                let (mut simple, scaled, bitmap) = match self.simple_packing_strategy {
                     SimplePackingStrategy::Decimal(decimal) => {
                         super::determine_simple_packing_params(self.data, decimal)
                     }
@@ -73,7 +73,7 @@ impl<'a> Encode for Encoder<'a> {
                         CodedValues::NonUnique(groups),
                     )
                 };
-                Encoded::new(simple, complex, coded)
+                Encoded::new(simple, complex, coded, bitmap)
             }
         }
     }
@@ -103,14 +103,21 @@ pub(crate) struct Encoded {
     simple: SimplePacking,
     complex: ComplexPacking,
     coded: CodedValues,
+    bitmap: Bitmap,
 }
 
 impl Encoded {
-    fn new(simple: SimplePacking, complex: ComplexPacking, coded: CodedValues) -> Self {
+    fn new(
+        simple: SimplePacking,
+        complex: ComplexPacking,
+        coded: CodedValues,
+        bitmap: Bitmap,
+    ) -> Self {
         Self {
             simple,
             complex,
             coded,
+            bitmap,
         }
     }
 
@@ -143,7 +150,12 @@ impl WriteGrib2DataSections for Encoded {
     }
 
     fn section6_len(&self) -> usize {
-        6
+        let bitmap_size = if self.bitmap.has_nan() {
+            self.bitmap.num_bytes_required()
+        } else {
+            0
+        };
+        6 + bitmap_size
     }
 
     fn write_section6(&self, buf: &mut [u8]) -> Result<usize, &'static str> {
@@ -155,7 +167,12 @@ impl WriteGrib2DataSections for Encoded {
         let mut pos = 0;
         pos += (len as u32).write_to_buffer(&mut buf[pos..])?;
         pos += 6_u8.write_to_buffer(&mut buf[pos..])?;
-        pos += 255_u8.write_to_buffer(&mut buf[pos..])?;
+        if self.bitmap.has_nan() {
+            pos += 0_u8.write_to_buffer(&mut buf[pos..])?;
+            pos += self.bitmap.write_to_buffer(&mut buf[pos..])?;
+        } else {
+            pos += 255_u8.write_to_buffer(&mut buf[pos..])?;
+        }
 
         Ok(pos)
     }
@@ -551,7 +568,11 @@ mod tests {
                 let decoder = crate::Grib2SubmessageDecoder::new(values.len(), sect5, sect6, sect7)?;
                 let actual = decoder.dispatch()?.collect::<Vec<_>>();
                 let expected = values.iter().map(|val| *val as f32).collect::<Vec<_>>();
-                assert_eq!(actual, expected);
+                assert_eq!(actual.len(), expected.len());
+                actual
+                    .iter()
+                    .zip(expected.iter())
+                    .all(|(a, b)| (a.is_nan() && b.is_nan()) || (a == b));
                 Ok(())
             }
         )*);
