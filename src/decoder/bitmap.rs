@@ -35,10 +35,12 @@ where
     type Item = f32;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let offset = self.offset;
-        if offset >= self.len {
+        if self.len == 0 {
             return None;
         }
+        self.len -= 1;
+
+        let offset = self.offset;
         let byte = if self.offset < 7 {
             self.offset += 1;
             self.bitmap.peek()?
@@ -55,7 +57,7 @@ where
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
-        let size = self.len - self.offset;
+        let size = self.len;
         (size, Some(size))
     }
 }
@@ -111,6 +113,37 @@ mod test {
             f32::NAN,
         ];
 
+        assert_eq!(actual.len(), expected.len());
+        actual
+            .iter()
+            .zip(expected.iter())
+            .all(|(a, b)| (a.is_nan() && b.is_nan()) || (a == b));
+    }
+
+    #[test]
+    fn bitmap_iterator_length() {
+        let bitmap = [0b01001100u8, 0b01110000];
+        let values = (0..6).map(|n| n as f32).collect::<Vec<_>>();
+        let values = values.into_iter();
+
+        let iter = BitmapDecodeIterator::new(bitmap.iter(), values, 12).unwrap();
+        let actual = iter.collect::<Vec<_>>();
+        let expected = [
+            f32::NAN,
+            0.0,
+            f32::NAN,
+            f32::NAN,
+            1.0,
+            2.0,
+            f32::NAN,
+            f32::NAN,
+            f32::NAN,
+            3.0,
+            4.0,
+            5.0,
+        ];
+
+        assert_eq!(actual.len(), expected.len());
         actual
             .iter()
             .zip(expected.iter())
