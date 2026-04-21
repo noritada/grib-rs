@@ -195,6 +195,7 @@ pub fn write_section8(buf: &mut [u8]) -> Result<usize, &'static str> {
     SIGNATURE.write_to_buffer(buf)
 }
 
+mod bitmap;
 mod complex;
 mod helpers;
 mod simple;
