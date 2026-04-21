@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.15.4] - 2026-04-21
+### Enhancements
+
+- Data encoding API now supports generating a bit-map from NaN values.
+  (PR #178)
+
+### Fixes
+
+- Fix a minor bug in the iterator length handling in the bit-map decoding.
+  This bug caused NaN padding to be added at the end when the total number of grid points was not divisible by 8 and a bit-map was being used.
+  (PR #179)
+
+### Versions
+
+```
+grib 0.15.4
+grib-cli 0.15.4
+```
+
 ## [0.15.3] - 2026-04-17
 ### Enhancements
 
@@ -924,7 +943,8 @@ grib-build 0.1.0
 grib 0.1.0
 ```
 
-[unreleased]: https://github.com/noritada/grib-rs/compare/v0.15.3...HEAD
+[unreleased]: https://github.com/noritada/grib-rs/compare/v0.15.4...HEAD
+[0.15.4]: https://github.com/noritada/grib-rs/compare/v0.15.3...v0.15.4
 [0.15.3]: https://github.com/noritada/grib-rs/compare/v0.15.2...v0.15.3
 [0.15.2]: https://github.com/noritada/grib-rs/compare/v0.15.1...v0.15.2
 [0.15.1]: https://github.com/noritada/grib-rs/compare/v0.15.0...v0.15.1
