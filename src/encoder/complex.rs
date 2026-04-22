@@ -54,7 +54,7 @@ impl<'a> Encode for Encoder<'a> {
                     }
                 };
                 let (complex, coded) = if simple.num_bits == 0 {
-                    let len = self.data.len();
+                    let len = scaled.len();
                     (
                         ComplexPacking::for_unique_values(len),
                         CodedValues::Unique(len),
