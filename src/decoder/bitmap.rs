@@ -107,76 +107,76 @@ pub(crate) fn check_consistency(
 mod test {
     use super::*;
 
-    #[test]
-    fn bitmap_iterator_works() {
-        let bitmap = [0b01001100u8, 0b01110000, 0b11110000];
-        let values = (0..10).map(|n| n as f32).collect::<Vec<_>>();
-        let values = values.into_iter();
+    macro_rules! test_bitmap_iterator {
+        ($(($name:ident, $bitmap:expr, $values:expr, $len:expr, $expected:expr,),)*) => ($(
+            #[test]
+            fn $name() {
+                let iter = BitmapDecodeIterator::new($bitmap.iter(), $values.into_iter(), $len);
+                let actual = iter.collect::<Vec<_>>();
+                let expected = $expected;
 
-        let iter = BitmapDecodeIterator::new(bitmap.iter(), values, 24);
-        let actual = iter.collect::<Vec<_>>();
-        let expected = [
-            f32::NAN,
-            0.0,
-            f32::NAN,
-            f32::NAN,
-            1.0,
-            2.0,
-            f32::NAN,
-            f32::NAN,
-            f32::NAN,
-            3.0,
-            4.0,
-            5.0,
-            f32::NAN,
-            f32::NAN,
-            f32::NAN,
-            f32::NAN,
-            6.0,
-            7.0,
-            8.0,
-            9.0,
-            f32::NAN,
-            f32::NAN,
-            f32::NAN,
-            f32::NAN,
-        ];
-
-        assert_eq!(actual.len(), expected.len());
-        actual
-            .iter()
-            .zip(expected.iter())
-            .all(|(a, b)| (a.is_nan() && b.is_nan()) || (a == b));
+                assert_eq!(actual.len(), expected.len());
+                actual
+                    .iter()
+                    .zip(expected.iter())
+                    .all(|(a, b)| (a.is_nan() && b.is_nan()) || (a == b));
+            }
+        )*);
     }
 
-    #[test]
-    fn bitmap_iterator_length() {
-        let bitmap = [0b01001100u8, 0b01110000];
-        let values = (0..6).map(|n| n as f32).collect::<Vec<_>>();
-        let values = values.into_iter();
-
-        let iter = BitmapDecodeIterator::new(bitmap.iter(), values, 12);
-        let actual = iter.collect::<Vec<_>>();
-        let expected = [
-            f32::NAN,
-            0.0,
-            f32::NAN,
-            f32::NAN,
-            1.0,
-            2.0,
-            f32::NAN,
-            f32::NAN,
-            f32::NAN,
-            3.0,
-            4.0,
-            5.0,
-        ];
-
-        assert_eq!(actual.len(), expected.len());
-        actual
-            .iter()
-            .zip(expected.iter())
-            .all(|(a, b)| (a.is_nan() && b.is_nan()) || (a == b));
+    test_bitmap_iterator! {
+        (
+            bitmap_iterator_using_bitmap_without_padding,
+            [0b01001100u8, 0b01110000, 0b11110000],
+            (0..10).map(|n| n as f32).collect::<Vec<_>>(),
+            24,
+            [
+                f32::NAN,
+                0.0,
+                f32::NAN,
+                f32::NAN,
+                1.0,
+                2.0,
+                f32::NAN,
+                f32::NAN,
+                f32::NAN,
+                3.0,
+                4.0,
+                5.0,
+                f32::NAN,
+                f32::NAN,
+                f32::NAN,
+                f32::NAN,
+                6.0,
+                7.0,
+                8.0,
+                9.0,
+                f32::NAN,
+                f32::NAN,
+                f32::NAN,
+                f32::NAN,
+            ],
+        ),
+        (
+            bitmap_iterator_using_bitmap_with_padding,
+            [0b01001100u8, 0b01110000],
+            (0..6).map(|n| n as f32).collect::<Vec<_>>(),
+            12,
+            [
+                f32::NAN,
+                0.0,
+                f32::NAN,
+                f32::NAN,
+                1.0,
+                2.0,
+                f32::NAN,
+                f32::NAN,
+                f32::NAN,
+                3.0,
+                4.0,
+                5.0,
+            ],
+        ),
     }
 
     #[test]
