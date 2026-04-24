@@ -37,7 +37,7 @@ impl<'a> Encode for Encoder<'a> {
             SimplePackingStrategy::Decimal(dec) => {
                 let (params, scaled, bitmap) = determine_simple_packing_params(self.data, dec);
                 let coded = if params.num_bits == 0 {
-                    CodedValues::Unique(self.data.len())
+                    CodedValues::Unique(scaled.len())
                 } else {
                     let exp = 2_f64.powf(params.exp as f64);
                     let coded = scaled
@@ -177,27 +177,26 @@ pub(crate) fn determine_simple_packing_params(
         })
         .collect::<Vec<_>>();
     let ref_val = min as f32;
-    if min == max {
-        let params = SimplePacking {
+    let params = if min == max {
+        SimplePacking {
             ref_val,
             exp: 0,
             dec,
             num_bits: 0,
-        };
-        (params, Vec::new(), bitmap)
+        }
     } else {
         let range = max - min;
         let exp = 0;
         let num_bits = range.bits_required();
         // TODO: if `num_bits` is too large, increase `exp` to reduce `num_bits`.
-        let params = SimplePacking {
+        SimplePacking {
             ref_val,
             exp,
             dec,
             num_bits,
-        };
-        (params, scaled, bitmap)
-    }
+        }
+    };
+    (params, scaled, bitmap)
 }
 
 #[derive(Debug)]
