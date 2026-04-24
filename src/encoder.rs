@@ -165,8 +165,7 @@ pub fn write_section1(
     }
 
     let mut pos = 0;
-    pos += (LEN as u32).write_to_buffer(&mut buf[pos..])?;
-    pos += 1_u8.write_to_buffer(&mut buf[pos..])?;
+    pos += write_section_header(LEN as u32, 1, &mut buf[pos..])?;
     pos += payload.write_to_buffer(&mut buf[pos..])?;
     Ok(pos)
 }
@@ -181,8 +180,7 @@ pub fn write_section3(
     }
 
     let mut pos = 0;
-    pos += (len as u32).write_to_buffer(&mut buf[pos..])?;
-    pos += 3_u8.write_to_buffer(&mut buf[pos..])?;
+    pos += write_section_header(len as u32, 3, &mut buf[pos..])?;
     pos += payload.write_to_buffer(&mut buf[pos..])?;
     Ok(pos)
 }
@@ -193,6 +191,10 @@ pub fn write_section8(buf: &mut [u8]) -> Result<usize, &'static str> {
         return Err("destination buffer is too small");
     }
     SIGNATURE.write_to_buffer(buf)
+}
+
+fn write_section_header(len: u32, sect_num: u8, buf: &mut [u8]) -> Result<usize, &'static str> {
+    crate::def::grib2::SectionHeader { len, sect_num }.write_to_buffer(buf)
 }
 
 mod bitmap;
