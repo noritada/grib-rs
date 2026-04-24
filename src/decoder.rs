@@ -185,11 +185,15 @@ impl Grib2SubmessageDecoder {
                 )));
             }
         };
-        let decoder = BitmapDecodeIterator::new(
-            self.sect6_bytes[6..].iter(),
-            decoder,
+
+        let bitmap_slice = &self.sect6_bytes[6..];
+        bitmap::check_consistency(
             self.num_points_total,
+            self.num_encoded_points(),
+            bitmap_slice,
         )?;
+        let decoder =
+            BitmapDecodeIterator::new(bitmap_slice.iter(), decoder, self.num_points_total);
         Ok(Grib2DecodedValues(decoder))
     }
 
