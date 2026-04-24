@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.15.5] - 2026-04-24
+### Enhancements
+
+- `Grib2SubmessageDecoder` now runs a consistency check between the number of grid points and the bit-map before decoding.
+  (PR #182)
+
+### Fixes
+
+- Fix an issue in v0.15.4 that the number of points becomes inconsistent in the generated data containing a bit-map.
+  (PR #181)
+
+### Versions
+
+```
+grib 0.15.5
+grib-cli 0.15.5
+```
+
 ## [0.15.4] - 2026-04-21
 ### Enhancements
 
@@ -943,7 +961,8 @@ grib-build 0.1.0
 grib 0.1.0
 ```
 
-[unreleased]: https://github.com/noritada/grib-rs/compare/v0.15.4...HEAD
+[unreleased]: https://github.com/noritada/grib-rs/compare/v0.15.5...HEAD
+[0.15.5]: https://github.com/noritada/grib-rs/compare/v0.15.4...v0.15.5
 [0.15.4]: https://github.com/noritada/grib-rs/compare/v0.15.3...v0.15.4
 [0.15.3]: https://github.com/noritada/grib-rs/compare/v0.15.2...v0.15.3
 [0.15.2]: https://github.com/noritada/grib-rs/compare/v0.15.1...v0.15.2
