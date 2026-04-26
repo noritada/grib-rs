@@ -54,6 +54,22 @@ fn impl_try_from_slice_for_struct(
         let ident = field.ident.as_ref().unwrap();
         let ty = &field.ty;
 
+        let num_octets_attr = field.attrs.iter().find_map(|attr| {
+            attr_value(attr, "num_octets").and_then(|v| parse_num_octets_attr(&v))
+        });
+        if let Some(num_octets) = num_octets_attr {
+            field_reads.push(quote! {
+                let #ident = <#ty as grib_template_helpers::TryFromArray>::try_from_array(
+                        <[u8; #num_octets] as grib_template_helpers::TryFromSlice>::try_from_slice(
+                            slice,
+                            pos,
+                        )?,
+                    ).map_err(|_| "slice length is too short")?;
+            });
+            idents.push(ident);
+            continue;
+        }
+
         let len_attr = field
             .attrs
             .iter()
@@ -218,6 +234,16 @@ fn attr_value(attr: &syn::Attribute, ident: &str) -> Option<syn::Expr> {
         Some(nv.value)
     } else {
         None
+    }
+}
+
+fn parse_num_octets_attr(attr_value: &syn::Expr) -> Option<usize> {
+    match attr_value {
+        syn::Expr::Lit(syn::ExprLit {
+            lit: syn::Lit::Int(lit_int),
+            ..
+        }) => Some(lit_int.base10_parse::<usize>().unwrap()),
+        _ => None,
     }
 }
 
