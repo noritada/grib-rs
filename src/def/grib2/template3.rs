@@ -242,6 +242,21 @@ pub struct Template3_40 {
     pub gaussian: param_set::GaussianGrid,
 }
 
+/// Grid definition template 3.101 - general unstructured grid.
+#[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
+pub struct Template3_101 {
+    /// Shape of the Earth (see Code table 3.2).
+    pub earth_shape: u8,
+    /// Number of grid used (defined by originating centre).
+    #[grib_template(num_octets = 3)]
+    pub grid_num: u32,
+    /// Number of grid in reference (to allow annotating for Arakawa C-grid on
+    /// arbitrary grid) (see Note).
+    pub ref_grid_num: u8,
+    /// Universally Unique Identifier of horizontal grid.
+    pub uuid: [u8; 16],
+}
+
 pub(crate) mod param_set {
     use grib_template_derive::{Dump, TryFromSlice, WriteToBuffer};
 

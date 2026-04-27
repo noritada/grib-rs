@@ -110,6 +110,7 @@ pub enum GridDefinitionTemplate {
     _3_20(template3::Template3_20) = 20,
     _3_30(template3::Template3_30) = 30,
     _3_40(template3::Template3_40) = 40,
+    _3_101(template3::Template3_101) = 101,
 }
 
 /// Section 4 - Product definition section.
