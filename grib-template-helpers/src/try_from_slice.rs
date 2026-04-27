@@ -109,25 +109,21 @@ impl<T: TryFromSlice> TryFromSlice for Option<T> {
     }
 }
 
-pub trait TryFromArray {
-    fn try_from_array<const N: usize>(bytes: [u8; N]) -> TryFromSliceResult<Self>
-    where
-        Self: Sized;
-}
-
 macro_rules! add_try_from_array_impl_for_unsigned_integer_types {
     ($($ty:ty,)*) => ($(
-        impl TryFromArray for $ty {
-            fn try_from_array<const N: usize>(bytes: [u8; N]) -> TryFromSliceResult<$ty> {
+        impl<const N: usize> TryFrom<[u8; N]> for crate::NonStdLenUint<$ty> {
+            type Error = &'static str;
+
+            fn try_from(value: [u8; N]) -> Result<Self, Self::Error> {
                 if N > (<$ty>::BITS / 8) as usize {
                     return Err("array length is too short");
                 }
 
                 let mut n = 0;
                 for i in 0..N {
-                    n += (bytes[i] as $ty) << ((N - 1 - i) * 8);
+                    n += (value[i] as $ty) << ((N - 1 - i) * 8);
                 }
-                Ok(n)
+                Ok(crate::NonStdLenUint::new(n, N))
             }
         }
     )*);

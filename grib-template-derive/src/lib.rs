@@ -59,12 +59,12 @@ fn impl_try_from_slice_for_struct(
         });
         if let Some(num_octets) = num_octets_attr {
             field_reads.push(quote! {
-                let #ident = <#ty as grib_template_helpers::TryFromArray>::try_from_array(
+                let #ident = grib_template_helpers::NonStdLenUint::try_from(
                         <[u8; #num_octets] as grib_template_helpers::TryFromSlice>::try_from_slice(
                             slice,
                             pos,
                         )?,
-                    ).map_err(|_| "slice length is too short")?;
+                    ).map_err(|_| "slice length is too short")?.inner();
             });
             idents.push(ident);
             continue;

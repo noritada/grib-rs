@@ -8,6 +8,10 @@ impl<N> NonStdLenUint<N> {
         Self { val, num_octets }
     }
 
+    pub fn inner(self) -> N {
+        self.val
+    }
+
     pub fn val(&self) -> &N {
         &self.val
     }
