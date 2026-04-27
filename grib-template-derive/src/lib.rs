@@ -455,7 +455,7 @@ fn impl_write_to_buffer_for_enum(
 }
 
 /// Derive macro generating an impl of the trait `grib_template_helpers::Dump`.
-#[proc_macro_derive(Dump)]
+#[proc_macro_derive(Dump, attributes(grib_template))]
 pub fn derive_dump(input: TokenStream) -> TokenStream {
     let input = syn::parse_macro_input!(input as syn::DeriveInput);
 
@@ -515,6 +515,24 @@ fn impl_dump_for_struct(
         let doc = get_doc(&field.attrs)
             .map(|s| format!("  // {}", s.trim()))
             .unwrap_or_default();
+
+        let num_octets_attr = field.attrs.iter().find_map(|attr| {
+            attr_value(attr, "num_octets").and_then(|v| parse_num_octets_attr(&v))
+        });
+        if let Some(num_octets) = num_octets_attr {
+            dumps.push(quote! {
+                <grib_template_helpers::NonStdLenUint<#ty> as grib_template_helpers::DumpField>::dump_field(
+                    &grib_template_helpers::NonStdLenUint::new(self.#ident, #num_octets),
+                    stringify!(#ident),
+                    parent,
+                    #doc,
+                    pos,
+                    output,
+                )?;
+            });
+            continue;
+        }
+
         dumps.push(quote! {
             <#ty as grib_template_helpers::DumpField>::dump_field(
                 &self.#ident,

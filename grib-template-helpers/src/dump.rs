@@ -155,6 +155,24 @@ where
     }
 }
 
+impl<T: std::fmt::Debug> DumpField for crate::NonStdLenUint<T> {
+    fn dump_field<W: Write>(
+        &self,
+        name: &str,
+        parent: Option<&Cow<str>>,
+        doc: &str,
+        pos: &mut usize,
+        output: &mut W,
+    ) -> Result<(), Error> {
+        let size = self.octet_size();
+        write_position_column(output, pos, size)?;
+        if let Some(parent) = parent {
+            write!(output, "{}.", parent)?;
+        }
+        writeln!(output, "{} = {:?}{}", name, self.val(), doc,)
+    }
+}
+
 impl<T: Dump> DumpField for T {
     fn dump_field<W: Write>(
         &self,
@@ -212,6 +230,12 @@ impl<T: OctetSize> OctetSize for Option<T> {
 impl<const N: usize> OctetSize for [u8; N] {
     fn octet_size(&self) -> usize {
         N
+    }
+}
+
+impl<T> OctetSize for crate::NonStdLenUint<T> {
+    fn octet_size(&self) -> usize {
+        self.num_octets()
     }
 }
 
