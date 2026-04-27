@@ -155,6 +155,30 @@ impl<T: WriteToBuffer> WriteToBuffer for Vec<T> {
     }
 }
 
+macro_rules! add_impl_for_non_standard_length_unsigned_integer_types {
+    ($($ty:ty,)*) => ($(
+        impl WriteToBuffer for crate::NonStdLenUint<$ty> {
+            fn write_to_buffer(&self, buf: &mut [u8]) -> Result<usize, &'static str> {
+                let len = self.num_bytes_required();
+                if buf.len() < len {
+                    return Err("destination buffer is too small");
+                }
+
+                let bytes = self.val().to_be_bytes();
+                let slice = &bytes[(bytes.len() - len)..];
+                buf[0..len].copy_from_slice(slice);
+                Ok(len)
+            }
+
+            fn num_bytes_required(&self) -> usize {
+                self.num_octets()
+            }
+        }
+    )*);
+}
+
+add_impl_for_non_standard_length_unsigned_integer_types![u16, u32, u64,];
+
 mod to_grib_signed;
 
 #[cfg(test)]

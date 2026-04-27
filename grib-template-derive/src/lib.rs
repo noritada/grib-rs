@@ -347,6 +347,26 @@ fn impl_write_to_buffer_for_struct(
         let ident = field.ident.as_ref().unwrap();
         let ty = &field.ty;
 
+        let num_octets_attr = field.attrs.iter().find_map(|attr| {
+            attr_value(attr, "num_octets").and_then(|v| parse_num_octets_attr(&v))
+        });
+        if let Some(num_octets) = num_octets_attr {
+            writes.push(quote! {
+                pos += <grib_template_helpers::NonStdLenUint<#ty> as grib_template_helpers::WriteToBuffer>::write_to_buffer(
+                    &grib_template_helpers::NonStdLenUint::new(self.#ident, #num_octets),
+                    &mut buf[pos..],
+                )?;
+            });
+
+            sizes.push(quote! {
+                size += <grib_template_helpers::NonStdLenUint<#ty> as grib_template_helpers::WriteToBuffer>::num_bytes_required(
+                    &grib_template_helpers::NonStdLenUint::new(self.#ident, #num_octets),
+                );
+            });
+
+            continue;
+        }
+
         writes.push(quote! {
             pos += <#ty as grib_template_helpers::WriteToBuffer>::write_to_buffer(
                 &self.#ident,
