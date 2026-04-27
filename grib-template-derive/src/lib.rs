@@ -57,7 +57,7 @@ fn impl_try_from_slice_for_struct(
         let len_attr = field
             .attrs
             .iter()
-            .find_map(|attr| attr_value(attr, "len").map(|v| parse_len_attr(&v)));
+            .find_map(|attr| attr_value(attr, "len").and_then(|v| parse_len_attr(&v)));
         if let Some(len) = len_attr {
             if let syn::Type::Path(type_path) = ty
                 && let Some((inner_ty, has_option)) = extract_vec_inner(type_path)
@@ -99,7 +99,7 @@ fn impl_try_from_slice_for_struct(
         let disc_attr = field
             .attrs
             .iter()
-            .find_map(|attr| attr_value(attr, "variant").map(|v| parse_variant_attr(&v)));
+            .find_map(|attr| attr_value(attr, "variant").and_then(|v| parse_variant_attr(&v)));
         if let Some(disc_ident) = disc_attr {
             field_reads.push(quote! {
                 let #ident = <#ty as grib_template_helpers::TryEnumFromSlice>::try_enum_from_slice(
@@ -174,9 +174,14 @@ fn impl_try_from_slice_for_enum(
                 slice: &[u8],
                 pos: &mut usize,
             ) -> grib_template_helpers::TryFromSliceResult<Self> {
-                match discriminant.into() {
+                let discriminant = discriminant.into();
+                match discriminant {
                     #(#arms),*,
-                    _ => panic!("unknown variant for {}", stringify!(#name)),
+                    _ => panic!(
+                        "unknown variant for {} (discriminant = {})",
+                        stringify!(#name),
+                        &discriminant
+                    ),
                 }
             }
         }

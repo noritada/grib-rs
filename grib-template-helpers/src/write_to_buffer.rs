@@ -65,9 +65,7 @@ macro_rules! add_impl_for_unsigned_integer_types {
                 }
 
                 let bytes = self.to_be_bytes();
-                for i in 0..self.num_bytes_required() {
-                    buf[i] = bytes[i];
-                }
+                buf[0..len].copy_from_slice(&bytes[..]);
                 Ok(len)
             }
 
