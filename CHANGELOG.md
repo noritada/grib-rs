@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.15.6] - 2026-04-27
+### New supports
+
+- Reading, accessing, and dumping section/template parameters:
+  - Template 3.101
+    (#167, PR #184)
+
+### Enhancements to helper crates
+
+- `TryFromSlice`, `WriteToBuffer`, and `Dump` traits, which are provided by grib-template-helpers, are now implemented by `[u8; N]`.
+  (PR #184)
+- Conversion between unsigned integer values and non-standard-length byte sequences is now supported by derive macros `TryFromSlice`, `WriteToBuffer`, and `Dump`, which are provided by grib-template-derive.
+  (PR #184)
+
+### Versions
+
+```
+grib 0.15.6
+grib-cli 0.15.6
+grib-template-derive 0.1.6
+grib-template-helpers 0.1.4
+```
+
 ## [0.15.5] - 2026-04-24
 ### Enhancements
 
@@ -961,7 +984,8 @@ grib-build 0.1.0
 grib 0.1.0
 ```
 
-[unreleased]: https://github.com/noritada/grib-rs/compare/v0.15.5...HEAD
+[unreleased]: https://github.com/noritada/grib-rs/compare/v0.15.6...HEAD
+[0.15.6]: https://github.com/noritada/grib-rs/compare/v0.15.5...v0.15.6
 [0.15.5]: https://github.com/noritada/grib-rs/compare/v0.15.4...v0.15.5
 [0.15.4]: https://github.com/noritada/grib-rs/compare/v0.15.3...v0.15.4
 [0.15.3]: https://github.com/noritada/grib-rs/compare/v0.15.2...v0.15.3
