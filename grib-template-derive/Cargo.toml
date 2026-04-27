@@ -3,7 +3,7 @@ name = "grib-template-derive"
 description = """
 Derive macros for the `grib` crate, used as an internal dependency
 """
-version = "0.1.5"
+version = "0.1.6"
 authors.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -25,7 +25,7 @@ path = "tests/runner.rs"
 trybuild = { version = "1.0.49", features = ["diff"] }
 
 [dependencies]
-grib-template-helpers = { path = "../grib-template-helpers", version = "=0.1.3" }
+grib-template-helpers = { path = "../grib-template-helpers", version = "=0.1.4" }
 proc-macro2 = "1"
 quote = "1"
 syn = "2"
