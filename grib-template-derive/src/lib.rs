@@ -54,6 +54,22 @@ fn impl_try_from_slice_for_struct(
         let ident = field.ident.as_ref().unwrap();
         let ty = &field.ty;
 
+        let num_octets_attr = field.attrs.iter().find_map(|attr| {
+            attr_value(attr, "num_octets").and_then(|v| parse_num_octets_attr(&v))
+        });
+        if let Some(num_octets) = num_octets_attr {
+            field_reads.push(quote! {
+                let #ident = grib_template_helpers::NonStdLenUint::try_from(
+                        <[u8; #num_octets] as grib_template_helpers::TryFromSlice>::try_from_slice(
+                            slice,
+                            pos,
+                        )?,
+                    ).map_err(|_| "slice length is too short")?.inner();
+            });
+            idents.push(ident);
+            continue;
+        }
+
         let len_attr = field
             .attrs
             .iter()
@@ -221,6 +237,16 @@ fn attr_value(attr: &syn::Attribute, ident: &str) -> Option<syn::Expr> {
     }
 }
 
+fn parse_num_octets_attr(attr_value: &syn::Expr) -> Option<usize> {
+    match attr_value {
+        syn::Expr::Lit(syn::ExprLit {
+            lit: syn::Lit::Int(lit_int),
+            ..
+        }) => Some(lit_int.base10_parse::<usize>().unwrap()),
+        _ => None,
+    }
+}
+
 fn parse_len_attr(attr_value: &syn::Expr) -> Option<LenKind> {
     match attr_value {
         syn::Expr::Lit(syn::ExprLit {
@@ -321,6 +347,26 @@ fn impl_write_to_buffer_for_struct(
         let ident = field.ident.as_ref().unwrap();
         let ty = &field.ty;
 
+        let num_octets_attr = field.attrs.iter().find_map(|attr| {
+            attr_value(attr, "num_octets").and_then(|v| parse_num_octets_attr(&v))
+        });
+        if let Some(num_octets) = num_octets_attr {
+            writes.push(quote! {
+                pos += <grib_template_helpers::NonStdLenUint<#ty> as grib_template_helpers::WriteToBuffer>::write_to_buffer(
+                    &grib_template_helpers::NonStdLenUint::new(self.#ident, #num_octets),
+                    &mut buf[pos..],
+                )?;
+            });
+
+            sizes.push(quote! {
+                size += <grib_template_helpers::NonStdLenUint<#ty> as grib_template_helpers::WriteToBuffer>::num_bytes_required(
+                    &grib_template_helpers::NonStdLenUint::new(self.#ident, #num_octets),
+                );
+            });
+
+            continue;
+        }
+
         writes.push(quote! {
             pos += <#ty as grib_template_helpers::WriteToBuffer>::write_to_buffer(
                 &self.#ident,
@@ -409,7 +455,7 @@ fn impl_write_to_buffer_for_enum(
 }
 
 /// Derive macro generating an impl of the trait `grib_template_helpers::Dump`.
-#[proc_macro_derive(Dump)]
+#[proc_macro_derive(Dump, attributes(grib_template))]
 pub fn derive_dump(input: TokenStream) -> TokenStream {
     let input = syn::parse_macro_input!(input as syn::DeriveInput);
 
@@ -469,6 +515,24 @@ fn impl_dump_for_struct(
         let doc = get_doc(&field.attrs)
             .map(|s| format!("  // {}", s.trim()))
             .unwrap_or_default();
+
+        let num_octets_attr = field.attrs.iter().find_map(|attr| {
+            attr_value(attr, "num_octets").and_then(|v| parse_num_octets_attr(&v))
+        });
+        if let Some(num_octets) = num_octets_attr {
+            dumps.push(quote! {
+                <grib_template_helpers::NonStdLenUint<#ty> as grib_template_helpers::DumpField>::dump_field(
+                    &grib_template_helpers::NonStdLenUint::new(self.#ident, #num_octets),
+                    stringify!(#ident),
+                    parent,
+                    #doc,
+                    pos,
+                    output,
+                )?;
+            });
+            continue;
+        }
+
         dumps.push(quote! {
             <#ty as grib_template_helpers::DumpField>::dump_field(
                 &self.#ident,

@@ -20,6 +20,11 @@ pub struct Params {
     field8: Vec<i16>,
     field9: TypeWithGenerics,
     field10: TupleStruct,
+    /// Field 11
+    field11: [u8; 5],
+    /// Field 12
+    #[grib_template(num_octets = 3)]
+    field12: u32,
 }
 
 #[derive(Debug, PartialEq, Eq, grib_template_derive::WriteToBuffer)]
@@ -74,13 +79,16 @@ fn main() {
         field8: vec![-0x70f1],
         field9: ParamsWithGenerics { field1: -0x70f1 },
         field10: TupleStruct(0x08),
+        field11: [1, 2, 3, 4, 5],
+        field12: 0x012345,
     };
-    let mut buf = vec![0_u8; 25];
+    let mut buf = vec![0_u8; 33];
     let result = params.write_to_buffer(&mut buf);
-    assert_eq!(result, Ok(25));
+    assert_eq!(result, Ok(33));
     let expected_buf = vec![
         0x01_u8, 0xff, 0x00, 0xff, 0x00, 0x3f, 0x80, 0x00, 0x00, 0xf0, 0x0f, 0x01, 0xf0, 0xf1,
-        0xf2, 0xf3, 0xf4, 0xf5, 0xf6, 0xf7, 0xf0, 0xf1, 0xf0, 0xf1, 0x08,
+        0xf2, 0xf3, 0xf4, 0xf5, 0xf6, 0xf7, 0xf0, 0xf1, 0xf0, 0xf1, 0x08, 0x01, 0x02, 0x03, 0x04,
+        0x05, 0x01, 0x23, 0x45,
     ];
     assert_eq!(buf, expected_buf);
 }
