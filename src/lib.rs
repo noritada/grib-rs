@@ -13,6 +13,8 @@ mod grid;
 mod helpers;
 mod parser;
 mod reader;
+#[cfg(test)]
+mod test_utils;
 mod time;
 pub mod utils;
 
