@@ -1337,12 +1337,7 @@ mod tests {
         ),)*) => ($(
             #[test]
             fn $name() -> Result<(), Box<dyn std::error::Error>> {
-                let mut buf = Vec::new();
-
-                let f = File::open($xz_compressed_input)?;
-                let f = BufReader::new(f);
-                let mut f = xz2::bufread::XzDecoder::new(f);
-                f.read_to_end(&mut buf)?;
+                let buf = crate::test_utils::get_uncompressed($xz_compressed_input)?;
 
                 let f = Cursor::new(buf);
                 let grib2 = crate::from_reader(f)?;
