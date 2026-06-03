@@ -60,7 +60,7 @@ pub(crate) fn impl_try_from_slice_for_struct(
         let len_attr = field
             .attrs
             .iter()
-            .find_map(|attr| attr_value(attr, "len").and_then(|v| parse_len_attr(&v)));
+            .find_map(|attr| LenKind::try_from(attr).ok());
         if let Some(len) = len_attr {
             if let syn::Type::Path(type_path) = ty
                 && let Some((inner_ty, has_option)) = extract_vec_inner(type_path)
@@ -191,9 +191,33 @@ pub(crate) fn impl_try_from_slice_for_enum(
     }
 }
 
+#[derive(Debug, PartialEq, Eq)]
 pub(crate) enum LenKind {
     Literal(usize),
     Ident(syn::Ident),
+}
+
+impl TryFrom<&syn::Attribute> for LenKind {
+    type Error = &'static str;
+
+    fn try_from(value: &syn::Attribute) -> Result<Self, Self::Error> {
+        attr_value(value, "len")
+            .and_then(|v| match v {
+                syn::Expr::Lit(syn::ExprLit {
+                    lit: syn::Lit::Int(lit_int),
+                    ..
+                }) => Some(LenKind::Literal(lit_int.base10_parse::<usize>().unwrap())),
+                syn::Expr::Lit(syn::ExprLit {
+                    lit: syn::Lit::Str(lit_str),
+                    ..
+                }) => Some(LenKind::Ident(syn::Ident::new(
+                    &lit_str.value(),
+                    lit_str.span(),
+                ))),
+                _ => None,
+            })
+            .ok_or(r#"parsing "len" failed"#)
+    }
 }
 
 impl quote::ToTokens for LenKind {
@@ -206,23 +230,6 @@ impl quote::ToTokens for LenKind {
                 tokens.extend(quote! { #ident as usize });
             }
         }
-    }
-}
-
-pub(crate) fn parse_len_attr(attr_value: &syn::Expr) -> Option<LenKind> {
-    match attr_value {
-        syn::Expr::Lit(syn::ExprLit {
-            lit: syn::Lit::Int(lit_int),
-            ..
-        }) => Some(LenKind::Literal(lit_int.base10_parse::<usize>().unwrap())),
-        syn::Expr::Lit(syn::ExprLit {
-            lit: syn::Lit::Str(lit_str),
-            ..
-        }) => Some(LenKind::Ident(syn::Ident::new(
-            &lit_str.value(),
-            lit_str.span(),
-        ))),
-        _ => None,
     }
 }
 
@@ -258,4 +265,32 @@ pub(crate) fn extract_vec_inner(type_path: &syn::TypePath) -> Option<(syn::Type,
         }
     }
     None
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parsing_literal_len_attr() {
+        let attr: syn::Attribute = syn::parse_quote! {
+            #[grib_template(len = 3)]
+        };
+        let parsed = LenKind::try_from(&attr);
+        assert_eq!(parsed, Ok(LenKind::Literal(3)));
+    }
+
+    #[test]
+    fn parsing_ident_len_attr() {
+        let attr: syn::Attribute = syn::parse_quote! {
+            #[grib_template(len = "field1")]
+        };
+        let parsed = LenKind::try_from(&attr);
+        if let Ok(LenKind::Ident(ident)) = parsed
+            && ident.to_string() == "field1"
+        {
+            return;
+        }
+        panic!(r#"parsing "len" is failure"#);
+    }
 }
