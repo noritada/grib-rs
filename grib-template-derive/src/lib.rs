@@ -7,8 +7,8 @@ pub fn derive_try_from_slice(input: TokenStream) -> TokenStream {
     let input = syn::parse_macro_input!(input as syn::DeriveInput);
 
     match &input.data {
-        syn::Data::Struct(data) => try_from_slice::impl_try_from_slice_for_struct(&input, data),
-        syn::Data::Enum(data) => try_from_slice::impl_try_from_slice_for_enum(&input, data),
+        syn::Data::Struct(data) => try_from_slice::impl_for_struct(&input, data),
+        syn::Data::Enum(data) => try_from_slice::impl_for_enum(&input, data),
         _ => unimplemented!("`TryFromSlice` can only be derived for structs/enums"),
     }
     .into()
@@ -21,8 +21,8 @@ pub fn derive_write_to_buffer(input: TokenStream) -> TokenStream {
     let input = syn::parse_macro_input!(input as syn::DeriveInput);
 
     match &input.data {
-        syn::Data::Struct(data) => write_to_buffer::impl_write_to_buffer_for_struct(&input, data),
-        syn::Data::Enum(data) => write_to_buffer::impl_write_to_buffer_for_enum(&input, data),
+        syn::Data::Struct(data) => write_to_buffer::impl_for_struct(&input, data),
+        syn::Data::Enum(data) => write_to_buffer::impl_for_enum(&input, data),
         _ => unimplemented!("`WriteToBuffer` can only be derived for structs/enums"),
     }
     .into()
@@ -34,8 +34,8 @@ pub fn derive_dump(input: TokenStream) -> TokenStream {
     let input = syn::parse_macro_input!(input as syn::DeriveInput);
 
     match &input.data {
-        syn::Data::Struct(data) => dump::impl_dump_for_struct(&input, data),
-        syn::Data::Enum(data) => dump::impl_dump_for_enum(&input, data),
+        syn::Data::Struct(data) => dump::impl_for_struct(&input, data),
+        syn::Data::Enum(data) => dump::impl_for_enum(&input, data),
         _ => unimplemented!("`Dump` can only be derived for structs/enums"),
     }
     .into()

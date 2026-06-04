@@ -2,7 +2,7 @@ use quote::quote;
 
 use super::helpers::attr_value;
 
-pub(crate) fn impl_try_from_slice_for_struct(
+pub(crate) fn impl_for_struct(
     input: &syn::DeriveInput,
     data: &syn::DataStruct,
 ) -> proc_macro2::TokenStream {
@@ -134,7 +134,7 @@ pub(crate) fn impl_try_from_slice_for_struct(
     }
 }
 
-pub(crate) fn impl_try_from_slice_for_enum(
+pub(crate) fn impl_for_enum(
     input: &syn::DeriveInput,
     data: &syn::DataEnum,
 ) -> proc_macro2::TokenStream {

@@ -1,6 +1,6 @@
 use quote::quote;
 
-pub(crate) fn impl_dump_for_struct(
+pub(crate) fn impl_for_struct(
     input: &syn::DeriveInput,
     data: &syn::DataStruct,
 ) -> proc_macro2::TokenStream {
@@ -94,7 +94,7 @@ pub(crate) fn impl_dump_for_struct(
     }
 }
 
-pub(crate) fn impl_dump_for_enum(
+pub(crate) fn impl_for_enum(
     input: &syn::DeriveInput,
     data: &syn::DataEnum,
 ) -> proc_macro2::TokenStream {
