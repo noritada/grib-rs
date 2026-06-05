@@ -19,13 +19,28 @@ pub(crate) fn attr_value(attr: &syn::Attribute, ident: &str) -> Option<syn::Expr
     }
 }
 
-pub(crate) fn parse_num_octets_attr(attr_value: &syn::Expr) -> Option<usize> {
-    match attr_value {
-        syn::Expr::Lit(syn::ExprLit {
-            lit: syn::Lit::Int(lit_int),
-            ..
-        }) => Some(lit_int.base10_parse::<usize>().unwrap()),
-        _ => None,
+#[derive(Debug, PartialEq, Eq)]
+pub(crate) struct NumOctets(usize);
+
+impl TryFrom<&syn::Attribute> for NumOctets {
+    type Error = &'static str;
+
+    fn try_from(value: &syn::Attribute) -> Result<Self, Self::Error> {
+        attr_value(value, "num_octets")
+            .and_then(|v| match v {
+                syn::Expr::Lit(syn::ExprLit {
+                    lit: syn::Lit::Int(lit_int),
+                    ..
+                }) => Some(Self(lit_int.base10_parse::<usize>().unwrap())),
+                _ => None,
+            })
+            .ok_or(r#"parsing "num_octets" failed"#)
+    }
+}
+
+impl quote::ToTokens for NumOctets {
+    fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
+        self.0.to_tokens(tokens);
     }
 }
 

@@ -41,9 +41,10 @@ pub(crate) fn impl_for_struct(
         let ident = field.ident.as_ref().unwrap();
         let ty = &field.ty;
 
-        let num_octets_attr = field.attrs.iter().find_map(|attr| {
-            attr_value(attr, "num_octets").and_then(|v| super::helpers::parse_num_octets_attr(&v))
-        });
+        let num_octets_attr = field
+            .attrs
+            .iter()
+            .find_map(|attr| super::helpers::NumOctets::try_from(attr).ok());
         if let Some(num_octets) = num_octets_attr {
             field_reads.push(quote! {
                 let #ident = grib_template_helpers::NonStdLenUint::try_from(
@@ -102,7 +103,7 @@ pub(crate) fn impl_for_struct(
         let disc_attr = field
             .attrs
             .iter()
-            .find_map(|attr| attr_value(attr, "variant").and_then(|v| parse_variant_attr(&v)));
+            .find_map(|attr| Variant::try_from(attr).ok());
         if let Some(disc_ident) = disc_attr {
             field_reads.push(quote! {
                 let #ident = <#ty as grib_template_helpers::TryEnumFromSlice>::try_enum_from_slice(
@@ -233,13 +234,28 @@ impl quote::ToTokens for LenKind {
     }
 }
 
-pub(crate) fn parse_variant_attr(attr_value: &syn::Expr) -> Option<syn::Ident> {
-    match attr_value {
-        syn::Expr::Lit(syn::ExprLit {
-            lit: syn::Lit::Str(lit_str),
-            ..
-        }) => Some(syn::Ident::new(&lit_str.value(), lit_str.span())),
-        _ => None,
+#[derive(Debug, PartialEq, Eq)]
+struct Variant(syn::Ident);
+
+impl TryFrom<&syn::Attribute> for Variant {
+    type Error = &'static str;
+
+    fn try_from(value: &syn::Attribute) -> Result<Self, Self::Error> {
+        attr_value(value, "variant")
+            .and_then(|v| match v {
+                syn::Expr::Lit(syn::ExprLit {
+                    lit: syn::Lit::Str(lit_str),
+                    ..
+                }) => Some(Self(syn::Ident::new(&lit_str.value(), lit_str.span()))),
+                _ => None,
+            })
+            .ok_or(r#"parsing "variant" failed"#)
+    }
+}
+
+impl quote::ToTokens for Variant {
+    fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
+        self.0.to_tokens(tokens);
     }
 }
 
