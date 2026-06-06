@@ -140,18 +140,21 @@ pub trait WriteGrib2DataSections {
 }
 
 pub fn write_section0(discipline: u8, len: usize, buf: &mut [u8]) -> Result<usize, &'static str> {
-    const HEAD: [u8; 6] = [0x47, 0x52, 0x49, 0x42, 0xff, 0xff];
-    const EDITION: u8 = 2;
     const LEN: usize = 16;
     if buf.len() < LEN {
         return Err("destination buffer is too small");
     }
 
+    let sect = crate::def::grib2::Section0 {
+        identifier: [0x47, 0x52, 0x49, 0x42],
+        reserved: [0xff, 0xff],
+        discipline,
+        edition_num: 2,
+        total_len: len as u64,
+    };
+
     let mut pos = 0;
-    pos += HEAD.write_to_buffer(&mut buf[pos..])?;
-    pos += discipline.write_to_buffer(&mut buf[pos..])?;
-    pos += EDITION.write_to_buffer(&mut buf[pos..])?;
-    pos += (len as u64).write_to_buffer(&mut buf[pos..])?;
+    pos += sect.write_to_buffer(&mut buf[pos..])?;
     Ok(pos)
 }
 

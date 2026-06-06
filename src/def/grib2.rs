@@ -19,6 +19,21 @@ pub struct SectionHeader {
     pub sect_num: u8,
 }
 
+/// SECTION 0 - Indicator section.
+#[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
+pub struct Section0 {
+    /// "GRIB" (coded according to the International Alphabet No. 5).
+    pub identifier: [u8; 4],
+    /// Reserved.
+    pub reserved: [u8; 2],
+    /// Discipline - GRIB Master Table Number (see Code Table 0.0).
+    pub discipline: u8,
+    /// GRIB Edition Number (currently 2).
+    pub edition_num: u8,
+    /// Total length of GRIB message in octets (including Section 0).
+    pub total_len: u64,
+}
+
 /// Section 1 - Identification section.
 pub type Section1 = Section<Section1Payload>;
 
