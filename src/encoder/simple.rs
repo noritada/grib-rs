@@ -10,6 +10,7 @@ use crate::{
 /// Simple packing is a method for discretizing continuous numerical values as
 /// integers, and various approaches can be taken during this process.
 #[derive(Debug, PartialEq, Eq, Clone)]
+#[non_exhaustive]
 pub enum SimplePackingStrategy {
     /// A strategy specifying how many decimal places to consider valid for the
     /// numbers. This strategy is effective for various types of data, such as

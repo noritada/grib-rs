@@ -7,6 +7,7 @@ use std::{
 use crate::decoder::*;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[non_exhaustive]
 pub enum GribError {
     InternalDataError,
     ParseError(ParseError),
@@ -54,6 +55,7 @@ impl Display for GribError {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[non_exhaustive]
 pub enum ParseError {
     ReadError(String),
     #[deprecated(
@@ -112,6 +114,7 @@ impl From<BuildError> for ParseError {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[non_exhaustive]
 pub enum BuildError {
     SectionSizeTooSmall(usize),
 }

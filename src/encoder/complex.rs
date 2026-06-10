@@ -11,6 +11,7 @@ use crate::{
 /// and efficiently compresses each group to improve the overall compression
 /// ratio of the data.
 #[derive(Debug, PartialEq, Eq, Clone)]
+#[non_exhaustive]
 pub enum ComplexPackingStrategy {
     /// A strategy that pre-reads a specified number of elements to determine
     /// whether to add an element to the current group.
@@ -18,6 +19,7 @@ pub enum ComplexPackingStrategy {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
+#[non_exhaustive]
 pub enum SpatialDifferencingOption {
     None,
 }

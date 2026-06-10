@@ -327,6 +327,7 @@ impl<'d> Iterator for Grib2ValueIterator<'d> {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[non_exhaustive]
 pub enum DecodeError {
     NotSupported(&'static str, u16),
     LengthMismatch,
