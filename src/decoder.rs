@@ -170,7 +170,10 @@ impl Grib2SubmessageDecoder {
             DataRepresentationTemplate::_5_41(template) => {
                 Grib2ValueIterator::SigSNV(png::Png(self, template).iter()?)
             }
-            #[cfg(feature = "ccsds-unpack-with-libaec")]
+            #[cfg(any(
+                feature = "ccsds-unpack-with-libaec",
+                feature = "ccsds-unpack-with-rust-aec"
+            ))]
             DataRepresentationTemplate::_5_42(template) => {
                 Grib2ValueIterator::SigSNV(ccsds::Ccsds(self, template).iter()?)
             }
@@ -354,7 +357,10 @@ pub(crate) trait Grib2GpvUnpack {
 }
 
 mod bitmap;
-#[cfg(feature = "ccsds-unpack-with-libaec")]
+#[cfg(any(
+    feature = "ccsds-unpack-with-libaec",
+    feature = "ccsds-unpack-with-rust-aec"
+))]
 mod ccsds;
 mod complex;
 mod helpers;
