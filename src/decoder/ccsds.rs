@@ -31,7 +31,7 @@ impl<'d> Grib2GpvUnpack for Ccsds<'d> {
             let element_size_in_bytes = super::helpers::num_octets(template.simple.num_bits);
             let size = element_size_in_bytes * target.num_encoded_points();
             let mut decoded = vec![0; size];
-            let mut stream = aec::Stream::new(
+            let mut stream = backend::Stream::new(
                 template.simple.num_bits.into(),
                 template.block_size.into(),
                 template.ref_sample_interval.into(),
@@ -82,4 +82,8 @@ mod tests {
     }
 }
 
-mod aec;
+#[cfg(feature = "ccsds-unpack-with-libaec")]
+mod libaec;
+
+#[cfg(feature = "ccsds-unpack-with-libaec")]
+use libaec as backend;
