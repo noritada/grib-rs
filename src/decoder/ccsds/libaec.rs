@@ -12,6 +12,8 @@ impl Stream {
         Self(raw)
     }
 
+    pub(crate) fn set_output_samples(&mut self, _output_samples: usize) {}
+
     pub(crate) fn decode(&mut self, input: &[u8], output: &mut [u8]) -> Result<(), &'static str> {
         self.0.next_in = input.as_ptr();
         self.0.avail_in = input.len();

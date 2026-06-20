@@ -37,6 +37,7 @@ impl<'d> Grib2GpvUnpack for Ccsds<'d> {
                 template.ref_sample_interval.into(),
                 template.mask.into(),
             );
+            stream.set_output_samples(target.num_encoded_points());
             stream
                 .decode(target.sect7_payload(), &mut decoded)
                 .map_err(DecodeError::from)?;
@@ -84,6 +85,14 @@ mod tests {
 
 #[cfg(feature = "ccsds-unpack-with-libaec")]
 mod libaec;
+#[cfg_attr(feature = "ccsds-unpack-with-libaec", allow(dead_code))]
+#[cfg(feature = "ccsds-unpack-with-rust-aec")]
+mod rust_aec;
 
 #[cfg(feature = "ccsds-unpack-with-libaec")]
 use libaec as backend;
+#[cfg(all(
+    not(feature = "ccsds-unpack-with-libaec"),
+    feature = "ccsds-unpack-with-rust-aec"
+))]
+use rust_aec as backend;
