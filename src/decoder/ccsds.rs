@@ -58,14 +58,102 @@ mod tests {
     };
 
     use super::*;
+    #[cfg(all(
+        feature = "ccsds-unpack-with-libaec",
+        feature = "ccsds-unpack-with-rust-aec"
+    ))]
+    use crate::def::grib2::{DataRepresentationTemplate, template::Template5_42};
 
-    #[test]
-    fn decode_ccsds_compression_when_nbit_is_zero() -> Result<(), Box<dyn std::error::Error>> {
-        let f = File::open("testdata/20240101000000-0h-oper-fc.grib2.0-10.xz")?;
+    fn read_xz(path: &str) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
+        let f = File::open(path)?;
         let f = BufReader::new(f);
         let mut f = xz2::bufread::XzDecoder::new(f);
         let mut buf = Vec::new();
         f.read_to_end(&mut buf)?;
+        Ok(buf)
+    }
+
+    #[cfg(all(
+        feature = "ccsds-unpack-with-libaec",
+        feature = "ccsds-unpack-with-rust-aec"
+    ))]
+    fn decoded_size(target: &Grib2SubmessageDecoder, template: &Template5_42) -> usize {
+        let element_size_in_bytes = super::super::helpers::num_octets(template.simple.num_bits);
+        element_size_in_bytes * target.num_encoded_points()
+    }
+
+    #[cfg(all(
+        feature = "ccsds-unpack-with-libaec",
+        feature = "ccsds-unpack-with-rust-aec"
+    ))]
+    fn decode_with_libaec(
+        target: &Grib2SubmessageDecoder,
+        template: &Template5_42,
+    ) -> Result<Vec<u8>, DecodeError> {
+        let mut decoded = vec![0; decoded_size(target, template)];
+        let mut stream = libaec::Stream::new(
+            template.simple.num_bits.into(),
+            template.block_size.into(),
+            template.ref_sample_interval.into(),
+            template.mask.into(),
+        );
+        stream.set_output_samples(target.num_encoded_points());
+        stream
+            .decode(target.sect7_payload(), &mut decoded)
+            .map_err(DecodeError::from)?;
+        Ok(decoded)
+    }
+
+    #[cfg(all(
+        feature = "ccsds-unpack-with-libaec",
+        feature = "ccsds-unpack-with-rust-aec"
+    ))]
+    fn decode_with_rust_aec(
+        target: &Grib2SubmessageDecoder,
+        template: &Template5_42,
+    ) -> Result<Vec<u8>, DecodeError> {
+        let mut decoded = vec![0; decoded_size(target, template)];
+        let mut stream = rust_aec::Stream::new(
+            template.simple.num_bits.into(),
+            template.block_size.into(),
+            template.ref_sample_interval.into(),
+            template.mask.into(),
+        );
+        stream.set_output_samples(target.num_encoded_points());
+        stream
+            .decode(target.sect7_payload(), &mut decoded)
+            .map_err(DecodeError::from)?;
+        Ok(decoded)
+    }
+
+    #[cfg(all(
+        feature = "ccsds-unpack-with-libaec",
+        feature = "ccsds-unpack-with-rust-aec"
+    ))]
+    fn first_ccsds_decoder_with_nonzero_bits(
+        path: &str,
+    ) -> Result<Grib2SubmessageDecoder, Box<dyn std::error::Error>> {
+        let buf = read_xz(path)?;
+        let cursor = std::io::Cursor::new(buf);
+        let grib2 = crate::from_reader(cursor)?;
+
+        for (_index, submessage) in grib2.iter() {
+            let decoder = Grib2SubmessageDecoder::from(submessage)?;
+            if let DataRepresentationTemplate::_5_42(template) =
+                &decoder.section5().payload.template
+            {
+                if template.simple.num_bits > 0 {
+                    return Ok(decoder);
+                }
+            }
+        }
+
+        Err("non-zero-bit CCSDS submessage not found".into())
+    }
+
+    #[test]
+    fn decode_ccsds_compression_when_nbit_is_zero() -> Result<(), Box<dyn std::error::Error>> {
+        let buf = read_xz("testdata/20240101000000-0h-oper-fc.grib2.0-10.xz")?;
 
         // submessage 2.0
         let decoder = Grib2SubmessageDecoder::new(
@@ -79,6 +167,28 @@ mod tests {
         let expected = vec![0f32; 0x0006318c];
         assert_eq!(actual, expected);
 
+        Ok(())
+    }
+
+    #[test]
+    #[cfg(all(
+        feature = "ccsds-unpack-with-libaec",
+        feature = "ccsds-unpack-with-rust-aec"
+    ))]
+    fn rust_aec_matches_libaec_for_ecmwf_ccsds_payload() -> Result<(), Box<dyn std::error::Error>> {
+        let decoder = first_ccsds_decoder_with_nonzero_bits(
+            "testdata/20250912120000-0h-oper-fc.grib2.89.xz",
+        )?;
+        let DataRepresentationTemplate::_5_42(template) = &decoder.section5().payload.template
+        else {
+            return Err("expected CCSDS template".into());
+        };
+
+        let libaec = decode_with_libaec(&decoder, template).map_err(|err| format!("{err:?}"))?;
+        let rust_aec =
+            decode_with_rust_aec(&decoder, template).map_err(|err| format!("{err:?}"))?;
+
+        assert_eq!(rust_aec, libaec);
         Ok(())
     }
 }
