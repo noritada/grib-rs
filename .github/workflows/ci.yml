@@ -100,6 +100,19 @@ jobs:
         if: matrix.with_test
         run: cargo test --target ${{ matrix.target }} --verbose ${{ matrix.workspace }} ${{ matrix.features }}
 
+  test_rust_aec_ccsds:
+    name: Test Rust AEC CCSDS backend
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+      - name: Run Rust AEC CCSDS tests
+        run: cargo test --verbose -p grib --no-default-features --features ccsds-unpack-with-rust-aec
+
   build_wasm:
     name: Building library for wasm
     runs-on: ubuntu-latest
