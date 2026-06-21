@@ -73,6 +73,21 @@ mod tests {
         Ok(buf)
     }
 
+    #[cfg(feature = "ccsds-unpack-with-rust-aec")]
+    fn decoded_values_to_le_bytes(values: impl IntoIterator<Item = f32>) -> Vec<u8> {
+        values.into_iter().flat_map(f32::to_le_bytes).collect()
+    }
+
+    #[cfg(feature = "ccsds-unpack-with-rust-aec")]
+    fn first_submessage_values(path: &str) -> Result<Vec<f32>, Box<dyn std::error::Error>> {
+        let buf = read_xz(path)?;
+        let cursor = std::io::Cursor::new(buf);
+        let grib2 = crate::from_reader(cursor)?;
+        let (_index, submessage) = grib2.iter().next().ok_or("GRIB file has no submessages")?;
+        let decoder = Grib2SubmessageDecoder::from(submessage)?;
+        Ok(decoder.dispatch()?.collect())
+    }
+
     #[cfg(all(
         feature = "ccsds-unpack-with-libaec",
         feature = "ccsds-unpack-with-rust-aec"
@@ -167,6 +182,28 @@ mod tests {
         let expected = vec![0f32; 0x0006318c];
         assert_eq!(actual, expected);
 
+        Ok(())
+    }
+
+    #[test]
+    #[cfg(feature = "ccsds-unpack-with-rust-aec")]
+    fn decode_ecmwf_ccsds_0_matches_wgrib2_fixture() -> Result<(), Box<dyn std::error::Error>> {
+        let values = first_submessage_values("testdata/20240101000000-0h-oper-fc.grib2.0-10.xz")?;
+        let actual = decoded_values_to_le_bytes(values);
+        let expected = read_xz("testdata/gen/ecmwf-realtime-oper-fc-0-le.bin.xz")?;
+
+        assert_eq!(actual, expected);
+        Ok(())
+    }
+
+    #[test]
+    #[cfg(feature = "ccsds-unpack-with-rust-aec")]
+    fn decode_ecmwf_ccsds_89_matches_wgrib2_fixture() -> Result<(), Box<dyn std::error::Error>> {
+        let values = first_submessage_values("testdata/20250912120000-0h-oper-fc.grib2.89.xz")?;
+        let actual = decoded_values_to_le_bytes(values);
+        let expected = read_xz("testdata/gen/ecmwf-realtime-oper-fc-89-le.bin.xz")?;
+
+        assert_eq!(actual, expected);
         Ok(())
     }
 
