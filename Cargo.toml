@@ -42,6 +42,7 @@ proj = { version = "0.31", optional = true }
 libaec-sys = { version = "0.1.1", optional = true }
 openjpeg-sys = { version = "1.0.5", optional = true }
 png = { version = "0.18", optional = true }
+rust-aec = { version = "0.1", optional = true }
 
 [dev-dependencies]
 flate2 = "1.0"
@@ -71,6 +72,10 @@ png-unpack-with-png-crate = ["dep:png"]
 # Enable CCSDS recommended lossless compression support in the GPV decoder with
 # the help of libaec written in C.
 ccsds-unpack-with-libaec = ["dep:libaec-sys"]
+
+# Enable CCSDS recommended lossless compression support in the GPV decoder with
+# a pure Rust backend.
+ccsds-unpack-with-rust-aec = ["dep:rust-aec"]
 
 # Enable computation of latitudes and longitudes of grid points points using
 # PROJ for some grid systems.
