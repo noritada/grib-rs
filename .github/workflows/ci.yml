@@ -113,6 +113,21 @@ jobs:
       - name: Run Rust AEC CCSDS tests
         run: cargo test --verbose -p grib --no-default-features --features ccsds-unpack-with-rust-aec
 
+  test_hayro_jpeg2000:
+    name: Test hayro JPEG 2000 backend
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+      - name: Run hayro JPEG 2000 tests
+        run: cargo test --verbose -p grib --no-default-features --features jpeg2000-unpack-with-hayro
+      - name: Verify hayro JPEG 2000 priority over OpenJPEG
+        run: cargo test --verbose -p grib --no-default-features --features jpeg2000-unpack-with-openjpeg,jpeg2000-unpack-with-hayro
+
   build_wasm:
     name: Building library for wasm
     runs-on: ubuntu-latest

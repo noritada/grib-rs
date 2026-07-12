@@ -40,6 +40,7 @@ num_enum = "0.7"
 proj = { version = "0.31", optional = true }
 
 libaec-sys = { version = "0.1.1", optional = true }
+hayro-jpeg2000 = { version = "0.4", default-features = false, features = ["std", "simd"], optional = true }
 openjpeg-sys = { version = "1.0.5", optional = true }
 png = { version = "0.18", optional = true }
 rust-aec = { version = "0.1", optional = true }
@@ -64,6 +65,10 @@ default = [
 # Enable JPEG 2000 code stream format support in the GPV decoder with the help
 # of OpenJPEG written in C.
 jpeg2000-unpack-with-openjpeg = ["dep:openjpeg-sys"]
+
+# Enable JPEG 2000 code stream format support in the GPV decoder with the
+# experimental pure Rust hayro-jpeg2000 backend.
+jpeg2000-unpack-with-hayro = ["dep:hayro-jpeg2000"]
 
 # Enable Portable Network Graphics (PNG) support in the GPV decoder with the
 # help of png crate.
