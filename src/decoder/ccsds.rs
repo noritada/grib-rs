@@ -228,18 +228,30 @@ mod tests {
         assert_eq!(rust_aec, libaec);
         Ok(())
     }
+
+    #[test]
+    #[cfg(all(
+        feature = "ccsds-unpack-with-libaec",
+        feature = "ccsds-unpack-with-rust-aec"
+    ))]
+    fn rust_aec_backend_takes_priority_when_both_features_are_enabled() {
+        let stream = backend::Stream::new(8, 8, 128, 0);
+
+        fn assert_rust_aec_stream(_: &rust_aec::Stream) {}
+        assert_rust_aec_stream(&stream);
+    }
 }
 
+#[cfg_attr(feature = "ccsds-unpack-with-rust-aec", allow(dead_code))]
 #[cfg(feature = "ccsds-unpack-with-libaec")]
 mod libaec;
-#[cfg_attr(feature = "ccsds-unpack-with-libaec", allow(dead_code))]
 #[cfg(feature = "ccsds-unpack-with-rust-aec")]
 mod rust_aec;
 
-#[cfg(feature = "ccsds-unpack-with-libaec")]
-use libaec as backend;
 #[cfg(all(
-    not(feature = "ccsds-unpack-with-libaec"),
-    feature = "ccsds-unpack-with-rust-aec"
+    feature = "ccsds-unpack-with-libaec",
+    not(feature = "ccsds-unpack-with-rust-aec")
 ))]
+use libaec as backend;
+#[cfg(feature = "ccsds-unpack-with-rust-aec")]
 use rust_aec as backend;
