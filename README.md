@@ -76,7 +76,7 @@ For data using the following encoding methods, grid point values can be extracte
 | 5.0 | simple packing ||
 | 5.2 | complex packing ||
 | 5.3 | complex packing and spatial differencing ||
-| 5.40 | JPEG 2000 code stream format | enabling feature `jpeg2000-unpack-with-openjpeg` required |
+| 5.40 | JPEG 2000 code stream format | enabling feature `jpeg2000-unpack-with-openjpeg` or `jpeg2000-unpack-with-hayro` required |
 | 5.41 | Portable Network Graphics (PNG) | enabling feature `png-unpack-with-png-crate` required |
 | 5.42 | CCSDS recommended lossless compression | enabling feature `ccsds-unpack-with-libaec` or `ccsds-unpack-with-rust-aec` required |
 | 5.200 | run length packing with level values ||
@@ -85,6 +85,10 @@ For CCSDS/AEC decoding, `ccsds-unpack-with-libaec` uses `libaec` through
 `libaec-sys`, while `ccsds-unpack-with-rust-aec` uses a pure Rust backend.
 When both CCSDS backend features are enabled, `ccsds-unpack-with-libaec` keeps
 priority to preserve the existing default and all-features behavior.
+
+For JPEG 2000 decoding, `jpeg2000-unpack-with-openjpeg` uses OpenJPEG through
+`openjpeg-sys`, while `jpeg2000-unpack-with-hayro` uses a pure Rust backend.
+When both JPEG 2000 backend features are enabled, hayro takes priority.
 
 ## Planned features
 
