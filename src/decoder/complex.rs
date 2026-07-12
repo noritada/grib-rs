@@ -299,7 +299,7 @@ where
                 // associated field width is 0, and no incremental data are physically present."
                 let _ref = _ref.to_i32().unwrap();
                 let length = length.to_usize().unwrap();
-                let missing1 = (1 << self.num_bits) - 1;
+                let missing1 = ((1_u32 << self.num_bits) - 1) as i32;
                 let missing2 = missing1 - 1;
 
                 if self.missing_value_management > 0 && _ref == missing1 {
@@ -319,7 +319,7 @@ where
                 let bits = self.start_offset_bits + width * length;
                 let (pos_end, offset_bits) = (self.pos + bits / 8, bits % 8);
                 let offset_byte = usize::from(offset_bits > 0);
-                let missing1 = (1 << width) - 1;
+                let missing1 = (1_u32 << width) - 1;
                 let missing2 = missing1 - 1;
                 let group_values =
                     NBitwiseIterator::new(&self.data[self.pos..pos_end + offset_byte], width)

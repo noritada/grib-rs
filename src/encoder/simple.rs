@@ -6,6 +6,9 @@ use crate::{
     encoder::{Encode, bitmap::Bitmap, helpers::BitsRequired, writer},
 };
 
+// Complex packing decodes group reference values as `i32`.
+const MAX_ENCODED_VALUE: u32 = i32::MAX as u32;
+
 /// Strategies applied when performing simple packing on numerical sequences.
 /// Simple packing is a method for discretizing continuous numerical values as
 /// integers, and various approaches can be taken during this process.
@@ -185,10 +188,14 @@ pub(crate) fn determine_simple_packing_params(
             num_bits: 0,
         }
     } else {
-        let range = max - min;
-        let exp = 0;
-        let num_bits = range.bits_required();
-        // TODO: if `num_bits` is too large, increase `exp` to reduce `num_bits`.
+        let max_diff = max - f64::from(ref_val);
+        let exp = if max_diff <= f64::from(MAX_ENCODED_VALUE) {
+            0
+        } else {
+            (max_diff / f64::from(MAX_ENCODED_VALUE)).log2().ceil() as i16
+        };
+        let max_code = (max_diff / 2_f64.powi(i32::from(exp))).round() as u32;
+        let num_bits = max_code.bits_required();
         SimplePacking {
             ref_val,
             exp,
@@ -273,6 +280,21 @@ mod tests {
                 num_bits: 0,
             },
         ),
+    }
+
+    #[test]
+    fn simple_packing_scales_large_finite_ranges_to_u32() -> Result<(), &'static str> {
+        let values = [0.0, 1.0e20];
+        let encoder = Encoder::new(&values, SimplePackingStrategy::Decimal(0));
+        let encoded = encoder.encode();
+
+        assert!(encoded.params().num_bits <= i32::BITS as u8);
+
+        let mut sect7 = vec![0; encoded.section7_len()];
+        let pos = encoded.write_section7(&mut sect7)?;
+        assert_eq!(pos, sect7.len());
+
+        Ok(())
     }
 
     macro_rules! grib2_coded_values_roundtrip_tests {
