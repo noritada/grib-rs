@@ -83,8 +83,8 @@ For data using the following encoding methods, grid point values can be extracte
 
 For CCSDS/AEC decoding, `ccsds-unpack-with-libaec` uses `libaec` through
 `libaec-sys`, while `ccsds-unpack-with-rust-aec` uses a pure Rust backend.
-When both CCSDS backend features are enabled, `ccsds-unpack-with-libaec` keeps
-priority to preserve the existing default and all-features behavior.
+When both CCSDS backend features are enabled, `ccsds-unpack-with-rust-aec` takes
+priority so it can override the default `libaec` backend.
 
 ## Planned features
 
