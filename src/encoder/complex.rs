@@ -588,6 +588,10 @@ mod tests {
             (2..5).map(|val| val as f64).collect::<Vec<_>>()
         ),
         (
+            grib2_coded_values_roundtrip_test_with_large_finite_range,
+            vec![0.0, 1.0e20]
+        ),
+        (
             grib2_coded_values_roundtrip_test_with_unique_values,
             vec![10.0_f64; 256]
         ),
