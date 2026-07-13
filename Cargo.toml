@@ -62,6 +62,14 @@ default = [
   "gridpoints-proj",
 ]
 
+# Provide an alternative to the `default` feature for WebAssembly builds.
+wasm-default = [
+  "jpeg2000-unpack-with-hayro",
+  "png-unpack-with-png-crate",
+  "ccsds-unpack-with-rust-aec",
+  "time-calculation",
+]
+
 # Enable JPEG 2000 code stream format support in the GPV decoder with the help
 # of OpenJPEG written in C.
 jpeg2000-unpack-with-openjpeg = ["dep:openjpeg-sys"]
