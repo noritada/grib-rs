@@ -74,6 +74,7 @@ pub struct Section1PayloadOptional {
 }
 
 #[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
+#[non_exhaustive]
 #[repr(u16)]
 pub enum IdentificationTemplate {
     _1_0(template1::Template1_0) = 0,
@@ -103,6 +104,7 @@ pub struct Section3Payload {
 }
 
 #[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
+#[non_exhaustive]
 #[repr(u16)]
 pub enum GridDefinitionTemplate {
     _3_0(template3::Template3_0) = 0,
@@ -143,6 +145,7 @@ pub struct Section5Payload {
 }
 
 #[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
+#[non_exhaustive]
 #[repr(u16)]
 pub enum DataRepresentationTemplate {
     _5_0(template5::Template5_0) = 0,

@@ -11,6 +11,7 @@ use crate::{
 };
 
 #[derive(Debug, PartialEq)]
+#[non_exhaustive]
 pub enum GridDefinitionTemplateValues {
     Template0(Template3_0),
     Template1(Template3_1),

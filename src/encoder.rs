@@ -25,6 +25,7 @@ pub fn encode_gpv(data: &[f64], method: EncodingMethod) -> EncodeOutput {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
+#[non_exhaustive]
 pub enum EncodingMethod {
     /// Simple packing.
     SimplePacking(SimplePackingStrategy),
@@ -100,6 +101,7 @@ impl WriteGrib2DataSections for EncodeOutput {
     }
 }
 
+#[non_exhaustive]
 pub enum EncodeOutputParams<'a> {
     SimplePacking(&'a param_set::SimplePacking),
     ComplexPacking(&'a param_set::SimplePacking, &'a param_set::ComplexPacking),
