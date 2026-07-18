@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.16.0] - 2026-07-18
+### Enhancements
+
+- Pure-Rust backends for following decoding supports are now available:
+  - Template 5.40/7.40 (JPEG 2000 code stream format)
+    (#191 (thanks @amoutiers), PR #192 (thanks @amoutiers))
+  - Template 5.42/7.42 (CCSDS recommended lossless compression)
+    (#185 (thanks @amoutiers), PR #186 (thanks @amoutiers), #187 (thanks @amoutiers), PR #188 (thanks @amoutiers))
+- `wasm-default` feature has been added to provide better defaults for WebAssembly builds.
+    (PR #195)
+
+### Breaking changes
+
+- The `non_exhaustive` attribute has been added to most of public enums to make them extensible;
+  it is now possible to add enum variants for new error kinds, newly supported templates, and new user options without breaking backward compatibility.
+  (PR #193)
+
+### Versions
+
+```
+grib 0.16.0
+grib-cli 0.16.0
+```
+
 ## [0.15.6] - 2026-04-27
 ### New supports
 
@@ -984,7 +1008,8 @@ grib-build 0.1.0
 grib 0.1.0
 ```
 
-[unreleased]: https://github.com/noritada/grib-rs/compare/v0.15.6...HEAD
+[unreleased]: https://github.com/noritada/grib-rs/compare/v0.16.0...HEAD
+[0.16.0]: https://github.com/noritada/grib-rs/compare/v0.15.6...v0.16.0
 [0.15.6]: https://github.com/noritada/grib-rs/compare/v0.15.5...v0.15.6
 [0.15.5]: https://github.com/noritada/grib-rs/compare/v0.15.4...v0.15.5
 [0.15.4]: https://github.com/noritada/grib-rs/compare/v0.15.3...v0.15.4
