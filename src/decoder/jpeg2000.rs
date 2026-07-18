@@ -1,15 +1,3 @@
-#[cfg(feature = "jpeg2000-unpack-with-hayro")]
-pub(crate) type ImageIntoIter = std::vec::IntoIter<i32>;
-#[cfg(all(
-    feature = "jpeg2000-unpack-with-openjpeg",
-    any(not(feature = "jpeg2000-unpack-with-hayro"), test)
-))]
-use self::decoder::DecodeParams;
-#[cfg(all(
-    not(feature = "jpeg2000-unpack-with-hayro"),
-    feature = "jpeg2000-unpack-with-openjpeg"
-))]
-pub(crate) use self::image::ImageIntoIter;
 use crate::{
     Grib2GpvUnpack,
     decoder::{DecodeError, Grib2SubmessageDecoder, simple::*, stream::FixedValueIterator},
@@ -46,23 +34,13 @@ impl<'d> Grib2GpvUnpack for Jpeg2000<'d> {
     }
 }
 
-#[cfg(all(
-    feature = "jpeg2000-unpack-with-openjpeg",
-    any(not(feature = "jpeg2000-unpack-with-hayro"), test)
-))]
-mod decoder;
 #[cfg(feature = "jpeg2000-unpack-with-hayro")]
-mod hayro;
+pub(crate) type ImageIntoIter = std::vec::IntoIter<i32>;
 #[cfg(all(
-    feature = "jpeg2000-unpack-with-openjpeg",
-    any(not(feature = "jpeg2000-unpack-with-hayro"), test)
+    not(feature = "jpeg2000-unpack-with-hayro"),
+    feature = "jpeg2000-unpack-with-openjpeg"
 ))]
-mod image;
-#[cfg(all(
-    feature = "jpeg2000-unpack-with-openjpeg",
-    any(not(feature = "jpeg2000-unpack-with-hayro"), test)
-))]
-mod stream;
+pub(crate) type ImageIntoIter = openjpeg::ImageIntoIter;
 
 #[cfg(feature = "jpeg2000-unpack-with-hayro")]
 fn decode_j2k(bytes: &[u8]) -> Result<ImageIntoIter, DecodeError> {
@@ -74,21 +52,7 @@ fn decode_j2k(bytes: &[u8]) -> Result<ImageIntoIter, DecodeError> {
     feature = "jpeg2000-unpack-with-openjpeg"
 ))]
 fn decode_j2k(bytes: &[u8]) -> Result<ImageIntoIter, DecodeError> {
-    decode_j2k_with_openjpeg(bytes)
-}
-
-#[cfg(all(
-    feature = "jpeg2000-unpack-with-openjpeg",
-    any(not(feature = "jpeg2000-unpack-with-hayro"), test)
-))]
-fn decode_j2k_with_openjpeg(bytes: &[u8]) -> Result<image::ImageIntoIter, DecodeError> {
-    let stream = stream::Stream::from_bytes(bytes)?;
-    let decoder = decoder::Decoder::new(stream)?;
-    decoder.setup(DecodeParams::default())?;
-    let image = decoder.read_header()?;
-    decoder.decode(&image)?;
-
-    image.try_into_iter()
+    openjpeg::decode_j2k(bytes)
 }
 
 #[cfg(test)]
@@ -99,11 +63,8 @@ mod tests {
     ))]
     use std::{fs::File, io::BufReader};
 
-    #[cfg(all(
-        feature = "jpeg2000-unpack-with-hayro",
-        feature = "jpeg2000-unpack-with-openjpeg"
-    ))]
-    use super::{decode_j2k, decode_j2k_with_openjpeg, hayro};
+    #[allow(dead_code)]
+    use super::*;
 
     #[test]
     #[cfg(all(
@@ -117,7 +78,7 @@ mod tests {
         let decoder = crate::Grib2SubmessageDecoder::from(submessage)?;
         let payload = decoder.sect7_payload();
 
-        let openjpeg = decode_j2k_with_openjpeg(payload)
+        let openjpeg = openjpeg::decode_j2k(payload)
             .map_err(|err| format!("{err:?}"))?
             .collect::<Vec<_>>();
         let hayro = hayro::decode_j2k(payload)
@@ -131,3 +92,11 @@ mod tests {
         Ok(())
     }
 }
+
+#[cfg(feature = "jpeg2000-unpack-with-hayro")]
+mod hayro;
+#[cfg(all(
+    feature = "jpeg2000-unpack-with-openjpeg",
+    any(not(feature = "jpeg2000-unpack-with-hayro"), test)
+))]
+mod openjpeg;
