@@ -34,21 +34,21 @@ impl<'d> Grib2GpvUnpack for Jpeg2000<'d> {
     }
 }
 
-#[cfg(feature = "jpeg2000-unpack-with-hayro-jpeg2000")]
+#[cfg(feature = "jpeg2000-unpack-with-hayro")]
 pub(crate) type ImageIntoIter = std::vec::IntoIter<i32>;
 #[cfg(all(
-    not(feature = "jpeg2000-unpack-with-hayro-jpeg2000"),
+    not(feature = "jpeg2000-unpack-with-hayro"),
     feature = "jpeg2000-unpack-with-openjpeg"
 ))]
 pub(crate) type ImageIntoIter = openjpeg::ImageIntoIter;
 
-#[cfg(feature = "jpeg2000-unpack-with-hayro-jpeg2000")]
+#[cfg(feature = "jpeg2000-unpack-with-hayro")]
 fn decode_j2k(bytes: &[u8]) -> Result<ImageIntoIter, DecodeError> {
-    hayro_jpeg2000::decode_j2k(bytes)
+    hayro::decode_j2k(bytes)
 }
 
 #[cfg(all(
-    not(feature = "jpeg2000-unpack-with-hayro-jpeg2000"),
+    not(feature = "jpeg2000-unpack-with-hayro"),
     feature = "jpeg2000-unpack-with-openjpeg"
 ))]
 fn decode_j2k(bytes: &[u8]) -> Result<ImageIntoIter, DecodeError> {
@@ -58,7 +58,7 @@ fn decode_j2k(bytes: &[u8]) -> Result<ImageIntoIter, DecodeError> {
 #[cfg(test)]
 mod tests {
     #[cfg(all(
-        feature = "jpeg2000-unpack-with-hayro-jpeg2000",
+        feature = "jpeg2000-unpack-with-hayro",
         feature = "jpeg2000-unpack-with-openjpeg"
     ))]
     use std::{fs::File, io::BufReader};
@@ -68,11 +68,10 @@ mod tests {
 
     #[test]
     #[cfg(all(
-        feature = "jpeg2000-unpack-with-hayro-jpeg2000",
+        feature = "jpeg2000-unpack-with-hayro",
         feature = "jpeg2000-unpack-with-openjpeg"
     ))]
-    fn hayro_jpeg2000_has_priority_and_matches_openjpeg() -> Result<(), Box<dyn std::error::Error>>
-    {
+    fn hayro_has_priority_and_matches_openjpeg() -> Result<(), Box<dyn std::error::Error>> {
         let f = File::open("testdata/CMC_glb_TMP_ISBL_1_latlon.24x.24_2021051800_P000.grib2")?;
         let grib2 = crate::from_reader(BufReader::new(f))?;
         let (_index, submessage) = grib2.iter().next().ok_or("GRIB file has no submessages")?;
@@ -82,10 +81,10 @@ mod tests {
         let openjpeg = openjpeg::decode_j2k(payload)
             .map_err(|err| format!("{err:?}"))?
             .collect::<Vec<_>>();
-        let hayro = hayro_jpeg2000::decode_j2k(payload)
+        let hayro = hayro::decode_j2k(payload)
             .map_err(|err| format!("{err:?}"))?
             .collect::<Vec<_>>();
-        let selected: hayro_jpeg2000::ImageIntoIter =
+        let selected: hayro::ImageIntoIter =
             decode_j2k(payload).map_err(|err| format!("{err:?}"))?;
 
         assert_eq!(hayro, openjpeg);
@@ -94,10 +93,10 @@ mod tests {
     }
 }
 
-#[cfg(feature = "jpeg2000-unpack-with-hayro-jpeg2000")]
-mod hayro_jpeg2000;
+#[cfg(feature = "jpeg2000-unpack-with-hayro")]
+mod hayro;
 #[cfg(all(
     feature = "jpeg2000-unpack-with-openjpeg",
-    any(not(feature = "jpeg2000-unpack-with-hayro-jpeg2000"), test)
+    any(not(feature = "jpeg2000-unpack-with-hayro"), test)
 ))]
 mod openjpeg;

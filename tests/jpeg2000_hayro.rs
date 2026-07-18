@@ -1,4 +1,4 @@
-#![cfg(feature = "jpeg2000-unpack-with-hayro-jpeg2000")]
+#![cfg(feature = "jpeg2000-unpack-with-hayro")]
 
 use std::{
     fs::File,
