@@ -124,9 +124,9 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
       - name: Run hayro JPEG 2000 tests
-        run: cargo test --verbose -p grib --no-default-features --features jpeg2000-unpack-with-hayro-jpeg2000
+        run: cargo test --verbose -p grib --no-default-features --features jpeg2000-unpack-with-hayro
       - name: Verify hayro JPEG 2000 priority over OpenJPEG
-        run: cargo test --verbose -p grib --no-default-features --features jpeg2000-unpack-with-openjpeg,jpeg2000-unpack-with-hayro-jpeg2000
+        run: cargo test --verbose -p grib --no-default-features --features jpeg2000-unpack-with-openjpeg,jpeg2000-unpack-with-hayro
 
   build_wasm:
     name: Building library for wasm
