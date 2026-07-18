@@ -164,7 +164,7 @@ impl Grib2SubmessageDecoder {
             }
             #[cfg(any(
                 feature = "jpeg2000-unpack-with-openjpeg",
-                feature = "jpeg2000-unpack-with-hayro"
+                feature = "jpeg2000-unpack-with-hayro-jpeg2000"
             ))]
             DataRepresentationTemplate::_5_40(template) => {
                 Grib2ValueIterator::SigSIm(jpeg2000::Jpeg2000(self, template).iter()?)
@@ -297,7 +297,7 @@ enum Grib2ValueIterator<'d> {
     SigSI(SimplePackingDecoder<IntoIter<i32>>),
     #[cfg(any(
         feature = "jpeg2000-unpack-with-openjpeg",
-        feature = "jpeg2000-unpack-with-hayro"
+        feature = "jpeg2000-unpack-with-hayro-jpeg2000"
     ))]
     SigSIm(SimplePackingDecoder<self::jpeg2000::ImageIntoIter>),
     #[allow(dead_code)]
@@ -316,7 +316,7 @@ impl<'d> Iterator for Grib2ValueIterator<'d> {
             Self::SigSI(inner) => inner.next(),
             #[cfg(any(
                 feature = "jpeg2000-unpack-with-openjpeg",
-                feature = "jpeg2000-unpack-with-hayro"
+                feature = "jpeg2000-unpack-with-hayro-jpeg2000"
             ))]
             Self::SigSIm(inner) => inner.next(),
             Self::SigSNV(inner) => inner.next(),
@@ -332,7 +332,7 @@ impl<'d> Iterator for Grib2ValueIterator<'d> {
             Self::SigSI(inner) => inner.size_hint(),
             #[cfg(any(
                 feature = "jpeg2000-unpack-with-openjpeg",
-                feature = "jpeg2000-unpack-with-hayro"
+                feature = "jpeg2000-unpack-with-hayro-jpeg2000"
             ))]
             Self::SigSIm(inner) => inner.size_hint(),
             Self::SigSNV(inner) => inner.size_hint(),
@@ -379,7 +379,7 @@ mod complex;
 mod helpers;
 #[cfg(any(
     feature = "jpeg2000-unpack-with-openjpeg",
-    feature = "jpeg2000-unpack-with-hayro"
+    feature = "jpeg2000-unpack-with-hayro-jpeg2000"
 ))]
 mod jpeg2000;
 #[cfg(feature = "png-unpack-with-png-crate")]
