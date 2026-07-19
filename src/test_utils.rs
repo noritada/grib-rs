@@ -49,4 +49,20 @@ pub(crate) fn encode_le_bytes_using_simple_packing(
         .collect::<Vec<_>>()
 }
 
+pub(crate) fn encode_using_simple_packing(
+    input: Vec<f32>,
+    ref_val: f32,
+    exp: i16,
+    dig: i16,
+) -> Vec<i32> {
+    let encode = |value: f32| -> i32 {
+        let dig_factor = 10_f32.powi(dig as i32);
+        let diff = value * dig_factor - ref_val;
+        let encoded = diff * 2_f32.powi(-exp as i32);
+        encoded.round() as i32
+    };
+
+    input.into_iter().map(encode).collect::<Vec<_>>()
+}
+
 pub(crate) mod data;
