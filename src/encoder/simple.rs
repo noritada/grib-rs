@@ -86,8 +86,7 @@ impl WriteGrib2DataSections for Encoded {
         }
 
         let mut pos = 0;
-        pos += (len as u32).write_to_buffer(&mut buf[pos..])?; // header.len
-        pos += 5_u8.write_to_buffer(&mut buf[pos..])?; // header.sect_num
+        pos += super::write_section_header(len as u32, 5, &mut buf[pos..])?;
         pos += (self.coded.num_values() as u32).write_to_buffer(&mut buf[pos..])?; // payload.num_encoded_points
         pos += 0_u16.write_to_buffer(&mut buf[pos..])?; // payload.template_num
         pos += self.params.write_to_buffer(&mut buf[pos..])?;
@@ -112,8 +111,7 @@ impl WriteGrib2DataSections for Encoded {
         }
 
         let mut pos = 0;
-        pos += (len as u32).write_to_buffer(&mut buf[pos..])?;
-        pos += 6_u8.write_to_buffer(&mut buf[pos..])?;
+        pos += super::write_section_header(len as u32, 6, &mut buf[pos..])?;
         if self.bitmap.has_nan() {
             pos += 0_u8.write_to_buffer(&mut buf[pos..])?;
             pos += self.bitmap.write_to_buffer(&mut buf[pos..])?;
@@ -142,8 +140,7 @@ impl WriteGrib2DataSections for Encoded {
         }
 
         let mut pos = 0;
-        pos += (len as u32).write_to_buffer(&mut buf[pos..])?;
-        pos += 7_u8.write_to_buffer(&mut buf[pos..])?;
+        pos += super::write_section_header(len as u32, 7, &mut buf[pos..])?;
         match &self.coded {
             CodedValues::NonUnique(vec) => {
                 let nbitwise = writer::NBitwise::new(&vec, self.params.num_bits as usize);

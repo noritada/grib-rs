@@ -55,7 +55,7 @@ Also, since the best encoding method for values varies from data to data, there 
 
 These definitions of grid systems and data representation are represented by sequences of bytes called templates, which should be supported in order for the reader to read GRIB2 data. grib-rs supports the following templates. We would love to support other templates as well, so please let us know if there is any data that is not readable.
 
-#### Supported grid definition templates
+#### Support for computation of latitudes/longitudes of grid points
 
 For data using the following grid systems, latitudes and longitudes of grid points can be computed.
 
@@ -67,7 +67,7 @@ For data using the following grid systems, latitudes and longitudes of grid poin
 | 3.30 | Lambert conformal | enabling feature `gridpoints-proj` required |
 | 3.40 | Gaussian latitude/longitude | supporting only regular grids |
 
-#### Supported data representation templates
+#### Support for extraction of grid point values
 
 For data using the following encoding methods, grid point values can be extracted.
 
@@ -89,6 +89,15 @@ priority so it can override the default `libaec` backend.
 For JPEG 2000 decoding, `jpeg2000-unpack-with-openjpeg` uses OpenJPEG through
 `openjpeg-sys`, while `jpeg2000-unpack-with-hayro` uses a pure Rust backend.
 When both JPEG 2000 backend features are enabled, hayro takes priority.
+
+#### Support for encoding of grid point values
+
+Grid point values can be encoded and written using the following encoding methods.
+
+| Template number | Encoding method | Notes |
+| --- | --- | --- |
+| 5.0 | simple packing ||
+| 5.2 | complex packing ||
 
 ## Planned features
 
@@ -190,7 +199,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // To dump to standard output, use the following instead:
     //
     //     first_submessage.dump(&mut std::io::stdout())?;
-    let mut buf = std::io::Cursor::new(Vec::with_capacity(1024));
+    let mut buf = std::io::Cursor::new(Vec::with_capacity(10240));
     first_submessage.dump(&mut buf)?;
     let expected = "\
 ##  SUBMESSAGE (total_length = 10321)

@@ -866,7 +866,7 @@ Data Representation:                    {}
     ///     let grib2 = grib::from_reader(f)?;
     ///     let (_index, first_submessage) = grib2.iter().next().unwrap();
     ///
-    ///     let mut buf = std::io::Cursor::new(Vec::with_capacity(1024));
+    ///     let mut buf = std::io::Cursor::new(Vec::with_capacity(10240));
     ///     first_submessage.dump(&mut buf)?;
     ///     let expected = "\
     /// ##  SUBMESSAGE (total_length = 10321)
