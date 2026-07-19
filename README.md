@@ -90,6 +90,15 @@ For JPEG 2000 decoding, `jpeg2000-unpack-with-openjpeg` uses OpenJPEG through
 `openjpeg-sys`, while `jpeg2000-unpack-with-hayro` uses a pure Rust backend.
 When both JPEG 2000 backend features are enabled, hayro takes priority.
 
+#### Support for encoding of grid point values
+
+Grid point values can be encoded and written using the following encoding methods.
+
+| Template number | Encoding method | Notes |
+| --- | --- | --- |
+| 5.0 | simple packing ||
+| 5.2 | complex packing ||
+
 ## Planned features
 
 Please check the [ROADMAP](ROADMAP.md) to see planned features.
