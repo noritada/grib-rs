@@ -1,5 +1,7 @@
 use std::slice::Iter;
 
+use grib_template_helpers::TryFromSlice;
+
 use crate::{
     codetables::SUPPORTED_PROD_DEF_TEMPLATE_NUMBERS,
     datatypes::*,
@@ -17,17 +19,16 @@ pub struct Indicator {
 
 impl Indicator {
     pub(crate) fn from_slice(slice: &[u8]) -> Result<Self, ParseError> {
-        let discipline = slice[6];
-        let version = slice[7];
-        if version != 2 {
-            return Err(ParseError::GRIBVersionMismatch(version));
+        let mut pos = 0;
+        let sect = crate::def::grib2::Section0::try_from_slice(slice, &mut pos)
+            .map_err(|_e| ParseError::UnexpectedEndOfData(0))?;
+        if sect.edition_num != 2 {
+            return Err(ParseError::GRIBVersionMismatch(sect.edition_num));
         }
 
-        let total_length = read_as!(u64, slice, 8);
-
         Ok(Self {
-            discipline,
-            total_length,
+            discipline: sect.discipline,
+            total_length: sect.total_len,
         })
     }
 }
