@@ -81,15 +81,6 @@ For data using the following encoding methods, grid point values can be extracte
 | 5.42 | CCSDS recommended lossless compression | enabling feature `ccsds-unpack-with-libaec` required |
 | 5.200 | run length packing with level values ||
 
-#### Support for encoding of grid point values
-
-Grid point values can be encoded and written using the following encoding methods.
-
-| Template number | Encoding method | Notes |
-| --- | --- | --- |
-| 5.0 | simple packing ||
-| 5.2 | complex packing ||
-
 ## Planned features
 
 Please check the [ROADMAP](ROADMAP.md) to see planned features.
