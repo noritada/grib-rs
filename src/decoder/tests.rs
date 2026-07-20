@@ -1,7 +1,13 @@
 use crate::{Grib2SubmessageDecoder, test_utils};
 
 macro_rules! test_operation_with_data_without_nan_values_and_byte_order_options {
-    ($(($name:ident, $input:expr, $message_index:expr, $expected:expr),)*) => ($(
+    (
+        $(
+            $(#[$meta:meta])*
+            ($name:ident, $input:expr, $message_index:expr, $expected:expr),
+        )*
+    ) => ($(
+        $(#[$meta])*
         #[test]
         fn $name() -> Result<(), Box<dyn std::error::Error>> {
             let buf = $input;
@@ -51,24 +57,34 @@ test_operation_with_data_without_nan_values_and_byte_order_options! {
         (0, 0),
         test_utils::data::flat_binary::noaa_gdas_46_le()?
     ),
+    #[cfg(feature = "png-unpack-with-png-crate")]
     (
         decoding_png_packing_with_num_bits_being_8_as_little_endian,
         test_utils::data::grib2::noaa_mrms_precip_flag()?,
         (0, 0),
         test_utils::data::flat_binary::noaa_mrms_precip_flag_le()?
     ),
+    #[cfg(feature = "png-unpack-with-png-crate")]
     (
         decoding_png_packing_with_num_bits_being_16_as_little_endian,
         test_utils::data::grib2::noaa_mrms_reflectivity()?,
         (0, 0),
         test_utils::data::flat_binary::noaa_mrms_reflectivity_le()?
     ),
+    #[cfg(any(
+        feature = "ccsds-unpack-with-libaec",
+        feature = "ccsds-unpack-with-rust-aec"
+    ))]
     (
         decoding_ccsds_compression_as_little_endian,
         test_utils::data::grib2::ecmwf_realtime_oper_fc_0()?,
         (0, 0),
         test_utils::data::flat_binary::ecmwf_realtime_oper_fc_0_le()?
     ),
+    #[cfg(any(
+        feature = "ccsds-unpack-with-libaec",
+        feature = "ccsds-unpack-with-rust-aec"
+    ))]
     (
         decoding_ccsds_compression_where_num_bits_is_multiple_of_eight,
         test_utils::data::grib2::ecmwf_realtime_oper_fc_89()?,
@@ -78,7 +94,13 @@ test_operation_with_data_without_nan_values_and_byte_order_options! {
 }
 
 macro_rules! test_operation_with_data_with_nan_values_as_little_endian {
-    ($(($name:ident, $input:expr, $message_index:expr, $expected:expr),)*) => ($(
+    (
+        $(
+            $(#[$meta:meta])*
+            ($name:ident, $input:expr, $message_index:expr, $expected:expr),
+        )*
+    ) => ($(
+        $(#[$meta])*
         #[test]
         fn $name() -> Result<(), Box<dyn std::error::Error>> {
             let buf = $input;
@@ -154,15 +176,21 @@ test_operation_with_data_with_nan_values_as_little_endian! {
 // Compares integer values encoded using simple packing since there are some
 // differences between float values from gribber and wgrib2.
 macro_rules! test_operation_with_data_without_nan_values_compared_using_simple_packing {
-    ($((
-        $name:ident,
-        $input:expr,
-        $message_index:expr,
-        $ref_val:expr,
-        $exp:expr,
-        $dig:expr,
-        $expected:expr
-    ),)*) => ($(
+    (
+        $(
+            $(#[$meta:meta])*
+            (
+                $name:ident,
+                $input:expr,
+                $message_index:expr,
+                $ref_val:expr,
+                $exp:expr,
+                $dig:expr,
+                $expected:expr
+            ),
+        )*
+    ) => ($(
+        $(#[$meta])*
         #[test]
         fn $name() -> Result<(), Box<dyn std::error::Error>> {
             let buf = $input;
@@ -190,6 +218,10 @@ macro_rules! test_operation_with_data_without_nan_values_compared_using_simple_p
 }
 
 test_operation_with_data_without_nan_values_compared_using_simple_packing! {
+    #[cfg(any(
+        feature = "jpeg2000-unpack-with-hayro",
+        feature = "jpeg2000-unpack-with-openjpeg"
+    ))]
     (
         decoding_jpeg2000_code_stream_as_little_endian,
         test_utils::data::grib2::cmc_glb()?,
@@ -226,6 +258,7 @@ test_operation_with_data_without_nan_values_compared_using_simple_packing! {
         9,
         test_utils::data::flat_binary::noaa_gdas_2_le()?
     ),
+    #[cfg(feature = "png-unpack-with-png-crate")]
     (
         decoding_png_packing_with_num_bits_being_24_as_little_endian,
         test_utils::data::grib2::noaa_mrms_merged_rho_hv()?,

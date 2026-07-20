@@ -14,6 +14,7 @@ pub(crate) mod grib2 {
 
     macro_rules! definitions_of_grib2_test_data {
         ($(($name:ident, $file_name:expr),)*) => ($(
+            #[allow(dead_code)]
             pub(crate) fn $name() -> Result<Vec<u8>, io::Error> {
                 get_uncompressed(testdata_dir().join($file_name))
             }
@@ -51,6 +52,7 @@ pub(crate) mod flat_binary {
 
     macro_rules! definitions_of_flat_binary_test_data {
         ($(($name:ident, $file_name:expr),)*) => ($(
+            #[allow(dead_code)]
             pub(crate) fn $name() -> Result<Vec<u8>, io::Error> {
                 get_uncompressed(testdata_dir().join("gen").join($file_name))
             }
