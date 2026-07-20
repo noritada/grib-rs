@@ -1222,10 +1222,7 @@ mod tests {
 
     #[test]
     fn context_from_bytes() {
-        let f = File::open(DWD_ICON).unwrap();
-        let mut f = BufReader::new(f);
-        let mut buf = Vec::new();
-        f.read_to_end(&mut buf).unwrap();
+        let buf = crate::test_utils::decompress_to_vec(DWD_ICON).unwrap();
         let result = from_bytes(&buf);
         assert!(result.is_ok())
     }
