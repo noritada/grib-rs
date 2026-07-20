@@ -90,5 +90,6 @@ pub(crate) mod flat_binary {
     definitions_of_flat_binary_test_data! {
         (jma_kousa_be, "kousa-wgrib2-be.bin.xz"),
         (jma_tornado_nowcast_be, "tornado-wgrib2-be.bin.xz"),
+        (jma_tornado_nowcast_le, "tornado-wgrib2-le.bin.xz"),
     }
 }

@@ -53,7 +53,14 @@ test_operation_with_no_options! {
 }
 
 macro_rules! test_operation_with_data_without_nan_values_and_byte_order_options {
-    ($(($name:ident, $input:expr, $message_index:expr, $byte_order_flag:expr, $expected:expr),)*) => ($(
+    ($((
+        $name:ident,
+        $input:expr,
+        $message_index:expr,
+        $byte_order_flag:expr,
+        $nan_replacement:expr,
+        $expected:expr
+    ),)*) => ($(
         #[test]
         fn $name() -> Result<(), Box<dyn std::error::Error>> {
             let input = $input;
@@ -74,7 +81,8 @@ macro_rules! test_operation_with_data_without_nan_values_and_byte_order_options 
                 .stderr(predicate::str::is_empty());
 
             let actual = utils::get_uncompressed(&out_path)?;
-            assert_eq!(actual, $expected);
+            let expected: Vec<_> = $expected.chunks(4).flat_map($nan_replacement).collect();
+            assert_eq!(actual, expected);
 
             Ok(())
         }
@@ -83,46 +91,27 @@ macro_rules! test_operation_with_data_without_nan_values_and_byte_order_options 
 
 test_operation_with_data_without_nan_values_and_byte_order_options! {
     (
-        decoding_simple_packing_as_big_endian,
-        utils::testdata::grib2::jma_kousa()?,
+        decoding_data_with_nan_values_as_big_endian,
+        utils::testdata::grib2::jma_tornado_nowcast()?,
         "0.3",
         "-b",
-        utils::testdata::flat_binary::jma_kousa_be()?
-    ),
-}
-
-#[test]
-fn decoding_run_length_packing_as_big_endian() -> Result<(), Box<dyn std::error::Error>> {
-    let tempfile = utils::testdata::grib2::jma_tornado_nowcast()?;
-    let arg_path = tempfile.path();
-
-    let dir = TempDir::new()?;
-    let out_path = dir.path().join("out.bin");
-    let out_path = format!("{}", out_path.display());
-
-    let mut cmd = Command::cargo_bin(CMD_NAME)?;
-    cmd.arg("decode")
-        .arg(arg_path)
-        .arg("0.3")
-        .arg("-b")
-        .arg(&out_path);
-    cmd.assert()
-        .success()
-        .stdout(predicate::str::is_empty())
-        .stderr(predicate::str::is_empty());
-
-    let expected = utils::testdata::flat_binary::jma_tornado_nowcast_be()?;
-    let expected: Vec<_> = expected
-        .chunks(4)
-        .flat_map(|b| match b {
+        |b| match b {
             [0x62, 0x58, 0xd1, 0x9a] => vec![0x7f, 0xc0, 0x00, 0x00],
             b => b.to_vec(),
-        })
-        .collect();
-    let actual = utils::get_uncompressed(&out_path)?;
-    assert_eq!(actual, expected);
-
-    Ok(())
+        },
+        utils::testdata::flat_binary::jma_tornado_nowcast_be()?
+    ),
+    (
+        decoding_data_with_nan_values_as_little_endian,
+        utils::testdata::grib2::jma_tornado_nowcast()?,
+        "0.3",
+        "-l",
+        |b| match b {
+            [0x9a, 0xd1, 0x58, 0x62] => vec![0x00, 0x00, 0xc0, 0x7f],
+            b => b.to_vec(),
+        },
+        utils::testdata::flat_binary::jma_tornado_nowcast_le()?
+    ),
 }
 
 #[test]
