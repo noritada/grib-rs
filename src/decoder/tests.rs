@@ -1,6 +1,6 @@
 use crate::{Grib2SubmessageDecoder, test_utils};
 
-macro_rules! test_operation_with_data_without_nan_values_and_byte_order_options {
+macro_rules! test_operation_with_data_without_nan_values {
     (
         $(
             $(#[$meta:meta])*
@@ -32,21 +32,21 @@ macro_rules! test_operation_with_data_without_nan_values_and_byte_order_options 
     )*);
 }
 
-test_operation_with_data_without_nan_values_and_byte_order_options! {
+test_operation_with_data_without_nan_values! {
     (
-        decoding_simple_packing_as_little_endian,
+        decoding_simple_packing,
         test_utils::data::grib2::jma_kousa()?,
         (0, 3),
         test_utils::data::flat_binary::jma_kousa_le()?
     ),
     (
-        decoding_complex_packing_with_num_descriptor_octet_being_1_as_little_endian,
+        decoding_complex_packing_with_num_descriptor_octet_being_1,
         test_utils::data::grib2::noaa_gdas_12()?,
         (0, 0),
         test_utils::data::flat_binary::noaa_gdas_12_le()?
     ),
     (
-        decoding_complex_packing_with_num_descriptor_octet_being_2_as_little_endian,
+        decoding_complex_packing_with_num_descriptor_octet_being_2,
         test_utils::data::grib2::jma_meps()?,
         (0, 2),
         test_utils::data::flat_binary::jma_meps_le()?
@@ -59,14 +59,14 @@ test_operation_with_data_without_nan_values_and_byte_order_options! {
     ),
     #[cfg(feature = "png-unpack-with-png-crate")]
     (
-        decoding_png_packing_with_num_bits_being_8_as_little_endian,
+        decoding_png_packing_with_num_bits_being_8,
         test_utils::data::grib2::noaa_mrms_precip_flag()?,
         (0, 0),
         test_utils::data::flat_binary::noaa_mrms_precip_flag_le()?
     ),
     #[cfg(feature = "png-unpack-with-png-crate")]
     (
-        decoding_png_packing_with_num_bits_being_16_as_little_endian,
+        decoding_png_packing_with_num_bits_being_16,
         test_utils::data::grib2::noaa_mrms_reflectivity()?,
         (0, 0),
         test_utils::data::flat_binary::noaa_mrms_reflectivity_le()?
@@ -76,7 +76,7 @@ test_operation_with_data_without_nan_values_and_byte_order_options! {
         feature = "ccsds-unpack-with-rust-aec"
     ))]
     (
-        decoding_ccsds_compression_as_little_endian,
+        decoding_ccsds_compression,
         test_utils::data::grib2::ecmwf_realtime_oper_fc_0()?,
         (0, 0),
         test_utils::data::flat_binary::ecmwf_realtime_oper_fc_0_le()?
@@ -93,7 +93,7 @@ test_operation_with_data_without_nan_values_and_byte_order_options! {
     ),
 }
 
-macro_rules! test_operation_with_data_with_nan_values_as_little_endian {
+macro_rules! test_operation_with_data_with_nan_values {
     (
         $(
             $(#[$meta:meta])*
@@ -134,39 +134,39 @@ macro_rules! test_operation_with_data_with_nan_values_as_little_endian {
     )*);
 }
 
-test_operation_with_data_with_nan_values_as_little_endian! {
+test_operation_with_data_with_nan_values! {
     (
-        decoding_run_length_packing_as_little_endian,
+        decoding_run_length_packing,
         test_utils::data::grib2::jma_tornado_nowcast()?,
         (0, 3),
         test_utils::data::flat_binary::jma_tornado_nowcast_le()?
     ),
     (
-        decoding_simple_packing_with_bitmap_as_little_endian,
+        decoding_simple_packing_with_bitmap,
         test_utils::data::grib2::jma_msmguid()?,
         (0, 0),
         test_utils::data::flat_binary::jma_msmguid_le()?
     ),
     (
-        decoding_complex_packing_with_first_order_spatial_differencing_as_little_endian,
+        decoding_complex_packing_with_first_order_spatial_differencing,
         test_utils::data::grib2::ncmrwf_wind_solar()?,
         (0, 0),
         test_utils::data::flat_binary::ncmrwf_wind_solar_le()?
     ),
     (
-        decoding_complex_packing_without_spatial_differencing_as_little_endian,
+        decoding_complex_packing_without_spatial_differencing,
         test_utils::data::grib2::noaa_ndfd_critfireo()?,
         (0, 0),
         test_utils::data::flat_binary::noaa_ndfd_critfireo_0_le()?
     ),
     (
-        decoding_complex_packing_without_spatial_differencing_as_little_endian_when_nbit_is_zero,
+        decoding_complex_packing_without_spatial_differencing_when_nbit_is_zero,
         test_utils::data::grib2::noaa_ndfd_critfireo()?,
         (1, 0),
         test_utils::data::flat_binary::noaa_ndfd_critfireo_1_le()?
     ),
     (
-        decoding_complex_packing_with_missing_value_management_as_little_endian,
+        decoding_complex_packing_with_missing_value_management,
         test_utils::data::grib2::noaa_ndfd_minrh()?,
         (0, 0),
         test_utils::data::flat_binary::noaa_ndfd_minrh_0_le()?
@@ -223,7 +223,7 @@ test_operation_with_data_without_nan_values_compared_using_simple_packing! {
         feature = "jpeg2000-unpack-with-openjpeg"
     ))]
     (
-        decoding_jpeg2000_code_stream_as_little_endian,
+        decoding_jpeg2000_code_stream,
         test_utils::data::grib2::cmc_glb()?,
         (0, 0),
         f32::from_be_bytes([0x45, 0x0e, 0xcc, 0x05]),
@@ -232,7 +232,7 @@ test_operation_with_data_without_nan_values_compared_using_simple_packing! {
         test_utils::data::flat_binary::cmc_glb_le()?
     ),
     (
-        decoding_complex_packing_with_num_descriptor_octet_being_3_as_little_endian,
+        decoding_complex_packing_with_num_descriptor_octet_being_3,
         test_utils::data::grib2::noaa_gdas_0_10()?,
         (1, 0),
         f32::from_be_bytes([0x00, 0x00, 0x00, 0x00]),
@@ -250,7 +250,7 @@ test_operation_with_data_without_nan_values_compared_using_simple_packing! {
         test_utils::data::flat_binary::noaa_gdas_0_le()?
     ),
     (
-        decoding_complex_packing_with_zero_width_groups_as_little_endian,
+        decoding_complex_packing_with_zero_width_groups,
         test_utils::data::grib2::noaa_gdas_0_10()?,
         (2, 0),
         f32::from_be_bytes([0x00, 0x00, 0x00, 0x00]),
@@ -260,7 +260,7 @@ test_operation_with_data_without_nan_values_compared_using_simple_packing! {
     ),
     #[cfg(feature = "png-unpack-with-png-crate")]
     (
-        decoding_png_packing_with_num_bits_being_24_as_little_endian,
+        decoding_png_packing_with_num_bits_being_24,
         test_utils::data::grib2::noaa_mrms_merged_rho_hv()?,
         (0, 0),
         f32::from_be_bytes([0xc7, 0xc3, 0x1e, 0x00]),
