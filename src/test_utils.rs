@@ -4,6 +4,8 @@ use std::{
     path::Path,
 };
 
+/// Reads a byte sequence from a file path and stores it in a `Vec`. If the data
+/// is compressed, the decompressed result will be stored.
 pub(crate) fn decompress_to_vec<P>(file_path: P) -> Result<Vec<u8>, io::Error>
 where
     P: AsRef<Path>,

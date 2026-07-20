@@ -1,5 +1,11 @@
 macro_rules! definitions_of_test_data {
-    ($(($name:ident, $file_name:expr),)*) => ($(
+    (
+        $(
+            $(#[$meta:meta])*
+            ($name:ident, $file_name:expr),
+        )*
+    ) => ($(
+        $(#[$meta])*
         #[allow(dead_code)]
         pub(crate) const $name: &'static str = $file_name;
     )*);
@@ -8,6 +14,7 @@ macro_rules! definitions_of_test_data {
 pub(crate) mod grib2 {
     definitions_of_test_data! {
         (CMC_GLB, "testdata/CMC_glb_TMP_ISBL_1_latlon.24x.24_2021051800_P000.grib2"),
+        /// Notable points: This data includes Section 2 and uses Template 3.101.
         (DWD_ICON, "testdata/icon_global_icosahedral_single-level_2021112018_000_TOT_PREC.grib2"),
         (ECMWF_REALTIME_OPER_FC_0, "testdata/20240101000000-0h-oper-fc.grib2.0-10.xz"),
         (ECMWF_REALTIME_OPER_FC_89, "testdata/20250912120000-0h-oper-fc.grib2.89.xz"),
