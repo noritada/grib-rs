@@ -3,7 +3,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use crate::test_utils::get_uncompressed;
+use crate::test_utils::decompress_to_vec;
 
 fn testdata_dir() -> PathBuf {
     Path::new("testdata").into()
@@ -16,7 +16,7 @@ pub(crate) mod grib2 {
         ($(($name:ident, $file_name:expr),)*) => ($(
             #[allow(dead_code)]
             pub(crate) fn $name() -> Result<Vec<u8>, io::Error> {
-                get_uncompressed(testdata_dir().join($file_name))
+                decompress_to_vec(testdata_dir().join($file_name))
             }
         )*);
     }
@@ -54,7 +54,7 @@ pub(crate) mod flat_binary {
         ($(($name:ident, $file_name:expr),)*) => ($(
             #[allow(dead_code)]
             pub(crate) fn $name() -> Result<Vec<u8>, io::Error> {
-                get_uncompressed(testdata_dir().join("gen").join($file_name))
+                decompress_to_vec(testdata_dir().join("gen").join($file_name))
             }
         )*);
     }

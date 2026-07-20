@@ -162,7 +162,7 @@ mod tests {
     fn latlon_computation_for_real_world_gaussian_grid_compared_with_results_from_eccodes()
     -> Result<(), Box<dyn std::error::Error>> {
         let buf =
-            crate::test_utils::get_uncompressed("testdata/gdas.t00z.sfluxgrbf000.grib2.0.xz")?;
+            crate::test_utils::decompress_to_vec("testdata/gdas.t00z.sfluxgrbf000.grib2.0.xz")?;
 
         let f = std::io::Cursor::new(buf);
         let grib2 = crate::from_reader(f)?;

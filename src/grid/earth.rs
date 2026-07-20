@@ -38,11 +38,11 @@ mod tests {
     use grib_template_helpers::TryFromSlice;
 
     use super::*;
-    use crate::test_utils::get_uncompressed;
+    use crate::test_utils::decompress_to_vec;
 
     #[test]
     fn radii_for_shape_1() -> Result<(), Box<dyn std::error::Error>> {
-        let buf = get_uncompressed("testdata/ds.critfireo.bin.xz")?;
+        let buf = decompress_to_vec("testdata/ds.critfireo.bin.xz")?;
         let mut pos = 0x83;
         let earth_actual = EarthShape::try_from_slice(&buf, &mut pos)?;
         let earth_expected = EarthShape {
@@ -62,7 +62,7 @@ mod tests {
 
     #[test]
     fn radii_for_shape_2() -> Result<(), Box<dyn std::error::Error>> {
-        let buf = get_uncompressed(
+        let buf = decompress_to_vec(
             "testdata/MRMS_ReflectivityAtLowestAltitude_00.50_20230406-120039.grib2.gz",
         )?;
         let mut pos = 0x33;
@@ -84,7 +84,7 @@ mod tests {
 
     #[test]
     fn radii_for_shape_4() -> Result<(), Box<dyn std::error::Error>> {
-        let buf = get_uncompressed(
+        let buf = decompress_to_vec(
             "testdata/Z__C_RJTD_20160822020000_NOWC_GPV_Ggis10km_Pphw10_FH0000-0100_grib2.bin",
         )?;
         let mut pos = 0x33;
@@ -106,7 +106,7 @@ mod tests {
 
     #[test]
     fn radii_for_shape_6() -> Result<(), Box<dyn std::error::Error>> {
-        let buf = get_uncompressed("testdata/gdas.t12z.pgrb2.0p25.f000.0-10.xz")?;
+        let buf = decompress_to_vec("testdata/gdas.t12z.pgrb2.0p25.f000.0-10.xz")?;
         let mut pos = 0x33;
         let earth_actual = EarthShape::try_from_slice(&buf, &mut pos)?;
         let earth_expected = EarthShape {

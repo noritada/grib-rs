@@ -1337,7 +1337,7 @@ mod tests {
         ),)*) => ($(
             #[test]
             fn $name() -> Result<(), Box<dyn std::error::Error>> {
-                let buf = crate::test_utils::get_uncompressed($xz_compressed_input)?;
+                let buf = crate::test_utils::decompress_to_vec($xz_compressed_input)?;
 
                 let f = Cursor::new(buf);
                 let grib2 = crate::from_reader(f)?;
