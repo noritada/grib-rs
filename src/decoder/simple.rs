@@ -155,10 +155,7 @@ mod tests {
 
     #[test]
     fn decode_simple_packing_when_nbit_is_zero() {
-        let f = File::open(
-            "testdata/icon_global_icosahedral_single-level_2021112018_000_TOT_PREC.grib2",
-        )
-        .unwrap();
+        let f = File::open(crate::test_utils::data::grib2::DWD_ICON).unwrap();
         let mut f = BufReader::new(f);
         let mut buf = Vec::new();
         f.read_to_end(&mut buf).unwrap();

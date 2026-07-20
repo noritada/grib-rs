@@ -161,14 +161,8 @@ mod tests {
     #[test]
     fn latlon_computation_for_real_world_gaussian_grid_compared_with_results_from_eccodes()
     -> Result<(), Box<dyn std::error::Error>> {
-        use std::io::Read;
-
-        let mut buf = Vec::new();
-
-        let f = std::fs::File::open("testdata/gdas.t00z.sfluxgrbf000.grib2.0.xz")?;
-        let f = std::io::BufReader::new(f);
-        let mut f = xz2::bufread::XzDecoder::new(f);
-        f.read_to_end(&mut buf)?;
+        let buf =
+            crate::test_utils::decompress_to_vec(crate::test_utils::data::grib2::NOAA_GDAS_SFLUX)?;
 
         let f = std::io::Cursor::new(buf);
         let grib2 = crate::from_reader(f)?;

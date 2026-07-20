@@ -35,43 +35,14 @@ impl EarthShape {
 
 #[cfg(test)]
 mod tests {
-    use std::{
-        fs::File,
-        io::{BufReader, Read},
-    };
-
     use grib_template_helpers::TryFromSlice;
 
     use super::*;
-
-    fn get_uncompressed<P>(file_path: P) -> Result<Vec<u8>, std::io::Error>
-    where
-        P: AsRef<std::path::Path>,
-    {
-        let mut buf = Vec::new();
-
-        let f = File::open(&file_path)?;
-        let mut f = BufReader::new(f);
-        match file_path.as_ref().extension().map(|s| s.as_encoded_bytes()) {
-            Some(b"gz") => {
-                let mut f = flate2::read::GzDecoder::new(f);
-                f.read_to_end(&mut buf)?;
-            }
-            Some(b"xz") => {
-                let mut f = xz2::bufread::XzDecoder::new(f);
-                f.read_to_end(&mut buf)?;
-            }
-            _ => {
-                f.read_to_end(&mut buf)?;
-            }
-        };
-
-        Ok(buf)
-    }
+    use crate::test_utils::decompress_to_vec;
 
     #[test]
     fn radii_for_shape_1() -> Result<(), Box<dyn std::error::Error>> {
-        let buf = get_uncompressed("testdata/ds.critfireo.bin.xz")?;
+        let buf = decompress_to_vec(crate::test_utils::data::grib2::NOAA_NDFD_CRITFIREO)?;
         let mut pos = 0x83;
         let earth_actual = EarthShape::try_from_slice(&buf, &mut pos)?;
         let earth_expected = EarthShape {
@@ -91,9 +62,7 @@ mod tests {
 
     #[test]
     fn radii_for_shape_2() -> Result<(), Box<dyn std::error::Error>> {
-        let buf = get_uncompressed(
-            "testdata/MRMS_ReflectivityAtLowestAltitude_00.50_20230406-120039.grib2.gz",
-        )?;
+        let buf = decompress_to_vec(crate::test_utils::data::grib2::NOAA_MRMS_REFLECTIVITY)?;
         let mut pos = 0x33;
         let earth_actual = EarthShape::try_from_slice(&buf, &mut pos)?;
         let earth_expected = EarthShape {
@@ -113,9 +82,7 @@ mod tests {
 
     #[test]
     fn radii_for_shape_4() -> Result<(), Box<dyn std::error::Error>> {
-        let buf = get_uncompressed(
-            "testdata/Z__C_RJTD_20160822020000_NOWC_GPV_Ggis10km_Pphw10_FH0000-0100_grib2.bin",
-        )?;
+        let buf = decompress_to_vec(crate::test_utils::data::grib2::JMA_TORNADO_NOWCAST)?;
         let mut pos = 0x33;
         let earth_actual = EarthShape::try_from_slice(&buf, &mut pos)?;
         let earth_expected = EarthShape {
@@ -135,7 +102,7 @@ mod tests {
 
     #[test]
     fn radii_for_shape_6() -> Result<(), Box<dyn std::error::Error>> {
-        let buf = get_uncompressed("testdata/gdas.t12z.pgrb2.0p25.f000.0-10.xz")?;
+        let buf = decompress_to_vec(crate::test_utils::data::grib2::NOAA_GDAS_0_10)?;
         let mut pos = 0x33;
         let earth_actual = EarthShape::try_from_slice(&buf, &mut pos)?;
         let earth_expected = EarthShape {

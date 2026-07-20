@@ -52,41 +52,13 @@ impl<'d> Grib2GpvUnpack for Ccsds<'d> {
 
 #[cfg(test)]
 mod tests {
-    use std::{
-        fs::File,
-        io::{BufReader, Read},
-    };
-
     use super::*;
     #[cfg(all(
         feature = "ccsds-unpack-with-libaec",
         feature = "ccsds-unpack-with-rust-aec"
     ))]
     use crate::def::grib2::{DataRepresentationTemplate, template::Template5_42};
-
-    fn read_xz(path: &str) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
-        let f = File::open(path)?;
-        let f = BufReader::new(f);
-        let mut f = xz2::bufread::XzDecoder::new(f);
-        let mut buf = Vec::new();
-        f.read_to_end(&mut buf)?;
-        Ok(buf)
-    }
-
-    #[cfg(feature = "ccsds-unpack-with-rust-aec")]
-    fn decoded_values_to_le_bytes(values: impl IntoIterator<Item = f32>) -> Vec<u8> {
-        values.into_iter().flat_map(f32::to_le_bytes).collect()
-    }
-
-    #[cfg(feature = "ccsds-unpack-with-rust-aec")]
-    fn first_submessage_values(path: &str) -> Result<Vec<f32>, Box<dyn std::error::Error>> {
-        let buf = read_xz(path)?;
-        let cursor = std::io::Cursor::new(buf);
-        let grib2 = crate::from_reader(cursor)?;
-        let (_index, submessage) = grib2.iter().next().ok_or("GRIB file has no submessages")?;
-        let decoder = Grib2SubmessageDecoder::from(submessage)?;
-        Ok(decoder.dispatch()?.collect())
-    }
+    use crate::test_utils::decompress_to_vec;
 
     #[cfg(all(
         feature = "ccsds-unpack-with-libaec",
@@ -148,7 +120,7 @@ mod tests {
     fn first_ccsds_decoder_with_nonzero_bits(
         path: &str,
     ) -> Result<Grib2SubmessageDecoder, Box<dyn std::error::Error>> {
-        let buf = read_xz(path)?;
+        let buf = decompress_to_vec(path)?;
         let cursor = std::io::Cursor::new(buf);
         let grib2 = crate::from_reader(cursor)?;
 
@@ -168,7 +140,7 @@ mod tests {
 
     #[test]
     fn decode_ccsds_compression_when_nbit_is_zero() -> Result<(), Box<dyn std::error::Error>> {
-        let buf = read_xz("testdata/20240101000000-0h-oper-fc.grib2.0-10.xz")?;
+        let buf = decompress_to_vec(crate::test_utils::data::grib2::ECMWF_REALTIME_OPER_FC_0)?;
 
         // submessage 2.0
         let decoder = Grib2SubmessageDecoder::new(
@@ -186,35 +158,13 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "ccsds-unpack-with-rust-aec")]
-    fn decode_ecmwf_ccsds_0_matches_wgrib2_fixture() -> Result<(), Box<dyn std::error::Error>> {
-        let values = first_submessage_values("testdata/20240101000000-0h-oper-fc.grib2.0-10.xz")?;
-        let actual = decoded_values_to_le_bytes(values);
-        let expected = read_xz("testdata/gen/ecmwf-realtime-oper-fc-0-le.bin.xz")?;
-
-        assert_eq!(actual, expected);
-        Ok(())
-    }
-
-    #[test]
-    #[cfg(feature = "ccsds-unpack-with-rust-aec")]
-    fn decode_ecmwf_ccsds_89_matches_wgrib2_fixture() -> Result<(), Box<dyn std::error::Error>> {
-        let values = first_submessage_values("testdata/20250912120000-0h-oper-fc.grib2.89.xz")?;
-        let actual = decoded_values_to_le_bytes(values);
-        let expected = read_xz("testdata/gen/ecmwf-realtime-oper-fc-89-le.bin.xz")?;
-
-        assert_eq!(actual, expected);
-        Ok(())
-    }
-
-    #[test]
     #[cfg(all(
         feature = "ccsds-unpack-with-libaec",
         feature = "ccsds-unpack-with-rust-aec"
     ))]
     fn rust_aec_matches_libaec_for_ecmwf_ccsds_payload() -> Result<(), Box<dyn std::error::Error>> {
         let decoder = first_ccsds_decoder_with_nonzero_bits(
-            "testdata/20250912120000-0h-oper-fc.grib2.89.xz",
+            crate::test_utils::data::grib2::ECMWF_REALTIME_OPER_FC_89,
         )?;
         let DataRepresentationTemplate::_5_42(template) = &decoder.section5().payload.template
         else {

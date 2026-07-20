@@ -348,12 +348,11 @@ mod tests {
     use std::io::{Cursor, Write};
 
     use super::*;
+    use crate::test_utils::{data::grib2::DWD_ICON, decompress_to_vec};
 
     #[test]
     fn read_one_grib2_message() -> Result<(), Box<dyn std::error::Error>> {
-        let f = std::fs::File::open(
-            "testdata/icon_global_icosahedral_single-level_2021112018_000_TOT_PREC.grib2",
-        )?;
+        let f = std::fs::File::open(DWD_ICON)?;
         let f = std::io::BufReader::new(f);
 
         let grib2_reader = SeekableGrib2Reader::new(f);
@@ -381,12 +380,7 @@ mod tests {
 
     #[test]
     fn read_multiple_grib2_messages() -> Result<(), Box<dyn std::error::Error>> {
-        let f = std::fs::File::open(
-            "testdata/icon_global_icosahedral_single-level_2021112018_000_TOT_PREC.grib2",
-        )?;
-        let mut f = std::io::BufReader::new(f);
-        let mut buf = Vec::new();
-        f.read_to_end(&mut buf)?;
+        let buf = decompress_to_vec(DWD_ICON)?;
         let repeated_message = buf.repeat(2);
         let f = Cursor::new(repeated_message);
 
@@ -424,13 +418,7 @@ mod tests {
 
     #[test]
     fn read_grib2_message_with_incomplete_section_0() -> Result<(), Box<dyn std::error::Error>> {
-        let f = std::fs::File::open(
-            "testdata/icon_global_icosahedral_single-level_2021112018_000_TOT_PREC.grib2",
-        )?;
-        let mut f = std::io::BufReader::new(f);
-        let mut buf = Vec::new();
-        f.read_to_end(&mut buf)?;
-
+        let mut buf = decompress_to_vec(DWD_ICON)?;
         let mut extra_bytes = "extra".as_bytes().to_vec();
         buf.append(&mut extra_bytes);
         let f = Cursor::new(buf);
@@ -460,13 +448,7 @@ mod tests {
 
     #[test]
     fn read_grib2_message_with_incomplete_section_1() -> Result<(), Box<dyn std::error::Error>> {
-        let f = std::fs::File::open(
-            "testdata/icon_global_icosahedral_single-level_2021112018_000_TOT_PREC.grib2",
-        )?;
-        let mut f = std::io::BufReader::new(f);
-        let mut buf = Vec::new();
-        f.read_to_end(&mut buf)?;
-
+        let mut buf = decompress_to_vec(DWD_ICON)?;
         let mut message_2_bytes = buf[..(SECT0_IS_SIZE + 1)].to_vec();
         buf.append(&mut message_2_bytes);
         let f = Cursor::new(buf);
@@ -500,13 +482,7 @@ mod tests {
 
     #[test]
     fn read_grib2_message_with_incomplete_section_8() -> Result<(), Box<dyn std::error::Error>> {
-        let f = std::fs::File::open(
-            "testdata/icon_global_icosahedral_single-level_2021112018_000_TOT_PREC.grib2",
-        )?;
-        let mut f = std::io::BufReader::new(f);
-        let mut buf = Vec::new();
-        f.read_to_end(&mut buf)?;
-
+        let buf = decompress_to_vec(DWD_ICON)?;
         let mut repeated_message = buf.repeat(2);
         repeated_message.pop();
         let f = Cursor::new(repeated_message);
@@ -551,9 +527,7 @@ mod tests {
         let mut buf = Vec::new();
         buf.write_all(header)?;
 
-        let f = std::fs::File::open(
-            "testdata/icon_global_icosahedral_single-level_2021112018_000_TOT_PREC.grib2",
-        )?;
+        let f = std::fs::File::open(DWD_ICON)?;
         let mut f = std::io::BufReader::new(f);
         f.read_to_end(&mut buf)?;
 

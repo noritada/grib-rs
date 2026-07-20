@@ -1269,6 +1269,7 @@ mod tests {
     use std::{fs::File, io::BufReader};
 
     use super::*;
+    use crate::test_utils::data::grib2::{DWD_ICON, JMA_MSMGUID, NOAA_GDAS_0_10};
 
     macro_rules! sect_placeholder {
         ($num:expr) => {{
@@ -1283,10 +1284,7 @@ mod tests {
 
     #[test]
     fn context_from_buf_reader() {
-        let f = File::open(
-            "testdata/icon_global_icosahedral_single-level_2021112018_000_TOT_PREC.grib2",
-        )
-        .unwrap();
+        let f = File::open(DWD_ICON).unwrap();
         let f = BufReader::new(f);
         let result = from_reader(f);
         assert!(result.is_ok())
@@ -1294,13 +1292,7 @@ mod tests {
 
     #[test]
     fn context_from_bytes() {
-        let f = File::open(
-            "testdata/icon_global_icosahedral_single-level_2021112018_000_TOT_PREC.grib2",
-        )
-        .unwrap();
-        let mut f = BufReader::new(f);
-        let mut buf = Vec::new();
-        f.read_to_end(&mut buf).unwrap();
+        let buf = crate::test_utils::decompress_to_vec(DWD_ICON).unwrap();
         let result = from_bytes(&buf);
         assert!(result.is_ok())
     }
@@ -1407,12 +1399,7 @@ mod tests {
         ),)*) => ($(
             #[test]
             fn $name() -> Result<(), Box<dyn std::error::Error>> {
-                let mut buf = Vec::new();
-
-                let f = File::open($xz_compressed_input)?;
-                let f = BufReader::new(f);
-                let mut f = xz2::bufread::XzDecoder::new(f);
-                f.read_to_end(&mut buf)?;
+                let buf = crate::test_utils::decompress_to_vec($xz_compressed_input)?;
 
                 let f = Cursor::new(buf);
                 let grib2 = crate::from_reader(f)?;
@@ -1431,28 +1418,28 @@ mod tests {
     test_submessage_iterator! {
         (
             item_0_from_submessage_iterator_for_single_message_data_with_multiple_submessages,
-            "testdata/Z__C_RJTD_20190304000000_MSM_GUID_Rjp_P-all_FH03-39_Toorg_grib2.bin.xz",
+            JMA_MSMGUID,
             0,
             (0, 0),
             (0, 1, None, 2, 3, 4, 5, 6, 0),
         ),
         (
             item_1_from_submessage_iterator_for_single_message_data_with_multiple_submessages,
-            "testdata/Z__C_RJTD_20190304000000_MSM_GUID_Rjp_P-all_FH03-39_Toorg_grib2.bin.xz",
+            JMA_MSMGUID,
             1,
             (0, 1),
             (0, 1, None, 2, 7, 8, 9, 10, 0),
         ),
         (
             item_0_from_submessage_iterator_for_multi_message_data,
-            "testdata/gdas.t12z.pgrb2.0p25.f000.0-10.xz",
+            NOAA_GDAS_0_10,
             0,
             (0, 0),
             (0, 1, None, 2, 3, 4, 5, 6, 7),
         ),
         (
             item_1_from_submessage_iterator_for_multi_message_data,
-            "testdata/gdas.t12z.pgrb2.0p25.f000.0-10.xz",
+            NOAA_GDAS_0_10,
             1,
             (1, 0),
             (8, 9, None, 10, 11, 12, 13, 14, 15),
