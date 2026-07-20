@@ -52,26 +52,13 @@ impl<'d> Grib2GpvUnpack for Ccsds<'d> {
 
 #[cfg(test)]
 mod tests {
-    use std::{
-        fs::File,
-        io::{BufReader, Read},
-    };
-
     use super::*;
     #[cfg(all(
         feature = "ccsds-unpack-with-libaec",
         feature = "ccsds-unpack-with-rust-aec"
     ))]
     use crate::def::grib2::{DataRepresentationTemplate, template::Template5_42};
-
-    fn read_xz(path: &str) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
-        let f = File::open(path)?;
-        let f = BufReader::new(f);
-        let mut f = xz2::bufread::XzDecoder::new(f);
-        let mut buf = Vec::new();
-        f.read_to_end(&mut buf)?;
-        Ok(buf)
-    }
+    use crate::test_utils::decompress_to_vec;
 
     #[cfg(all(
         feature = "ccsds-unpack-with-libaec",
@@ -133,7 +120,7 @@ mod tests {
     fn first_ccsds_decoder_with_nonzero_bits(
         path: &str,
     ) -> Result<Grib2SubmessageDecoder, Box<dyn std::error::Error>> {
-        let buf = read_xz(path)?;
+        let buf = decompress_to_vec(path)?;
         let cursor = std::io::Cursor::new(buf);
         let grib2 = crate::from_reader(cursor)?;
 
@@ -153,7 +140,7 @@ mod tests {
 
     #[test]
     fn decode_ccsds_compression_when_nbit_is_zero() -> Result<(), Box<dyn std::error::Error>> {
-        let buf = read_xz("testdata/20240101000000-0h-oper-fc.grib2.0-10.xz")?;
+        let buf = decompress_to_vec("testdata/20240101000000-0h-oper-fc.grib2.0-10.xz")?;
 
         // submessage 2.0
         let decoder = Grib2SubmessageDecoder::new(
