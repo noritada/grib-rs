@@ -42,7 +42,7 @@ mod tests {
 
     #[test]
     fn radii_for_shape_1() -> Result<(), Box<dyn std::error::Error>> {
-        let buf = decompress_to_vec("testdata/ds.critfireo.bin.xz")?;
+        let buf = decompress_to_vec(crate::test_utils::data::grib2::NOAA_NDFD_CRITFIREO)?;
         let mut pos = 0x83;
         let earth_actual = EarthShape::try_from_slice(&buf, &mut pos)?;
         let earth_expected = EarthShape {
@@ -62,9 +62,7 @@ mod tests {
 
     #[test]
     fn radii_for_shape_2() -> Result<(), Box<dyn std::error::Error>> {
-        let buf = decompress_to_vec(
-            "testdata/MRMS_ReflectivityAtLowestAltitude_00.50_20230406-120039.grib2.gz",
-        )?;
+        let buf = decompress_to_vec(crate::test_utils::data::grib2::NOAA_MRMS_REFLECTIVITY)?;
         let mut pos = 0x33;
         let earth_actual = EarthShape::try_from_slice(&buf, &mut pos)?;
         let earth_expected = EarthShape {
@@ -84,9 +82,7 @@ mod tests {
 
     #[test]
     fn radii_for_shape_4() -> Result<(), Box<dyn std::error::Error>> {
-        let buf = decompress_to_vec(
-            "testdata/Z__C_RJTD_20160822020000_NOWC_GPV_Ggis10km_Pphw10_FH0000-0100_grib2.bin",
-        )?;
+        let buf = decompress_to_vec(crate::test_utils::data::grib2::JMA_TORNADO_NOWCAST)?;
         let mut pos = 0x33;
         let earth_actual = EarthShape::try_from_slice(&buf, &mut pos)?;
         let earth_expected = EarthShape {
@@ -106,7 +102,7 @@ mod tests {
 
     #[test]
     fn radii_for_shape_6() -> Result<(), Box<dyn std::error::Error>> {
-        let buf = decompress_to_vec("testdata/gdas.t12z.pgrb2.0p25.f000.0-10.xz")?;
+        let buf = decompress_to_vec(crate::test_utils::data::grib2::NOAA_GDAS_0_10)?;
         let mut pos = 0x33;
         let earth_actual = EarthShape::try_from_slice(&buf, &mut pos)?;
         let earth_expected = EarthShape {

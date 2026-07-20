@@ -72,7 +72,7 @@ mod tests {
         feature = "jpeg2000-unpack-with-openjpeg"
     ))]
     fn hayro_has_priority_and_matches_openjpeg() -> Result<(), Box<dyn std::error::Error>> {
-        let f = File::open("testdata/CMC_glb_TMP_ISBL_1_latlon.24x.24_2021051800_P000.grib2")?;
+        let f = File::open(crate::test_utils::data::grib2::CMC_GLB)?;
         let grib2 = crate::from_reader(BufReader::new(f))?;
         let (_index, submessage) = grib2.iter().next().ok_or("GRIB file has no submessages")?;
         let decoder = crate::Grib2SubmessageDecoder::from(submessage)?;

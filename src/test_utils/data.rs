@@ -8,6 +8,7 @@ macro_rules! definitions_of_test_data {
 pub(crate) mod grib2 {
     definitions_of_test_data! {
         (CMC_GLB, "testdata/CMC_glb_TMP_ISBL_1_latlon.24x.24_2021051800_P000.grib2"),
+        (DWD_ICON, "testdata/icon_global_icosahedral_single-level_2021112018_000_TOT_PREC.grib2"),
         (ECMWF_REALTIME_OPER_FC_0, "testdata/20240101000000-0h-oper-fc.grib2.0-10.xz"),
         (ECMWF_REALTIME_OPER_FC_89, "testdata/20250912120000-0h-oper-fc.grib2.89.xz"),
         (
@@ -24,6 +25,7 @@ pub(crate) mod grib2 {
         (NOAA_GDAS_0_10, "testdata/gdas.t12z.pgrb2.0p25.f000.0-10.xz"),
         (NOAA_GDAS_12, "testdata/gdas.t12z.pgrb2.0p25.f000.12.xz"),
         (NOAA_GDAS_46, "testdata/gdas.t12z.pgrb2.0p25.f000.46.xz"),
+        (NOAA_GDAS_SFLUX, "testdata/gdas.t00z.sfluxgrbf000.grib2.0.xz"),
         (NOAA_MRMS_MERGED_RHO_HV, "testdata/MRMS_MergedRhoHV_19.00_20260219-042039.grib2.gz"),
         (NOAA_MRMS_PRECIP_FLAG, "testdata/MRMS_PrecipFlag_00.00_20260219-042400.grib2.gz"),
         (NOAA_MRMS_REFLECTIVITY, "testdata/MRMS_ReflectivityAtLowestAltitude_00.50_20230406-120039.grib2.gz"),

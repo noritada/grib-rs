@@ -140,7 +140,7 @@ mod tests {
 
     #[test]
     fn decode_ccsds_compression_when_nbit_is_zero() -> Result<(), Box<dyn std::error::Error>> {
-        let buf = decompress_to_vec("testdata/20240101000000-0h-oper-fc.grib2.0-10.xz")?;
+        let buf = decompress_to_vec(crate::test_utils::data::grib2::ECMWF_REALTIME_OPER_FC_0)?;
 
         // submessage 2.0
         let decoder = Grib2SubmessageDecoder::new(
@@ -164,7 +164,7 @@ mod tests {
     ))]
     fn rust_aec_matches_libaec_for_ecmwf_ccsds_payload() -> Result<(), Box<dyn std::error::Error>> {
         let decoder = first_ccsds_decoder_with_nonzero_bits(
-            "testdata/20250912120000-0h-oper-fc.grib2.89.xz",
+            crate::test_utils::data::grib2::ECMWF_REALTIME_OPER_FC_89,
         )?;
         let DataRepresentationTemplate::_5_42(template) = &decoder.section5().payload.template
         else {
