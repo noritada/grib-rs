@@ -1,4 +1,4 @@
-use grib_template_helpers::WriteToBuffer;
+use crate::WriteToBuffer;
 
 #[derive(Debug)]
 pub(crate) struct Bitmap {

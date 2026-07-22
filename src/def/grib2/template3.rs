@@ -16,8 +16,10 @@ pub struct Template3_0 {
 /// ```
 /// use std::io::Read;
 ///
-/// use grib::def::grib2::template::{Template3_1, param_set};
-/// use grib_template_helpers::TryFromSlice;
+/// use grib::{
+///     TryFromSlice,
+///     def::grib2::template::{Template3_1, param_set},
+/// };
 ///
 /// fn main() -> Result<(), Box<dyn std::error::Error>> {
 ///     let mut buf = Vec::new();
@@ -83,8 +85,10 @@ pub struct Template3_1 {
 /// ```
 /// use std::io::{BufReader, Read};
 ///
-/// use grib::def::grib2::template::{Template3_20, param_set};
-/// use grib_template_helpers::TryFromSlice;
+/// use grib::{
+///     TryFromSlice,
+///     def::grib2::template::{Template3_20, param_set},
+/// };
 ///
 /// fn main() -> Result<(), Box<dyn std::error::Error>> {
 ///     let mut buf = Vec::new();
@@ -156,8 +160,10 @@ pub struct Template3_20 {
 /// ```
 /// use std::io::{BufReader, Read};
 ///
-/// use grib::def::grib2::template::{Template3_30, param_set};
-/// use grib_template_helpers::TryFromSlice;
+/// use grib::{
+///     TryFromSlice,
+///     def::grib2::template::{Template3_30, param_set},
+/// };
 ///
 /// fn main() -> Result<(), Box<dyn std::error::Error>> {
 ///     let mut buf = Vec::new();

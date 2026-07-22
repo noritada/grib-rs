@@ -1,8 +1,7 @@
 use std::slice::Iter;
 
-use grib_template_helpers::TryFromSlice;
-
 use crate::{
+    TryFromSlice,
     codetables::SUPPORTED_PROD_DEF_TEMPLATE_NUMBERS,
     datatypes::*,
     error::*,

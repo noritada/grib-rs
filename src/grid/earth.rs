@@ -35,10 +35,8 @@ impl EarthShape {
 
 #[cfg(test)]
 mod tests {
-    use grib_template_helpers::TryFromSlice;
-
     use super::*;
-    use crate::test_utils::decompress_to_vec;
+    use crate::{TryFromSlice, test_utils::decompress_to_vec};
 
     #[test]
     fn radii_for_shape_1() -> Result<(), Box<dyn std::error::Error>> {

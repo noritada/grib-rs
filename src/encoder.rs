@@ -1,8 +1,7 @@
 pub use complex::*;
-use grib_template_helpers::WriteToBuffer;
 pub use simple::*;
 
-use crate::def::grib2::template::param_set;
+use crate::{WriteToBuffer, def::grib2::template::param_set};
 
 /// Encodes a sequence of numerical values as GRIB2 data sections.
 pub fn encode_gpv(data: &[f64], method: EncodingMethod) -> EncodeOutput {
@@ -210,10 +209,8 @@ mod writer;
 
 #[cfg(test)]
 mod tests {
-    use grib_template_helpers::TryFromSlice as _;
-
     use super::*;
-    use crate::def::grib2::Section1;
+    use crate::{TryFromSlice as _, def::grib2::Section1};
 
     #[test]
     fn grib2_section1_roundtrip_test() -> Result<(), Box<dyn std::error::Error>> {

@@ -1,8 +1,7 @@
 use std::vec::IntoIter;
 
-use grib_template_helpers::TryFromSlice as _;
-
 use crate::{
+    TryFromSlice as _,
     context::{SectionBody, SubMessage},
     decoder::{
         bitmap::{BitmapDecodeIterator, dummy_bitmap_for_nonnullable_data},
