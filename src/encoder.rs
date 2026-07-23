@@ -118,6 +118,98 @@ trait Encode {
     fn encode(&self) -> Self::Output;
 }
 
+pub trait WriteGrib2Ident {
+    fn section1_len(&self) -> usize;
+
+    fn write_section1(&self, buf: &mut [u8]) -> Result<usize, &'static str>;
+}
+
+pub trait WriteGrib2LocalUse {
+    fn section2_len(&self) -> usize;
+
+    fn write_section2(&self, buf: &mut [u8]) -> Result<usize, &'static str>;
+}
+
+pub trait WriteGrib2GridDef {
+    fn section3_len(&self) -> usize;
+
+    fn write_section3(&self, buf: &mut [u8]) -> Result<usize, &'static str>;
+}
+
+pub trait WriteGrib2ProductDef {
+    fn section4_len(&self) -> usize;
+
+    fn write_section4(&self, buf: &mut [u8]) -> Result<usize, &'static str>;
+}
+
+macro_rules! add_impl_for_u8_slices {
+    ($(($trait:ty,$len_method:ident,$write_method:ident,$sect_num:expr),)*) => ($(
+        impl $trait for &[u8] {
+            fn $len_method(&self) -> usize {
+                self.len() + 5
+            }
+
+            fn $write_method(&self, buf: &mut [u8]) -> Result<usize, &'static str> {
+                let len = self.$len_method();
+                if buf.len() < len {
+                    return Err("destination buffer is too small");
+                }
+
+                let mut pos = 0;
+                pos += write_section_header(len as u32, $sect_num, &mut buf[pos..])?;
+                buf[pos..len].copy_from_slice(self);
+                Ok(len)
+            }
+        }
+    )*);
+}
+
+add_impl_for_u8_slices![
+    (WriteGrib2Ident, section1_len, write_section1, 1),
+    (WriteGrib2LocalUse, section2_len, write_section2, 2),
+    (WriteGrib2GridDef, section3_len, write_section3, 3),
+    (WriteGrib2ProductDef, section4_len, write_section4, 4),
+];
+
+macro_rules! add_impl_for_payload_structs {
+    ($(($trait:ty,$ty:ty,$len_method:ident,$write_method:ident,$sect_num:expr),)*) => ($(
+        impl $trait for $ty {
+            fn $len_method(&self) -> usize {
+                self.num_bytes_required() + 5
+            }
+
+            fn $write_method(&self, buf: &mut [u8]) -> Result<usize, &'static str> {
+                let len = self.$len_method();
+                if buf.len() < len {
+                    return Err("destination buffer is too small");
+                }
+
+                let mut pos = 0;
+                pos += write_section_header(len as u32, $sect_num, &mut buf[pos..])?;
+                pos += self.write_to_buffer(&mut buf[pos..])?;
+                Ok(pos)
+            }
+        }
+    )*);
+}
+
+add_impl_for_payload_structs![
+    (
+        WriteGrib2Ident,
+        crate::def::grib2::Section1Payload,
+        section1_len,
+        write_section1,
+        1
+    ),
+    (
+        WriteGrib2GridDef,
+        crate::def::grib2::Section3Payload,
+        section3_len,
+        write_section3,
+        3
+    ),
+];
+
 /// A serializer that writes the byte sequence of sections concerning GPV data
 /// to the output buffer.
 pub trait WriteGrib2DataSections {
@@ -156,36 +248,6 @@ pub fn write_section0(discipline: u8, len: usize, buf: &mut [u8]) -> Result<usiz
 
     let mut pos = 0;
     pos += sect.write_to_buffer(&mut buf[pos..])?;
-    Ok(pos)
-}
-
-pub fn write_section1(
-    payload: &crate::def::grib2::Section1Payload,
-    buf: &mut [u8],
-) -> Result<usize, &'static str> {
-    const LEN: usize = 0x15;
-    if buf.len() < LEN {
-        return Err("destination buffer is too small");
-    }
-
-    let mut pos = 0;
-    pos += write_section_header(LEN as u32, 1, &mut buf[pos..])?;
-    pos += payload.write_to_buffer(&mut buf[pos..])?;
-    Ok(pos)
-}
-
-pub fn write_section3(
-    payload: &crate::def::grib2::Section3Payload,
-    buf: &mut [u8],
-) -> Result<usize, &'static str> {
-    let len: usize = 5 + payload.num_bytes_required();
-    if buf.len() < len {
-        return Err("destination buffer is too small");
-    }
-
-    let mut pos = 0;
-    pos += write_section_header(len as u32, 3, &mut buf[pos..])?;
-    pos += payload.write_to_buffer(&mut buf[pos..])?;
     Ok(pos)
 }
 
@@ -239,7 +301,7 @@ mod tests {
             },
         };
         let mut buf = vec![0; 21];
-        write_section1(&sect.payload, &mut buf)?;
+        sect.payload.write_section1(&mut buf)?;
         let decoded = Section1::try_from_slice(&buf, &mut 0)?;
         assert_eq!(decoded, sect);
         Ok(())
