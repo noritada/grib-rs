@@ -3,24 +3,47 @@ pub use simple::*;
 
 use crate::{WriteToBuffer, def::grib2::template::param_set};
 
-/// Encodes a sequence of numerical values as GRIB2 data sections.
-pub fn encode_gpv(data: &[f64], method: EncodingMethod) -> EncodeOutput {
-    let output = match method {
-        EncodingMethod::SimplePacking(simple_packing_strategy) => {
-            let encoder = simple::Encoder::new(data, simple_packing_strategy);
-            EncodeOutputInner::SimplePacking(encoder.encode())
-        }
-        EncodingMethod::ComplexPacking(
-            simple_packing_strategy,
-            complex_packing_strategy,
-            _spatial_differencing_option,
-        ) => {
-            let encoder =
-                complex::Encoder::new(data, simple_packing_strategy, complex_packing_strategy);
-            EncodeOutputInner::ComplexPacking(encoder.encode())
-        }
-    };
-    EncodeOutput(output)
+pub struct Encoder<'d> {
+    data: std::borrow::Cow<'d, [f64]>,
+    method: EncodingMethod,
+}
+
+impl<'d> Encoder<'d> {
+    pub fn new(data: std::borrow::Cow<'d, [f64]>, method: EncodingMethod) -> Self {
+        Self { data, method }
+    }
+
+    /// Encodes a sequence of numerical values as GRIB2 data sections.
+    pub fn encode(&self) -> EncodeOutput {
+        let output = match &self.method {
+            EncodingMethod::SimplePacking(simple_packing_strategy) => {
+                let encoder = simple::Encoder::new(&self.data, simple_packing_strategy.clone());
+                EncodeOutputInner::SimplePacking(encoder.encode())
+            }
+            EncodingMethod::ComplexPacking(
+                simple_packing_strategy,
+                complex_packing_strategy,
+                _spatial_differencing_option,
+            ) => {
+                let encoder = complex::Encoder::new(
+                    &self.data,
+                    simple_packing_strategy.clone(),
+                    complex_packing_strategy.clone(),
+                );
+                EncodeOutputInner::ComplexPacking(encoder.encode())
+            }
+        };
+        EncodeOutput(output)
+    }
+
+    pub fn encode_and_write_point_values(&self, buf: &mut [u8]) -> Result<usize, &'static str> {
+        let encoded = self.encode();
+        let mut pos = 0;
+        pos += encoded.write_section5(&mut buf[pos..])?;
+        pos += encoded.write_section6(&mut buf[pos..])?;
+        pos += encoded.write_section7(&mut buf[pos..])?;
+        Ok(pos)
+    }
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
