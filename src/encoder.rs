@@ -141,6 +141,61 @@ trait Encode {
     fn encode(&self) -> Self::Output;
 }
 
+pub struct Grib2MessageWriter<S1, LocalUseIter> {
+    pub section1: S1,
+    pub local_use_iter: LocalUseIter,
+}
+
+pub struct Grib2LocalUseIterWriter<S2, GridIter> {
+    pub section2: Option<S2>,
+    pub grid_iter: GridIter,
+}
+
+pub struct Grib2GridIterWriter<S3, ProductIter> {
+    pub section3: S3,
+    pub product_iter: ProductIter,
+}
+
+pub struct Grib2ProductIterWriter<S4, SD> {
+    pub section4: S4,
+    pub data: SD,
+}
+
+impl<S1, S2, S3, S4, SD, LocalUseIter, GridIter, ProductIter> Grib2MessageWriter<S1, LocalUseIter>
+where
+    S1: WriteGrib2Ident,
+    S2: WriteGrib2LocalUse,
+    S3: WriteGrib2GridDef,
+    S4: WriteGrib2ProductDef,
+    SD: WriteGrib2DataSections,
+    LocalUseIter: IntoIterator<Item = Grib2LocalUseIterWriter<S2, GridIter>>,
+    GridIter: IntoIterator<Item = Grib2GridIterWriter<S3, ProductIter>>,
+    ProductIter: IntoIterator<Item = Grib2ProductIterWriter<S4, SD>>,
+{
+    pub fn write(self, buf: &mut [u8]) -> Result<usize, &'static str> {
+        // TODO: run the same loop to calculate the total length
+
+        let mut pos = 0;
+        pos += self.section1.write_section1(&mut buf[pos..])?;
+        for local_use in self.local_use_iter {
+            if let Some(section2) = local_use.section2 {
+                pos += section2.write_section2(&mut buf[pos..])?;
+            }
+            for grid in local_use.grid_iter {
+                pos += grid.section3.write_section3(&mut buf[pos..])?;
+                for product in grid.product_iter {
+                    pos += product.section4.write_section4(&mut buf[pos..])?;
+                    pos += product.data.write_section5(&mut buf[pos..])?;
+                    pos += product.data.write_section6(&mut buf[pos..])?;
+                    pos += product.data.write_section7(&mut buf[pos..])?;
+                }
+            }
+        }
+        pos += write_section8(&mut buf[pos..])?;
+        Ok(pos)
+    }
+}
+
 pub trait WriteGrib2Ident {
     fn section1_len(&self) -> usize;
 
@@ -274,7 +329,7 @@ pub fn write_section0(discipline: u8, len: usize, buf: &mut [u8]) -> Result<usiz
     Ok(pos)
 }
 
-pub fn write_section8(buf: &mut [u8]) -> Result<usize, &'static str> {
+fn write_section8(buf: &mut [u8]) -> Result<usize, &'static str> {
     const SIGNATURE: [u8; 4] = [0x37, 0x37, 0x37, 0x37];
     if buf.len() < SIGNATURE.num_bytes_required() {
         return Err("destination buffer is too small");
