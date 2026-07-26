@@ -165,7 +165,9 @@ trait Encode {
 }
 
 pub trait WriteGrib2Message {
-    type S1: WriteGrib2Ident;
+    type S1<'a>: WriteGrib2Ident
+    where
+        Self: 'a;
 
     type Item<'a>: WriteGrib2SubmessageL1
     where
@@ -179,7 +181,7 @@ pub trait WriteGrib2Message {
     fn reserved(&self) -> [u8; 2] {
         [0xff, 0xff]
     }
-    fn section1(&self) -> &Self::S1;
+    fn section1(&self) -> &Self::S1<'_>;
     fn iter(&self) -> Self::Iter<'_>;
 
     fn len(&self) -> usize {
@@ -212,7 +214,9 @@ pub trait WriteGrib2Message {
 }
 
 pub trait WriteGrib2SubmessageL1 {
-    type S2: WriteGrib2LocalUse;
+    type S2<'a>: WriteGrib2LocalUse
+    where
+        Self: 'a;
 
     type Item<'a>: WriteGrib2SubmessageL2
     where
@@ -222,7 +226,7 @@ pub trait WriteGrib2SubmessageL1 {
     where
         Self: 'a;
 
-    fn section2(&self) -> Option<&Self::S2>;
+    fn section2(&self) -> Option<&Self::S2<'_>>;
     fn iter(&self) -> Self::Iter<'_>;
 
     fn len(&self) -> usize {
@@ -243,7 +247,9 @@ pub trait WriteGrib2SubmessageL1 {
 }
 
 pub trait WriteGrib2SubmessageL2 {
-    type S3: WriteGrib2GridDef;
+    type S3<'a>: WriteGrib2GridDef
+    where
+        Self: 'a;
 
     type Item<'a>: WriteGrib2SubmessageL3
     where
@@ -253,7 +259,7 @@ pub trait WriteGrib2SubmessageL2 {
     where
         Self: 'a;
 
-    fn section3(&self) -> &Self::S3;
+    fn section3(&self) -> &Self::S3<'_>;
     fn iter(&self) -> Self::Iter<'_>;
 
     fn len(&self) -> usize {
@@ -271,11 +277,15 @@ pub trait WriteGrib2SubmessageL2 {
 }
 
 pub trait WriteGrib2SubmessageL3 {
-    type S4: WriteGrib2ProductDef;
-    type SD: WriteGrib2PointValues;
+    type S4<'a>: WriteGrib2ProductDef
+    where
+        Self: 'a;
+    type SD<'a>: WriteGrib2PointValues
+    where
+        Self: 'a;
 
-    fn section4(&self) -> &Self::S4;
-    fn data_sections(&self) -> &Self::SD;
+    fn section4(&self) -> &Self::S4<'_>;
+    fn data_sections(&self) -> &Self::SD<'_>;
 
     fn len(&self) -> usize {
         self.section4().section4_len() + self.data_sections().data_sections_len()
@@ -321,9 +331,9 @@ pub trait WriteGrib2PointValues {
 
 macro_rules! add_impl_for_u8_slices {
     ($(($trait:ty,$len_method:ident,$write_method:ident,$sect_num:expr),)*) => ($(
-        impl $trait for &[u8] {
+        impl<T: AsRef<[u8]>> $trait for T {
             fn $len_method(&self) -> usize {
-                self.len() + 5
+                self.as_ref().len() + 5
             }
 
             fn $write_method(&self, buf: &mut [u8]) -> Result<usize, &'static str> {
@@ -334,7 +344,7 @@ macro_rules! add_impl_for_u8_slices {
 
                 let mut pos = 0;
                 pos += write_section_header(len as u32, $sect_num, &mut buf[pos..])?;
-                buf[pos..len].copy_from_slice(self);
+                buf[pos..len].copy_from_slice(self.as_ref());
                 Ok(len)
             }
         }
