@@ -1,3 +1,5 @@
+use std::cell::{Ref, RefCell};
+
 pub use complex::*;
 pub use simple::*;
 
@@ -6,15 +8,27 @@ use crate::{WriteToBuffer, def::grib2::template::param_set};
 pub struct Encoder<'d> {
     data: std::borrow::Cow<'d, [f64]>,
     method: EncodingMethod,
+    encoded: RefCell<Option<EncodeOutput>>,
 }
 
 impl<'d> Encoder<'d> {
     pub fn new(data: std::borrow::Cow<'d, [f64]>, method: EncodingMethod) -> Self {
-        Self { data, method }
+        Self {
+            data,
+            method,
+            encoded: RefCell::new(None),
+        }
     }
 
-    /// Encodes a sequence of numerical values as GRIB2 data sections.
-    pub fn encode(&self) -> EncodeOutput {
+    pub fn get_encoded(&'_ self) -> Ref<'_, EncodeOutput> {
+        if self.encoded.borrow().is_none() {
+            *self.encoded.borrow_mut() = Some(self.encode());
+        }
+
+        Ref::map(self.encoded.borrow(), |c| c.as_ref().unwrap())
+    }
+
+    fn encode(&self) -> EncodeOutput {
         let output = match &self.method {
             EncodingMethod::SimplePacking(simple_packing_strategy) => {
                 let encoder = simple::Encoder::new(&self.data, simple_packing_strategy.clone());
@@ -35,9 +49,16 @@ impl<'d> Encoder<'d> {
         };
         EncodeOutput(output)
     }
+}
 
-    pub fn encode_and_write_point_values(&self, buf: &mut [u8]) -> Result<usize, &'static str> {
-        let encoded = self.encode();
+impl<'d> WriteGrib2PointValues for Encoder<'d> {
+    fn data_sections_len(&self) -> usize {
+        let encoded = self.get_encoded();
+        encoded.section5_len() + encoded.section6_len() + encoded.section7_len()
+    }
+
+    fn write_data_sections(&self, buf: &mut [u8]) -> Result<usize, &'static str> {
+        let encoded = self.get_encoded();
         let mut pos = 0;
         pos += encoded.write_section5(&mut buf[pos..])?;
         pos += encoded.write_section6(&mut buf[pos..])?;
@@ -218,6 +239,12 @@ pub trait WriteGrib2ProductDef {
     fn section4_len(&self) -> usize;
 
     fn write_section4(&self, buf: &mut [u8]) -> Result<usize, &'static str>;
+}
+
+pub trait WriteGrib2PointValues {
+    fn data_sections_len(&self) -> usize;
+
+    fn write_data_sections(&self, buf: &mut [u8]) -> Result<usize, &'static str>;
 }
 
 macro_rules! add_impl_for_u8_slices {
