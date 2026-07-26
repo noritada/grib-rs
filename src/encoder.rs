@@ -5,6 +5,8 @@ pub use simple::*;
 
 use crate::{WriteToBuffer, def::grib2::template::param_set};
 
+const SECT0_LEN: usize = 16;
+
 pub struct Encoder<'d> {
     data: std::borrow::Cow<'d, [f64]>,
     method: EncodingMethod,
@@ -162,57 +164,127 @@ trait Encode {
     fn encode(&self) -> Self::Output;
 }
 
-pub struct Grib2MessageWriter<S1, LocalUseIter> {
-    pub section1: S1,
-    pub local_use_iter: LocalUseIter,
-}
+pub trait WriteGrib2Message {
+    type S1: WriteGrib2Ident;
 
-pub struct Grib2LocalUseIterWriter<S2, GridIter> {
-    pub section2: Option<S2>,
-    pub grid_iter: GridIter,
-}
+    type Item<'a>: WriteGrib2SubmessageL1
+    where
+        Self: 'a;
 
-pub struct Grib2GridIterWriter<S3, ProductIter> {
-    pub section3: S3,
-    pub product_iter: ProductIter,
-}
+    type Iter<'a>: Iterator<Item = Self::Item<'a>>
+    where
+        Self: 'a;
 
-pub struct Grib2ProductIterWriter<S4, SD> {
-    pub section4: S4,
-    pub data: SD,
-}
+    fn discipline(&self) -> u8;
+    fn reserved(&self) -> [u8; 2] {
+        [0xff, 0xff]
+    }
+    fn section1(&self) -> &Self::S1;
+    fn iter(&self) -> Self::Iter<'_>;
 
-impl<S1, S2, S3, S4, SD, LocalUseIter, GridIter, ProductIter> Grib2MessageWriter<S1, LocalUseIter>
-where
-    S1: WriteGrib2Ident,
-    S2: WriteGrib2LocalUse,
-    S3: WriteGrib2GridDef,
-    S4: WriteGrib2ProductDef,
-    SD: WriteGrib2DataSections,
-    LocalUseIter: IntoIterator<Item = Grib2LocalUseIterWriter<S2, GridIter>>,
-    GridIter: IntoIterator<Item = Grib2GridIterWriter<S3, ProductIter>>,
-    ProductIter: IntoIterator<Item = Grib2ProductIterWriter<S4, SD>>,
-{
-    pub fn write(self, buf: &mut [u8]) -> Result<usize, &'static str> {
-        // TODO: run the same loop to calculate the total length
+    fn len(&self) -> usize {
+        SECT0_LEN
+            + self.section1().section1_len()
+            + self.iter().map(|m| m.len()).sum::<usize>()
+            + crate::SECT8_ES_SIZE
+    }
+
+    fn write(&self, buf: &mut [u8]) -> Result<usize, &'static str> {
+        let total_len = self.len();
+        if buf.len() < total_len {
+            return Err("destination buffer is too small");
+        }
 
         let mut pos = 0;
-        pos += self.section1.write_section1(&mut buf[pos..])?;
-        for local_use in self.local_use_iter {
-            if let Some(section2) = local_use.section2 {
-                pos += section2.write_section2(&mut buf[pos..])?;
-            }
-            for grid in local_use.grid_iter {
-                pos += grid.section3.write_section3(&mut buf[pos..])?;
-                for product in grid.product_iter {
-                    pos += product.section4.write_section4(&mut buf[pos..])?;
-                    pos += product.data.write_section5(&mut buf[pos..])?;
-                    pos += product.data.write_section6(&mut buf[pos..])?;
-                    pos += product.data.write_section7(&mut buf[pos..])?;
-                }
-            }
+        pos += write_section0(
+            self.discipline(),
+            self.reserved(),
+            total_len,
+            &mut buf[pos..],
+        )?;
+        pos += self.section1().write_section1(&mut buf[pos..])?;
+        for m in self.iter() {
+            pos += m.write(&mut buf[pos..])?;
         }
         pos += write_section8(&mut buf[pos..])?;
+        Ok(pos)
+    }
+}
+
+pub trait WriteGrib2SubmessageL1 {
+    type S2: WriteGrib2LocalUse;
+
+    type Item<'a>: WriteGrib2SubmessageL2
+    where
+        Self: 'a;
+
+    type Iter<'a>: Iterator<Item = Self::Item<'a>>
+    where
+        Self: 'a;
+
+    fn section2(&self) -> Option<&Self::S2>;
+    fn iter(&self) -> Self::Iter<'_>;
+
+    fn len(&self) -> usize {
+        self.section2().map_or(0, |m| m.section2_len())
+            + self.iter().map(|m| m.len()).sum::<usize>()
+    }
+
+    fn write(&self, buf: &mut [u8]) -> Result<usize, &'static str> {
+        let mut pos = 0;
+        if let Some(section2) = self.section2() {
+            pos += section2.write_section2(&mut buf[pos..])?;
+        }
+        for m in self.iter() {
+            pos += m.write(&mut buf[pos..])?;
+        }
+        Ok(pos)
+    }
+}
+
+pub trait WriteGrib2SubmessageL2 {
+    type S3: WriteGrib2GridDef;
+
+    type Item<'a>: WriteGrib2SubmessageL3
+    where
+        Self: 'a;
+
+    type Iter<'a>: Iterator<Item = Self::Item<'a>>
+    where
+        Self: 'a;
+
+    fn section3(&self) -> &Self::S3;
+    fn iter(&self) -> Self::Iter<'_>;
+
+    fn len(&self) -> usize {
+        self.section3().section3_len() + self.iter().map(|m| m.len()).sum::<usize>()
+    }
+
+    fn write(&self, buf: &mut [u8]) -> Result<usize, &'static str> {
+        let mut pos = 0;
+        pos += self.section3().write_section3(&mut buf[pos..])?;
+        for m in self.iter() {
+            pos += m.write(&mut buf[pos..])?;
+        }
+        Ok(pos)
+    }
+}
+
+pub trait WriteGrib2SubmessageL3 {
+    type S4: WriteGrib2ProductDef;
+    type SD: WriteGrib2PointValues;
+
+    fn section4(&self) -> &Self::S4;
+    fn data_sections(&self) -> &Self::SD;
+
+    fn len(&self) -> usize {
+        self.section4().section4_len() + self.data_sections().data_sections_len()
+    }
+
+    fn write(&self, buf: &mut [u8]) -> Result<usize, &'static str> {
+        let mut pos = 0;
+        pos += self.section4().write_section4(&mut buf[pos..])?;
+        pos += self.data_sections().write_data_sections(&mut buf[pos..])?;
         Ok(pos)
     }
 }
@@ -337,15 +409,19 @@ pub trait WriteGrib2DataSections {
     fn write_section7(&self, buf: &mut [u8]) -> Result<usize, &'static str>;
 }
 
-pub fn write_section0(discipline: u8, len: usize, buf: &mut [u8]) -> Result<usize, &'static str> {
-    const LEN: usize = 16;
-    if buf.len() < LEN {
+fn write_section0(
+    discipline: u8,
+    reserved: [u8; 2],
+    len: usize,
+    buf: &mut [u8],
+) -> Result<usize, &'static str> {
+    if buf.len() < SECT0_LEN {
         return Err("destination buffer is too small");
     }
 
     let sect = crate::def::grib2::Section0 {
         identifier: [0x47, 0x52, 0x49, 0x42],
-        reserved: [0xff, 0xff],
+        reserved,
         discipline,
         edition_num: 2,
         total_len: len as u64,
