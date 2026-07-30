@@ -1,6 +1,7 @@
 use std::cell::{Ref, RefCell};
 
 pub use complex::*;
+pub use message::*;
 pub use simple::*;
 
 use crate::{WriteToBuffer, def::grib2::template::param_set};
@@ -457,6 +458,7 @@ fn write_section_header(len: u32, sect_num: u8, buf: &mut [u8]) -> Result<usize,
 mod bitmap;
 mod complex;
 mod helpers;
+mod message;
 mod simple;
 mod writer;
 
