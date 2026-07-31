@@ -1,26 +1,71 @@
+use std::cell::{Ref, RefCell};
+
 pub use complex::*;
+pub use message::*;
 pub use simple::*;
 
-use crate::{WriteToBuffer, def::grib2::template::param_set};
+use crate::def::grib2::template::param_set;
 
-/// Encodes a sequence of numerical values as GRIB2 data sections.
-pub fn encode_gpv(data: &[f64], method: EncodingMethod) -> EncodeOutput {
-    let output = match method {
-        EncodingMethod::SimplePacking(simple_packing_strategy) => {
-            let encoder = simple::Encoder::new(data, simple_packing_strategy);
-            EncodeOutputInner::SimplePacking(encoder.encode())
+pub struct Encoder<'d> {
+    data: std::borrow::Cow<'d, [f64]>,
+    method: EncodingMethod,
+    encoded: RefCell<Option<EncodeOutput>>,
+}
+
+impl<'d> Encoder<'d> {
+    pub fn new(data: std::borrow::Cow<'d, [f64]>, method: EncodingMethod) -> Self {
+        Self {
+            data,
+            method,
+            encoded: RefCell::new(None),
         }
-        EncodingMethod::ComplexPacking(
-            simple_packing_strategy,
-            complex_packing_strategy,
-            _spatial_differencing_option,
-        ) => {
-            let encoder =
-                complex::Encoder::new(data, simple_packing_strategy, complex_packing_strategy);
-            EncodeOutputInner::ComplexPacking(encoder.encode())
+    }
+
+    pub fn get_encoded(&'_ self) -> Ref<'_, EncodeOutput> {
+        if self.encoded.borrow().is_none() {
+            *self.encoded.borrow_mut() = Some(self.encode());
         }
-    };
-    EncodeOutput(output)
+
+        Ref::map(self.encoded.borrow(), |c| c.as_ref().unwrap())
+    }
+
+    fn encode(&self) -> EncodeOutput {
+        let output = match &self.method {
+            EncodingMethod::SimplePacking(simple_packing_strategy) => {
+                let encoder = simple::Encoder::new(&self.data, simple_packing_strategy.clone());
+                EncodeOutputInner::SimplePacking(encoder.encode())
+            }
+            EncodingMethod::ComplexPacking(
+                simple_packing_strategy,
+                complex_packing_strategy,
+                _spatial_differencing_option,
+            ) => {
+                let encoder = complex::Encoder::new(
+                    &self.data,
+                    simple_packing_strategy.clone(),
+                    complex_packing_strategy.clone(),
+                );
+                EncodeOutputInner::ComplexPacking(encoder.encode())
+            }
+        };
+        EncodeOutput(output)
+    }
+}
+
+impl<'d> WriteGrib2PointValues for Encoder<'d> {
+    fn data_sections_len(&self) -> usize {
+        let encoded = self.get_encoded();
+        encoded.section5_len() + encoded.section6_len() + encoded.section7_len()
+    }
+
+    fn write_data_sections(&self, buf: &mut [u8]) -> Result<usize, &'static str> {
+        let encoded = self.get_encoded();
+        let mut pos = 0;
+        pos += encoded.write_section5(&mut buf[pos..])?;
+        pos += encoded.write_section6(&mut buf[pos..])?;
+        pos += encoded.write_section7(&mut buf[pos..])?;
+        Ok(pos)
+    }
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -118,130 +163,9 @@ trait Encode {
     fn encode(&self) -> Self::Output;
 }
 
-/// A serializer that writes the byte sequence of sections concerning GPV data
-/// to the output buffer.
-pub trait WriteGrib2DataSections {
-    /// Returns the length of the byte sequence in Section 5.
-    fn section5_len(&self) -> usize;
-
-    /// Writes the byte sequence of Section 5 to the output buffer.
-    fn write_section5(&self, buf: &mut [u8]) -> Result<usize, &'static str>;
-
-    /// Returns the length of the byte sequence in Section 6.
-    fn section6_len(&self) -> usize;
-
-    /// Writes the byte sequence of Section 6 to the output buffer.
-    fn write_section6(&self, buf: &mut [u8]) -> Result<usize, &'static str>;
-
-    /// Returns the length of the byte sequence in Section 7.
-    fn section7_len(&self) -> usize;
-
-    /// Writes the byte sequence of Section 7 to the output buffer.
-    fn write_section7(&self, buf: &mut [u8]) -> Result<usize, &'static str>;
-}
-
-pub fn write_section0(discipline: u8, len: usize, buf: &mut [u8]) -> Result<usize, &'static str> {
-    const LEN: usize = 16;
-    if buf.len() < LEN {
-        return Err("destination buffer is too small");
-    }
-
-    let sect = crate::def::grib2::Section0 {
-        identifier: [0x47, 0x52, 0x49, 0x42],
-        reserved: [0xff, 0xff],
-        discipline,
-        edition_num: 2,
-        total_len: len as u64,
-    };
-
-    let mut pos = 0;
-    pos += sect.write_to_buffer(&mut buf[pos..])?;
-    Ok(pos)
-}
-
-pub fn write_section1(
-    payload: &crate::def::grib2::Section1Payload,
-    buf: &mut [u8],
-) -> Result<usize, &'static str> {
-    const LEN: usize = 0x15;
-    if buf.len() < LEN {
-        return Err("destination buffer is too small");
-    }
-
-    let mut pos = 0;
-    pos += write_section_header(LEN as u32, 1, &mut buf[pos..])?;
-    pos += payload.write_to_buffer(&mut buf[pos..])?;
-    Ok(pos)
-}
-
-pub fn write_section3(
-    payload: &crate::def::grib2::Section3Payload,
-    buf: &mut [u8],
-) -> Result<usize, &'static str> {
-    let len: usize = 5 + payload.num_bytes_required();
-    if buf.len() < len {
-        return Err("destination buffer is too small");
-    }
-
-    let mut pos = 0;
-    pos += write_section_header(len as u32, 3, &mut buf[pos..])?;
-    pos += payload.write_to_buffer(&mut buf[pos..])?;
-    Ok(pos)
-}
-
-pub fn write_section8(buf: &mut [u8]) -> Result<usize, &'static str> {
-    const SIGNATURE: [u8; 4] = [0x37, 0x37, 0x37, 0x37];
-    if buf.len() < SIGNATURE.num_bytes_required() {
-        return Err("destination buffer is too small");
-    }
-    SIGNATURE.write_to_buffer(buf)
-}
-
-fn write_section_header(len: u32, sect_num: u8, buf: &mut [u8]) -> Result<usize, &'static str> {
-    crate::def::grib2::SectionHeader { len, sect_num }.write_to_buffer(buf)
-}
-
 mod bitmap;
 mod complex;
 mod helpers;
+mod message;
 mod simple;
 mod writer;
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::{TryFromSlice as _, def::grib2::Section1};
-
-    #[test]
-    fn grib2_section1_roundtrip_test() -> Result<(), Box<dyn std::error::Error>> {
-        let sect = Section1 {
-            header: crate::def::grib2::SectionHeader {
-                len: 21,
-                sect_num: 1,
-            },
-            payload: crate::def::grib2::Section1Payload {
-                centre_id: 0xffff,
-                subcentre_id: 0,
-                master_table_version: 29,
-                local_table_version: 0,
-                ref_time_significance: 0,
-                ref_time: crate::def::grib2::RefTime {
-                    year: 2026,
-                    month: 1,
-                    day: 2,
-                    hour: 3,
-                    minute: 4,
-                    second: 5,
-                },
-                prod_status: 0,
-                data_type: 0,
-                optional: None,
-            },
-        };
-        let mut buf = vec![0; 21];
-        write_section1(&sect.payload, &mut buf)?;
-        let decoded = Section1::try_from_slice(&buf, &mut 0)?;
-        assert_eq!(decoded, sect);
-        Ok(())
-    }
-}
