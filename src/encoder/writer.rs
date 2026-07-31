@@ -1,4 +1,4 @@
-use grib_template_helpers::WriteToBuffer;
+use crate::WriteToBuffer;
 
 #[derive(Clone)]
 pub(crate) struct NBitwise<B> {

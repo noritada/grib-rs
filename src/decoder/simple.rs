@@ -113,9 +113,8 @@ mod tests {
         io::{BufReader, Read},
     };
 
-    use grib_template_helpers::TryFromSlice as _;
-
     use super::*;
+    use crate::TryFromSlice as _;
 
     #[test]
     fn decode_simple_packing() {

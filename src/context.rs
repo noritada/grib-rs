@@ -5,12 +5,11 @@ use std::{
     io::{Cursor, Read, Seek},
 };
 
-use grib_template_helpers::{Dump as _, TryFromSlice as _};
-
 #[cfg(feature = "time-calculation")]
 use crate::TemporalInfo;
 use crate::{
-    GridDefinitionTemplateValues, GridPointIndex, GridPointIndexIterator, LatLons, TemporalRawInfo,
+    Dump as _, GridDefinitionTemplateValues, GridPointIndex, GridPointIndexIterator, LatLons,
+    TemporalRawInfo, TryFromSlice as _,
     codetables::{
         CodeTable3_1, CodeTable4_0, CodeTable4_1, CodeTable4_2, CodeTable4_3, CodeTable5_0, Lookup,
     },

@@ -1,9 +1,8 @@
-use grib_template_helpers::TryFromSlice;
 use helpers::RegularGridIterator;
 
 pub use self::{gaussian::compute_gaussian_latitudes, rotated_ll::Unrotate};
 use crate::{
-    GribError, GridDefinition,
+    GribError, GridDefinition, TryFromSlice,
     def::grib2::template::{
         Template3_0, Template3_1, Template3_20, Template3_30, Template3_40,
         param_set::{Grid, ScanningMode},

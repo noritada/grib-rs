@@ -1,7 +1,5 @@
-use grib_template_helpers::WriteToBuffer;
-
 use crate::{
-    SimplePackingStrategy, WriteGrib2DataSections,
+    SimplePackingStrategy, WriteGrib2DataSections, WriteToBuffer,
     def::grib2::template::param_set::{ComplexPacking, SimplePacking},
     encoder::{Encode, bitmap::Bitmap, helpers::BitsRequired, writer},
 };

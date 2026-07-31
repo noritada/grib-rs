@@ -18,6 +18,8 @@ mod test_utils;
 mod time;
 pub mod utils;
 
+pub use grib_template_helpers::{Dump, TryFromSlice, WriteToBuffer};
+
 pub use crate::{
     codetables::Code::{self, Name, Num},
     context::*,
