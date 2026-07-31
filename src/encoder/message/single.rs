@@ -95,7 +95,7 @@ where
     }
 
     fn iter(&self) -> Self::Iter<'_> {
-        once((&self.1, &self.2, &self.3))
+        once((self.1, self.2, self.3))
     }
 }
 
@@ -120,10 +120,10 @@ where
         Self: 's;
 
     fn section3(&self) -> &Self::S3<'_> {
-        &self.0
+        self.0
     }
 
     fn iter(&self) -> Self::Iter<'_> {
-        once((&self.1, &self.2))
+        once((self.1, self.2))
     }
 }
