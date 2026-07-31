@@ -5,30 +5,36 @@ use crate::{
     WriteGrib2ProductDef, WriteGrib2SubmessageL1, WriteGrib2SubmessageL2,
 };
 
-pub struct MultiGridGrib2Message<'d, I, L, G, P> {
-    discipline: u8,
-    ident: I,
-    local_use: Option<L>,
-    grid_product_values: Vec<(G, P, Encoder<'d>)>,
+pub struct Single<'d, I, L, G, P> {
+    pub(crate) discipline: u8,
+    pub(crate) ident: I,
+    pub(crate) local_use: Option<L>,
+    pub(crate) grid: G,
+    pub(crate) product: P,
+    pub(crate) values: Encoder<'d>,
 }
 
-impl<'d, I, L, G, P> MultiGridGrib2Message<'d, I, L, G, P> {
+impl<'d, I, L, G, P> Single<'d, I, L, G, P> {
     pub fn new(
         discipline: u8,
         ident: I,
         local_use: Option<L>,
-        grid_product_values: Vec<(G, P, Encoder<'d>)>,
+        grid: G,
+        product: P,
+        values: Encoder<'d>,
     ) -> Self {
         Self {
             discipline,
             ident,
             local_use,
-            grid_product_values,
+            grid,
+            product,
+            values,
         }
     }
 }
 
-impl<'d, I, L, G, P> WriteGrib2Message for MultiGridGrib2Message<'d, I, L, G, P>
+impl<'d, I, L, G, P> WriteGrib2Message for Single<'d, I, L, G, P>
 where
     I: WriteGrib2Ident,
     L: WriteGrib2LocalUse,
@@ -41,12 +47,12 @@ where
         Self: 'a;
 
     type Item<'a>
-        = (&'a Option<L>, &'a Vec<(G, P, Encoder<'d>)>)
+        = (&'a Option<L>, &'a G, &'a P, &'a Encoder<'d>)
     where
         Self: 'a;
 
     type Iter<'a>
-        = Once<(&'a Option<L>, &'a Vec<(G, P, Encoder<'d>)>)>
+        = Once<(&'a Option<L>, &'a G, &'a P, &'a Encoder<'d>)>
     where
         Self: 'a;
 
@@ -59,11 +65,11 @@ where
     }
 
     fn iter(&self) -> Self::Iter<'_> {
-        once((&self.local_use, &self.grid_product_values))
+        once((&self.local_use, &self.grid, &self.product, &self.values))
     }
 }
 
-impl<'a, 'd, L, G, P> WriteGrib2SubmessageL1 for (&'a Option<L>, &'a Vec<(G, P, Encoder<'d>)>)
+impl<'a, 'd, L, G, P> WriteGrib2SubmessageL1 for (&'a Option<L>, &'a G, &'a P, &'a Encoder<'d>)
 where
     L: WriteGrib2LocalUse,
     G: WriteGrib2GridDef,
@@ -75,12 +81,12 @@ where
         Self: 's;
 
     type Item<'s>
-        = &'a (G, P, Encoder<'d>)
+        = (&'a G, &'a P, &'a Encoder<'d>)
     where
         Self: 's;
 
     type Iter<'s>
-        = std::slice::Iter<'a, (G, P, Encoder<'d>)>
+        = Once<(&'a G, &'a P, &'a Encoder<'d>)>
     where
         Self: 's;
 
@@ -89,11 +95,11 @@ where
     }
 
     fn iter(&self) -> Self::Iter<'_> {
-        self.1.iter()
+        once((&self.1, &self.2, &self.3))
     }
 }
 
-impl<'a, 'd, G, P> WriteGrib2SubmessageL2 for &'a (G, P, Encoder<'d>)
+impl<'a, 'd, G, P> WriteGrib2SubmessageL2 for (&'a G, &'a P, &'a Encoder<'d>)
 where
     G: WriteGrib2GridDef,
     P: WriteGrib2ProductDef,
