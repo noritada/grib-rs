@@ -30,15 +30,15 @@ pub trait WriteGrib2Message {
     fn section1(&self) -> &Self::S1<'_>;
     fn iter(&self) -> Self::Iter<'_>;
 
-    fn len(&self) -> usize {
+    fn num_octets(&self) -> usize {
         SECT0_LEN
             + self.section1().section1_len()
-            + self.iter().map(|m| m.len()).sum::<usize>()
+            + self.iter().map(|m| m.num_octets()).sum::<usize>()
             + crate::SECT8_ES_SIZE
     }
 
     fn write(&self, buf: &mut [u8]) -> Result<usize, &'static str> {
-        let total_len = self.len();
+        let total_len = self.num_octets();
         if buf.len() < total_len {
             return Err("destination buffer is too small");
         }
@@ -75,9 +75,9 @@ pub trait WriteGrib2SubmessageL1 {
     fn section2(&self) -> Option<&Self::S2<'_>>;
     fn iter(&self) -> Self::Iter<'_>;
 
-    fn len(&self) -> usize {
+    fn num_octets(&self) -> usize {
         self.section2().map_or(0, |m| m.section2_len())
-            + self.iter().map(|m| m.len()).sum::<usize>()
+            + self.iter().map(|m| m.num_octets()).sum::<usize>()
     }
 
     fn write(&self, buf: &mut [u8]) -> Result<usize, &'static str> {
@@ -108,8 +108,8 @@ pub trait WriteGrib2SubmessageL2 {
     fn section3(&self) -> &Self::S3<'_>;
     fn iter(&self) -> Self::Iter<'_>;
 
-    fn len(&self) -> usize {
-        self.section3().section3_len() + self.iter().map(|m| m.len()).sum::<usize>()
+    fn num_octets(&self) -> usize {
+        self.section3().section3_len() + self.iter().map(|m| m.num_octets()).sum::<usize>()
     }
 
     fn write(&self, buf: &mut [u8]) -> Result<usize, &'static str> {
@@ -133,7 +133,7 @@ pub trait WriteGrib2SubmessageL3 {
     fn section4(&self) -> &Self::S4<'_>;
     fn data_sections(&self) -> &Self::SD<'_>;
 
-    fn len(&self) -> usize {
+    fn num_octets(&self) -> usize {
         self.section4().section4_len() + self.data_sections().data_sections_len()
     }
 
