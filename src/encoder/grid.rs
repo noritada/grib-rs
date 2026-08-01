@@ -1,9 +1,8 @@
 use crate::def::grib2::template::param_set;
 
-/// An auxiliary struct for creating the definition of the latitude/longitude
-/// coordinate system
-/// ([`LatLonGrid`](`crate::def::grib2::template::param_set::LatLonGrid`)) in a
-/// more intuitive way.
+/// An auxiliary struct for creating the definition of a latitude/longitude grid
+/// ([`def::grib2::template::param_set::LatLonGrid`](`crate::def::grib2::template::param_set::LatLonGrid`))
+/// in a more intuitive way.
 ///
 /// You can specify any value within the range of -360 degrees to 360 degrees
 /// for the longitude values of the first and last points. However, to
@@ -22,14 +21,14 @@ use crate::def::grib2::template::param_set;
 ///   point’s longitude as 180.0 and the last point’s longitude as 175.0.
 ///
 /// Longitude values are automatically normalized during conversion to
-/// [`LatLonGrid`](`crate::def::grib2::template::param_set::LatLonGrid`) to
-/// comply with GRIB2 specification.
+/// [`def::grib2::template::param_set::LatLonGrid`](`crate::def::grib2::template::param_set::LatLonGrid`)
+/// to comply with GRIB2 specification.
 pub struct LatLonGrid {
     /// Shape of the grid, in the form `(ni, nj)`.
     pub shape: (usize, usize),
     /// First coordinate point, in the form `(lat, lon)`. The order in which you
     /// specify the "first" point should correspond to the order of the array of
-    /// point values.
+    /// grid point values.
     pub first_point: (f64, f64),
     /// The coordinate point diagonally opposite the first coordinate point, in
     /// the form `(lat, lon)`.
@@ -66,12 +65,12 @@ impl From<&LatLonGrid> for param_set::LatLonGrid {
         let (ni, nj) = (value.shape.0 as u32, value.shape.1 as u32);
 
         let (first_point_lat, first_point_lon) = (
-            microdegrees(value.first_point.0),
-            microdegrees(normalized_longitude(value.first_point.1)) as u32,
+            lat_in_microdegrees(value.first_point.0),
+            lon_in_microdegrees(value.first_point.1),
         );
         let (last_point_lat, last_point_lon) = (
-            microdegrees(value.last_point.0),
-            microdegrees(normalized_longitude(value.last_point.1)) as u32,
+            lat_in_microdegrees(value.last_point.0),
+            lon_in_microdegrees(value.last_point.1),
         );
 
         let i_direction_inc =
@@ -97,6 +96,14 @@ impl From<&LatLonGrid> for param_set::LatLonGrid {
             scanning_mode,
         }
     }
+}
+
+fn lat_in_microdegrees(val_in_degrees: f64) -> i32 {
+    microdegrees(val_in_degrees)
+}
+
+fn lon_in_microdegrees(val_in_degrees: f64) -> u32 {
+    microdegrees(normalized_longitude(val_in_degrees)) as u32
 }
 
 fn inc_in_microdegrees(first: f64, last: f64, n_spacing: usize) -> u32 {
