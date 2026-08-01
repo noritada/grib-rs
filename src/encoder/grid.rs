@@ -4,6 +4,26 @@ use crate::def::grib2::template::param_set;
 /// coordinate system
 /// ([`LatLonGrid`](`crate::def::grib2::template::param_set::LatLonGrid`)) in a
 /// more intuitive way.
+///
+/// You can specify any value within the range of -360 degrees to 360 degrees
+/// for the longitude values of the first and last points. However, to
+/// distinguish the grid area, set the longitude value at the western end of the
+/// grid to a value smaller than that at the eastern end.
+///
+/// For example:
+///
+/// - For a grid extending eastward from 0° to 5°W, specify the first point’s
+///   longitude as 0.0 and the last point’s longitude as 355.0.
+/// - For a grid extending westward from 0° to 5°W, specify the first point’s
+///   longitude as 0.0 and the last point’s longitude as -5.0.
+/// - For a grid extending eastward from 180° to 175°W, specify the first
+///   point’s longitude as -180.0 and the last point’s longitude as 175.0.
+/// - For a grid extending westward from 180° to 175°W, specify the first
+///   point’s longitude as 180.0 and the last point’s longitude as 175.0.
+///
+/// Longitude values are automatically normalized during conversion to
+/// [`LatLonGrid`](`crate::def::grib2::template::param_set::LatLonGrid`) to
+/// comply with GRIB2 specification.
 pub struct LatLonGrid {
     /// Shape of the grid, in the form `(ni, nj)`.
     pub shape: (usize, usize),
@@ -181,6 +201,70 @@ mod tests {
                 (40000000, 130000000),
                 (50000, 100000),
                 param_set::ScanningMode(0b11000000),
+            )
+        ),
+        (
+            lat_lon_grid_definition_for_eastward_from_0_deg,
+            LatLonGrid {
+                shape: (2, 2),
+                first_point: (40., 0.),
+                last_point: (30., 355.),
+                i_consecutive: true,
+            },
+            (
+                (2, 2),
+                (40000000, 0),
+                (30000000, 355000000),
+                (355000000, 10000000),
+                param_set::ScanningMode(0b00000000),
+            )
+        ),
+        (
+            lat_lon_grid_definition_for_westward_from_0_deg,
+            LatLonGrid {
+                shape: (2, 2),
+                first_point: (40., 0.),
+                last_point: (30., -5.),
+                i_consecutive: true,
+            },
+            (
+                (2, 2),
+                (40000000, 0),
+                (30000000, 355000000),
+                (5000000, 10000000),
+                param_set::ScanningMode(0b10000000),
+            )
+        ),
+        (
+            lat_lon_grid_definition_for_eastward_from_180_deg,
+            LatLonGrid {
+                shape: (2, 2),
+                first_point: (40., -180.),
+                last_point: (30., 175.),
+                i_consecutive: true,
+            },
+            (
+                (2, 2),
+                (40000000, 180000000),
+                (30000000, 175000000),
+                (355000000, 10000000),
+                param_set::ScanningMode(0b00000000),
+            )
+        ),
+        (
+            lat_lon_grid_definition_for_westward_from_180_deg,
+            LatLonGrid {
+                shape: (2, 2),
+                first_point: (40., 180.),
+                last_point: (30., 175.),
+                i_consecutive: true,
+            },
+            (
+                (2, 2),
+                (40000000, 180000000),
+                (30000000, 175000000),
+                (5000000, 10000000),
+                param_set::ScanningMode(0b10000000),
             )
         ),
     }
