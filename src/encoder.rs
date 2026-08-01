@@ -165,6 +165,7 @@ trait Encode {
 
 mod bitmap;
 mod complex;
+mod grid;
 mod helpers;
 mod message;
 mod simple;
