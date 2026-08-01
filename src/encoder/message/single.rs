@@ -5,7 +5,7 @@ use crate::{
     WriteGrib2ProductDef, WriteGrib2SubmessageL1, WriteGrib2SubmessageL2,
 };
 
-pub struct Single<'d, I, L, G, P> {
+pub struct SingleGrib2Message<'d, I, L, G, P> {
     pub(crate) discipline: u8,
     pub(crate) ident: I,
     pub(crate) local_use: Option<L>,
@@ -14,7 +14,7 @@ pub struct Single<'d, I, L, G, P> {
     pub(crate) values: Encoder<'d>,
 }
 
-impl<'d, I, L, G, P> Single<'d, I, L, G, P> {
+impl<'d, I, L, G, P> SingleGrib2Message<'d, I, L, G, P> {
     pub fn new(
         discipline: u8,
         ident: I,
@@ -34,7 +34,7 @@ impl<'d, I, L, G, P> Single<'d, I, L, G, P> {
     }
 }
 
-impl<'d, I, L, G, P> WriteGrib2Message for Single<'d, I, L, G, P>
+impl<'d, I, L, G, P> WriteGrib2Message for SingleGrib2Message<'d, I, L, G, P>
 where
     I: WriteGrib2Ident,
     L: WriteGrib2LocalUse,
