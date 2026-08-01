@@ -1,6 +1,7 @@
 use std::cell::{Ref, RefCell};
 
 pub use complex::*;
+pub use grid::*;
 pub use message::*;
 pub use simple::*;
 
