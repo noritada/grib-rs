@@ -1,12 +1,9 @@
-mod multigrid;
-mod multiproduct;
-mod single;
-
 pub use multigrid::*;
 pub use multiproduct::*;
 pub use single::*;
 
-use crate::{Encoder, WriteToBuffer};
+use super::Encoder;
+use crate::WriteToBuffer;
 
 const SECT0_LEN: usize = 16;
 
@@ -365,3 +362,7 @@ mod tests {
         Ok(())
     }
 }
+
+mod multigrid;
+mod multiproduct;
+mod single;

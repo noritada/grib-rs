@@ -1,6 +1,6 @@
 use std::iter::{Once, once};
 
-use crate::{
+use super::{
     Encoder, WriteGrib2GridDef, WriteGrib2Ident, WriteGrib2LocalUse, WriteGrib2Message,
     WriteGrib2ProductDef, WriteGrib2SubmessageL1, WriteGrib2SubmessageL2, WriteGrib2SubmessageL3,
 };

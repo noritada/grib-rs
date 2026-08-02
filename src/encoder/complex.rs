@@ -1,7 +1,10 @@
 use crate::{
-    SimplePackingStrategy, WriteGrib2DataSections, WriteToBuffer,
+    WriteToBuffer,
     def::grib2::template::param_set::{ComplexPacking, SimplePacking},
-    encoder::{Encode, bitmap::Bitmap, helpers::BitsRequired, writer},
+    encoder::{
+        Encode, SimplePackingStrategy, WriteGrib2DataSections, bitmap::Bitmap,
+        helpers::BitsRequired, writer,
+    },
 };
 
 /// Strategies applied when performing complex packing on numerical sequences.
