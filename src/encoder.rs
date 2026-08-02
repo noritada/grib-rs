@@ -1,3 +1,81 @@
+//! GRIB2 data encoder.
+//!
+//! # The complexity of GRIB2
+//!
+//! GRIB2 is a data format specifically designed to store grid-point values
+//! related to meteorological data. Therefore, it is easy to imagine that, in
+//! addition to the values at each grid point, information such as the latitude
+//! and longitude of each point, the date and time, and meteorological elements
+//! must also be included as metadata. Furthermore, even for grid-point values
+//! represented as arrays of real numbers, GRIB2 generally does not store
+//! floating-point values as-is. Instead, the values are rounded based on their
+//! precision and then compressed and stored as an array of integers--that is,
+//! discrete numerical values.
+//!
+//! Consequently, unlike highly versatile formats such as NetCDF and HDF, which
+//! allow for the flexible serialization of large amounts of numerical data, or
+//! Gzip and Xz, which can freely compress arbitrary data, GRIB2 is a format
+//! with specific constraints. On the other hand, GRIB2 is a format whose
+//! specifications prevent situations where "a value has been obtained but its
+//! meaning is unclear." It can also be described as a format capable of
+//! "representing" meteorological data by incorporating not only raw numerical
+//! values but also the complexities of the real world, such as missing values
+//! and precision information.
+//!
+//! # Goal of this module
+//!
+//! The goal of this module is to enable users to create GRIB2 data--which
+//! has many parameters and some configurable options within its
+//! constraints--using an API that is as user-friendly as possible (although
+//! some parts are currently not user-friendly).
+//!
+//! Internally, a single GRIB2 dataset (message) is composed of a collection of
+//! blocks called "sections." However, this module's high-level API avoids using
+//! the term "section" and instead focuses on "what information needs to be
+//! configured" and "how you want to represent the meteorological data."
+//!
+//! # High-level and low-level APIs
+//!
+//! This module provides 3 structs: [`SingleGrib2Message`],
+//! [`MultiGridGrib2Message`], and [`MultiProductGrib2Message`]. By providing
+//! all the necessary information to these structs (which may be a bit of a
+//! challenge), you can create GRIB2 messages. These structs constitute a
+//! high-level API designed to accommodate the most common use cases.
+//! If your use case does not fit these scenarios, you will need to implement
+//! the low-level API [`WriteGrib2Message`] and its sub-traits:
+//! [`WriteGrib2MessageIterL1`], [`WriteGrib2MessageIterL2`], and
+//! [`WriteGrib2MessageIterL3`].
+//!
+//! # Generating data sets comprising multiple elements
+//!
+//! It is rare to have only one type of grid point value data for a given time
+//! that you want to generate and provide. As shown below, in many cases, you
+//! will likely want to generate and provide multiple types of grid point value
+//! data together.
+//!
+//! - Different meteorological elements (temperature, pressure, humidity, wind
+//!   speed in 2 directions)
+//! - Different forecast times (1 hour later, 2 hours later, 3 hours later)
+//! - Different altitude levels (1000 hPa, 925 hPa, 850 hPa)
+//!
+//! We will refer to this type of data here as "data sets comprising multiple
+//! elements." The term "element" here is used in a general sense and is not
+//! limited to meteorological elements.
+//!
+//! When representing data sets comprising multiple elements in GRIB2, there are
+//! 2 main options, or 3 when broken down in detail:
+//!
+//! - A. Include them in a single message
+//! - B. Create separate messages (but store them in a single file)
+//! - C. Create separate messages (and store them in separate files)
+//!
+//! If you wish to use option A, use [`MultiGridGrib2Message`] or
+//! [`MultiProductGrib2Message`] (or the low-level API) to include the set of
+//! multiple elements in a single message. If you want to implement options B or
+//! C, simply use [`SingleGrib2Message`] for each element. You can implement
+//! option B by writing to the same output destination consecutively, and option
+//! C by writing to separate output destinations.
+
 use std::cell::{Ref, RefCell};
 
 pub use complex::*;
