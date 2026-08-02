@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.17.0] - 2026-08-02
+### Enhancements
+
+- Public traits defined in `grib-template-helpers` crate are now re-exported in the library crate.
+  It was not ideal for users to have to be aware of the `grib-template-helpers` helper crate.
+  (PR #198)
+- The encoder API (formerly the data encoding API) has been significantly enhanced:
+  - A high-level API has been added. Previously, it was impossible to output GRIB2 messages without understanding the section structure within a message, but using the new high-level API makes it somewhat easier to output GRIB2 messages.
+    (PR #199, PR #200, PR #201, PR #202)
+  - Since the API has grown large enough to require separation from the main API namespace, it has been spun off into a separate "encoder" module.
+    (PR #201)
+  - Documentation has also been added.
+  (PR #201)
+
+### Breaking changes
+
+- All public functions in the encoder API have been replaced with traits in the low-level API and structs in the high-level API.
+  (PR #199)
+
+### Others
+
+- Decoding logic tests are relocated from the CLI crate to the library crate.
+  (PR #197)
+
+### Versions
+
+```
+grib 0.17.0
+grib-cli 0.17.0
+```
+
 ## [0.16.0] - 2026-07-18
 ### Enhancements
 
@@ -1008,7 +1039,8 @@ grib-build 0.1.0
 grib 0.1.0
 ```
 
-[unreleased]: https://github.com/noritada/grib-rs/compare/v0.16.0...HEAD
+[unreleased]: https://github.com/noritada/grib-rs/compare/v0.17.0...HEAD
+[0.17.0]: https://github.com/noritada/grib-rs/compare/v0.16.0...v0.17.0
 [0.16.0]: https://github.com/noritada/grib-rs/compare/v0.15.6...v0.16.0
 [0.15.6]: https://github.com/noritada/grib-rs/compare/v0.15.5...v0.15.6
 [0.15.5]: https://github.com/noritada/grib-rs/compare/v0.15.4...v0.15.5
