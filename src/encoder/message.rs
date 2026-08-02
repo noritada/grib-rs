@@ -2,7 +2,7 @@ pub use multigrid::*;
 pub use multiproduct::*;
 pub use single::*;
 
-use super::Encoder;
+use super::GpvEncoder;
 use crate::WriteToBuffer;
 
 const SECT0_LEN: usize = 16;
@@ -442,7 +442,7 @@ pub(crate) fn write_section_header(
     crate::def::grib2::SectionHeader { len, sect_num }.write_to_buffer(buf)
 }
 
-impl<'a, 'd, P> WriteGrib2MessageIterL3 for (&'a P, &'a Encoder<'d>)
+impl<'a, 'd, P> WriteGrib2MessageIterL3 for (&'a P, &'a GpvEncoder<'d>)
 where
     P: WriteGrib2ProductDef,
 {
@@ -452,7 +452,7 @@ where
         Self: 's;
 
     type SD<'s>
-        = Encoder<'d>
+        = GpvEncoder<'d>
     where
         Self: 's;
 

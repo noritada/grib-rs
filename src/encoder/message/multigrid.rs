@@ -1,7 +1,7 @@
 use std::iter::{Once, once};
 
 use super::{
-    Encoder, WriteGrib2GridDef, WriteGrib2Ident, WriteGrib2LocalUse, WriteGrib2Message,
+    GpvEncoder, WriteGrib2GridDef, WriteGrib2Ident, WriteGrib2LocalUse, WriteGrib2Message,
     WriteGrib2MessageIterL1, WriteGrib2MessageIterL2, WriteGrib2ProductDef,
 };
 
@@ -11,7 +11,7 @@ pub struct MultiGridGrib2Message<'d, I, L, G, P> {
     discipline: u8,
     ident: I,
     local_use: Option<L>,
-    grid_product_values: Vec<(G, P, Encoder<'d>)>,
+    grid_product_values: Vec<(G, P, GpvEncoder<'d>)>,
 }
 
 impl<'d, I, L, G, P> MultiGridGrib2Message<'d, I, L, G, P> {
@@ -19,7 +19,7 @@ impl<'d, I, L, G, P> MultiGridGrib2Message<'d, I, L, G, P> {
         discipline: u8,
         ident: I,
         local_use: Option<L>,
-        grid_product_values: Vec<(G, P, Encoder<'d>)>,
+        grid_product_values: Vec<(G, P, GpvEncoder<'d>)>,
     ) -> Self {
         Self {
             discipline,
@@ -43,12 +43,12 @@ where
         Self: 'a;
 
     type Item<'a>
-        = (&'a Option<L>, &'a Vec<(G, P, Encoder<'d>)>)
+        = (&'a Option<L>, &'a Vec<(G, P, GpvEncoder<'d>)>)
     where
         Self: 'a;
 
     type Iter<'a>
-        = Once<(&'a Option<L>, &'a Vec<(G, P, Encoder<'d>)>)>
+        = Once<(&'a Option<L>, &'a Vec<(G, P, GpvEncoder<'d>)>)>
     where
         Self: 'a;
 
@@ -65,7 +65,7 @@ where
     }
 }
 
-impl<'a, 'd, L, G, P> WriteGrib2MessageIterL1 for (&'a Option<L>, &'a Vec<(G, P, Encoder<'d>)>)
+impl<'a, 'd, L, G, P> WriteGrib2MessageIterL1 for (&'a Option<L>, &'a Vec<(G, P, GpvEncoder<'d>)>)
 where
     L: WriteGrib2LocalUse,
     G: WriteGrib2GridDef,
@@ -77,12 +77,12 @@ where
         Self: 's;
 
     type Item<'s>
-        = &'a (G, P, Encoder<'d>)
+        = &'a (G, P, GpvEncoder<'d>)
     where
         Self: 's;
 
     type Iter<'s>
-        = std::slice::Iter<'a, (G, P, Encoder<'d>)>
+        = std::slice::Iter<'a, (G, P, GpvEncoder<'d>)>
     where
         Self: 's;
 
@@ -95,7 +95,7 @@ where
     }
 }
 
-impl<'a, 'd, G, P> WriteGrib2MessageIterL2 for &'a (G, P, Encoder<'d>)
+impl<'a, 'd, G, P> WriteGrib2MessageIterL2 for &'a (G, P, GpvEncoder<'d>)
 where
     G: WriteGrib2GridDef,
     P: WriteGrib2ProductDef,
@@ -106,12 +106,12 @@ where
         Self: 's;
 
     type Item<'s>
-        = (&'a P, &'a Encoder<'d>)
+        = (&'a P, &'a GpvEncoder<'d>)
     where
         Self: 's;
 
     type Iter<'s>
-        = Once<(&'a P, &'a Encoder<'d>)>
+        = Once<(&'a P, &'a GpvEncoder<'d>)>
     where
         Self: 's;
 

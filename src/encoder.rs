@@ -85,13 +85,14 @@ pub use simple::*;
 
 use crate::def::grib2::template::param_set;
 
-pub struct Encoder<'d> {
+/// GPV data encoder.
+pub struct GpvEncoder<'d> {
     data: std::borrow::Cow<'d, [f64]>,
     method: EncodingMethod,
-    encoded: RefCell<Option<EncodeOutput>>,
+    encoded: RefCell<Option<GpvEncodeOutput>>,
 }
 
-impl<'d> Encoder<'d> {
+impl<'d> GpvEncoder<'d> {
     pub fn new(data: std::borrow::Cow<'d, [f64]>, method: EncodingMethod) -> Self {
         Self {
             data,
@@ -100,7 +101,7 @@ impl<'d> Encoder<'d> {
         }
     }
 
-    pub fn get_encoded(&'_ self) -> Ref<'_, EncodeOutput> {
+    pub fn get_encoded(&'_ self) -> Ref<'_, GpvEncodeOutput> {
         if self.encoded.borrow().is_none() {
             *self.encoded.borrow_mut() = Some(self.encode());
         }
@@ -108,11 +109,11 @@ impl<'d> Encoder<'d> {
         Ref::map(self.encoded.borrow(), |c| c.as_ref().unwrap())
     }
 
-    fn encode(&self) -> EncodeOutput {
+    fn encode(&self) -> GpvEncodeOutput {
         let output = match &self.method {
             EncodingMethod::SimplePacking(simple_packing_strategy) => {
                 let encoder = simple::Encoder::new(&self.data, simple_packing_strategy.clone());
-                EncodeOutputInner::SimplePacking(encoder.encode())
+                GpvEncodeOutputInner::SimplePacking(encoder.encode())
             }
             EncodingMethod::ComplexPacking(
                 simple_packing_strategy,
@@ -124,14 +125,14 @@ impl<'d> Encoder<'d> {
                     simple_packing_strategy.clone(),
                     complex_packing_strategy.clone(),
                 );
-                EncodeOutputInner::ComplexPacking(encoder.encode())
+                GpvEncodeOutputInner::ComplexPacking(encoder.encode())
             }
         };
-        EncodeOutput(output)
+        GpvEncodeOutput(output)
     }
 }
 
-impl<'d> WriteGrib2PointValues for Encoder<'d> {
+impl<'d> WriteGrib2PointValues for GpvEncoder<'d> {
     fn data_sections_len(&self) -> usize {
         let encoded = self.get_encoded();
         encoded.section5_len() + encoded.section6_len() + encoded.section7_len()
@@ -160,82 +161,85 @@ pub enum EncodingMethod {
     ),
 }
 
-/// Data obtained through encoding. Instances are typically used to write GRIB2
-/// data via the methods defined in [`WriteGrib2DataSections`].
+/// Data obtained through GPV encoding. Instances are typically used to write
+/// GRIB2 data via the methods defined in [`WriteGrib2DataSections`].
 #[derive(Debug)]
-pub struct EncodeOutput(EncodeOutputInner);
+pub struct GpvEncodeOutput(GpvEncodeOutputInner);
 
-impl EncodeOutput {
+impl GpvEncodeOutput {
     /// Returns the parameter set.
-    pub fn params(&self) -> EncodeOutputParams<'_> {
+    pub fn params(&self) -> GpvEncodeParams<'_> {
         match &self.0 {
-            EncodeOutputInner::SimplePacking(encoded) => {
-                EncodeOutputParams::SimplePacking(encoded.params())
+            GpvEncodeOutputInner::SimplePacking(encoded) => {
+                GpvEncodeParams::SimplePacking(encoded.params())
             }
-            EncodeOutputInner::ComplexPacking(encoded) => {
+            GpvEncodeOutputInner::ComplexPacking(encoded) => {
                 let (simple, complex) = encoded.params();
-                EncodeOutputParams::ComplexPacking(simple, complex)
+                GpvEncodeParams::ComplexPacking(simple, complex)
             }
         }
     }
 }
 
-impl WriteGrib2DataSections for EncodeOutput {
+impl WriteGrib2DataSections for GpvEncodeOutput {
     fn section5_len(&self) -> usize {
         match &self.0 {
-            EncodeOutputInner::SimplePacking(encoded) => encoded.section5_len(),
-            EncodeOutputInner::ComplexPacking(encoded) => encoded.section5_len(),
+            GpvEncodeOutputInner::SimplePacking(encoded) => encoded.section5_len(),
+            GpvEncodeOutputInner::ComplexPacking(encoded) => encoded.section5_len(),
         }
     }
 
     fn write_section5(&self, buf: &mut [u8]) -> Result<usize, &'static str> {
         match &self.0 {
-            EncodeOutputInner::SimplePacking(encoded) => encoded.write_section5(buf),
-            EncodeOutputInner::ComplexPacking(encoded) => encoded.write_section5(buf),
+            GpvEncodeOutputInner::SimplePacking(encoded) => encoded.write_section5(buf),
+            GpvEncodeOutputInner::ComplexPacking(encoded) => encoded.write_section5(buf),
         }
     }
 
     fn section6_len(&self) -> usize {
         match &self.0 {
-            EncodeOutputInner::SimplePacking(encoded) => encoded.section6_len(),
-            EncodeOutputInner::ComplexPacking(encoded) => encoded.section6_len(),
+            GpvEncodeOutputInner::SimplePacking(encoded) => encoded.section6_len(),
+            GpvEncodeOutputInner::ComplexPacking(encoded) => encoded.section6_len(),
         }
     }
 
     fn write_section6(&self, buf: &mut [u8]) -> Result<usize, &'static str> {
         match &self.0 {
-            EncodeOutputInner::SimplePacking(encoded) => encoded.write_section6(buf),
-            EncodeOutputInner::ComplexPacking(encoded) => encoded.write_section6(buf),
+            GpvEncodeOutputInner::SimplePacking(encoded) => encoded.write_section6(buf),
+            GpvEncodeOutputInner::ComplexPacking(encoded) => encoded.write_section6(buf),
         }
     }
 
     fn section7_len(&self) -> usize {
         match &self.0 {
-            EncodeOutputInner::SimplePacking(encoded) => encoded.section7_len(),
-            EncodeOutputInner::ComplexPacking(encoded) => encoded.section7_len(),
+            GpvEncodeOutputInner::SimplePacking(encoded) => encoded.section7_len(),
+            GpvEncodeOutputInner::ComplexPacking(encoded) => encoded.section7_len(),
         }
     }
 
     fn write_section7(&self, buf: &mut [u8]) -> Result<usize, &'static str> {
         match &self.0 {
-            EncodeOutputInner::SimplePacking(encoded) => encoded.write_section7(buf),
-            EncodeOutputInner::ComplexPacking(encoded) => encoded.write_section7(buf),
+            GpvEncodeOutputInner::SimplePacking(encoded) => encoded.write_section7(buf),
+            GpvEncodeOutputInner::ComplexPacking(encoded) => encoded.write_section7(buf),
         }
     }
 }
 
 #[non_exhaustive]
-pub enum EncodeOutputParams<'a> {
+pub enum GpvEncodeParams<'a> {
     SimplePacking(&'a param_set::SimplePacking),
     ComplexPacking(&'a param_set::SimplePacking, &'a param_set::ComplexPacking),
 }
 
 #[derive(Debug)]
-enum EncodeOutputInner {
+enum GpvEncodeOutputInner {
     SimplePacking(simple::Encoded),
     ComplexPacking(complex::Encoded),
 }
 
+// Since the name `Encode` is already in use on other branches currently under
+// development, and since this trait is private, we'll continue to use that name
+// for the time being.
 trait Encode {
     type Output;
 
