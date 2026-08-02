@@ -2,7 +2,8 @@ use std::iter::{Once, once};
 
 use super::{
     Encoder, WriteGrib2GridDef, WriteGrib2Ident, WriteGrib2LocalUse, WriteGrib2Message,
-    WriteGrib2ProductDef, WriteGrib2SubmessageL1, WriteGrib2SubmessageL2, WriteGrib2SubmessageL3,
+    WriteGrib2MessageIterL1, WriteGrib2MessageIterL2, WriteGrib2MessageIterL3,
+    WriteGrib2ProductDef,
 };
 
 pub struct MultiProductGrib2Message<'d, I, L, G, P> {
@@ -66,7 +67,7 @@ where
     }
 }
 
-impl<'a, 'd, L, G, P> WriteGrib2SubmessageL1 for (&'a Option<L>, &'a G, &'a Vec<(P, Encoder<'d>)>)
+impl<'a, 'd, L, G, P> WriteGrib2MessageIterL1 for (&'a Option<L>, &'a G, &'a Vec<(P, Encoder<'d>)>)
 where
     L: WriteGrib2LocalUse,
     G: WriteGrib2GridDef,
@@ -96,7 +97,7 @@ where
     }
 }
 
-impl<'a, 'd, G, P> WriteGrib2SubmessageL2 for (&'a G, &'a Vec<(P, Encoder<'d>)>)
+impl<'a, 'd, G, P> WriteGrib2MessageIterL2 for (&'a G, &'a Vec<(P, Encoder<'d>)>)
 where
     G: WriteGrib2GridDef,
     P: WriteGrib2ProductDef,
@@ -125,7 +126,7 @@ where
     }
 }
 
-impl<'d, P> WriteGrib2SubmessageL3 for &(P, Encoder<'d>)
+impl<'d, P> WriteGrib2MessageIterL3 for &(P, Encoder<'d>)
 where
     P: WriteGrib2ProductDef,
 {

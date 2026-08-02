@@ -2,7 +2,7 @@ use std::iter::{Once, once};
 
 use super::{
     Encoder, WriteGrib2GridDef, WriteGrib2Ident, WriteGrib2LocalUse, WriteGrib2Message,
-    WriteGrib2ProductDef, WriteGrib2SubmessageL1, WriteGrib2SubmessageL2,
+    WriteGrib2MessageIterL1, WriteGrib2MessageIterL2, WriteGrib2ProductDef,
 };
 
 pub struct SingleGrib2Message<'d, I, L, G, P> {
@@ -69,7 +69,7 @@ where
     }
 }
 
-impl<'a, 'd, L, G, P> WriteGrib2SubmessageL1 for (&'a Option<L>, &'a G, &'a P, &'a Encoder<'d>)
+impl<'a, 'd, L, G, P> WriteGrib2MessageIterL1 for (&'a Option<L>, &'a G, &'a P, &'a Encoder<'d>)
 where
     L: WriteGrib2LocalUse,
     G: WriteGrib2GridDef,
@@ -99,7 +99,7 @@ where
     }
 }
 
-impl<'a, 'd, G, P> WriteGrib2SubmessageL2 for (&'a G, &'a P, &'a Encoder<'d>)
+impl<'a, 'd, G, P> WriteGrib2MessageIterL2 for (&'a G, &'a P, &'a Encoder<'d>)
 where
     G: WriteGrib2GridDef,
     P: WriteGrib2ProductDef,

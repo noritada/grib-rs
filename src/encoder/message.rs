@@ -12,7 +12,7 @@ pub trait WriteGrib2Message {
     where
         Self: 'a;
 
-    type Item<'a>: WriteGrib2SubmessageL1
+    type Item<'a>: WriteGrib2MessageIterL1
     where
         Self: 'a;
 
@@ -56,12 +56,12 @@ pub trait WriteGrib2Message {
     }
 }
 
-pub trait WriteGrib2SubmessageL1 {
+pub trait WriteGrib2MessageIterL1 {
     type S2<'a>: WriteGrib2LocalUse
     where
         Self: 'a;
 
-    type Item<'a>: WriteGrib2SubmessageL2
+    type Item<'a>: WriteGrib2MessageIterL2
     where
         Self: 'a;
 
@@ -89,12 +89,12 @@ pub trait WriteGrib2SubmessageL1 {
     }
 }
 
-pub trait WriteGrib2SubmessageL2 {
+pub trait WriteGrib2MessageIterL2 {
     type S3<'a>: WriteGrib2GridDef
     where
         Self: 'a;
 
-    type Item<'a>: WriteGrib2SubmessageL3
+    type Item<'a>: WriteGrib2MessageIterL3
     where
         Self: 'a;
 
@@ -119,7 +119,7 @@ pub trait WriteGrib2SubmessageL2 {
     }
 }
 
-pub trait WriteGrib2SubmessageL3 {
+pub trait WriteGrib2MessageIterL3 {
     type S4<'a>: WriteGrib2ProductDef
     where
         Self: 'a;
@@ -301,7 +301,7 @@ pub(crate) fn write_section_header(
     crate::def::grib2::SectionHeader { len, sect_num }.write_to_buffer(buf)
 }
 
-impl<'a, 'd, P> WriteGrib2SubmessageL3 for (&'a P, &'a Encoder<'d>)
+impl<'a, 'd, P> WriteGrib2MessageIterL3 for (&'a P, &'a Encoder<'d>)
 where
     P: WriteGrib2ProductDef,
 {
