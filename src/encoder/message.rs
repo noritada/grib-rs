@@ -159,6 +159,121 @@ pub trait WriteGrib2MessageIterL3 {
 
 /// A functionality to write the byte sequence of Section 1 (Identification
 /// Section) of a GRIB2 message.
+///
+/// # Examples
+///
+/// This trait is implemented for the payload struct of Section 1
+/// ([`def::grib2::Section1Payload`](crate::def::grib2::Section1Payload)).
+///
+/// ```
+/// use grib::{TryFromSlice, def::grib2, encoder::WriteGrib2Ident};
+///
+/// fn main() -> Result<(), Box<dyn std::error::Error>> {
+///     let sect = grib2::Section1 {
+///         header: grib2::SectionHeader {
+///             len: 21,
+///             sect_num: 1,
+///         },
+///         payload: grib2::Section1Payload {
+///             centre_id: 0xffff,
+///             subcentre_id: 0,
+///             master_table_version: 29,
+///             local_table_version: 0,
+///             ref_time_significance: 0,
+///             ref_time: grib2::RefTime {
+///                 year: 2026,
+///                 month: 1,
+///                 day: 2,
+///                 hour: 3,
+///                 minute: 4,
+///                 second: 5,
+///             },
+///             prod_status: 0,
+///             data_type: 0,
+///             optional: None,
+///         },
+///     };
+///     let mut buf = vec![0; sect.payload.section1_len()];
+///     sect.payload.write_section1(&mut buf)?;
+///     let decoded = grib2::Section1::try_from_slice(&buf, &mut 0);
+///     assert_eq!(decoded, Ok(sect));
+///
+///     Ok(())
+/// }
+/// ```
+///
+/// This trait is also implemented for the byte sequence of the payload of
+/// Section 1.
+///
+/// ```
+/// use grib::{TryFromSlice, def::grib2, encoder::WriteGrib2Ident};
+///
+/// fn main() -> Result<(), Box<dyn std::error::Error>> {
+///     let mut input = [
+///         0xff, 0xff, 0x00, 0x00, 0x1d, 0x00, 0x00, 0x07, 0xea, 0x01, 0x02, 0x03, 0x04, 0x05,
+///         0x00, 0x00,
+///     ];
+///     let mut buf = vec![0; input.section1_len()];
+///     input.write_section1(&mut buf)?;
+///
+///     // The output is simply the input byte sequence with a section header appended to it.
+///     assert_eq!(&buf[5..], input);
+///
+///     let decoded = grib2::Section1::try_from_slice(&buf, &mut 0);
+///     let expected = Ok(grib2::Section1 {
+///         header: grib2::SectionHeader {
+///             len: 21,
+///             sect_num: 1,
+///         },
+///         payload: grib2::Section1Payload {
+///             centre_id: 0xffff,
+///             subcentre_id: 0,
+///             master_table_version: 29,
+///             local_table_version: 0,
+///             ref_time_significance: 0,
+///             ref_time: grib2::RefTime {
+///                 year: 2026,
+///                 month: 1,
+///                 day: 2,
+///                 hour: 3,
+///                 minute: 4,
+///                 second: 5,
+///             },
+///             prod_status: 0,
+///             data_type: 0,
+///             optional: None,
+///         },
+///     });
+///     assert_eq!(decoded, expected);
+///
+///     Ok(())
+/// }
+/// ```
+///
+/// Since no constraints can be placed on the byte sequence, `write_section1`
+/// can, of course, be executed on any byte sequence; however, if it is executed
+/// on an inappropriate byte sequence, the resulting byte sequence will not be
+/// correctly interpreted as Section 1.
+///
+/// ```
+/// use grib::{TryFromSlice, def::grib2, encoder::WriteGrib2Ident};
+///
+/// fn main() -> Result<(), Box<dyn std::error::Error>> {
+///     let mut input = [0xff, 0xff];
+///     let mut buf = vec![0; input.section1_len()];
+///     input.write_section1(&mut buf)?;
+///
+///     // The output is simply the input byte sequence with a section header appended to it.
+///     assert_eq!(&buf[5..], input);
+///
+///     // The output cannot be correctly interpreted as Section 1.
+///     let decoded = grib2::Section1::try_from_slice(&buf, &mut 0);
+///     let expected = Err("slice length is too short");
+///     assert_eq!(decoded, expected);
+///
+///     Ok(())
+/// }
+/// ```
 pub trait WriteGrib2Ident {
     fn section1_len(&self) -> usize;
 
