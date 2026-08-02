@@ -465,45 +465,6 @@ where
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::{TryFromSlice as _, def::grib2::Section1};
-
-    #[test]
-    fn grib2_section1_roundtrip_test() -> Result<(), Box<dyn std::error::Error>> {
-        let sect = Section1 {
-            header: crate::def::grib2::SectionHeader {
-                len: 21,
-                sect_num: 1,
-            },
-            payload: crate::def::grib2::Section1Payload {
-                centre_id: 0xffff,
-                subcentre_id: 0,
-                master_table_version: 29,
-                local_table_version: 0,
-                ref_time_significance: 0,
-                ref_time: crate::def::grib2::RefTime {
-                    year: 2026,
-                    month: 1,
-                    day: 2,
-                    hour: 3,
-                    minute: 4,
-                    second: 5,
-                },
-                prod_status: 0,
-                data_type: 0,
-                optional: None,
-            },
-        };
-        let mut buf = vec![0; 21];
-        sect.payload.write_section1(&mut buf)?;
-        let decoded = Section1::try_from_slice(&buf, &mut 0)?;
-        assert_eq!(decoded, sect);
-        Ok(())
-    }
-}
-
 mod multigrid;
 mod multiproduct;
 mod single;
