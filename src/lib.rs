@@ -7,7 +7,7 @@ pub mod cookbook;
 mod datatypes;
 mod decoder;
 pub mod def;
-mod encoder;
+pub mod encoder;
 mod error;
 mod grid;
 mod helpers;
@@ -25,7 +25,6 @@ pub use crate::{
     context::*,
     datatypes::*,
     decoder::*,
-    encoder::*,
     error::*,
     grid::{
         GridDefinitionTemplateValues, GridPointIndex, GridPointIndexIterator, GridPointLatLons,

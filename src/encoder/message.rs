@@ -1,21 +1,21 @@
-mod multigrid;
-mod multiproduct;
-mod single;
-
 pub use multigrid::*;
 pub use multiproduct::*;
 pub use single::*;
 
-use crate::{Encoder, WriteToBuffer};
+use super::Encoder;
+use crate::WriteToBuffer;
 
 const SECT0_LEN: usize = 16;
 
+/// A functionality to write an entire GRIB2 message. This trait works in
+/// conjunction with [`WriteGrib2MessageIterL1`], [`WriteGrib2MessageIterL2`],
+/// and [`WriteGrib2MessageIterL3`] to write the message.
 pub trait WriteGrib2Message {
     type S1<'a>: WriteGrib2Ident
     where
         Self: 'a;
 
-    type Item<'a>: WriteGrib2SubmessageL1
+    type Item<'a>: WriteGrib2MessageIterL1
     where
         Self: 'a;
 
@@ -59,12 +59,16 @@ pub trait WriteGrib2Message {
     }
 }
 
-pub trait WriteGrib2SubmessageL1 {
+/// A functionality to write elements of the L1 iterator in a GRIB2 message.
+/// This trait works in conjunction with [`WriteGrib2Message`],
+/// [`WriteGrib2MessageIterL2`], and [`WriteGrib2MessageIterL3`] to write the
+/// message.
+pub trait WriteGrib2MessageIterL1 {
     type S2<'a>: WriteGrib2LocalUse
     where
         Self: 'a;
 
-    type Item<'a>: WriteGrib2SubmessageL2
+    type Item<'a>: WriteGrib2MessageIterL2
     where
         Self: 'a;
 
@@ -92,12 +96,16 @@ pub trait WriteGrib2SubmessageL1 {
     }
 }
 
-pub trait WriteGrib2SubmessageL2 {
+/// A functionality to write elements of the L2 iterator in a GRIB2 message.
+/// This trait works in conjunction with [`WriteGrib2Message`],
+/// [`WriteGrib2MessageIterL1`], and [`WriteGrib2MessageIterL3`] to write the
+/// message.
+pub trait WriteGrib2MessageIterL2 {
     type S3<'a>: WriteGrib2GridDef
     where
         Self: 'a;
 
-    type Item<'a>: WriteGrib2SubmessageL3
+    type Item<'a>: WriteGrib2MessageIterL3
     where
         Self: 'a;
 
@@ -122,7 +130,11 @@ pub trait WriteGrib2SubmessageL2 {
     }
 }
 
-pub trait WriteGrib2SubmessageL3 {
+/// A functionality to write elements of the L3 iterator in a GRIB2 message.
+/// This trait works in conjunction with [`WriteGrib2Message`],
+/// [`WriteGrib2MessageIterL1`], and [`WriteGrib2MessageIterL2`] to write the
+/// message.
+pub trait WriteGrib2MessageIterL3 {
     type S4<'a>: WriteGrib2ProductDef
     where
         Self: 'a;
@@ -145,30 +157,156 @@ pub trait WriteGrib2SubmessageL3 {
     }
 }
 
+/// A functionality to write the byte sequence of Section 1 (Identification
+/// Section) of a GRIB2 message.
+///
+/// # Examples
+///
+/// This trait is implemented for the payload struct of Section 1
+/// ([`def::grib2::Section1Payload`](crate::def::grib2::Section1Payload)).
+///
+/// ```
+/// use grib::{TryFromSlice, def::grib2, encoder::WriteGrib2Ident};
+///
+/// fn main() -> Result<(), Box<dyn std::error::Error>> {
+///     let sect = grib2::Section1 {
+///         header: grib2::SectionHeader {
+///             len: 21,
+///             sect_num: 1,
+///         },
+///         payload: grib2::Section1Payload {
+///             centre_id: 0xffff,
+///             subcentre_id: 0,
+///             master_table_version: 29,
+///             local_table_version: 0,
+///             ref_time_significance: 0,
+///             ref_time: grib2::RefTime {
+///                 year: 2026,
+///                 month: 1,
+///                 day: 2,
+///                 hour: 3,
+///                 minute: 4,
+///                 second: 5,
+///             },
+///             prod_status: 0,
+///             data_type: 0,
+///             optional: None,
+///         },
+///     };
+///     let mut buf = vec![0; sect.payload.section1_len()];
+///     sect.payload.write_section1(&mut buf)?;
+///     let decoded = grib2::Section1::try_from_slice(&buf, &mut 0);
+///     assert_eq!(decoded, Ok(sect));
+///
+///     Ok(())
+/// }
+/// ```
+///
+/// This trait is also implemented for the byte sequence of the payload of
+/// Section 1.
+///
+/// ```
+/// use grib::{TryFromSlice, def::grib2, encoder::WriteGrib2Ident};
+///
+/// fn main() -> Result<(), Box<dyn std::error::Error>> {
+///     let mut input = [
+///         0xff, 0xff, 0x00, 0x00, 0x1d, 0x00, 0x00, 0x07, 0xea, 0x01, 0x02, 0x03, 0x04, 0x05,
+///         0x00, 0x00,
+///     ];
+///     let mut buf = vec![0; input.section1_len()];
+///     input.write_section1(&mut buf)?;
+///
+///     // The output is simply the input byte sequence with a section header appended to it.
+///     assert_eq!(&buf[5..], input);
+///
+///     let decoded = grib2::Section1::try_from_slice(&buf, &mut 0);
+///     let expected = Ok(grib2::Section1 {
+///         header: grib2::SectionHeader {
+///             len: 21,
+///             sect_num: 1,
+///         },
+///         payload: grib2::Section1Payload {
+///             centre_id: 0xffff,
+///             subcentre_id: 0,
+///             master_table_version: 29,
+///             local_table_version: 0,
+///             ref_time_significance: 0,
+///             ref_time: grib2::RefTime {
+///                 year: 2026,
+///                 month: 1,
+///                 day: 2,
+///                 hour: 3,
+///                 minute: 4,
+///                 second: 5,
+///             },
+///             prod_status: 0,
+///             data_type: 0,
+///             optional: None,
+///         },
+///     });
+///     assert_eq!(decoded, expected);
+///
+///     Ok(())
+/// }
+/// ```
+///
+/// Since no constraints can be placed on the byte sequence, `write_section1`
+/// can, of course, be executed on any byte sequence; however, if it is executed
+/// on an inappropriate byte sequence, the resulting byte sequence will not be
+/// correctly interpreted as Section 1.
+///
+/// ```
+/// use grib::{TryFromSlice, def::grib2, encoder::WriteGrib2Ident};
+///
+/// fn main() -> Result<(), Box<dyn std::error::Error>> {
+///     let mut input = [0xff, 0xff];
+///     let mut buf = vec![0; input.section1_len()];
+///     input.write_section1(&mut buf)?;
+///
+///     // The output is simply the input byte sequence with a section header appended to it.
+///     assert_eq!(&buf[5..], input);
+///
+///     // The output cannot be correctly interpreted as Section 1.
+///     let decoded = grib2::Section1::try_from_slice(&buf, &mut 0);
+///     let expected = Err("slice length is too short");
+///     assert_eq!(decoded, expected);
+///
+///     Ok(())
+/// }
+/// ```
 pub trait WriteGrib2Ident {
     fn section1_len(&self) -> usize;
 
     fn write_section1(&self, buf: &mut [u8]) -> Result<usize, &'static str>;
 }
 
+/// A functionality to write the byte sequence of Section 2 (Local Use Section)
+/// of a GRIB2 message.
 pub trait WriteGrib2LocalUse {
     fn section2_len(&self) -> usize;
 
     fn write_section2(&self, buf: &mut [u8]) -> Result<usize, &'static str>;
 }
 
+/// A functionality to write the byte sequence of Section 3 (Grid Definition
+/// Section) of a GRIB2 message.
 pub trait WriteGrib2GridDef {
     fn section3_len(&self) -> usize;
 
     fn write_section3(&self, buf: &mut [u8]) -> Result<usize, &'static str>;
 }
 
+/// A functionality to write the byte sequence of Section 4 (Product Definition
+/// Section) of a GRIB2 message.
 pub trait WriteGrib2ProductDef {
     fn section4_len(&self) -> usize;
 
     fn write_section4(&self, buf: &mut [u8]) -> Result<usize, &'static str>;
 }
 
+/// A functionality to write the byte sequence of Section 5 (Data
+/// Representation Section), Section 6 (Bit-map section), and Section 7 (Data
+/// Section) of a GRIB2 message.
 pub trait WriteGrib2PointValues {
     fn data_sections_len(&self) -> usize;
 
@@ -304,7 +442,7 @@ pub(crate) fn write_section_header(
     crate::def::grib2::SectionHeader { len, sect_num }.write_to_buffer(buf)
 }
 
-impl<'a, 'd, P> WriteGrib2SubmessageL3 for (&'a P, &'a Encoder<'d>)
+impl<'a, 'd, P> WriteGrib2MessageIterL3 for (&'a P, &'a Encoder<'d>)
 where
     P: WriteGrib2ProductDef,
 {
@@ -365,3 +503,7 @@ mod tests {
         Ok(())
     }
 }
+
+mod multigrid;
+mod multiproduct;
+mod single;

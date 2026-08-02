@@ -1,11 +1,12 @@
 use std::iter::{Once, once};
 
-use crate::{
+use super::{
     Encoder, WriteGrib2GridDef, WriteGrib2Ident, WriteGrib2LocalUse, WriteGrib2Message,
-    WriteGrib2ProductDef, WriteGrib2SubmessageL1, WriteGrib2SubmessageL2,
+    WriteGrib2MessageIterL1, WriteGrib2MessageIterL2, WriteGrib2ProductDef,
 };
 
-pub struct Single<'d, I, L, G, P> {
+/// A writer for GRIB2 messages that contain only one submessage.
+pub struct SingleGrib2Message<'d, I, L, G, P> {
     pub(crate) discipline: u8,
     pub(crate) ident: I,
     pub(crate) local_use: Option<L>,
@@ -14,7 +15,7 @@ pub struct Single<'d, I, L, G, P> {
     pub(crate) values: Encoder<'d>,
 }
 
-impl<'d, I, L, G, P> Single<'d, I, L, G, P> {
+impl<'d, I, L, G, P> SingleGrib2Message<'d, I, L, G, P> {
     pub fn new(
         discipline: u8,
         ident: I,
@@ -34,7 +35,7 @@ impl<'d, I, L, G, P> Single<'d, I, L, G, P> {
     }
 }
 
-impl<'d, I, L, G, P> WriteGrib2Message for Single<'d, I, L, G, P>
+impl<'d, I, L, G, P> WriteGrib2Message for SingleGrib2Message<'d, I, L, G, P>
 where
     I: WriteGrib2Ident,
     L: WriteGrib2LocalUse,
@@ -69,7 +70,7 @@ where
     }
 }
 
-impl<'a, 'd, L, G, P> WriteGrib2SubmessageL1 for (&'a Option<L>, &'a G, &'a P, &'a Encoder<'d>)
+impl<'a, 'd, L, G, P> WriteGrib2MessageIterL1 for (&'a Option<L>, &'a G, &'a P, &'a Encoder<'d>)
 where
     L: WriteGrib2LocalUse,
     G: WriteGrib2GridDef,
@@ -99,7 +100,7 @@ where
     }
 }
 
-impl<'a, 'd, G, P> WriteGrib2SubmessageL2 for (&'a G, &'a P, &'a Encoder<'d>)
+impl<'a, 'd, G, P> WriteGrib2MessageIterL2 for (&'a G, &'a P, &'a Encoder<'d>)
 where
     G: WriteGrib2GridDef,
     P: WriteGrib2ProductDef,
