@@ -5,6 +5,8 @@ use super::{
     WriteGrib2MessageIterL1, WriteGrib2MessageIterL2, WriteGrib2ProductDef,
 };
 
+/// A writer for GRIB2 messages containing multiple submessages with different
+/// grids.
 pub struct MultiGridGrib2Message<'d, I, L, G, P> {
     discipline: u8,
     ident: I,

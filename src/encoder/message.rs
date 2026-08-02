@@ -7,6 +7,9 @@ use crate::WriteToBuffer;
 
 const SECT0_LEN: usize = 16;
 
+/// A functionality to write an entire GRIB2 message. This trait works in
+/// conjunction with [`WriteGrib2MessageIterL1`], [`WriteGrib2MessageIterL2`],
+/// and [`WriteGrib2MessageIterL3`] to write the message.
 pub trait WriteGrib2Message {
     type S1<'a>: WriteGrib2Ident
     where
@@ -56,6 +59,10 @@ pub trait WriteGrib2Message {
     }
 }
 
+/// A functionality to write elements of the L1 iterator in a GRIB2 message.
+/// This trait works in conjunction with [`WriteGrib2Message`],
+/// [`WriteGrib2MessageIterL2`], and [`WriteGrib2MessageIterL3`] to write the
+/// message.
 pub trait WriteGrib2MessageIterL1 {
     type S2<'a>: WriteGrib2LocalUse
     where
@@ -89,6 +96,10 @@ pub trait WriteGrib2MessageIterL1 {
     }
 }
 
+/// A functionality to write elements of the L2 iterator in a GRIB2 message.
+/// This trait works in conjunction with [`WriteGrib2Message`],
+/// [`WriteGrib2MessageIterL1`], and [`WriteGrib2MessageIterL3`] to write the
+/// message.
 pub trait WriteGrib2MessageIterL2 {
     type S3<'a>: WriteGrib2GridDef
     where
@@ -119,6 +130,10 @@ pub trait WriteGrib2MessageIterL2 {
     }
 }
 
+/// A functionality to write elements of the L3 iterator in a GRIB2 message.
+/// This trait works in conjunction with [`WriteGrib2Message`],
+/// [`WriteGrib2MessageIterL1`], and [`WriteGrib2MessageIterL2`] to write the
+/// message.
 pub trait WriteGrib2MessageIterL3 {
     type S4<'a>: WriteGrib2ProductDef
     where
@@ -142,30 +157,41 @@ pub trait WriteGrib2MessageIterL3 {
     }
 }
 
+/// A functionality to write the byte sequence of Section 1 (Identification
+/// Section) of a GRIB2 message.
 pub trait WriteGrib2Ident {
     fn section1_len(&self) -> usize;
 
     fn write_section1(&self, buf: &mut [u8]) -> Result<usize, &'static str>;
 }
 
+/// A functionality to write the byte sequence of Section 2 (Local Use Section)
+/// of a GRIB2 message.
 pub trait WriteGrib2LocalUse {
     fn section2_len(&self) -> usize;
 
     fn write_section2(&self, buf: &mut [u8]) -> Result<usize, &'static str>;
 }
 
+/// A functionality to write the byte sequence of Section 3 (Grid Definition
+/// Section) of a GRIB2 message.
 pub trait WriteGrib2GridDef {
     fn section3_len(&self) -> usize;
 
     fn write_section3(&self, buf: &mut [u8]) -> Result<usize, &'static str>;
 }
 
+/// A functionality to write the byte sequence of Section 4 (Product Definition
+/// Section) of a GRIB2 message.
 pub trait WriteGrib2ProductDef {
     fn section4_len(&self) -> usize;
 
     fn write_section4(&self, buf: &mut [u8]) -> Result<usize, &'static str>;
 }
 
+/// A functionality to write the byte sequence of Section 5 (Data
+/// Representation Section), Section 6 (Bit-map section), and Section 7 (Data
+/// Section) of a GRIB2 message.
 pub trait WriteGrib2PointValues {
     fn data_sections_len(&self) -> usize;
 

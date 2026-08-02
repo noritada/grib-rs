@@ -6,6 +6,8 @@ use super::{
     WriteGrib2ProductDef,
 };
 
+/// A writer for GRIB2 messages containing multiple submessages that share a
+/// grid.
 pub struct MultiProductGrib2Message<'d, I, L, G, P> {
     pub(crate) discipline: u8,
     pub(crate) ident: I,

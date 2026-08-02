@@ -5,6 +5,7 @@ use super::{
     WriteGrib2MessageIterL1, WriteGrib2MessageIterL2, WriteGrib2ProductDef,
 };
 
+/// A writer for GRIB2 messages that contain only one submessage.
 pub struct SingleGrib2Message<'d, I, L, G, P> {
     pub(crate) discipline: u8,
     pub(crate) ident: I,
