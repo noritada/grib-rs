@@ -91,15 +91,8 @@ impl Identification {
     /// a "date and time" such as "2000-13-32 25:61:62", it will be returned as
     /// is.
     pub fn ref_time_unchecked(&self) -> crate::def::grib2::RefTime {
-        let payload = &self.payload;
-        crate::def::grib2::RefTime::new(
-            read_as!(u16, payload, 7),
-            payload[9],
-            payload[10],
-            payload[11],
-            payload[12],
-            payload[13],
-        )
+        let mut pos = 7;
+        crate::def::grib2::RefTime::try_from_slice(&self.payload, &mut pos).unwrap()
     }
 
     /// Production status of processed data in this GRIB message
