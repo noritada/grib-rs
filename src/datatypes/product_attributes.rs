@@ -1,5 +1,7 @@
 use std::fmt::{self, Display, Formatter};
 
+use grib_template_derive::{Dump, TryFromSlice, WriteToBuffer};
+
 use crate::codetables::{grib2::*, *};
 
 #[derive(Debug, PartialEq, Eq)]
@@ -47,7 +49,7 @@ impl Display for ForecastTime {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, TryFromSlice, WriteToBuffer, Dump)]
 pub struct FixedSurface {
     /// Use [CodeTable4_5] to get textual representation.
     pub surface_type: u8,

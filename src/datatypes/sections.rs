@@ -1,11 +1,8 @@
 use std::slice::Iter;
 
 use crate::{
-    TryFromSlice,
-    codetables::SUPPORTED_PROD_DEF_TEMPLATE_NUMBERS,
-    datatypes::*,
-    error::*,
-    helpers::{GribInt, read_as},
+    TryFromSlice, codetables::SUPPORTED_PROD_DEF_TEMPLATE_NUMBERS, datatypes::*, error::*,
+    helpers::read_as,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -323,25 +320,13 @@ impl ProdDefinition {
                 _ => None,
             }?;
 
-            let first_surface = self.read_surface_from(index);
-            let second_surface = self.read_surface_from(index + 6);
+            let mut pos = START_OF_PROD_TEMPLATE + index;
+            let first_surface = FixedSurface::try_from_slice(&self.payload, &mut pos).ok();
+            let second_surface = FixedSurface::try_from_slice(&self.payload, &mut pos).ok();
             first_surface.zip(second_surface)
         } else {
             None
         }
-    }
-
-    fn read_surface_from(&self, index: usize) -> Option<FixedSurface> {
-        let index = START_OF_PROD_TEMPLATE + index;
-        let surface_type = self.payload.get(index).copied();
-        let scale_factor = self.payload.get(index + 1).map(|v| (*v).as_grib_int());
-        let start = index + 2;
-        let end = index + 6;
-        let scaled_value =
-            u32::from_be_bytes(self.payload[start..end].try_into().unwrap()).as_grib_int();
-        surface_type
-            .zip(scale_factor)
-            .map(|(stype, factor)| FixedSurface::new(stype, factor, scaled_value))
     }
 }
 
