@@ -1,3 +1,5 @@
+use crate::TryFromSlice as _;
+
 pub(crate) trait GribInt<I> {
     fn as_grib_int(&self) -> I;
 }
@@ -36,17 +38,18 @@ pub(crate) fn grib_int_from_bytes(bytes: &[u8]) -> i32 {
     let len = bytes.len();
     // Although there is logic that can be used to generalize, not so many patterns
     // exist that generalization is necessary.
+    let mut pos = 0;
     match len {
-        1 => i32::from(read_as!(u8, bytes, 0).as_grib_int()),
-        2 => i32::from(read_as!(u16, bytes, 0).as_grib_int()),
+        1 => i32::from(i8::try_from_slice(bytes, &mut pos).unwrap()),
+        2 => i32::from(i16::try_from_slice(bytes, &mut pos).unwrap()),
         3 => {
-            let first = read_as!(u8, bytes, 0);
+            let first = u8::try_from_slice(bytes, &mut pos).unwrap();
             let positive = first.leading_zeros() != 0;
-            let rest = i32::from(read_as!(u16, bytes, 1));
+            let rest = i32::from(u16::try_from_slice(bytes, &mut pos).unwrap());
             let abs = i32::from(first << 1 >> 1) * 0x10000 + rest;
             if positive { abs } else { -abs }
         }
-        4 => read_as!(u32, bytes, 0).as_grib_int(),
+        4 => i32::try_from_slice(bytes, &mut pos).unwrap(),
         _ => unimplemented!(),
     }
 }
