@@ -379,6 +379,13 @@ add_impl_for_payload_structs![
         write_section3,
         3
     ),
+    (
+        WriteGrib2ProductDef,
+        crate::def::grib2::Section4Payload,
+        section4_len,
+        write_section4,
+        4
+    ),
 ];
 
 /// A serializer that writes the byte sequence of sections concerning GPV data

@@ -133,7 +133,7 @@ pub enum GridDefinitionTemplate {
 /// Section 4 - Product definition section.
 pub type Section4 = Section<Section4Payload>;
 
-#[derive(Debug, PartialEq, TryFromSlice, Dump)]
+#[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
 pub struct Section4Payload {
     /// Number of coordinate values after template or number of information
     /// according to 3D vertical coordinate GRIB2 message (see Notes 1 and 5).
