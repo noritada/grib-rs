@@ -18,7 +18,6 @@ use crate::{
         stream::{BitStream, NBitwiseIterator},
     },
     def::grib2::template::param_set,
-    helpers::GribInt,
 };
 
 pub(crate) struct Complex<'d>(
@@ -297,29 +296,31 @@ where
             (Some(_ref), Some(width), Some(length)) if width.to_usize().unwrap() == 0 => {
                 // The specification states as follows: "For groups with a constant value,
                 // associated field width is 0, and no incremental data are physically present."
-                let _ref = _ref.to_i32().unwrap();
+                let _ref = _ref.to_u32().unwrap();
                 let length = length.to_usize().unwrap();
-                let missing1 = ((1_u32 << self.num_bits) - 1) as i32;
-                let missing2 = missing1 - 1;
+                let missing1: u32 = (1 << self.num_bits) - 1;
+                // if missing1 == 0 (i.e. width == 0), missing2 should not be used, so it can be
+                // set to any value.
+                let missing2 = if missing1 == 0 { 0 } else { missing1 - 1 };
 
                 if self.missing_value_management > 0 && _ref == missing1 {
                     Some(vec![Missing1; length])
                 } else if self.missing_value_management == 2 && _ref == missing2 {
                     Some(vec![Missing2; length])
                 } else {
-                    Some(vec![Normal(_ref + self.z_min); length])
+                    Some(vec![Normal(_ref as i32 + self.z_min); length])
                 }
             }
             (Some(_ref), Some(width), Some(length)) => {
                 let (_ref, width, length) = (
-                    _ref.to_i32().unwrap(),
+                    _ref.to_u32().unwrap(),
                     width.to_usize().unwrap(),
                     length.to_usize().unwrap(),
                 );
                 let bits = self.start_offset_bits + width * length;
                 let (pos_end, offset_bits) = (self.pos + bits / 8, bits % 8);
                 let offset_byte = usize::from(offset_bits > 0);
-                let missing1 = (1_u32 << width) - 1;
+                let missing1: u32 = (1 << width) - 1;
                 let missing2 = missing1 - 1;
                 let group_values =
                     NBitwiseIterator::new(&self.data[self.pos..pos_end + offset_byte], width)
@@ -331,7 +332,7 @@ where
                             } else if self.missing_value_management == 2 && v == missing2 {
                                 Missing2
                             } else {
-                                Normal(v.as_grib_int() + _ref + self.z_min)
+                                Normal((v + _ref) as i32 + self.z_min)
                             }
                         })
                         .collect::<Vec<_>>();
