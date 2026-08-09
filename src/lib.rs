@@ -10,6 +10,7 @@ mod error;
 mod grid;
 mod helpers;
 mod parser;
+mod projection;
 mod reader;
 mod time;
 pub mod utils;
@@ -26,6 +27,7 @@ pub use crate::{
         ProjectionCentreFlag, ScanningMode,
     },
     parser::*,
+    projection::*,
     reader::*,
     time::*,
 };

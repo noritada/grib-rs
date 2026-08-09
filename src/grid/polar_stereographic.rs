@@ -2,6 +2,7 @@ use super::{earth::EarthShapeDefinition, GridPointIndexIterator, ScanningMode};
 use crate::{
     error::GribError,
     helpers::{read_as, GribInt},
+    projection::{ProjectionParams, StereParams},
     ProjectionCentreFlag,
 };
 
@@ -18,6 +19,47 @@ pub struct PolarStereographicGridDefinition {
     pub dy: u32,
     pub projection_centre: ProjectionCentreFlag,
     pub scanning_mode: ScanningMode,
+}
+
+impl TryFrom<&PolarStereographicGridDefinition> for ProjectionParams {
+    type Error = GribError;
+
+    fn try_from(value: &PolarStereographicGridDefinition) -> Result<Self, Self::Error> {
+        let PolarStereographicGridDefinition {
+            earth_shape,
+            lad,
+            lov,
+            projection_centre,
+            ..
+        } = value;
+
+        let lad = *lad as f64 * 1e-6;
+        let lov = *lov as f64 * 1e-6;
+        let (a, b) = earth_shape.radii().ok_or_else(|| {
+            GribError::NotSupported(format!(
+                "unknown value of Code Table 3.2 (shape of the Earth): {}",
+                earth_shape.shape_of_the_earth
+            ))
+        })?;
+
+        if projection_centre.has_unsupported_flags() {
+            let ProjectionCentreFlag(flag) = projection_centre;
+            return Err(GribError::NotSupported(format!("projection centre {flag}")));
+        }
+        let lat_origin = if projection_centre.contains_north_pole_on_projection_plane() {
+            90.
+        } else {
+            -90.
+        };
+
+        Ok(Self::Stere(StereParams {
+            a,
+            b,
+            lat_ts: lad,
+            lat_0: lat_origin,
+            lon_0: lov,
+        }))
+    }
 }
 
 impl PolarStereographicGridDefinition {
@@ -118,30 +160,7 @@ impl PolarStereographicGridDefinition {
     #[cfg(feature = "gridpoints-proj")]
     #[cfg_attr(docsrs, doc(cfg(feature = "gridpoints-proj")))]
     pub fn latlons(&self) -> Result<std::vec::IntoIter<(f32, f32)>, GribError> {
-        let lad = self.lad as f64 * 1e-6;
-        let lov = self.lov as f64 * 1e-6;
-        let (a, b) = self.earth_shape.radii().ok_or_else(|| {
-            GribError::NotSupported(format!(
-                "unknown value of Code Table 3.2 (shape of the Earth): {}",
-                self.earth_shape.shape_of_the_earth
-            ))
-        })?;
-
-        if self.projection_centre.has_unsupported_flags() {
-            let ProjectionCentreFlag(flag) = self.projection_centre;
-            return Err(GribError::NotSupported(format!("projection centre {flag}")));
-        }
-        let lat_origin = if self
-            .projection_centre
-            .contains_north_pole_on_projection_plane()
-        {
-            90.
-        } else {
-            -90.
-        };
-
-        let proj_def =
-            format!("+a={a} +b={b} +proj=stere +lat_ts={lad} +lat_0={lat_origin} +lon_0={lov}");
+        let params = ProjectionParams::try_from(self)?;
 
         let dx = self.dx as f64 * 1e-3;
         let dy = self.dy as f64 * 1e-3;
@@ -157,7 +176,7 @@ impl PolarStereographicGridDefinition {
         };
 
         super::helpers::latlons_from_projection_definition_and_first_point(
-            &proj_def,
+            &params,
             (
                 self.first_point_lat as f64 * 1e-6,
                 self.first_point_lon as f64 * 1e-6,

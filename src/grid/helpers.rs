@@ -2,9 +2,9 @@
 use proj::Proj;
 
 use super::ScanningMode;
-#[allow(unused_imports)]
-use crate::GribError;
 use crate::GridPointIndexIterator;
+#[allow(unused_imports)]
+use crate::{GribError, ProjectionParams};
 
 pub(crate) fn evenly_spaced_longitudes(
     start_microdegree: i32,
@@ -75,12 +75,13 @@ impl Iterator for RegularGridIterator {
 
 #[cfg(feature = "gridpoints-proj")]
 pub(crate) fn latlons_from_projection_definition_and_first_point(
-    proj_def: &str,
+    proj_params: &ProjectionParams,
     first_point_latlon_in_degrees: (f64, f64),
     delta_in_meters: (f64, f64),
     indices: GridPointIndexIterator,
 ) -> Result<std::vec::IntoIter<(f32, f32)>, GribError> {
-    let projection = Proj::new(proj_def).map_err(|e| GribError::Unknown(e.to_string()))?;
+    let projection =
+        Proj::new(&proj_params.osgeo_proj_args()).map_err(|e| GribError::Unknown(e.to_string()))?;
     let (first_point_lat, first_point_lon) = first_point_latlon_in_degrees;
     let (first_corner_x, first_corner_y) = projection
         .project(
