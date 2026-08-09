@@ -140,6 +140,17 @@ pub struct Section4Payload {
     pub num_coord_values: u16,
     /// Product definition template number (see Code table 4.0).
     pub template_num: u16,
+    /// Product Definition Template (see Template 4.X, where X is the Product
+    /// Definition Template Number given in octets 8-9).
+    #[grib_template(variant = "template_num")]
+    pub template: ProductDefinitionTemplate,
+}
+
+#[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
+#[non_exhaustive]
+#[repr(u16)]
+pub enum ProductDefinitionTemplate {
+    _4_0(template4::Template4_0) = 0,
 }
 
 /// Section 5 - Data representation section.
@@ -190,15 +201,18 @@ pub struct Section6Payload {
 pub mod template {
     //! GRIB2 template definitions.
 
-    pub use super::{template1::*, template3::*, template5::*};
+    pub use super::{template1::*, template3::*, template4::*, template5::*};
 
     pub mod param_set {
         //! Definitions of parameter sets used in GRIB2 templates.
 
-        pub use super::super::{template3::param_set::*, template5::param_set::*};
+        pub use super::super::{
+            template3::param_set::*, template4::param_set::*, template5::param_set::*,
+        };
     }
 }
 
 mod template1;
 mod template3;
+mod template4;
 mod template5;
