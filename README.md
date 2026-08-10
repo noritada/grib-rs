@@ -257,8 +257,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 12        payload.template.generating_process.process_type = 0  // Type of generating process (see Code Table 4.3).
 13        payload.template.generating_process.background_process = 153  // Background generating process identifier (defined by originating centre).
 14        payload.template.generating_process.process_id = 255  // Analysis or forecast generating processes identifier (defined by originating centre).
-15-16     payload.template.forecast_time.cutoff_hours = 0  // Hours of observational data cutoff after reference time (see Note 1).
-17        payload.template.forecast_time.cutoff_minutes = 0  // Minutes of observational data cutoff after reference time.
+15-16     payload.template.forecast_time.cutoff_hours = 0  // Hours after reference time of data cutoff (see Note 1).
+17        payload.template.forecast_time.cutoff_minutes = 0  // Minutes after reference time of data cutoff.
 18        payload.template.forecast_time.unit = 0  // Indicator of unit of time range (see Code Table 4.4).
 19-22     payload.template.forecast_time.time = 0  // Forecast time in units defined by octet 18.
 23        payload.template.horizontal.first_surface.surface_type = 1  // Type of fixed surface (see Code Table 4.5).

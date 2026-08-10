@@ -10,6 +10,51 @@ pub struct Template4_0 {
     pub horizontal: param_set::HorizontalSurfaces,
 }
 
+/// Product definition template 4.1 - Individual ensemble forecast, control and
+/// perturbed, at a horizontal level or in a horizontal layer at a point in
+/// time.
+#[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
+pub struct Template4_1 {
+    pub param: param_set::Parameter,
+    pub generating_process: param_set::GeneratingProcessType,
+    pub forecast_time: param_set::ForecastTime,
+    pub horizontal: param_set::HorizontalSurfaces,
+    pub emsemble: param_set::EnsembleForecast,
+}
+
+/// Product definition template 4.2 - Derived forecast based on all ensemble
+/// members at a horizontal level or in a horizontal layer at a point in time.
+#[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
+pub struct Template4_2 {
+    pub param: param_set::Parameter,
+    pub generating_process: param_set::GeneratingProcessType,
+    pub forecast_time: param_set::ForecastTime,
+    pub horizontal: param_set::HorizontalSurfaces,
+    pub derived: param_set::DerivedForecast,
+}
+
+/// Product definition template 4.5 - Probability forecasts at a horizontal
+/// level or in a horizontal layer at a point in time.
+#[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
+pub struct Template4_5 {
+    pub param: param_set::Parameter,
+    pub generating_process: param_set::GeneratingProcessType,
+    pub forecast_time: param_set::ForecastTime,
+    pub horizontal: param_set::HorizontalSurfaces,
+    pub probability: param_set::ProbabilityForecasts,
+}
+
+/// Product definition template 4.6 - Percentile forecasts at a horizontal level
+/// or in a horizontal layer at a point in time.
+#[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
+pub struct Template4_6 {
+    pub param: param_set::Parameter,
+    pub generating_process: param_set::GeneratingProcessType,
+    pub forecast_time: param_set::ForecastTime,
+    pub horizontal: param_set::HorizontalSurfaces,
+    pub percentile: param_set::PercentileForecasts,
+}
+
 pub(crate) mod param_set {
     use grib_template_derive::{Dump, TryFromSlice, WriteToBuffer};
 
@@ -35,10 +80,9 @@ pub(crate) mod param_set {
 
     #[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
     pub struct ForecastTime {
-        /// Hours of observational data cutoff after reference time (see Note
-        /// 1).
+        /// Hours after reference time of data cutoff (see Note 1).
         pub cutoff_hours: u16,
-        /// Minutes of observational data cutoff after reference time.
+        /// Minutes after reference time of data cutoff.
         pub cutoff_minutes: u8,
         /// Indicator of unit of time range (see Code Table 4.4).
         pub unit: u8,
@@ -60,5 +104,47 @@ pub(crate) mod param_set {
         pub scale_factor: i8,
         /// Scaled value of fixed surface.
         pub scaled_value: i32,
+    }
+
+    #[derive(Debug, PartialEq, Eq, TryFromSlice, WriteToBuffer, Dump)]
+    pub struct EnsembleForecast {
+        /// Type of ensemble forecast (see Code Table 4.6).
+        pub ensemble_forecast_type: u8,
+        ///  Perturbation number.
+        pub perturbation_num: u8,
+        /// Number of forecasts in ensemble.
+        pub num_forecasts: u8,
+    }
+
+    #[derive(Debug, PartialEq, Eq, TryFromSlice, WriteToBuffer, Dump)]
+    pub struct DerivedForecast {
+        /// Derived forecast (see Code Table 4.7).
+        pub derived_forecast: u8,
+        /// Number of forecasts in ensemble.
+        pub num_forecasts: u8,
+    }
+
+    #[derive(Debug, PartialEq, Eq, TryFromSlice, WriteToBuffer, Dump)]
+    pub struct ProbabilityForecasts {
+        /// Forecast probability number.
+        pub forecast_probability_num: u8,
+        /// Total number of forecast probabilities.
+        pub total_num_forecast_probabilities: u8,
+        /// Probability type (see Code Table 4.9).
+        pub probability_type: u8,
+        /// Scale factor of lower limit.
+        pub lower_limit_scale_factor: i8,
+        /// Scaled value of lower limit.
+        pub lower_limit_scaled_value: i32,
+        /// Scale factor of upper limit.
+        pub upper_limit_scale_factor: i8,
+        /// Scaled value of upper limit.
+        pub upper_limit_scaled_value: i32,
+    }
+
+    #[derive(Debug, PartialEq, Eq, TryFromSlice, WriteToBuffer, Dump)]
+    pub struct PercentileForecasts {
+        /// Percentile value (from 100% to 0%).
+        pub percentile_value: u8,
     }
 }

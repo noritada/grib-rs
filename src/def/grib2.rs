@@ -151,6 +151,10 @@ pub struct Section4Payload {
 #[repr(u16)]
 pub enum ProductDefinitionTemplate {
     _4_0(template4::Template4_0) = 0,
+    _4_1(template4::Template4_1) = 1,
+    _4_2(template4::Template4_2) = 2,
+    _4_5(template4::Template4_5) = 5,
+    _4_6(template4::Template4_6) = 6,
 }
 
 /// Section 5 - Data representation section.
