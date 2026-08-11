@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.17.1] - 2026-08-11
+### Fixes
+
+- Fixed a panic in encoding large finite ranges using simple packing.
+  (#189 (thanks @amoutiers), PR #190 (thanks @amoutiers))
+- Corrected the decoding of unsigned integers that were ultimately packed using complex packing. There was a potential issue where the decoded result would be an incorrect value when those integers were quite large.
+  (PR #204)
+
+### Versions
+
+```
+grib 0.17.1
+grib-cli 0.17.1
+```
+
 ## [0.17.0] - 2026-08-02
 ### Enhancements
 
@@ -1039,7 +1054,8 @@ grib-build 0.1.0
 grib 0.1.0
 ```
 
-[unreleased]: https://github.com/noritada/grib-rs/compare/v0.17.0...HEAD
+[unreleased]: https://github.com/noritada/grib-rs/compare/v0.17.1...HEAD
+[0.17.1]: https://github.com/noritada/grib-rs/compare/v0.17.0...v0.17.1
 [0.17.0]: https://github.com/noritada/grib-rs/compare/v0.16.0...v0.17.0
 [0.16.0]: https://github.com/noritada/grib-rs/compare/v0.15.6...v0.16.0
 [0.15.6]: https://github.com/noritada/grib-rs/compare/v0.15.5...v0.15.6
