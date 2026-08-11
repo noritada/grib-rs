@@ -55,6 +55,18 @@ pub struct Template4_6 {
     pub percentile_forecasts: param_set::PercentileForecasts,
 }
 
+/// Product definition template 4.8 - Average, accumulation, and/or extreme
+/// values or other statistically processed values at a horizontal level or in a
+/// horizontal layer in a continuous or non-continuous time interval.
+#[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer)]
+pub struct Template4_8 {
+    pub param: param_set::ProductParam,
+    pub generating_process: param_set::GeneratingProcess,
+    pub forecast_time: param_set::ForecastTime,
+    pub horizontal: param_set::Horizontal,
+    pub percentile: param_set::Statistical,
+}
+
 pub(crate) mod param_set {
     use grib_template_derive::{Dump, TryFromSlice, WriteToBuffer};
 
@@ -146,5 +158,41 @@ pub(crate) mod param_set {
     pub struct PercentileForecasts {
         /// Percentile value (from 100% to 0%).
         pub percentile_value: u8,
+    }
+
+    #[derive(Debug, PartialEq, Eq, TryFromSlice, WriteToBuffer)]
+    pub struct Statistical {
+        /// Time of end of overall time interval.
+        pub end_of_overall_time_interval: super::super::RefTime,
+        /// n - Number of time range specifications describing the time
+        /// intervals used to calculate the statistically processed field.
+        pub num_time_ranges: u8,
+        /// Total number of data values missing in statistical process.
+        pub num_missing: u32,
+        #[grib_template(len = "num_time_ranges")]
+        pub time_ranges: Vec<StatisticalProcess>,
+    }
+
+    #[derive(Debug, PartialEq, Eq, TryFromSlice, WriteToBuffer, Dump)]
+    pub struct StatisticalProcess {
+        /// Statistical process used to calculate the processed field from the
+        /// field at each time increment during the time range (see Code Table
+        /// 4.10).
+        pub statistical_process_type: u8,
+        /// Type of time increment between successive fields used in the
+        /// statistical processing (see Code Table 4.11).
+        pub time_increment_type: u8,
+        /// Indicator of unit of time for time range over which statistical
+        /// processing is done (see Code Table 4.4).
+        pub time_range_unit: u8,
+        /// Length of the time range over which statistical processing is done,
+        /// in units defined by the previous octet.
+        pub time_range_len: u32,
+        /// Indicator of unit of time for the increment between the successive
+        /// fields used (see Code Table 4.4).
+        pub time_increment_unit: u8,
+        /// Time increment between successive fields, in units defined by the
+        /// previous octet (see Notes 3 and 4).
+        pub time_increment: u32,
     }
 }
