@@ -4,10 +4,10 @@ use grib_template_derive::{Dump, TryFromSlice, WriteToBuffer};
 /// or in a horizontal layer at a point in time.
 #[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
 pub struct Template4_0 {
-    pub param: param_set::Parameter,
-    pub generating_process: param_set::GeneratingProcessType,
+    pub param: param_set::ProductParam,
+    pub generating_process: param_set::GeneratingProcess,
     pub forecast_time: param_set::ForecastTime,
-    pub horizontal: param_set::HorizontalSurfaces,
+    pub horizontal: param_set::Horizontal,
 }
 
 /// Product definition template 4.1 - Individual ensemble forecast, control and
@@ -15,51 +15,51 @@ pub struct Template4_0 {
 /// time.
 #[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
 pub struct Template4_1 {
-    pub param: param_set::Parameter,
-    pub generating_process: param_set::GeneratingProcessType,
+    pub param: param_set::ProductParam,
+    pub generating_process: param_set::GeneratingProcess,
     pub forecast_time: param_set::ForecastTime,
-    pub horizontal: param_set::HorizontalSurfaces,
-    pub emsemble: param_set::EnsembleForecast,
+    pub horizontal: param_set::Horizontal,
+    pub emsemble_forecast: param_set::EnsembleForecast,
 }
 
 /// Product definition template 4.2 - Derived forecast based on all ensemble
 /// members at a horizontal level or in a horizontal layer at a point in time.
 #[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
 pub struct Template4_2 {
-    pub param: param_set::Parameter,
-    pub generating_process: param_set::GeneratingProcessType,
+    pub param: param_set::ProductParam,
+    pub generating_process: param_set::GeneratingProcess,
     pub forecast_time: param_set::ForecastTime,
-    pub horizontal: param_set::HorizontalSurfaces,
-    pub derived: param_set::DerivedForecast,
+    pub horizontal: param_set::Horizontal,
+    pub derived_forecast: param_set::DerivedForecast,
 }
 
 /// Product definition template 4.5 - Probability forecasts at a horizontal
 /// level or in a horizontal layer at a point in time.
 #[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
 pub struct Template4_5 {
-    pub param: param_set::Parameter,
-    pub generating_process: param_set::GeneratingProcessType,
+    pub param: param_set::ProductParam,
+    pub generating_process: param_set::GeneratingProcess,
     pub forecast_time: param_set::ForecastTime,
-    pub horizontal: param_set::HorizontalSurfaces,
-    pub probability: param_set::ProbabilityForecasts,
+    pub horizontal: param_set::Horizontal,
+    pub probability_forecasts: param_set::ProbabilityForecasts,
 }
 
 /// Product definition template 4.6 - Percentile forecasts at a horizontal level
 /// or in a horizontal layer at a point in time.
 #[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
 pub struct Template4_6 {
-    pub param: param_set::Parameter,
-    pub generating_process: param_set::GeneratingProcessType,
+    pub param: param_set::ProductParam,
+    pub generating_process: param_set::GeneratingProcess,
     pub forecast_time: param_set::ForecastTime,
-    pub horizontal: param_set::HorizontalSurfaces,
-    pub percentile: param_set::PercentileForecasts,
+    pub horizontal: param_set::Horizontal,
+    pub percentile_forecasts: param_set::PercentileForecasts,
 }
 
 pub(crate) mod param_set {
     use grib_template_derive::{Dump, TryFromSlice, WriteToBuffer};
 
     #[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
-    pub struct Parameter {
+    pub struct ProductParam {
         /// Parameter category (see Code Table 4.1).
         pub category: u8,
         /// Parameter number (see Code Table 4.2).
@@ -67,7 +67,7 @@ pub(crate) mod param_set {
     }
 
     #[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
-    pub struct GeneratingProcessType {
+    pub struct GeneratingProcess {
         /// Type of generating process (see Code Table 4.3).
         pub process_type: u8,
         /// Background generating process identifier (defined by originating
@@ -91,7 +91,7 @@ pub(crate) mod param_set {
     }
 
     #[derive(Debug, PartialEq, Eq, TryFromSlice, WriteToBuffer, Dump)]
-    pub struct HorizontalSurfaces {
+    pub struct Horizontal {
         pub first_surface: FixedSurface,
         pub second_surface: FixedSurface,
     }
@@ -119,7 +119,7 @@ pub(crate) mod param_set {
     #[derive(Debug, PartialEq, Eq, TryFromSlice, WriteToBuffer, Dump)]
     pub struct DerivedForecast {
         /// Derived forecast (see Code Table 4.7).
-        pub derived_forecast: u8,
+        pub derived_forecast_type: u8,
         /// Number of forecasts in ensemble.
         pub num_forecasts: u8,
     }

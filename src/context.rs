@@ -662,12 +662,12 @@ Data Representation:                    {}
     ///             template_num: 0,
     ///             template: grib::def::grib2::ProductDefinitionTemplate::_4_0(
     ///                 grib::def::grib2::template::Template4_0 {
-    ///                     param: grib::def::grib2::template::param_set::Parameter {
+    ///                     param: grib::def::grib2::template::param_set::ProductParam {
     ///                         category: 193,
     ///                         num: 0,
     ///                     },
     ///                     generating_process:
-    ///                         grib::def::grib2::template::param_set::GeneratingProcessType {
+    ///                         grib::def::grib2::template::param_set::GeneratingProcess {
     ///                             process_type: 0,
     ///                             background_process: 153,
     ///                             process_id: 255,
@@ -678,7 +678,7 @@ Data Representation:                    {}
     ///                         unit: 0,
     ///                         time: 0,
     ///                     },
-    ///                     horizontal: grib::def::grib2::template::param_set::HorizontalSurfaces {
+    ///                     horizontal: grib::def::grib2::template::param_set::Horizontal {
     ///                         first_surface: grib::def::grib2::template::param_set::FixedSurface {
     ///                             surface_type: 1,
     ///                             scale_factor: -127,
