@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use quote::quote;
 
 pub(crate) fn impl_for_struct(
@@ -159,7 +157,7 @@ pub(crate) fn get_doc(attrs: &[syn::Attribute]) -> Option<String> {
 }
 
 #[derive(Debug, PartialEq, Eq)]
-struct DocOverrides(HashMap<String, String>);
+struct DocOverrides(Vec<(String, String)>);
 
 impl TryFrom<&syn::Attribute> for DocOverrides {
     type Error = &'static str;
@@ -180,7 +178,7 @@ impl TryFrom<&syn::Attribute> for DocOverrides {
                 )
                 .map_err(|_| MESSAGE)?;
 
-            let mut map = HashMap::new();
+            let mut map = Vec::with_capacity(items.len());
             for item in items {
                 if let syn::Meta::NameValue(nv) = item {
                     let k = nv
@@ -195,7 +193,7 @@ impl TryFrom<&syn::Attribute> for DocOverrides {
                     } else {
                         return Err(MESSAGE);
                     };
-                    map.insert(k, v);
+                    map.push((k, v));
                 } else {
                     return Err(MESSAGE);
                 }
@@ -207,8 +205,24 @@ impl TryFrom<&syn::Attribute> for DocOverrides {
     }
 }
 
+impl quote::ToTokens for DocOverrides {
+    fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
+        let Self(inner) = self;
+        let iter = inner
+            .iter()
+            .map(|(k, v)| quote! { (#k, #v) })
+            .collect::<Vec<_>>();
+        let tok = quote! {
+            vec![#(#iter),*]
+        };
+        tokens.extend(tok);
+    }
+}
+
 #[cfg(test)]
 mod tests {
+    use quote::ToTokens;
+
     use super::*;
 
     #[test]
@@ -223,9 +237,13 @@ mod tests {
         let expected = vec![("key1", "val1"), ("key2", "val2")]
             .into_iter()
             .map(|(k, v)| (k.to_owned(), v.to_owned()))
-            .collect::<HashMap<_, _>>();
+            .collect::<Vec<_>>();
         let expected = DocOverrides(expected);
         assert_eq!(actual, expected);
+
+        let actual_stream = actual.to_token_stream().to_string();
+        let expected_stream = r#"vec ! [("key1" , "val1") , ("key2" , "val2")]"#;
+        assert_eq!(actual_stream, expected_stream);
 
         Ok(())
     }
