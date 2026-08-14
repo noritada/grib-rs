@@ -8,7 +8,7 @@ use std::{
 /// # Examples
 ///
 /// ```
-/// use grib_template_helpers::Dump;
+/// use grib_template_helpers::{DocOverrides, Dump};
 ///
 /// struct VariableLength {
 ///     len: u8,
@@ -16,9 +16,10 @@ use std::{
 /// }
 ///
 /// impl Dump for VariableLength {
-///     fn dump<W: std::io::Write>(
+///     fn dump<'d, W: std::io::Write>(
 ///         &self,
 ///         parent: Option<&std::borrow::Cow<str>>,
+///         doc_overrides: Option<DocOverrides<'d>>,
 ///         pos: &mut usize,
 ///         output: &mut W,
 ///     ) -> Result<(), std::io::Error> {
@@ -37,7 +38,7 @@ use std::{
 ///     };
 ///     let mut buf = std::io::Cursor::new(Vec::with_capacity(1024));
 ///     let mut pos = 0;
-///     var.dump(None, &mut pos, &mut buf)?;
+///     var.dump(None, None, &mut pos, &mut buf)?;
 ///     assert_eq!(
 ///         String::from_utf8_lossy(buf.get_ref()),
 ///         "variable-length array (length = 3, content = [1, 2, 3])\n"
@@ -50,20 +51,22 @@ pub trait Dump {
     ///
     /// Users can use the `pos` argument to output the current byte offset, and
     /// `parent` to output information about nested structures.
-    fn dump<W: Write>(
+    fn dump<'d, W: Write>(
         &self,
         parent: Option<&Cow<str>>,
+        doc_overrides: Option<DocOverrides<'d>>,
         pos: &mut usize,
         output: &mut W,
     ) -> Result<(), Error>;
 }
 
 pub trait DumpField: OctetSize {
-    fn dump_field<W: Write>(
+    fn dump_field<'d, W: Write>(
         &self,
         name: &str,
         parent: Option<&Cow<str>>,
         doc: &str,
+        doc_overrides: Option<DocOverrides<'d>>,
         pos: &mut usize,
         output: &mut W,
     ) -> Result<(), Error>;
@@ -72,11 +75,12 @@ pub trait DumpField: OctetSize {
 macro_rules! add_impl_of_dump_field_for_number_types {
     ($($ty:ty,)*) => ($(
         impl DumpField for $ty {
-            fn dump_field<W: Write>(
+            fn dump_field<'d, W: Write>(
                 &self,
                 name: &str,
                 parent: Option<&Cow<str>>,
                 doc: &str,
+                _doc_overrides: Option<DocOverrides<'d>>,
                 pos: &mut usize,
                 output: &mut W,
             ) -> Result<(), Error> {
@@ -119,11 +123,12 @@ add_impl_of_dump_field_for_number_types![
 ];
 
 impl<const N: usize> DumpField for [u8; N] {
-    fn dump_field<W: Write>(
+    fn dump_field<'d, W: Write>(
         &self,
         name: &str,
         parent: Option<&Cow<str>>,
         doc: &str,
+        _doc_overrides: Option<DocOverrides<'d>>,
         pos: &mut usize,
         output: &mut W,
     ) -> Result<(), Error> {
@@ -140,27 +145,29 @@ impl<T: OctetSize + DumpField> DumpField for Option<T>
 where
     Self: OctetSize,
 {
-    fn dump_field<W: Write>(
+    fn dump_field<'d, W: Write>(
         &self,
         name: &str,
         parent: Option<&Cow<str>>,
         doc: &str,
+        doc_overrides: Option<DocOverrides<'d>>,
         pos: &mut usize,
         output: &mut W,
     ) -> Result<(), Error> {
         if let Some(val) = self {
-            val.dump_field(name, parent, doc, pos, output)?;
+            val.dump_field(name, parent, doc, doc_overrides, pos, output)?;
         }
         Ok(())
     }
 }
 
 impl<T: std::fmt::Debug> DumpField for crate::NonStdLenUint<T> {
-    fn dump_field<W: Write>(
+    fn dump_field<'d, W: Write>(
         &self,
         name: &str,
         parent: Option<&Cow<str>>,
         doc: &str,
+        _doc_overrides: Option<DocOverrides<'d>>,
         pos: &mut usize,
         output: &mut W,
     ) -> Result<(), Error> {
@@ -174,18 +181,19 @@ impl<T: std::fmt::Debug> DumpField for crate::NonStdLenUint<T> {
 }
 
 impl<T: Dump> DumpField for T {
-    fn dump_field<W: Write>(
+    fn dump_field<'d, W: Write>(
         &self,
         name: &str,
         parent: Option<&Cow<str>>,
         _doc: &str,
+        doc_overrides: Option<DocOverrides<'d>>,
         pos: &mut usize,
         output: &mut W,
     ) -> Result<(), Error> {
         let parent = parent
             .map(|s| Cow::Owned(format!("{}.{}", s, name)))
             .unwrap_or(Cow::Borrowed(name));
-        self.dump(Some(&parent), pos, output)
+        self.dump(Some(&parent), doc_overrides, pos, output)
     }
 }
 
@@ -271,6 +279,19 @@ pub fn write_position_column<W: Write>(
     Ok(())
 }
 
+pub struct DocOverrides<'a>(Vec<(&'a str, &'a str)>);
+
+impl<'a> DocOverrides<'a> {
+    pub fn new(items: Vec<(&'a str, &'a str)>) -> Self {
+        Self(items)
+    }
+
+    pub fn get(&self, key: &str) -> Option<&&'a str> {
+        let Self(inner) = self;
+        inner.iter().find(|(k, _v)| *k == key).map(|(_k, v)| v)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -281,9 +302,10 @@ mod tests {
     }
 
     impl Dump for Foo {
-        fn dump<W: Write>(
+        fn dump<'d, W: Write>(
             &self,
             _parent: Option<&Cow<str>>,
+            _doc_overrides: Option<DocOverrides<'d>>,
             _pos: &mut usize,
             output: &mut W,
         ) -> Result<(), Error> {
@@ -300,7 +322,7 @@ mod tests {
         };
         let mut buf = std::io::Cursor::new(Vec::with_capacity(1024));
         let mut pos = 0;
-        foo.dump(None, &mut pos, &mut buf)?;
+        foo.dump(None, None, &mut pos, &mut buf)?;
         assert_eq!(
             String::from_utf8_lossy(buf.get_ref()),
             "member1: 1\nmember2: 2\n"

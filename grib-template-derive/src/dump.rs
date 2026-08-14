@@ -19,9 +19,10 @@ pub(crate) fn impl_for_struct(
 
         return quote! {
             impl #impl_generics grib_template_helpers::Dump for #name #type_generics #where_clause {
-                fn dump<W: std::io::Write>(
+                fn dump<'d, W: std::io::Write>(
                     &self,
                     parent: Option<&std::borrow::Cow<str>>,
+                    doc_overrides: Option<grib_template_helpers::DocOverrides<'d>>,
                     pos: &mut usize,
                     output: &mut W,
                 ) -> Result<(), std::io::Error> {
@@ -49,6 +50,16 @@ pub(crate) fn impl_for_struct(
             .map(|s| format!("  // {}", s.trim()))
             .unwrap_or_default();
 
+        let doc_overrides = field
+            .attrs
+            .iter()
+            .find_map(|attr| DocOverrides::try_from(attr).ok());
+        let doc_overrides = if let Some(inner) = doc_overrides {
+            quote! { Some(grib_template_helpers::DocOverrides::new(#inner)) }
+        } else {
+            quote! { None }
+        };
+
         let num_octets_attr = field
             .attrs
             .iter()
@@ -60,6 +71,7 @@ pub(crate) fn impl_for_struct(
                     stringify!(#ident),
                     parent,
                     #doc,
+                    #doc_overrides,
                     pos,
                     output,
                 )?;
@@ -73,6 +85,7 @@ pub(crate) fn impl_for_struct(
                 stringify!(#ident),
                 parent,
                 #doc,
+                #doc_overrides,
                 pos,
                 output,
             )?;
@@ -81,9 +94,10 @@ pub(crate) fn impl_for_struct(
 
     quote! {
         impl #impl_generics grib_template_helpers::Dump for #name #type_generics #where_clause {
-            fn dump<W: std::io::Write>(
+            fn dump<'d, W: std::io::Write>(
                 &self,
                 parent: Option<&std::borrow::Cow<str>>,
+                doc_overrides: Option<grib_template_helpers::DocOverrides<'d>>,
                 pos: &mut usize,
                 output: &mut W,
             ) -> Result<(), std::io::Error> {
@@ -114,6 +128,7 @@ pub(crate) fn impl_for_enum(
                 #name::#variant_ident(inner) => <#inner_ty as grib_template_helpers::Dump>::dump(
                     inner,
                     parent,
+                    None,
                     pos,
                     output
                 )
@@ -125,9 +140,10 @@ pub(crate) fn impl_for_enum(
 
     quote! {
         impl #impl_generics grib_template_helpers::Dump for #name #type_generics #where_clause {
-            fn dump<W: std::io::Write>(
+            fn dump<'d, W: std::io::Write>(
                 &self,
                 parent: Option<&std::borrow::Cow<str>>,
+                doc_overrides: Option<grib_template_helpers::DocOverrides<'d>>,
                 pos: &mut usize,
                 output: &mut W,
             ) -> Result<(), std::io::Error> {
