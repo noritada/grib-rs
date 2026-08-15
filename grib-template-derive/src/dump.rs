@@ -52,6 +52,17 @@ pub(crate) fn impl_for_struct(
             quote! { None }
         };
 
+        dumps.push(quote! {
+            let name = stringify!(#ident);
+            let doc = if let Some(doc_overrides) = &doc_overrides
+                && let Some(val) = doc_overrides.get(name)
+            {
+                Some(*val)
+            } else {
+                #doc
+            };
+        });
+
         let doc_overrides = field
             .attrs
             .iter()
@@ -70,9 +81,9 @@ pub(crate) fn impl_for_struct(
             dumps.push(quote! {
                 <grib_template_helpers::NonStdLenUint<#ty> as grib_template_helpers::DumpField>::dump_field(
                     &grib_template_helpers::NonStdLenUint::new(self.#ident, #num_octets),
-                    stringify!(#ident),
+                    name,
                     parent,
-                    #doc,
+                    doc,
                     #doc_overrides,
                     pos,
                     output,
@@ -84,9 +95,9 @@ pub(crate) fn impl_for_struct(
         dumps.push(quote! {
             <#ty as grib_template_helpers::DumpField>::dump_field(
                 &self.#ident,
-                stringify!(#ident),
+                name,
                 parent,
-                #doc,
+                doc,
                 #doc_overrides,
                 pos,
                 output,
