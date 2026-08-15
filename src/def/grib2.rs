@@ -133,13 +133,28 @@ pub enum GridDefinitionTemplate {
 /// Section 4 - Product definition section.
 pub type Section4 = Section<Section4Payload>;
 
-#[derive(Debug, PartialEq, TryFromSlice, Dump)]
+#[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
 pub struct Section4Payload {
     /// Number of coordinate values after template or number of information
     /// according to 3D vertical coordinate GRIB2 message (see Notes 1 and 5).
     pub num_coord_values: u16,
     /// Product definition template number (see Code table 4.0).
     pub template_num: u16,
+    /// Product Definition Template (see Template 4.X, where X is the Product
+    /// Definition Template Number given in octets 8-9).
+    #[grib_template(variant = "template_num")]
+    pub template: ProductDefinitionTemplate,
+}
+
+#[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
+#[non_exhaustive]
+#[repr(u16)]
+pub enum ProductDefinitionTemplate {
+    _4_0(template4::Template4_0) = 0,
+    _4_1(template4::Template4_1) = 1,
+    _4_2(template4::Template4_2) = 2,
+    _4_5(template4::Template4_5) = 5,
+    _4_6(template4::Template4_6) = 6,
 }
 
 /// Section 5 - Data representation section.
@@ -190,15 +205,18 @@ pub struct Section6Payload {
 pub mod template {
     //! GRIB2 template definitions.
 
-    pub use super::{template1::*, template3::*, template5::*};
+    pub use super::{template1::*, template3::*, template4::*, template5::*};
 
     pub mod param_set {
         //! Definitions of parameter sets used in GRIB2 templates.
 
-        pub use super::super::{template3::param_set::*, template5::param_set::*};
+        pub use super::super::{
+            template3::param_set::*, template4::param_set::*, template5::param_set::*,
+        };
     }
 }
 
 mod template1;
 mod template3;
+mod template4;
 mod template5;
