@@ -47,6 +47,7 @@ pub(crate) fn impl_for_struct(
         let ty = &field.ty;
 
         let doc = if let Some(s) = get_doc(&field.attrs) {
+            let s = s.trim();
             quote! { Some(#s) }
         } else {
             quote! { None }

@@ -90,7 +90,7 @@ macro_rules! add_impl_of_dump_field_for_number_types {
                     write!(output, "{}.", parent)?;
                 }
                 let doc = doc
-                    .map(|s| format!("  // {}", s.trim()))
+                    .map(|s| format!("  // {}", s))
                     .unwrap_or_default();
                 writeln!(output, "{} = {:?}{}",
                     name,
@@ -140,9 +140,7 @@ impl<const N: usize> DumpField for [u8; N] {
         if let Some(parent) = parent {
             write!(output, "{}.", parent)?;
         }
-        let doc = doc
-            .map(|s| format!("  // {}", s.trim()))
-            .unwrap_or_default();
+        let doc = doc.map(|s| format!("  // {}", s)).unwrap_or_default();
         writeln!(output, "{} = {:?}{}", name, self, doc,)
     }
 }
@@ -182,9 +180,7 @@ impl<T: std::fmt::Debug> DumpField for crate::NonStdLenUint<T> {
         if let Some(parent) = parent {
             write!(output, "{}.", parent)?;
         }
-        let doc = doc
-            .map(|s| format!("  // {}", s.trim()))
-            .unwrap_or_default();
+        let doc = doc.map(|s| format!("  // {}", s)).unwrap_or_default();
         writeln!(output, "{} = {:?}{}", name, self.val(), doc,)
     }
 }
