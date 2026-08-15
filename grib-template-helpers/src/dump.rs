@@ -65,7 +65,7 @@ pub trait DumpField: OctetSize {
         &self,
         name: &str,
         parent: Option<&Cow<str>>,
-        doc: &str,
+        doc: Option<&str>,
         doc_overrides: Option<DocOverrides<'d>>,
         pos: &mut usize,
         output: &mut W,
@@ -79,7 +79,7 @@ macro_rules! add_impl_of_dump_field_for_number_types {
                 &self,
                 name: &str,
                 parent: Option<&Cow<str>>,
-                doc: &str,
+                doc: Option<&str>,
                 _doc_overrides: Option<DocOverrides<'d>>,
                 pos: &mut usize,
                 output: &mut W,
@@ -89,6 +89,9 @@ macro_rules! add_impl_of_dump_field_for_number_types {
                 if let Some(parent) = parent {
                     write!(output, "{}.", parent)?;
                 }
+                let doc = doc
+                    .map(|s| format!("  // {}", s.trim()))
+                    .unwrap_or_default();
                 writeln!(output, "{} = {:?}{}",
                     name,
                     self,
@@ -127,7 +130,7 @@ impl<const N: usize> DumpField for [u8; N] {
         &self,
         name: &str,
         parent: Option<&Cow<str>>,
-        doc: &str,
+        doc: Option<&str>,
         _doc_overrides: Option<DocOverrides<'d>>,
         pos: &mut usize,
         output: &mut W,
@@ -137,6 +140,9 @@ impl<const N: usize> DumpField for [u8; N] {
         if let Some(parent) = parent {
             write!(output, "{}.", parent)?;
         }
+        let doc = doc
+            .map(|s| format!("  // {}", s.trim()))
+            .unwrap_or_default();
         writeln!(output, "{} = {:?}{}", name, self, doc,)
     }
 }
@@ -149,7 +155,7 @@ where
         &self,
         name: &str,
         parent: Option<&Cow<str>>,
-        doc: &str,
+        doc: Option<&str>,
         doc_overrides: Option<DocOverrides<'d>>,
         pos: &mut usize,
         output: &mut W,
@@ -166,7 +172,7 @@ impl<T: std::fmt::Debug> DumpField for crate::NonStdLenUint<T> {
         &self,
         name: &str,
         parent: Option<&Cow<str>>,
-        doc: &str,
+        doc: Option<&str>,
         _doc_overrides: Option<DocOverrides<'d>>,
         pos: &mut usize,
         output: &mut W,
@@ -176,6 +182,9 @@ impl<T: std::fmt::Debug> DumpField for crate::NonStdLenUint<T> {
         if let Some(parent) = parent {
             write!(output, "{}.", parent)?;
         }
+        let doc = doc
+            .map(|s| format!("  // {}", s.trim()))
+            .unwrap_or_default();
         writeln!(output, "{} = {:?}{}", name, self.val(), doc,)
     }
 }
@@ -185,7 +194,7 @@ impl<T: Dump> DumpField for T {
         &self,
         name: &str,
         parent: Option<&Cow<str>>,
-        _doc: &str,
+        _doc: Option<&str>,
         doc_overrides: Option<DocOverrides<'d>>,
         pos: &mut usize,
         output: &mut W,

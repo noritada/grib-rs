@@ -46,9 +46,11 @@ pub(crate) fn impl_for_struct(
         let ident = field.ident.as_ref().unwrap();
         let ty = &field.ty;
 
-        let doc = get_doc(&field.attrs)
-            .map(|s| format!("  // {}", s.trim()))
-            .unwrap_or_default();
+        let doc = if let Some(s) = get_doc(&field.attrs) {
+            quote! { Some(#s) }
+        } else {
+            quote! { None }
+        };
 
         let doc_overrides = field
             .attrs
