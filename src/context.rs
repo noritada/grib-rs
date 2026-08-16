@@ -531,7 +531,7 @@ Data Representation:                    {}
     ///             master_table_version: 5,
     ///             local_table_version: 1,
     ///             ref_time_significance: 0,
-    ///             ref_time: grib::def::grib2::RefTime {
+    ///             ref_time: grib::def::grib2::template::param_set::DateTime {
     ///                 year: 2016,
     ///                 month: 8,
     ///                 day: 22,
@@ -846,12 +846,12 @@ Data Representation:                    {}
     /// 10        payload.master_table_version = 5  // GRIB master table version number (see Common Code table C-0 and Note 1).
     /// 11        payload.local_table_version = 1  // Version number of GRIB Local tables used to augment Master tables (see Code table 1.1 and Note 2).
     /// 12        payload.ref_time_significance = 0  // Significance of reference time (see Code table 1.2).
-    /// 13-14     payload.ref_time.year = 2016  // Year (4 digits).
-    /// 15        payload.ref_time.month = 8  // Month.
-    /// 16        payload.ref_time.day = 22  // Day.
-    /// 17        payload.ref_time.hour = 2  // Hour.
-    /// 18        payload.ref_time.minute = 0  // Minute.
-    /// 19        payload.ref_time.second = 0  // Second.
+    /// 13-14     payload.ref_time.year = 2016  // Year (4 digits) - Reference time of data.
+    /// 15        payload.ref_time.month = 8  // Month - Reference time of data.
+    /// 16        payload.ref_time.day = 22  // Day - Reference time of data.
+    /// 17        payload.ref_time.hour = 2  // Hour - Reference time of data.
+    /// 18        payload.ref_time.minute = 0  // Minute - Reference time of data.
+    /// 19        payload.ref_time.second = 0  // Second - Reference time of data.
     /// 20        payload.prod_status = 0  // Production status of processed data in this GRIB message (see Code table 1.3).
     /// 21        payload.data_type = 2  // Type of processed data in this GRIB message (see Code table 1.4).
     /// ###  SECTION 3: GRID DEFINITION SECTION (length = 72)
@@ -978,7 +978,7 @@ Data Representation:                    {}
     /// use grib::{
     ///     Code, ForecastTime, TemporalRawInfo,
     ///     codetables::grib2::{Table1_2, Table4_4},
-    ///     def::grib2::RefTime,
+    ///     def::grib2::template::param_set::DateTime,
     /// };
     ///
     /// fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -995,7 +995,7 @@ Data Representation:                    {}
     ///         let actual = message.temporal_raw_info();
     ///         let expected = TemporalRawInfo {
     ///             ref_time_significance: Code::Name(Table1_2::Analysis),
-    ///             ref_time_unchecked: RefTime::new(2016, 8, 22, 2, 0, 0),
+    ///             ref_time_unchecked: DateTime::new(2016, 8, 22, 2, 0, 0),
     ///             forecast_time_diff: Some(ForecastTime {
     ///                 unit: Code::Name(Table4_4::Minute),
     ///                 value: 0,
@@ -1009,7 +1009,7 @@ Data Representation:                    {}
     ///         let actual = message.temporal_raw_info();
     ///         let expected = TemporalRawInfo {
     ///             ref_time_significance: Code::Name(Table1_2::Analysis),
-    ///             ref_time_unchecked: RefTime::new(2016, 8, 22, 2, 0, 0),
+    ///             ref_time_unchecked: DateTime::new(2016, 8, 22, 2, 0, 0),
     ///             forecast_time_diff: Some(ForecastTime {
     ///                 unit: Code::Name(Table4_4::Minute),
     ///                 value: 10,

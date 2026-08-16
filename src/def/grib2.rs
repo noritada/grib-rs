@@ -53,29 +53,21 @@ pub struct Section1Payload {
     /// Significance of reference time (see Code table 1.2).
     pub ref_time_significance: u8,
     /// Reference time of data.
-    pub ref_time: RefTime,
+    #[dump(doc(
+        year = "Year (4 digits) - Reference time of data.",
+        month = "Month - Reference time of data.",
+        day = "Day - Reference time of data.",
+        hour = "Hour - Reference time of data.",
+        minute = "Minute - Reference time of data.",
+        second = "Second - Reference time of data.",
+    ))]
+    pub ref_time: template::param_set::DateTime,
     /// Production status of processed data in this GRIB message (see Code table
     /// 1.3).
     pub prod_status: u8,
     /// Type of processed data in this GRIB message (see Code table 1.4).
     pub data_type: u8,
     pub optional: Option<Section1PayloadOptional>,
-}
-
-#[derive(Debug, PartialEq, Eq, TryFromSlice, WriteToBuffer, Dump)]
-pub struct RefTime {
-    /// Year (4 digits).
-    pub year: u16,
-    /// Month.
-    pub month: u8,
-    /// Day.
-    pub day: u8,
-    /// Hour.
-    pub hour: u8,
-    /// Minute.
-    pub minute: u8,
-    /// Second.
-    pub second: u8,
 }
 
 #[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
@@ -215,6 +207,23 @@ pub mod template {
         pub use super::super::{
             template3::param_set::*, template4::param_set::*, template5::param_set::*,
         };
+
+        /// Date and time.
+        #[derive(Debug, PartialEq, Eq, TryFromSlice, WriteToBuffer, Dump)]
+        pub struct DateTime {
+            /// Year (4 digits).
+            pub year: u16,
+            /// Month.
+            pub month: u8,
+            /// Day.
+            pub day: u8,
+            /// Hour.
+            pub hour: u8,
+            /// Minute.
+            pub minute: u8,
+            /// Second.
+            pub second: u8,
+        }
 
         /// Value with a scaling.
         #[derive(Debug, PartialEq, Eq, TryFromSlice, WriteToBuffer, Dump)]

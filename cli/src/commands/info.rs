@@ -51,7 +51,7 @@ struct InfoView<'i>(
     usize,
     &'i Indicator,
     &'i Identification,
-    grib::def::grib2::RefTime,
+    grib::def::grib2::template::param_set::DateTime,
 );
 
 impl<'i> Display for InfoView<'i> {

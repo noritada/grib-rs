@@ -14,7 +14,7 @@ pub struct TemporalRawInfo {
     /// [Code Table 1.2](crate::codetables::grib2::Table1_2).
     pub ref_time_significance: Code<Table1_2, u8>,
     /// "Reference time" set in Section 1 of the submessage.
-    pub ref_time_unchecked: crate::def::grib2::RefTime,
+    pub ref_time_unchecked: crate::def::grib2::template::param_set::DateTime,
     /// "Forecast time" set in Section 3 of the submessage.
     pub forecast_time_diff: Option<ForecastTime>,
 }
@@ -22,7 +22,7 @@ pub struct TemporalRawInfo {
 impl TemporalRawInfo {
     pub(crate) fn new(
         ref_time_significance: u8,
-        ref_time_unchecked: crate::def::grib2::RefTime,
+        ref_time_unchecked: crate::def::grib2::template::param_set::DateTime,
         forecast_time_diff: Option<ForecastTime>,
     ) -> Self {
         let ref_time_significance = Table1_2::try_from(ref_time_significance).into();
@@ -70,7 +70,7 @@ impl From<&TemporalRawInfo> for TemporalInfo {
     }
 }
 
-impl crate::def::grib2::RefTime {
+impl crate::def::grib2::template::param_set::DateTime {
     pub fn new(year: u16, month: u8, day: u8, hour: u8, minute: u8, second: u8) -> Self {
         Self {
             year,
@@ -83,7 +83,7 @@ impl crate::def::grib2::RefTime {
     }
 }
 
-impl fmt::Display for crate::def::grib2::RefTime {
+impl fmt::Display for crate::def::grib2::template::param_set::DateTime {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
@@ -168,7 +168,7 @@ mod tests {
 
     #[test]
     fn test_utc_date_time_string() {
-        let time = crate::def::grib2::RefTime::new(2025, 1, 1, 0, 0, 0);
+        let time = crate::def::grib2::template::param_set::DateTime::new(2025, 1, 1, 0, 0, 0);
         assert_eq!(format!("{time}"), "2025-01-01 00:00:00 UTC".to_owned())
     }
 }
