@@ -929,7 +929,7 @@ Data Representation:                    {}
             ($sect:expr) => {{
                 let mut pos = 1;
                 match $sect {
-                    Ok(s) => s.dump(None, &mut pos, writer)?,
+                    Ok(s) => s.dump(None, None, &mut pos, writer)?,
                     Err(e) => writeln!(writer, "error: {}", e)?,
                 }
             }};

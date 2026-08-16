@@ -95,7 +95,7 @@ fn main() {
 
     let mut buf = std::io::Cursor::new(Vec::with_capacity(1024));
     let mut pos = 1;
-    params.dump(None, &mut pos, &mut buf).unwrap();
+    params.dump(None, None, &mut pos, &mut buf).unwrap();
     assert_eq!(
         String::from_utf8_lossy(buf.get_ref()),
         "\

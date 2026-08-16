@@ -4,6 +4,7 @@ fn tests() {
     t.pass("tests/dump.rs");
     t.pass("tests/dump_standalone.rs");
     t.pass("tests/dump_for_option.rs");
+    t.pass("tests/dump_with_doc_overrides.rs");
     t.pass("tests/try_from_slice.rs");
     t.pass("tests/try_from_slice_standalone.rs");
     t.pass("tests/try_from_slice_for_enum.rs");
