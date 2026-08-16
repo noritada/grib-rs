@@ -71,7 +71,7 @@ pub struct Template4_6 {
 pub(crate) mod param_set {
     use grib_template_derive::{Dump, TryFromSlice, WriteToBuffer};
 
-    use super::super::template::param_set::ValueWithScaling;
+    use super::super::template::param_set::{TimeRange, ValueWithScaling};
 
     #[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
     pub struct ProductParam {
@@ -99,10 +99,12 @@ pub(crate) mod param_set {
         pub cutoff_hours: u16,
         /// Minutes after reference time of data cutoff.
         pub cutoff_minutes: u8,
-        /// Indicator of unit of time range (see Code Table 4.4).
-        pub unit: u8,
-        /// Forecast time in units defined by octet 18.
-        pub time: i32,
+        /// Forecast time.
+        #[dump(doc(
+            unit = "Indicator of unit of time range (see Code Table 4.4).",
+            len = "Forecast time in units defined by octet 18.",
+        ))]
+        pub value: TimeRange<i32>,
     }
 
     #[derive(Debug, PartialEq, Eq, TryFromSlice, WriteToBuffer, Dump)]

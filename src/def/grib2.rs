@@ -237,6 +237,18 @@ pub mod template {
             /// Scaled value.
             pub scaled_value: V,
         }
+
+        /// Time range.
+        #[derive(Debug, PartialEq, Eq, TryFromSlice, WriteToBuffer, Dump)]
+        pub struct TimeRange<L>
+        where
+            L: crate::TryFromSlice + crate::WriteToBuffer + grib_template_helpers::DumpField,
+        {
+            /// Unit of time range (see Code Table 4.4).
+            pub unit: u8,
+            /// Length of the time range in units defined by `unit`.
+            pub len: L,
+        }
     }
 }
 
