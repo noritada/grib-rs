@@ -71,7 +71,7 @@ pub struct Template4_6 {
 pub(crate) mod param_set {
     use grib_template_derive::{Dump, TryFromSlice, WriteToBuffer};
 
-    use super::super::template::param_set::{TimeRange, ValueWithScaling};
+    use super::super::template::param_set::{ScaledValue, TimeRange};
 
     #[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
     pub struct ProductParam {
@@ -104,7 +104,7 @@ pub(crate) mod param_set {
             unit = "Indicator of unit of time range (see Code Table 4.4).",
             len = "Forecast time in units defined by octet 18.",
         ))]
-        pub value: TimeRange<i32>,
+        pub time: TimeRange<i32>,
     }
 
     #[derive(Debug, PartialEq, Eq, TryFromSlice, WriteToBuffer, Dump)]
@@ -164,13 +164,13 @@ pub(crate) mod param_set {
             scale_factor = "Scale factor of lower limit.",
             scaled_value = "Scaled value of lower limit.",
         ))]
-        pub lower_limit: ValueWithScaling<i8, i32>,
+        pub lower_limit: ScaledValue<i8, i32>,
         /// Upper limit.
         #[dump(doc(
             scale_factor = "Scale factor of upper limit.",
             scaled_value = "Scaled value of upper limit.",
         ))]
-        pub upper_limit: ValueWithScaling<i8, i32>,
+        pub upper_limit: ScaledValue<i8, i32>,
     }
 
     #[derive(Debug, PartialEq, Eq, TryFromSlice, WriteToBuffer, Dump)]

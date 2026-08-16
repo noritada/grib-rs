@@ -101,15 +101,15 @@ mod tests {
         let grid_def = Template3_20 {
             earth_shape: param_set::EarthShape {
                 shape: 6,
-                spherical_earth_radius: param_set::ValueWithScaling {
+                spherical_earth_radius: param_set::ScaledValue {
                     scale_factor: 0xff,
                     scaled_value: 0xffffffff,
                 },
-                major_axis: param_set::ValueWithScaling {
+                major_axis: param_set::ScaledValue {
                     scale_factor: 0xff,
                     scaled_value: 0xffffffff,
                 },
-                minor_axis: param_set::ValueWithScaling {
+                minor_axis: param_set::ScaledValue {
                     scale_factor: 0xff,
                     scaled_value: 0xffffffff,
                 },

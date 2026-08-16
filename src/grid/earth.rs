@@ -37,8 +37,7 @@ impl EarthShape {
 mod tests {
     use super::*;
     use crate::{
-        TryFromSlice, def::grib2::template::param_set::ValueWithScaling,
-        test_utils::decompress_to_vec,
+        TryFromSlice, def::grib2::template::param_set::ScaledValue, test_utils::decompress_to_vec,
     };
 
     #[test]
@@ -48,15 +47,15 @@ mod tests {
         let earth_actual = EarthShape::try_from_slice(&buf, &mut pos)?;
         let earth_expected = EarthShape {
             shape: 1,
-            spherical_earth_radius: ValueWithScaling {
+            spherical_earth_radius: ScaledValue {
                 scale_factor: 0,
                 scaled_value: 6371200,
             },
-            major_axis: ValueWithScaling {
+            major_axis: ScaledValue {
                 scale_factor: 0,
                 scaled_value: 0,
             },
-            minor_axis: ValueWithScaling {
+            minor_axis: ScaledValue {
                 scale_factor: 0,
                 scaled_value: 0,
             },
@@ -74,15 +73,15 @@ mod tests {
         let earth_actual = EarthShape::try_from_slice(&buf, &mut pos)?;
         let earth_expected = EarthShape {
             shape: 2,
-            spherical_earth_radius: ValueWithScaling {
+            spherical_earth_radius: ScaledValue {
                 scale_factor: 1,
                 scaled_value: 6367470,
             },
-            major_axis: ValueWithScaling {
+            major_axis: ScaledValue {
                 scale_factor: 1,
                 scaled_value: 6378160,
             },
-            minor_axis: ValueWithScaling {
+            minor_axis: ScaledValue {
                 scale_factor: 1,
                 scaled_value: 6356775,
             },
@@ -100,15 +99,15 @@ mod tests {
         let earth_actual = EarthShape::try_from_slice(&buf, &mut pos)?;
         let earth_expected = EarthShape {
             shape: 4,
-            spherical_earth_radius: ValueWithScaling {
+            spherical_earth_radius: ScaledValue {
                 scale_factor: 0xff,
                 scaled_value: 0xffffffff,
             },
-            major_axis: ValueWithScaling {
+            major_axis: ScaledValue {
                 scale_factor: 1,
                 scaled_value: 63781370,
             },
-            minor_axis: ValueWithScaling {
+            minor_axis: ScaledValue {
                 scale_factor: 1,
                 scaled_value: 63567523,
             },
@@ -126,15 +125,15 @@ mod tests {
         let earth_actual = EarthShape::try_from_slice(&buf, &mut pos)?;
         let earth_expected = EarthShape {
             shape: 6,
-            spherical_earth_radius: ValueWithScaling {
+            spherical_earth_radius: ScaledValue {
                 scale_factor: 0,
                 scaled_value: 0,
             },
-            major_axis: ValueWithScaling {
+            major_axis: ScaledValue {
                 scale_factor: 0,
                 scaled_value: 0,
             },
-            minor_axis: ValueWithScaling {
+            minor_axis: ScaledValue {
                 scale_factor: 0,
                 scaled_value: 0,
             },

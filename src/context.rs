@@ -592,15 +592,15 @@ Data Representation:                    {}
     ///             template: grib::def::grib2::GridDefinitionTemplate::_3_0(grib::def::grib2::template::Template3_0 {
     ///                 earth: grib::def::grib2::template::param_set::EarthShape {
     ///                     shape: 4,
-    ///                     spherical_earth_radius: grib::def::grib2::template::param_set::ValueWithScaling {
+    ///                     spherical_earth_radius: grib::def::grib2::template::param_set::ScaledValue {
     ///                         scale_factor: 0xff,
     ///                         scaled_value: 0xffffffff,
     ///                     },
-    ///                     major_axis: grib::def::grib2::template::param_set::ValueWithScaling {
+    ///                     major_axis: grib::def::grib2::template::param_set::ScaledValue {
     ///                         scale_factor: 1,
     ///                         scaled_value: 63781370,
     ///                     },
-    ///                     minor_axis: grib::def::grib2::template::param_set::ValueWithScaling {
+    ///                     minor_axis: grib::def::grib2::template::param_set::ScaledValue {
     ///                         scale_factor: 1,
     ///                         scaled_value: 63567523,
     ///                     },
@@ -681,7 +681,7 @@ Data Representation:                    {}
     ///                     forecast_time: grib::def::grib2::template::param_set::ForecastTime {
     ///                         cutoff_hours: 0,
     ///                         cutoff_minutes: 0,
-    ///                         value: grib::def::grib2::template::param_set::TimeRange {
+    ///                         time: grib::def::grib2::template::param_set::TimeRange {
     ///                             unit: 0,
     ///                             len: 0,
     ///                         },
@@ -895,8 +895,8 @@ Data Representation:                    {}
     /// 14        payload.template.generating_process.process_id = 255  // Analysis or forecast generating processes identifier (defined by originating centre).
     /// 15-16     payload.template.forecast_time.cutoff_hours = 0  // Hours of observational data cutoff after reference time (see Note 1)
     /// 17        payload.template.forecast_time.cutoff_minutes = 0  // Minutes of observational data cutoff after reference time
-    /// 18        payload.template.forecast_time.value.unit = 0  // Indicator of unit of time range (see Code Table 4.4).
-    /// 19-22     payload.template.forecast_time.value.len = 0  // Forecast time in units defined by octet 18.
+    /// 18        payload.template.forecast_time.time.unit = 0  // Indicator of unit of time range (see Code Table 4.4).
+    /// 19-22     payload.template.forecast_time.time.len = 0  // Forecast time in units defined by octet 18.
     /// 23        payload.template.horizontal.first_surface.surface_type = 1  // Type of first fixed surface (see Code Table 4.5).
     /// 24        payload.template.horizontal.first_surface.scale_factor = -127  // Scale factor of first fixed surface.
     /// 25-28     payload.template.horizontal.first_surface.scaled_value = -2147483647  // Scaled value of first fixed surface.

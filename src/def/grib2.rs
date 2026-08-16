@@ -227,7 +227,7 @@ pub mod template {
 
         /// Value with a scaling.
         #[derive(Debug, PartialEq, Eq, TryFromSlice, WriteToBuffer, Dump)]
-        pub struct ValueWithScaling<F, V>
+        pub struct ScaledValue<F, V>
         where
             F: crate::TryFromSlice + crate::WriteToBuffer + grib_template_helpers::DumpField,
             V: crate::TryFromSlice + crate::WriteToBuffer + grib_template_helpers::DumpField,
