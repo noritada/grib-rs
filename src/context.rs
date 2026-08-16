@@ -592,12 +592,18 @@ Data Representation:                    {}
     ///             template: grib::def::grib2::GridDefinitionTemplate::_3_0(grib::def::grib2::template::Template3_0 {
     ///                 earth: grib::def::grib2::template::param_set::EarthShape {
     ///                     shape: 4,
-    ///                     spherical_earth_radius_scale_factor: 0xff,
-    ///                     spherical_earth_radius_scaled_value: 0xffffffff,
-    ///                     major_axis_scale_factor: 1,
-    ///                     major_axis_scaled_value: 63781370,
-    ///                     minor_axis_scale_factor: 1,
-    ///                     minor_axis_scaled_value: 63567523,
+    ///                     spherical_earth_radius: grib::def::grib2::template::param_set::ValueWithScaling {
+    ///                         scale_factor: 0xff,
+    ///                         scaled_value: 0xffffffff,
+    ///                     },
+    ///                     major_axis: grib::def::grib2::template::param_set::ValueWithScaling {
+    ///                         scale_factor: 1,
+    ///                         scaled_value: 63781370,
+    ///                     },
+    ///                     minor_axis: grib::def::grib2::template::param_set::ValueWithScaling {
+    ///                         scale_factor: 1,
+    ///                         scaled_value: 63567523,
+    ///                     },
     ///                 },
     ///                 lat_lon: grib::def::grib2::template::param_set::LatLonGrid {
     ///                     grid: grib::def::grib2::template::param_set::Grid {
@@ -857,12 +863,12 @@ Data Representation:                    {}
     /// 12        payload.point_list_interpretation = 0  // Interpretation of list of numbers (see Code table 3.11).
     /// 13-14     payload.template_num = 0  // Grid definition template number (= N) (see Code table 3.1).
     /// 15        payload.template.earth.shape = 4  // Shape of the Earth (see Code table 3.2).
-    /// 16        payload.template.earth.spherical_earth_radius_scale_factor = 255  // Scale factor of radius of spherical Earth.
-    /// 17-20     payload.template.earth.spherical_earth_radius_scaled_value = 4294967295  // Scaled value of radius of spherical Earth.
-    /// 21        payload.template.earth.major_axis_scale_factor = 1  // Scale factor of major axis of oblate spheroid Earth.
-    /// 22-25     payload.template.earth.major_axis_scaled_value = 63781370  // Scaled value of major axis of oblate spheroid Earth.
-    /// 26        payload.template.earth.minor_axis_scale_factor = 1  // Scale factor of minor axis of oblate spheroid Earth.
-    /// 27-30     payload.template.earth.minor_axis_scaled_value = 63567523  // Scaled value of minor axis of oblate spheroid Earth.
+    /// 16        payload.template.earth.spherical_earth_radius.scale_factor = 255  // Scale factor of radius of spherical Earth.
+    /// 17-20     payload.template.earth.spherical_earth_radius.scaled_value = 4294967295  // Scaled value of radius of spherical Earth.
+    /// 21        payload.template.earth.major_axis.scale_factor = 1  // Scale factor of major axis of oblate spheroid Earth.
+    /// 22-25     payload.template.earth.major_axis.scaled_value = 63781370  // Scaled value of major axis of oblate spheroid Earth.
+    /// 26        payload.template.earth.minor_axis.scale_factor = 1  // Scale factor of minor axis of oblate spheroid Earth.
+    /// 27-30     payload.template.earth.minor_axis.scaled_value = 63567523  // Scaled value of minor axis of oblate spheroid Earth.
     /// 31-34     payload.template.lat_lon.grid.ni = 256  // Ni - number of points along a parallel.
     /// 35-38     payload.template.lat_lon.grid.nj = 336  // Nj - number of points along a meridian.
     /// 39-42     payload.template.lat_lon.grid.initial_production_domain_basic_angle = 0  // Basic angle of the initial production domain (see Note 1).

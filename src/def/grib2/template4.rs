@@ -58,6 +58,8 @@ pub struct Template4_6 {
 pub(crate) mod param_set {
     use grib_template_derive::{Dump, TryFromSlice, WriteToBuffer};
 
+    use super::super::template::param_set::ValueWithScaling;
+
     #[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
     pub struct ProductParam {
         /// Parameter category (see Code Table 4.1).
@@ -132,14 +134,18 @@ pub(crate) mod param_set {
         pub total_num_forecast_probabilities: u8,
         /// Probability type (see Code Table 4.9).
         pub probability_type: u8,
-        /// Scale factor of lower limit.
-        pub lower_limit_scale_factor: i8,
-        /// Scaled value of lower limit.
-        pub lower_limit_scaled_value: i32,
-        /// Scale factor of upper limit.
-        pub upper_limit_scale_factor: i8,
-        /// Scaled value of upper limit.
-        pub upper_limit_scaled_value: i32,
+        /// Lower limit.
+        #[dump(doc(
+            scale_factor = "Scale factor of lower limit.",
+            scaled_value = "Scaled value of lower limit.",
+        ))]
+        pub lower_limit: ValueWithScaling<i8, i32>,
+        /// Upper limit.
+        #[dump(doc(
+            scale_factor = "Scale factor of upper limit.",
+            scaled_value = "Scaled value of upper limit.",
+        ))]
+        pub upper_limit: ValueWithScaling<i8, i32>,
     }
 
     #[derive(Debug, PartialEq, Eq, TryFromSlice, WriteToBuffer, Dump)]

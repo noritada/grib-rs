@@ -210,9 +210,24 @@ pub mod template {
     pub mod param_set {
         //! Definitions of parameter sets used in GRIB2 templates.
 
+        use grib_template_derive::{Dump, TryFromSlice, WriteToBuffer};
+
         pub use super::super::{
             template3::param_set::*, template4::param_set::*, template5::param_set::*,
         };
+
+        /// Value with a scaling.
+        #[derive(Debug, PartialEq, Eq, TryFromSlice, WriteToBuffer, Dump)]
+        pub struct ValueWithScaling<F, V>
+        where
+            F: crate::TryFromSlice + crate::WriteToBuffer + grib_template_helpers::DumpField,
+            V: crate::TryFromSlice + crate::WriteToBuffer + grib_template_helpers::DumpField,
+        {
+            /// Scale factor.
+            pub scale_factor: F,
+            /// Scaled value.
+            pub scaled_value: V,
+        }
     }
 }
 

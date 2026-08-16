@@ -388,7 +388,7 @@ impl AngleUnit for Grid {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::def::grib2::template::param_set::EarthShape;
+    use crate::def::grib2::template::param_set::{EarthShape, ValueWithScaling};
 
     #[test]
     fn grid_definition_template_0() {
@@ -411,12 +411,18 @@ mod tests {
         let expected = GridDefinitionTemplateValues::Template0(Template3_0 {
             earth: EarthShape {
                 shape: 4,
-                spherical_earth_radius_scale_factor: 0xff,
-                spherical_earth_radius_scaled_value: 0xffffffff,
-                major_axis_scale_factor: 1,
-                major_axis_scaled_value: 63781370,
-                minor_axis_scale_factor: 1,
-                minor_axis_scaled_value: 63567523,
+                spherical_earth_radius: ValueWithScaling {
+                    scale_factor: 0xff,
+                    scaled_value: 0xffffffff,
+                },
+                major_axis: ValueWithScaling {
+                    scale_factor: 1,
+                    scaled_value: 63781370,
+                },
+                minor_axis: ValueWithScaling {
+                    scale_factor: 1,
+                    scaled_value: 63567523,
+                },
             },
             lat_lon: crate::def::grib2::template::param_set::LatLonGrid {
                 grid: crate::def::grib2::template::param_set::Grid {
