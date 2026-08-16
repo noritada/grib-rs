@@ -601,7 +601,7 @@ Data Representation:                    {}
     ///             master_table_version: 5,
     ///             local_table_version: 1,
     ///             ref_time_significance: 0,
-    ///             ref_time: grib::def::grib2::RefTime {
+    ///             ref_time: grib::def::grib2::template::param_set::DateTime {
     ///                 year: 2016,
     ///                 month: 8,
     ///                 day: 22,
@@ -662,12 +662,18 @@ Data Representation:                    {}
     ///             template: grib::def::grib2::GridDefinitionTemplate::_3_0(grib::def::grib2::template::Template3_0 {
     ///                 earth: grib::def::grib2::template::param_set::EarthShape {
     ///                     shape: 4,
-    ///                     spherical_earth_radius_scale_factor: 0xff,
-    ///                     spherical_earth_radius_scaled_value: 0xffffffff,
-    ///                     major_axis_scale_factor: 1,
-    ///                     major_axis_scaled_value: 63781370,
-    ///                     minor_axis_scale_factor: 1,
-    ///                     minor_axis_scaled_value: 63567523,
+    ///                     spherical_earth_radius: grib::def::grib2::template::param_set::ScaledValue {
+    ///                         scale_factor: 0xff,
+    ///                         scaled_value: 0xffffffff,
+    ///                     },
+    ///                     major_axis: grib::def::grib2::template::param_set::ScaledValue {
+    ///                         scale_factor: 1,
+    ///                         scaled_value: 63781370,
+    ///                     },
+    ///                     minor_axis: grib::def::grib2::template::param_set::ScaledValue {
+    ///                         scale_factor: 1,
+    ///                         scaled_value: 63567523,
+    ///                     },
     ///                 },
     ///                 lat_lon: grib::def::grib2::template::param_set::LatLonGrid {
     ///                     grid: grib::def::grib2::template::param_set::Grid {
@@ -745,8 +751,10 @@ Data Representation:                    {}
     ///                     forecast_time: grib::def::grib2::template::param_set::ForecastTime {
     ///                         cutoff_hours: 0,
     ///                         cutoff_minutes: 0,
-    ///                         unit: 0,
-    ///                         time: 0,
+    ///                         time: grib::def::grib2::template::param_set::TimeRange {
+    ///                             unit: 0,
+    ///                             len: 0,
+    ///                         },
     ///                     },
     ///                     horizontal: grib::def::grib2::template::param_set::Horizontal {
     ///                         first_surface: grib::def::grib2::template::param_set::FixedSurface {
@@ -910,12 +918,12 @@ Data Representation:                    {}
     /// 10        payload.master_table_version = 5  // GRIB master table version number (see Common Code table C-0 and Note 1).
     /// 11        payload.local_table_version = 1  // Version number of GRIB Local tables used to augment Master tables (see Code table 1.1 and Note 2).
     /// 12        payload.ref_time_significance = 0  // Significance of reference time (see Code table 1.2).
-    /// 13-14     payload.ref_time.year = 2016  // Year (4 digits).
-    /// 15        payload.ref_time.month = 8  // Month.
-    /// 16        payload.ref_time.day = 22  // Day.
-    /// 17        payload.ref_time.hour = 2  // Hour.
-    /// 18        payload.ref_time.minute = 0  // Minute.
-    /// 19        payload.ref_time.second = 0  // Second.
+    /// 13-14     payload.ref_time.year = 2016  // Year (4 digits) - Reference time of data.
+    /// 15        payload.ref_time.month = 8  // Month - Reference time of data.
+    /// 16        payload.ref_time.day = 22  // Day - Reference time of data.
+    /// 17        payload.ref_time.hour = 2  // Hour - Reference time of data.
+    /// 18        payload.ref_time.minute = 0  // Minute - Reference time of data.
+    /// 19        payload.ref_time.second = 0  // Second - Reference time of data.
     /// 20        payload.prod_status = 0  // Production status of processed data in this GRIB message (see Code table 1.3).
     /// 21        payload.data_type = 2  // Type of processed data in this GRIB message (see Code table 1.4).
     /// ###  SECTION 3: GRID DEFINITION SECTION (length = 72)
@@ -927,12 +935,12 @@ Data Representation:                    {}
     /// 12        payload.point_list_interpretation = 0  // Interpretation of list of numbers (see Code table 3.11).
     /// 13-14     payload.template_num = 0  // Grid definition template number (= N) (see Code table 3.1).
     /// 15        payload.template.earth.shape = 4  // Shape of the Earth (see Code table 3.2).
-    /// 16        payload.template.earth.spherical_earth_radius_scale_factor = 255  // Scale factor of radius of spherical Earth.
-    /// 17-20     payload.template.earth.spherical_earth_radius_scaled_value = 4294967295  // Scaled value of radius of spherical Earth.
-    /// 21        payload.template.earth.major_axis_scale_factor = 1  // Scale factor of major axis of oblate spheroid Earth.
-    /// 22-25     payload.template.earth.major_axis_scaled_value = 63781370  // Scaled value of major axis of oblate spheroid Earth.
-    /// 26        payload.template.earth.minor_axis_scale_factor = 1  // Scale factor of minor axis of oblate spheroid Earth.
-    /// 27-30     payload.template.earth.minor_axis_scaled_value = 63567523  // Scaled value of minor axis of oblate spheroid Earth.
+    /// 16        payload.template.earth.spherical_earth_radius.scale_factor = 255  // Scale factor of radius of spherical Earth.
+    /// 17-20     payload.template.earth.spherical_earth_radius.scaled_value = 4294967295  // Scaled value of radius of spherical Earth.
+    /// 21        payload.template.earth.major_axis.scale_factor = 1  // Scale factor of major axis of oblate spheroid Earth.
+    /// 22-25     payload.template.earth.major_axis.scaled_value = 63781370  // Scaled value of major axis of oblate spheroid Earth.
+    /// 26        payload.template.earth.minor_axis.scale_factor = 1  // Scale factor of minor axis of oblate spheroid Earth.
+    /// 27-30     payload.template.earth.minor_axis.scaled_value = 63567523  // Scaled value of minor axis of oblate spheroid Earth.
     /// 31-34     payload.template.lat_lon.grid.ni = 256  // Ni - number of points along a parallel.
     /// 35-38     payload.template.lat_lon.grid.nj = 336  // Nj - number of points along a meridian.
     /// 39-42     payload.template.lat_lon.grid.initial_production_domain_basic_angle = 0  // Basic angle of the initial production domain (see Note 1).
@@ -955,16 +963,16 @@ Data Representation:                    {}
     /// 12        payload.template.generating_process.process_type = 0  // Type of generating process (see Code Table 4.3).
     /// 13        payload.template.generating_process.background_process = 153  // Background generating process identifier (defined by originating centre).
     /// 14        payload.template.generating_process.process_id = 255  // Analysis or forecast generating processes identifier (defined by originating centre).
-    /// 15-16     payload.template.forecast_time.cutoff_hours = 0  // Hours after reference time of data cutoff (see Note 1).
-    /// 17        payload.template.forecast_time.cutoff_minutes = 0  // Minutes after reference time of data cutoff.
-    /// 18        payload.template.forecast_time.unit = 0  // Indicator of unit of time range (see Code Table 4.4).
-    /// 19-22     payload.template.forecast_time.time = 0  // Forecast time in units defined by octet 18.
-    /// 23        payload.template.horizontal.first_surface.surface_type = 1  // Type of fixed surface (see Code Table 4.5).
-    /// 24        payload.template.horizontal.first_surface.scale_factor = -127  // Scale factor of fixed surface.
-    /// 25-28     payload.template.horizontal.first_surface.scaled_value = -2147483647  // Scaled value of fixed surface.
-    /// 29        payload.template.horizontal.second_surface.surface_type = 255  // Type of fixed surface (see Code Table 4.5).
-    /// 30        payload.template.horizontal.second_surface.scale_factor = -127  // Scale factor of fixed surface.
-    /// 31-34     payload.template.horizontal.second_surface.scaled_value = -2147483647  // Scaled value of fixed surface.
+    /// 15-16     payload.template.forecast_time.cutoff_hours = 0  // Hours of observational data cutoff after reference time (see Note 1)
+    /// 17        payload.template.forecast_time.cutoff_minutes = 0  // Minutes of observational data cutoff after reference time
+    /// 18        payload.template.forecast_time.time.unit = 0  // Indicator of unit of time range (see Code Table 4.4).
+    /// 19-22     payload.template.forecast_time.time.len = 0  // Forecast time in units defined by octet 18.
+    /// 23        payload.template.horizontal.first_surface.surface_type = 1  // Type of first fixed surface (see Code Table 4.5).
+    /// 24        payload.template.horizontal.first_surface.scale_factor = -127  // Scale factor of first fixed surface.
+    /// 25-28     payload.template.horizontal.first_surface.scaled_value = -2147483647  // Scaled value of first fixed surface.
+    /// 29        payload.template.horizontal.second_surface.surface_type = 255  // Type of second fixed surface (see Code Table 4.5).
+    /// 30        payload.template.horizontal.second_surface.scale_factor = -127  // Scale factor of second fixed surface.
+    /// 31-34     payload.template.horizontal.second_surface.scaled_value = -2147483647  // Scaled value of second fixed surface.
     /// ###  SECTION 5: DATA REPRESENTATION SECTION (length = 23)
     /// 1-4       header.len = 23  // Length of section in octets (nn).
     /// 5         header.sect_num = 5  // Number of section.
@@ -1042,7 +1050,7 @@ Data Representation:                    {}
     /// use grib::{
     ///     Code, ForecastTime, TemporalRawInfo,
     ///     codetables::grib2::{Table1_2, Table4_4},
-    ///     def::grib2::RefTime,
+    ///     def::grib2::template::param_set::DateTime,
     /// };
     ///
     /// fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -1059,7 +1067,7 @@ Data Representation:                    {}
     ///         let actual = message.temporal_raw_info();
     ///         let expected = TemporalRawInfo {
     ///             ref_time_significance: Code::Name(Table1_2::Analysis),
-    ///             ref_time_unchecked: RefTime::new(2016, 8, 22, 2, 0, 0),
+    ///             ref_time_unchecked: DateTime::new(2016, 8, 22, 2, 0, 0),
     ///             forecast_time_diff: Some(ForecastTime {
     ///                 unit: Code::Name(Table4_4::Minute),
     ///                 value: 0,
@@ -1073,7 +1081,7 @@ Data Representation:                    {}
     ///         let actual = message.temporal_raw_info();
     ///         let expected = TemporalRawInfo {
     ///             ref_time_significance: Code::Name(Table1_2::Analysis),
-    ///             ref_time_unchecked: RefTime::new(2016, 8, 22, 2, 0, 0),
+    ///             ref_time_unchecked: DateTime::new(2016, 8, 22, 2, 0, 0),
     ///             forecast_time_diff: Some(ForecastTime {
     ///                 unit: Code::Name(Table4_4::Minute),
     ///                 value: 10,

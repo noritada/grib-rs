@@ -6,6 +6,10 @@ use grib_template_derive::{Dump, TryFromSlice, WriteToBuffer};
 pub struct Template4_0 {
     pub param: param_set::ProductParam,
     pub generating_process: param_set::GeneratingProcess,
+    #[dump(doc(
+        cutoff_hours = "Hours of observational data cutoff after reference time (see Note 1)",
+        cutoff_minutes = "Minutes of observational data cutoff after reference time",
+    ))]
     pub forecast_time: param_set::ForecastTime,
     pub horizontal: param_set::Horizontal,
 }
@@ -16,6 +20,9 @@ pub struct Template4_0 {
 #[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
 pub struct Template4_1 {
     pub param: param_set::ProductParam,
+    #[dump(doc(
+        process_id = "Forecast generating process identifier (defined by originating centre).",
+    ))]
     pub generating_process: param_set::GeneratingProcess,
     pub forecast_time: param_set::ForecastTime,
     pub horizontal: param_set::Horizontal,
@@ -27,6 +34,9 @@ pub struct Template4_1 {
 #[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
 pub struct Template4_2 {
     pub param: param_set::ProductParam,
+    #[dump(doc(
+        process_id = "Forecast generating process identifier (defined by originating centre).",
+    ))]
     pub generating_process: param_set::GeneratingProcess,
     pub forecast_time: param_set::ForecastTime,
     pub horizontal: param_set::Horizontal,
@@ -38,6 +48,9 @@ pub struct Template4_2 {
 #[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
 pub struct Template4_5 {
     pub param: param_set::ProductParam,
+    #[dump(doc(
+        process_id = "Forecast generating process identifier (defined by originating centre).",
+    ))]
     pub generating_process: param_set::GeneratingProcess,
     pub forecast_time: param_set::ForecastTime,
     pub horizontal: param_set::Horizontal,
@@ -57,6 +70,8 @@ pub struct Template4_6 {
 
 pub(crate) mod param_set {
     use grib_template_derive::{Dump, TryFromSlice, WriteToBuffer};
+
+    use super::super::template::param_set::{ScaledValue, TimeRange};
 
     #[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
     pub struct ProductParam {
@@ -84,15 +99,27 @@ pub(crate) mod param_set {
         pub cutoff_hours: u16,
         /// Minutes after reference time of data cutoff.
         pub cutoff_minutes: u8,
-        /// Indicator of unit of time range (see Code Table 4.4).
-        pub unit: u8,
-        /// Forecast time in units defined by octet 18.
-        pub time: i32,
+        /// Forecast time.
+        #[dump(doc(
+            unit = "Indicator of unit of time range (see Code Table 4.4).",
+            len = "Forecast time in units defined by octet 18.",
+        ))]
+        pub time: TimeRange<i32>,
     }
 
     #[derive(Debug, PartialEq, Eq, TryFromSlice, WriteToBuffer, Dump)]
     pub struct Horizontal {
+        #[dump(doc(
+            surface_type = "Type of first fixed surface (see Code Table 4.5).",
+            scale_factor = "Scale factor of first fixed surface.",
+            scaled_value = "Scaled value of first fixed surface."
+        ))]
         pub first_surface: FixedSurface,
+        #[dump(doc(
+            surface_type = "Type of second fixed surface (see Code Table 4.5).",
+            scale_factor = "Scale factor of second fixed surface.",
+            scaled_value = "Scaled value of second fixed surface."
+        ))]
         pub second_surface: FixedSurface,
     }
 
@@ -132,14 +159,18 @@ pub(crate) mod param_set {
         pub total_num_forecast_probabilities: u8,
         /// Probability type (see Code Table 4.9).
         pub probability_type: u8,
-        /// Scale factor of lower limit.
-        pub lower_limit_scale_factor: i8,
-        /// Scaled value of lower limit.
-        pub lower_limit_scaled_value: i32,
-        /// Scale factor of upper limit.
-        pub upper_limit_scale_factor: i8,
-        /// Scaled value of upper limit.
-        pub upper_limit_scaled_value: i32,
+        /// Lower limit.
+        #[dump(doc(
+            scale_factor = "Scale factor of lower limit.",
+            scaled_value = "Scaled value of lower limit.",
+        ))]
+        pub lower_limit: ScaledValue<i8, i32>,
+        /// Upper limit.
+        #[dump(doc(
+            scale_factor = "Scale factor of upper limit.",
+            scaled_value = "Scaled value of upper limit.",
+        ))]
+        pub upper_limit: ScaledValue<i8, i32>,
     }
 
     #[derive(Debug, PartialEq, Eq, TryFromSlice, WriteToBuffer, Dump)]
