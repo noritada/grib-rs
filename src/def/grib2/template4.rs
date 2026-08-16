@@ -6,6 +6,10 @@ use grib_template_derive::{Dump, TryFromSlice, WriteToBuffer};
 pub struct Template4_0 {
     pub param: param_set::ProductParam,
     pub generating_process: param_set::GeneratingProcess,
+    #[dump(doc(
+        cutoff_hours = "Hours of observational data cutoff after reference time (see Note 1)",
+        cutoff_minutes = "Minutes of observational data cutoff after reference time",
+    ))]
     pub forecast_time: param_set::ForecastTime,
     pub horizontal: param_set::Horizontal,
 }
@@ -16,6 +20,9 @@ pub struct Template4_0 {
 #[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
 pub struct Template4_1 {
     pub param: param_set::ProductParam,
+    #[dump(doc(
+        process_id = "Forecast generating process identifier (defined by originating centre).",
+    ))]
     pub generating_process: param_set::GeneratingProcess,
     pub forecast_time: param_set::ForecastTime,
     pub horizontal: param_set::Horizontal,
@@ -27,6 +34,9 @@ pub struct Template4_1 {
 #[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
 pub struct Template4_2 {
     pub param: param_set::ProductParam,
+    #[dump(doc(
+        process_id = "Forecast generating process identifier (defined by originating centre).",
+    ))]
     pub generating_process: param_set::GeneratingProcess,
     pub forecast_time: param_set::ForecastTime,
     pub horizontal: param_set::Horizontal,
@@ -38,6 +48,9 @@ pub struct Template4_2 {
 #[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
 pub struct Template4_5 {
     pub param: param_set::ProductParam,
+    #[dump(doc(
+        process_id = "Forecast generating process identifier (defined by originating centre).",
+    ))]
     pub generating_process: param_set::GeneratingProcess,
     pub forecast_time: param_set::ForecastTime,
     pub horizontal: param_set::Horizontal,
@@ -94,7 +107,17 @@ pub(crate) mod param_set {
 
     #[derive(Debug, PartialEq, Eq, TryFromSlice, WriteToBuffer, Dump)]
     pub struct Horizontal {
+        #[dump(doc(
+            surface_type = "Type of first fixed surface (see Code Table 4.5).",
+            scale_factor = "Scale factor of first fixed surface.",
+            scaled_value = "Scaled value of first fixed surface."
+        ))]
         pub first_surface: FixedSurface,
+        #[dump(doc(
+            surface_type = "Type of second fixed surface (see Code Table 4.5).",
+            scale_factor = "Scale factor of second fixed surface.",
+            scaled_value = "Scaled value of second fixed surface."
+        ))]
         pub second_surface: FixedSurface,
     }
 
