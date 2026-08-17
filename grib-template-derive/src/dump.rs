@@ -78,24 +78,20 @@ pub(crate) fn impl_for_struct(
             .attrs
             .iter()
             .find_map(|attr| super::helpers::NumOctets::try_from(attr).ok());
-        if let Some(num_octets) = num_octets_attr {
-            dumps.push(quote! {
-                <grib_template_helpers::NonStdLenUint<#ty> as grib_template_helpers::DumpField>::dump_field(
-                    &grib_template_helpers::NonStdLenUint::new(self.#ident, #num_octets),
-                    name,
-                    parent,
-                    doc,
-                    #doc_overrides,
-                    pos,
-                    output,
-                )?;
-            });
-            continue;
-        }
+        let (ty, self_ident) = if let Some(num_octets) = num_octets_attr {
+            (
+                quote! { grib_template_helpers::NonStdLenUint<#ty> },
+                quote! {
+                    &grib_template_helpers::NonStdLenUint::new(self.#ident, #num_octets)
+                },
+            )
+        } else {
+            (quote! { #ty }, quote! { &self.#ident })
+        };
 
         dumps.push(quote! {
             <#ty as grib_template_helpers::DumpField>::dump_field(
-                &self.#ident,
+                #self_ident,
                 name,
                 parent,
                 doc,
