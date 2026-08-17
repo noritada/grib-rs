@@ -1,4 +1,4 @@
-use quote::quote;
+use quote::{ToTokens, quote};
 
 pub(crate) fn impl_for_struct(
     input: &syn::DeriveInput,
@@ -44,7 +44,7 @@ pub(crate) fn impl_for_struct(
                     },
                 )
             } else {
-                (quote! { #ty }, quote! { &self.#ident })
+                (ty.to_token_stream(), quote! { &self.#ident })
             };
 
         writes.push(quote! {

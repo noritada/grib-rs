@@ -1,4 +1,4 @@
-use quote::quote;
+use quote::{ToTokens, quote};
 
 use super::helpers::attr_value;
 
@@ -221,7 +221,7 @@ impl TryFrom<&syn::Attribute> for LenKind {
     }
 }
 
-impl quote::ToTokens for LenKind {
+impl ToTokens for LenKind {
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
         match self {
             LenKind::Literal(n) => {
@@ -265,7 +265,7 @@ impl TryFrom<&syn::Attribute> for Variant {
     }
 }
 
-impl quote::ToTokens for Variant {
+impl ToTokens for Variant {
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
         self.0.to_tokens(tokens);
     }

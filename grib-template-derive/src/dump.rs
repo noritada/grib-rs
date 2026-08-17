@@ -1,4 +1,4 @@
-use quote::quote;
+use quote::{ToTokens, quote};
 
 pub(crate) fn impl_for_struct(
     input: &syn::DeriveInput,
@@ -79,7 +79,7 @@ pub(crate) fn impl_for_struct(
                     },
                 )
             } else {
-                (quote! { #ty }, quote! { &self.#ident })
+                (ty.to_token_stream(), quote! { &self.#ident })
             };
 
         dumps.push(quote! {
@@ -236,7 +236,7 @@ impl TryFrom<&syn::Attribute> for DocOverrides {
     }
 }
 
-impl quote::ToTokens for DocOverrides {
+impl ToTokens for DocOverrides {
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
         let Self(inner) = self;
         let iter = inner
@@ -252,8 +252,6 @@ impl quote::ToTokens for DocOverrides {
 
 #[cfg(test)]
 mod tests {
-    use quote::ToTokens;
-
     use super::*;
 
     #[test]
