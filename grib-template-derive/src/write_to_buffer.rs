@@ -35,20 +35,17 @@ pub(crate) fn impl_for_struct(
         let ident = field.ident.as_ref().unwrap();
         let ty = &field.ty;
 
-        let num_octets_attr = field
-            .attrs
-            .iter()
-            .find_map(|attr| super::helpers::NumOctets::try_from(attr).ok());
-        let (ty, self_ident) = if let Some(num_octets) = num_octets_attr {
-            (
-                quote! { grib_template_helpers::NonStdLenUint<#ty> },
-                quote! {
-                    &grib_template_helpers::NonStdLenUint::new(self.#ident, #num_octets)
-                },
-            )
-        } else {
-            (quote! { #ty }, quote! { &self.#ident })
-        };
+        let (ty, self_ident) =
+            if let Some(num_octets) = super::helpers::NumOctets::try_from(field).ok() {
+                (
+                    quote! { grib_template_helpers::NonStdLenUint<#ty> },
+                    quote! {
+                        &grib_template_helpers::NonStdLenUint::new(self.#ident, #num_octets)
+                    },
+                )
+            } else {
+                (quote! { #ty }, quote! { &self.#ident })
+            };
 
         writes.push(quote! {
             pos += <#ty as grib_template_helpers::WriteToBuffer>::write_to_buffer(

@@ -64,30 +64,23 @@ pub(crate) fn impl_for_struct(
             };
         });
 
-        let doc_overrides = field
-            .attrs
-            .iter()
-            .find_map(|attr| DocOverrides::try_from(attr).ok());
-        let doc_overrides = if let Some(inner) = doc_overrides {
+        let doc_overrides = if let Some(inner) = DocOverrides::try_from(field).ok() {
             quote! { Some(grib_template_helpers::DocOverrides::new(#inner)) }
         } else {
             quote! { None }
         };
 
-        let num_octets_attr = field
-            .attrs
-            .iter()
-            .find_map(|attr| super::helpers::NumOctets::try_from(attr).ok());
-        let (ty, self_ident) = if let Some(num_octets) = num_octets_attr {
-            (
-                quote! { grib_template_helpers::NonStdLenUint<#ty> },
-                quote! {
-                    &grib_template_helpers::NonStdLenUint::new(self.#ident, #num_octets)
-                },
-            )
-        } else {
-            (quote! { #ty }, quote! { &self.#ident })
-        };
+        let (ty, self_ident) =
+            if let Some(num_octets) = super::helpers::NumOctets::try_from(field).ok() {
+                (
+                    quote! { grib_template_helpers::NonStdLenUint<#ty> },
+                    quote! {
+                        &grib_template_helpers::NonStdLenUint::new(self.#ident, #num_octets)
+                    },
+                )
+            } else {
+                (quote! { #ty }, quote! { &self.#ident })
+            };
 
         dumps.push(quote! {
             <#ty as grib_template_helpers::DumpField>::dump_field(
@@ -184,6 +177,18 @@ pub(crate) fn get_doc(attrs: &[syn::Attribute]) -> Option<String> {
 
 #[derive(Debug, PartialEq, Eq)]
 struct DocOverrides(Vec<(String, String)>);
+
+impl TryFrom<&syn::Field> for DocOverrides {
+    type Error = &'static str;
+
+    fn try_from(value: &syn::Field) -> Result<Self, Self::Error> {
+        value
+            .attrs
+            .iter()
+            .find_map(|attr| DocOverrides::try_from(attr).ok())
+            .ok_or("error")
+    }
+}
 
 impl TryFrom<&syn::Attribute> for DocOverrides {
     type Error = &'static str;
