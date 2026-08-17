@@ -175,7 +175,7 @@ pub(crate) fn get_doc(attrs: &[syn::Attribute]) -> Option<String> {
 }
 
 #[derive(Debug, PartialEq, Eq)]
-struct DocOverrides(Vec<(String, String)>);
+struct DocOverrides(Vec<(Vec<String>, String)>);
 
 impl TryFrom<&syn::Field> for DocOverrides {
     type Error = &'static str;
@@ -199,34 +199,12 @@ impl TryFrom<&syn::Attribute> for DocOverrides {
         }
         let meta = value.parse_args::<syn::Meta>().map_err(|_| MESSAGE)?;
         if let syn::Meta::List(list) = meta {
-            if !list.path.is_ident("doc") {
+            let mut map = Vec::with_capacity(16);
+            parse_tree(list, &Vec::new(), &mut map)?;
+            if let Some((k, _v)) = map.first()
+                && k[0] != "doc"
+            {
                 return Err(MESSAGE);
-            }
-            let items = list
-                .parse_args_with(
-                    syn::punctuated::Punctuated::<syn::Meta, syn::Token![,]>::parse_terminated,
-                )
-                .map_err(|_| MESSAGE)?;
-
-            let mut map = Vec::with_capacity(items.len());
-            for item in items {
-                if let syn::Meta::NameValue(nv) = item {
-                    let k = nv
-                        .path
-                        .get_ident()
-                        .map(|i| i.to_string())
-                        .unwrap_or_default();
-                    let v = if let syn::Expr::Lit(lit) = &nv.value
-                        && let syn::Lit::Str(s) = &lit.lit
-                    {
-                        s.value()
-                    } else {
-                        return Err(MESSAGE);
-                    };
-                    map.push((k, v));
-                } else {
-                    return Err(MESSAGE);
-                }
             }
             Ok(Self(map))
         } else {
@@ -240,13 +218,65 @@ impl ToTokens for DocOverrides {
         let Self(inner) = self;
         let iter = inner
             .iter()
-            .map(|(k, v)| quote! { (#k, #v) })
+            .map(|(k, v)| {
+                // the 0th element should be "doc"
+                let k = &k[1..].join(".");
+                quote! { (#k, #v) }
+            })
             .collect::<Vec<_>>();
         let tok = quote! {
             vec![#(#iter),*]
         };
         tokens.extend(tok);
     }
+}
+
+fn parse_tree(
+    list: syn::MetaList,
+    path: &Vec<String>,
+    out: &mut Vec<(Vec<String>, String)>,
+) -> Result<(), &'static str> {
+    const MESSAGE: &str = "error";
+
+    let mut path = path.clone();
+    let name = list
+        .path
+        .get_ident()
+        .map(|i| i.to_string())
+        .unwrap_or_default();
+    path.push(name);
+
+    let items = list
+        .parse_args_with(syn::punctuated::Punctuated::<syn::Meta, syn::Token![,]>::parse_terminated)
+        .map_err(|_| MESSAGE)?;
+
+    for item in items {
+        match item {
+            syn::Meta::NameValue(nv) => {
+                let mut k = path.clone();
+                let name = nv
+                    .path
+                    .get_ident()
+                    .map(|i| i.to_string())
+                    .unwrap_or_default();
+                k.push(name);
+
+                let v = if let syn::Expr::Lit(lit) = &nv.value
+                    && let syn::Lit::Str(s) = &lit.lit
+                {
+                    s.value()
+                } else {
+                    return Err(MESSAGE);
+                };
+                out.push((k, v));
+            }
+            syn::Meta::List(sublist) => parse_tree(sublist, &path, out)?,
+            _ => {
+                return Err(MESSAGE);
+            }
+        }
+    }
+    Ok(())
 }
 
 #[cfg(test)]
@@ -258,19 +288,30 @@ mod tests {
         let attr: syn::Attribute = syn::parse_quote! {
             #[dump(doc(
                 key1 = "val1",
-                key2 = "val2",
+                key2(key1 = "val21"),
+                key3 = "val3",
             ))]
         };
         let actual = DocOverrides::try_from(&attr)?;
-        let expected = vec![("key1", "val1"), ("key2", "val2")]
-            .into_iter()
-            .map(|(k, v)| (k.to_owned(), v.to_owned()))
-            .collect::<Vec<_>>();
+        let expected = vec![
+            (vec!["doc", "key1"], "val1"),
+            (vec!["doc", "key2", "key1"], "val21"),
+            (vec!["doc", "key3"], "val3"),
+        ]
+        .into_iter()
+        .map(|(k, v)| {
+            (
+                k.into_iter().map(|s| s.to_owned()).collect::<Vec<_>>(),
+                v.to_owned(),
+            )
+        })
+        .collect::<Vec<_>>();
         let expected = DocOverrides(expected);
         assert_eq!(actual, expected);
 
         let actual_stream = actual.to_token_stream().to_string();
-        let expected_stream = r#"vec ! [("key1" , "val1") , ("key2" , "val2")]"#;
+        let expected_stream =
+            r#"vec ! [("key1" , "val1") , ("key2.key1" , "val21") , ("key3" , "val3")]"#;
         assert_eq!(actual_stream, expected_stream);
 
         Ok(())
