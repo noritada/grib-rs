@@ -41,7 +41,7 @@ pub(crate) fn impl_for_struct(
         let ident = field.ident.as_ref().unwrap();
         let ty = &field.ty;
 
-        if let Some(num_octets) = super::helpers::NumOctets::try_from(field).ok() {
+        if let Ok(num_octets) = super::helpers::NumOctets::try_from(field) {
             field_reads.push(quote! {
                 let #ident = grib_template_helpers::NonStdLenUint::try_from(
                         <[u8; #num_octets] as grib_template_helpers::TryFromSlice>::try_from_slice(
@@ -54,7 +54,7 @@ pub(crate) fn impl_for_struct(
             continue;
         }
 
-        if let Some(len) = LenKind::try_from(field).ok() {
+        if let Ok(len) = LenKind::try_from(field) {
             if let syn::Type::Path(type_path) = ty
                 && let Some((inner_ty, has_option)) = extract_vec_inner(type_path)
             {
@@ -92,7 +92,7 @@ pub(crate) fn impl_for_struct(
             );
         }
 
-        if let Some(disc_ident) = Variant::try_from(field).ok() {
+        if let Ok(disc_ident) = Variant::try_from(field) {
             field_reads.push(quote! {
                 let #ident = <#ty as grib_template_helpers::TryEnumFromSlice>::try_enum_from_slice(
                     #disc_ident,

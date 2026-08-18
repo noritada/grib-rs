@@ -64,23 +64,22 @@ pub(crate) fn impl_for_struct(
             };
         });
 
-        let doc_overrides = if let Some(inner) = DocOverrides::try_from(field).ok() {
+        let doc_overrides = if let Ok(inner) = DocOverrides::try_from(field) {
             quote! { Some(grib_template_helpers::DocOverrides::new(#inner)) }
         } else {
             quote! { None }
         };
 
-        let (ty, self_ident) =
-            if let Some(num_octets) = super::helpers::NumOctets::try_from(field).ok() {
-                (
-                    quote! { grib_template_helpers::NonStdLenUint<#ty> },
-                    quote! {
-                        &grib_template_helpers::NonStdLenUint::new(self.#ident, #num_octets)
-                    },
-                )
-            } else {
-                (ty.to_token_stream(), quote! { &self.#ident })
-            };
+        let (ty, self_ident) = if let Ok(num_octets) = super::helpers::NumOctets::try_from(field) {
+            (
+                quote! { grib_template_helpers::NonStdLenUint<#ty> },
+                quote! {
+                    &grib_template_helpers::NonStdLenUint::new(self.#ident, #num_octets)
+                },
+            )
+        } else {
+            (ty.to_token_stream(), quote! { &self.#ident })
+        };
 
         dumps.push(quote! {
             <#ty as grib_template_helpers::DumpField>::dump_field(
