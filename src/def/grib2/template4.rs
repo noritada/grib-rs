@@ -111,14 +111,18 @@ pub(crate) mod param_set {
     pub struct Horizontal {
         #[dump(doc(
             surface_type = "Type of first fixed surface (see Code Table 4.5).",
-            scale_factor = "Scale factor of first fixed surface.",
-            scaled_value = "Scaled value of first fixed surface."
+            value(
+                scale_factor = "Scale factor of first fixed surface.",
+                scaled_value = "Scaled value of first fixed surface.",
+            ),
         ))]
         pub first_surface: FixedSurface,
         #[dump(doc(
             surface_type = "Type of second fixed surface (see Code Table 4.5).",
-            scale_factor = "Scale factor of second fixed surface.",
-            scaled_value = "Scaled value of second fixed surface."
+            value(
+                scale_factor = "Scale factor of second fixed surface.",
+                scaled_value = "Scaled value of second fixed surface.",
+            ),
         ))]
         pub second_surface: FixedSurface,
     }
@@ -127,10 +131,8 @@ pub(crate) mod param_set {
     pub struct FixedSurface {
         /// Type of fixed surface (see Code Table 4.5).
         pub surface_type: u8,
-        /// Scale factor of fixed surface.
-        pub scale_factor: i8,
         /// Scaled value of fixed surface.
-        pub scaled_value: i32,
+        pub value: ScaledValue<i8, i32>,
     }
 
     #[derive(Debug, PartialEq, Eq, TryFromSlice, WriteToBuffer, Dump)]
