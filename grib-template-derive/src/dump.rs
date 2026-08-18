@@ -233,12 +233,12 @@ impl ToTokens for DocOverrides {
 
 fn parse_tree(
     list: syn::MetaList,
-    path: &Vec<String>,
+    path: &[String],
     out: &mut Vec<(Vec<String>, String)>,
 ) -> Result<(), &'static str> {
     const MESSAGE: &str = "error";
 
-    let mut path = path.clone();
+    let mut path = path.to_owned();
     let name = list
         .path
         .get_ident()
