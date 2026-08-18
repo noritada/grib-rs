@@ -22,6 +22,18 @@ pub(crate) fn attr_value(attr: &syn::Attribute, ident: &str) -> Option<syn::Expr
 #[derive(Debug, PartialEq, Eq)]
 pub(crate) struct NumOctets(usize);
 
+impl TryFrom<&syn::Field> for NumOctets {
+    type Error = &'static str;
+
+    fn try_from(value: &syn::Field) -> Result<Self, Self::Error> {
+        value
+            .attrs
+            .iter()
+            .find_map(|attr| NumOctets::try_from(attr).ok())
+            .ok_or(r#""num_octets" not found"#)
+    }
+}
+
 impl TryFrom<&syn::Attribute> for NumOctets {
     type Error = &'static str;
 

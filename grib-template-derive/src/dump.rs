@@ -1,4 +1,4 @@
-use quote::quote;
+use quote::{ToTokens, quote};
 
 pub(crate) fn impl_for_struct(
     input: &syn::DeriveInput,
@@ -64,38 +64,26 @@ pub(crate) fn impl_for_struct(
             };
         });
 
-        let doc_overrides = field
-            .attrs
-            .iter()
-            .find_map(|attr| DocOverrides::try_from(attr).ok());
-        let doc_overrides = if let Some(inner) = doc_overrides {
+        let doc_overrides = if let Ok(inner) = DocOverrides::try_from(field) {
             quote! { Some(grib_template_helpers::DocOverrides::new(#inner)) }
         } else {
             quote! { None }
         };
 
-        let num_octets_attr = field
-            .attrs
-            .iter()
-            .find_map(|attr| super::helpers::NumOctets::try_from(attr).ok());
-        if let Some(num_octets) = num_octets_attr {
-            dumps.push(quote! {
-                <grib_template_helpers::NonStdLenUint<#ty> as grib_template_helpers::DumpField>::dump_field(
-                    &grib_template_helpers::NonStdLenUint::new(self.#ident, #num_octets),
-                    name,
-                    parent,
-                    doc,
-                    #doc_overrides,
-                    pos,
-                    output,
-                )?;
-            });
-            continue;
-        }
+        let (ty, self_ident) = if let Ok(num_octets) = super::helpers::NumOctets::try_from(field) {
+            (
+                quote! { grib_template_helpers::NonStdLenUint<#ty> },
+                quote! {
+                    &grib_template_helpers::NonStdLenUint::new(self.#ident, #num_octets)
+                },
+            )
+        } else {
+            (ty.to_token_stream(), quote! { &self.#ident })
+        };
 
         dumps.push(quote! {
             <#ty as grib_template_helpers::DumpField>::dump_field(
-                &self.#ident,
+                #self_ident,
                 name,
                 parent,
                 doc,
@@ -189,6 +177,18 @@ pub(crate) fn get_doc(attrs: &[syn::Attribute]) -> Option<String> {
 #[derive(Debug, PartialEq, Eq)]
 struct DocOverrides(Vec<(String, String)>);
 
+impl TryFrom<&syn::Field> for DocOverrides {
+    type Error = &'static str;
+
+    fn try_from(value: &syn::Field) -> Result<Self, Self::Error> {
+        value
+            .attrs
+            .iter()
+            .find_map(|attr| DocOverrides::try_from(attr).ok())
+            .ok_or("error")
+    }
+}
+
 impl TryFrom<&syn::Attribute> for DocOverrides {
     type Error = &'static str;
 
@@ -235,7 +235,7 @@ impl TryFrom<&syn::Attribute> for DocOverrides {
     }
 }
 
-impl quote::ToTokens for DocOverrides {
+impl ToTokens for DocOverrides {
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
         let Self(inner) = self;
         let iter = inner
@@ -251,8 +251,6 @@ impl quote::ToTokens for DocOverrides {
 
 #[cfg(test)]
 mod tests {
-    use quote::ToTokens;
-
     use super::*;
 
     #[test]
