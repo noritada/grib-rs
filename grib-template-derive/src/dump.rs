@@ -22,7 +22,7 @@ pub(crate) fn impl_for_struct(
                 fn dump<'d, W: std::io::Write>(
                     &self,
                     parent: Option<&std::borrow::Cow<str>>,
-                    doc_overrides: Option<grib_template_helpers::DocOverrides<'d>>,
+                    doc_overrides: grib_template_helpers::DocOverrides<'d>,
                     pos: &mut usize,
                     output: &mut W,
                 ) -> Result<(), std::io::Error> {
@@ -55,20 +55,11 @@ pub(crate) fn impl_for_struct(
 
         dumps.push(quote! {
             let name = stringify!(#ident);
-            let doc = if let Some(doc_overrides) = &doc_overrides
-                && let Some(val) = doc_overrides.get(name)
-            {
-                Some(*val)
-            } else {
-                #doc
-            };
+            let doc = doc_overrides.get(name).or(#doc);
         });
 
-        let doc_overrides = if let Ok(inner) = DocOverrides::try_from(field) {
-            quote! { Some(grib_template_helpers::DocOverrides::new(#inner)) }
-        } else {
-            quote! { None }
-        };
+        let doc_overrides = DocOverrides::try_from(field).unwrap_or(DocOverrides(Vec::new()));
+        let doc_overrides = quote! { grib_template_helpers::DocOverrides::new(#doc_overrides) };
 
         let (ty, self_ident) = if let Ok(num_octets) = super::helpers::NumOctets::try_from(field) {
             (
@@ -82,17 +73,8 @@ pub(crate) fn impl_for_struct(
         };
 
         dumps.push(quote! {
-            let mut child_doc_overrides = doc_overrides
-                .as_ref()
-                .and_then(|o| o.get_child_overrides(name));
-            let child_doc_overrides_added = #doc_overrides;
-            if let Some(parent) = child_doc_overrides.as_mut() {
-                if let Some(child) = child_doc_overrides_added.as_ref() {
-                    parent.merge(&child);
-                }
-            } else {
-                child_doc_overrides = child_doc_overrides_added;
-            }
+            let mut child_doc_overrides = doc_overrides.get_child_overrides(name);
+            child_doc_overrides.merge(&#doc_overrides);
 
             <#ty as grib_template_helpers::DumpField>::dump_field(
                 #self_ident,
@@ -111,7 +93,7 @@ pub(crate) fn impl_for_struct(
             fn dump<'d, W: std::io::Write>(
                 &self,
                 parent: Option<&std::borrow::Cow<str>>,
-                doc_overrides: Option<grib_template_helpers::DocOverrides<'d>>,
+                doc_overrides: grib_template_helpers::DocOverrides<'d>,
                 pos: &mut usize,
                 output: &mut W,
             ) -> Result<(), std::io::Error> {
@@ -142,7 +124,7 @@ pub(crate) fn impl_for_enum(
                 #name::#variant_ident(inner) => <#inner_ty as grib_template_helpers::Dump>::dump(
                     inner,
                     parent,
-                    None,
+                    grib_template_helpers::DocOverrides::empty(),
                     pos,
                     output
                 )
@@ -157,7 +139,7 @@ pub(crate) fn impl_for_enum(
             fn dump<'d, W: std::io::Write>(
                 &self,
                 parent: Option<&std::borrow::Cow<str>>,
-                doc_overrides: Option<grib_template_helpers::DocOverrides<'d>>,
+                doc_overrides: grib_template_helpers::DocOverrides<'d>,
                 pos: &mut usize,
                 output: &mut W,
             ) -> Result<(), std::io::Error> {

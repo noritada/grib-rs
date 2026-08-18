@@ -1,4 +1,4 @@
-use grib_template_helpers::Dump;
+use grib_template_helpers::{DocOverrides, Dump};
 
 #[derive(grib_template_derive::Dump)]
 pub struct Params {
@@ -58,7 +58,9 @@ fn main() {
 
     let mut buf = std::io::Cursor::new(Vec::with_capacity(1024));
     let mut pos = 1;
-    params.dump(None, None, &mut pos, &mut buf).unwrap();
+    params
+        .dump(None, DocOverrides::empty(), &mut pos, &mut buf)
+        .unwrap();
     assert_eq!(
         String::from_utf8_lossy(buf.get_ref()),
         "\

@@ -937,7 +937,12 @@ Data Representation:                    {}
             ($sect:expr) => {{
                 let mut pos = 1;
                 match $sect {
-                    Ok(s) => s.dump(None, None, &mut pos, writer)?,
+                    Ok(s) => s.dump(
+                        None,
+                        grib_template_helpers::DocOverrides::empty(),
+                        &mut pos,
+                        writer,
+                    )?,
                     Err(e) => writeln!(writer, "error: {}", e)?,
                 }
             }};

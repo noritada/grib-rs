@@ -1,4 +1,4 @@
-use grib_template_helpers::Dump;
+use grib_template_helpers::{DocOverrides, Dump};
 
 #[derive(Debug, PartialEq, grib_template_derive::Dump)]
 pub struct OptionalStruct {
@@ -50,7 +50,7 @@ macro_rules! test {
     ),)*) => ($(
         let mut buf = std::io::Cursor::new(Vec::with_capacity(1024));
         let mut pos = 1;
-        $input.dump(None, None, &mut pos, &mut buf).unwrap();
+        $input.dump(None, DocOverrides::empty(), &mut pos, &mut buf).unwrap();
         assert_eq!(String::from_utf8_lossy(buf.get_ref()), $expected);
     )*);
 }
