@@ -82,12 +82,24 @@ pub(crate) fn impl_for_struct(
         };
 
         dumps.push(quote! {
+            let mut child_doc_overrides = doc_overrides
+                .as_ref()
+                .and_then(|o| o.get_child_overrides(name));
+            let child_doc_overrides_added = #doc_overrides;
+            if let Some(parent) = child_doc_overrides.as_mut() {
+                if let Some(child) = child_doc_overrides_added.as_ref() {
+                    parent.merge(&child);
+                }
+            } else {
+                child_doc_overrides = child_doc_overrides_added;
+            }
+
             <#ty as grib_template_helpers::DumpField>::dump_field(
                 #self_ident,
                 name,
                 parent,
                 doc,
-                #doc_overrides,
+                child_doc_overrides,
                 pos,
                 output,
             )?;
