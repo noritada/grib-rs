@@ -19,7 +19,7 @@ use std::{
 ///     fn dump<'d, W: std::io::Write>(
 ///         &self,
 ///         parent: Option<&std::borrow::Cow<str>>,
-///         doc_overrides: Option<DocOverrides<'d>>,
+///         doc_overrides: DocOverrides<'d>,
 ///         pos: &mut usize,
 ///         output: &mut W,
 ///     ) -> Result<(), std::io::Error> {
@@ -38,7 +38,7 @@ use std::{
 ///     };
 ///     let mut buf = std::io::Cursor::new(Vec::with_capacity(1024));
 ///     let mut pos = 0;
-///     var.dump(None, None, &mut pos, &mut buf)?;
+///     var.dump(None, DocOverrides::empty(), &mut pos, &mut buf)?;
 ///     assert_eq!(
 ///         String::from_utf8_lossy(buf.get_ref()),
 ///         "variable-length array (length = 3, content = [1, 2, 3])\n"
@@ -54,7 +54,7 @@ pub trait Dump {
     fn dump<'d, W: Write>(
         &self,
         parent: Option<&Cow<str>>,
-        doc_overrides: Option<DocOverrides<'d>>,
+        doc_overrides: DocOverrides<'d>,
         pos: &mut usize,
         output: &mut W,
     ) -> Result<(), Error>;
@@ -66,7 +66,7 @@ pub trait DumpField: OctetSize {
         name: &str,
         parent: Option<&Cow<str>>,
         doc: Option<&str>,
-        doc_overrides: Option<DocOverrides<'d>>,
+        doc_overrides: DocOverrides<'d>,
         pos: &mut usize,
         output: &mut W,
     ) -> Result<(), Error>;
@@ -80,7 +80,7 @@ macro_rules! add_impl_of_dump_field_for_number_types {
                 name: &str,
                 parent: Option<&Cow<str>>,
                 doc: Option<&str>,
-                _doc_overrides: Option<DocOverrides<'d>>,
+                _doc_overrides: DocOverrides<'d>,
                 pos: &mut usize,
                 output: &mut W,
             ) -> Result<(), Error> {
@@ -131,7 +131,7 @@ impl<const N: usize> DumpField for [u8; N] {
         name: &str,
         parent: Option<&Cow<str>>,
         doc: Option<&str>,
-        _doc_overrides: Option<DocOverrides<'d>>,
+        _doc_overrides: DocOverrides<'d>,
         pos: &mut usize,
         output: &mut W,
     ) -> Result<(), Error> {
@@ -154,7 +154,7 @@ where
         name: &str,
         parent: Option<&Cow<str>>,
         doc: Option<&str>,
-        doc_overrides: Option<DocOverrides<'d>>,
+        doc_overrides: DocOverrides<'d>,
         pos: &mut usize,
         output: &mut W,
     ) -> Result<(), Error> {
@@ -171,7 +171,7 @@ impl<T: std::fmt::Debug> DumpField for crate::NonStdLenUint<T> {
         name: &str,
         parent: Option<&Cow<str>>,
         doc: Option<&str>,
-        _doc_overrides: Option<DocOverrides<'d>>,
+        _doc_overrides: DocOverrides<'d>,
         pos: &mut usize,
         output: &mut W,
     ) -> Result<(), Error> {
@@ -191,7 +191,7 @@ impl<T: Dump> DumpField for T {
         name: &str,
         parent: Option<&Cow<str>>,
         _doc: Option<&str>,
-        doc_overrides: Option<DocOverrides<'d>>,
+        doc_overrides: DocOverrides<'d>,
         pos: &mut usize,
         output: &mut W,
     ) -> Result<(), Error> {
@@ -284,16 +284,44 @@ pub fn write_position_column<W: Write>(
     Ok(())
 }
 
+#[derive(Debug, PartialEq, Eq)]
 pub struct DocOverrides<'a>(Vec<(&'a str, &'a str)>);
 
 impl<'a> DocOverrides<'a> {
+    pub fn empty() -> Self {
+        Self(Vec::new())
+    }
+
     pub fn new(items: Vec<(&'a str, &'a str)>) -> Self {
         Self(items)
     }
 
-    pub fn get(&self, key: &str) -> Option<&&'a str> {
+    pub fn get(&self, key: &str) -> Option<&str> {
         let Self(inner) = self;
-        inner.iter().find(|(k, _v)| *k == key).map(|(_k, v)| v)
+        inner.iter().find(|(k, _v)| *k == key).map(|(_k, v)| *v)
+    }
+
+    pub fn get_child_overrides(&self, key: &str) -> Self {
+        let Self(inner) = self;
+        let found = inner
+            .iter()
+            .filter_map(|(k, v)| {
+                if let Some((first, remaining)) = k.split_once(".")
+                    && first == key
+                {
+                    Some((remaining, *v))
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<_>>();
+        Self(found)
+    }
+
+    pub fn merge(&mut self, other: &Self) {
+        let Self(inner) = self;
+        let Self(other) = other;
+        inner.extend_from_slice(other);
     }
 }
 
@@ -310,7 +338,7 @@ mod tests {
         fn dump<'d, W: Write>(
             &self,
             _parent: Option<&Cow<str>>,
-            _doc_overrides: Option<DocOverrides<'d>>,
+            _doc_overrides: DocOverrides<'d>,
             _pos: &mut usize,
             output: &mut W,
         ) -> Result<(), Error> {
@@ -327,7 +355,7 @@ mod tests {
         };
         let mut buf = std::io::Cursor::new(Vec::with_capacity(1024));
         let mut pos = 0;
-        foo.dump(None, None, &mut pos, &mut buf)?;
+        foo.dump(None, DocOverrides::empty(), &mut pos, &mut buf)?;
         assert_eq!(
             String::from_utf8_lossy(buf.get_ref()),
             "member1: 1\nmember2: 2\n"
@@ -375,5 +403,38 @@ mod tests {
 ";
         assert_eq!(String::from_utf8_lossy(buf.get_ref()), expected);
         Ok(())
+    }
+
+    macro_rules! test_doc_overrides_get_children {
+        ($(($name:ident, $input:expr, $expected:expr),)*) => ($(
+            #[test]
+            fn $name() {
+                let parent = $input;
+                let actual = parent.get_child_overrides("key2");
+                let expected = $expected;
+                assert_eq!(actual, expected);
+            }
+        )*);
+    }
+
+    test_doc_overrides_get_children! {
+        (
+            doc_overrides_get_children_returns_some,
+            DocOverrides::new(vec![
+                ("key1", "field1"),
+                ("key2.key1", "field2.1"),
+                ("key3", "field3"),
+            ]),
+            DocOverrides::new(vec![("key1", "field2.1")])
+        ),
+        (
+            doc_overrides_get_children_returns_none,
+            DocOverrides::new(vec![
+                ("key1", "field1"),
+                ("key2", "field2"),
+                ("key3", "field3"),
+            ]),
+            DocOverrides::empty()
+        ),
     }
 }

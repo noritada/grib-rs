@@ -759,13 +759,17 @@ Data Representation:                    {}
     ///                     horizontal: grib::def::grib2::template::param_set::Horizontal {
     ///                         first_surface: grib::def::grib2::template::param_set::FixedSurface {
     ///                             surface_type: 1,
-    ///                             scale_factor: -127,
-    ///                             scaled_value: -2147483647,
+    ///                             value: grib::def::grib2::template::param_set::ScaledValue {
+    ///                                 scale_factor: -127,
+    ///                                 scaled_value: -2147483647,
+    ///                             },
     ///                         },
     ///                         second_surface: grib::def::grib2::template::param_set::FixedSurface {
     ///                             surface_type: 255,
-    ///                             scale_factor: -127,
-    ///                             scaled_value: -2147483647,
+    ///                             value: grib::def::grib2::template::param_set::ScaledValue {
+    ///                                 scale_factor: -127,
+    ///                                 scaled_value: -2147483647,
+    ///                             },
     ///                         },
     ///                     },
     ///                 },
@@ -968,11 +972,11 @@ Data Representation:                    {}
     /// 18        payload.template.forecast_time.time.unit = 0  // Indicator of unit of time range (see Code Table 4.4).
     /// 19-22     payload.template.forecast_time.time.len = 0  // Forecast time in units defined by octet 18.
     /// 23        payload.template.horizontal.first_surface.surface_type = 1  // Type of first fixed surface (see Code Table 4.5).
-    /// 24        payload.template.horizontal.first_surface.scale_factor = -127  // Scale factor of first fixed surface.
-    /// 25-28     payload.template.horizontal.first_surface.scaled_value = -2147483647  // Scaled value of first fixed surface.
+    /// 24        payload.template.horizontal.first_surface.value.scale_factor = -127  // Scale factor of first fixed surface.
+    /// 25-28     payload.template.horizontal.first_surface.value.scaled_value = -2147483647  // Scaled value of first fixed surface.
     /// 29        payload.template.horizontal.second_surface.surface_type = 255  // Type of second fixed surface (see Code Table 4.5).
-    /// 30        payload.template.horizontal.second_surface.scale_factor = -127  // Scale factor of second fixed surface.
-    /// 31-34     payload.template.horizontal.second_surface.scaled_value = -2147483647  // Scaled value of second fixed surface.
+    /// 30        payload.template.horizontal.second_surface.value.scale_factor = -127  // Scale factor of second fixed surface.
+    /// 31-34     payload.template.horizontal.second_surface.value.scaled_value = -2147483647  // Scaled value of second fixed surface.
     /// ###  SECTION 5: DATA REPRESENTATION SECTION (length = 23)
     /// 1-4       header.len = 23  // Length of section in octets (nn).
     /// 5         header.sect_num = 5  // Number of section.
@@ -1007,7 +1011,12 @@ Data Representation:                    {}
             ($sect:expr) => {{
                 let mut pos = 1;
                 match $sect {
-                    Ok(s) => s.dump(None, None, &mut pos, writer)?,
+                    Ok(s) => s.dump(
+                        None,
+                        grib_template_helpers::DocOverrides::empty(),
+                        &mut pos,
+                        writer,
+                    )?,
                     Err(e) => writeln!(writer, "error: {}", e)?,
                 }
             }};
