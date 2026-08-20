@@ -33,6 +33,7 @@ pub(crate) mod grib2 {
         (NOAA_GDAS_12, "testdata/gdas.t12z.pgrb2.0p25.f000.12.xz"),
         (NOAA_GDAS_46, "testdata/gdas.t12z.pgrb2.0p25.f000.46.xz"),
         (NOAA_GDAS_SFLUX, "testdata/gdas.t00z.sfluxgrbf000.grib2.0.xz"),
+        (NOAA_GFS_WAVE_HTSGW, "testdata/gfswave.t00z.global.0p16.f000.htsgw.grib2"),
         (NOAA_MRMS_MERGED_RHO_HV, "testdata/MRMS_MergedRhoHV_19.00_20260219-042039.grib2.gz"),
         (NOAA_MRMS_PRECIP_FLAG, "testdata/MRMS_PrecipFlag_00.00_20260219-042400.grib2.gz"),
         (NOAA_MRMS_REFLECTIVITY, "testdata/MRMS_ReflectivityAtLowestAltitude_00.50_20230406-120039.grib2.gz"),
