@@ -1,12 +1,19 @@
-use hayro_jpeg2000::{DecodeSettings, DecoderContext, Image};
+use hayro_jpeg2000::{DecodeLimits, DecodeSettings, DecoderContext, Image};
 
 use crate::DecodeError;
 
 pub(crate) type ImageIntoIter = std::vec::IntoIter<i32>;
 
-pub(crate) fn decode_j2k(bytes: &[u8]) -> Result<ImageIntoIter, DecodeError> {
-    let image = Image::new(bytes, &DecodeSettings::default())
-        .map_err(|err| DecodeError::from(format!("parsing JPEG 2000 image failed: {err}")))?;
+pub(crate) fn decode_j2k(
+    bytes: &[u8],
+    max_decoded_samples: usize,
+) -> Result<ImageIntoIter, DecodeError> {
+    let image = Image::new_with_limits(
+        bytes,
+        &DecodeSettings::default(),
+        DecodeLimits::new(max_decoded_samples),
+    )
+    .map_err(|err| DecodeError::from(format!("parsing JPEG 2000 image failed: {err}")))?;
     let mut context = DecoderContext::default();
     let decoded = image
         .decode(&mut context)
