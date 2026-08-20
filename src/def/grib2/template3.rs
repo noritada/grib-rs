@@ -84,6 +84,25 @@ pub struct Template3_1 {
     pub rotation: param_set::Rotation,
 }
 
+/// Grid definition template 3.2 - stretched latitude/longitude (or equidistant
+/// cylindrical, or Plate Carrée).
+#[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
+pub struct Template3_2 {
+    pub earth: param_set::EarthShape,
+    pub lat_lon: param_set::LatLonGrid,
+    pub stretching: param_set::Stretching,
+}
+
+/// Grid definition template 3.3 - stretched and rotated latitude/longitude (or
+/// equidistant cylindrical, or Plate Carrée).
+#[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
+pub struct Template3_3 {
+    pub earth: param_set::EarthShape,
+    pub lat_lon: param_set::LatLonGrid,
+    pub rotation: param_set::Rotation,
+    pub stretching: param_set::Stretching,
+}
+
 /// Grid definition template 3.10 - Mercator.
 #[derive(Debug, PartialEq, Eq, TryFromSlice, WriteToBuffer, Dump)]
 pub struct Template3_10 {
@@ -304,6 +323,24 @@ pub struct Template3_41 {
     pub rotation: param_set::Rotation,
 }
 
+/// Grid definition template 3.42 - stretched Gaussian latitude/longitude.
+#[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
+pub struct Template3_42 {
+    pub earth: param_set::EarthShape,
+    pub gaussian: param_set::GaussianGrid,
+    pub stretching: param_set::Stretching,
+}
+
+/// Grid definition template 3.43 - stretched and rotated Gaussian
+/// latitude/longitude.
+#[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
+pub struct Template3_43 {
+    pub earth: param_set::EarthShape,
+    pub gaussian: param_set::GaussianGrid,
+    pub rotation: param_set::Rotation,
+    pub stretching: param_set::Stretching,
+}
+
 /// Grid definition template 3.101 - general unstructured grid.
 #[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
 pub struct Template3_101 {
@@ -410,6 +447,16 @@ pub(crate) mod param_set {
         pub south_pole_lon: u32,
         /// Angle of rotation of projection.
         pub rot_angle: f32,
+    }
+
+    #[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
+    pub struct Stretching {
+        /// Latitude of the pole of stretching.
+        pub pole_lat: i32,
+        /// Longitude of the pole of stretching.
+        pub pole_lon: u32,
+        /// Stretching factor.
+        pub factor: u32,
     }
 
     #[derive(Debug, PartialEq, Eq, Clone, Copy, TryFromSlice, WriteToBuffer, Dump)]
