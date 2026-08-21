@@ -48,7 +48,7 @@ pub struct Template3_0 {
 ///                 scaled_value: 0xffffffff,
 ///             },
 ///         },
-///         rotated: param_set::LatLonGrid {
+///         lat_lon: param_set::LatLonGrid {
 ///             grid: param_set::Grid {
 ///                 ni: 2540,
 ///                 nj: 1290,
@@ -80,7 +80,7 @@ pub struct Template3_0 {
 #[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
 pub struct Template3_1 {
     pub earth: param_set::EarthShape,
-    pub rotated: param_set::LatLonGrid,
+    pub lat_lon: param_set::LatLonGrid,
     pub rotation: param_set::Rotation,
 }
 
@@ -319,7 +319,7 @@ pub struct Template3_40 {
 #[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
 pub struct Template3_41 {
     pub earth: param_set::EarthShape,
-    pub rotated: param_set::GaussianGrid,
+    pub gaussian: param_set::GaussianGrid,
     pub rotation: param_set::Rotation,
 }
 
