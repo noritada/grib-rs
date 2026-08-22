@@ -7,6 +7,51 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.18.0] - 2026-08-22
+### New supports
+
+- Reading, accessing, dumping, and writing section/template parameters:
+  - Templates 3.2, 3.3, 3.10, 3.41, 3.42, 3.43
+    (#140, PR #213)
+  - Template 4.0, 4.1, 4.2, 4.5, 4.6
+    (#140, PR #207, PR #208, PR #210)
+
+### Enhancements
+
+- The `WriteToBuffer` trait is now implemented for `Section4Payload`.
+  (PR #207)
+- The `MissingValue` trait has been added to check whether integer parameter values in templates are missing values.
+  (PR #214)
+
+### Breaking changes
+
+- Due to changes in how field descriptions are handled, the signature of `Dump::dump` has changed.
+  (PR #206, PR #210)
+- `def::grib2::RefTime` has now renamed to `def::grib2::template::param_set::DateTime`, which is also intended to be used to represent other data components that denote dates and times.
+  (PR #208)
+- The 7 fields of `def::grib3::template::param_set::EarthShape` have been reorganized into 4 through nesting.
+  (PR #208)
+- The `rotated` field in `def::grib2::Template3_1` has been renamed to `lat_lon`.
+  (PR #213)
+- `FixedSurface::scale_factor_is_nan` and `FixedSurface::value_is_nan` have been removed because their functionality has been replaced by the more general-purpose `MissingValue` trait.
+  Please rewrite your code to use `MissingValue::is_missing`.
+  (PR #214)
+
+### Enhancements to helper crates
+
+- The `Dump` trait provided by grib-template-helpers now allows parent struct fields to override the descriptions of each template parameters (child struct fields) to be displayed for nested structs.
+  This makes it easier to reuse structs.
+  (PR #206, PR #210)
+
+### Versions
+
+```
+grib 0.18.0
+grib-cli 0.18.0
+grib-template-derive 0.2.0
+grib-template-helpers 0.2.0
+```
+
 ## [0.17.1] - 2026-08-11
 ### Fixes
 
@@ -82,7 +127,7 @@ grib-cli 0.16.0
 
 - Reading, accessing, and dumping section/template parameters:
   - Template 3.101
-    (#167, PR #184)
+    (#140, #167, PR #184)
 
 ### Enhancements to helper crates
 
@@ -1054,7 +1099,8 @@ grib-build 0.1.0
 grib 0.1.0
 ```
 
-[unreleased]: https://github.com/noritada/grib-rs/compare/v0.17.1...HEAD
+[unreleased]: https://github.com/noritada/grib-rs/compare/v0.18.0...HEAD
+[0.18.0]: https://github.com/noritada/grib-rs/compare/v0.17.1...v0.18.0
 [0.17.1]: https://github.com/noritada/grib-rs/compare/v0.17.0...v0.17.1
 [0.17.0]: https://github.com/noritada/grib-rs/compare/v0.16.0...v0.17.0
 [0.16.0]: https://github.com/noritada/grib-rs/compare/v0.15.6...v0.16.0
