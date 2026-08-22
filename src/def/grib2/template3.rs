@@ -48,7 +48,7 @@ pub struct Template3_0 {
 ///                 scaled_value: 0xffffffff,
 ///             },
 ///         },
-///         rotated: param_set::LatLonGrid {
+///         lat_lon: param_set::LatLonGrid {
 ///             grid: param_set::Grid {
 ///                 ni: 2540,
 ///                 nj: 1290,
@@ -80,8 +80,57 @@ pub struct Template3_0 {
 #[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
 pub struct Template3_1 {
     pub earth: param_set::EarthShape,
-    pub rotated: param_set::LatLonGrid,
+    pub lat_lon: param_set::LatLonGrid,
     pub rotation: param_set::Rotation,
+}
+
+/// Grid definition template 3.2 - stretched latitude/longitude (or equidistant
+/// cylindrical, or Plate Carrée).
+#[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
+pub struct Template3_2 {
+    pub earth: param_set::EarthShape,
+    pub lat_lon: param_set::LatLonGrid,
+    pub stretching: param_set::Stretching,
+}
+
+/// Grid definition template 3.3 - stretched and rotated latitude/longitude (or
+/// equidistant cylindrical, or Plate Carrée).
+#[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
+pub struct Template3_3 {
+    pub earth: param_set::EarthShape,
+    pub lat_lon: param_set::LatLonGrid,
+    pub rotation: param_set::Rotation,
+    pub stretching: param_set::Stretching,
+}
+
+/// Grid definition template 3.10 - Mercator.
+#[derive(Debug, PartialEq, Eq, TryFromSlice, WriteToBuffer, Dump)]
+pub struct Template3_10 {
+    pub earth_shape: param_set::EarthShape,
+    /// Ni - number of points along a parallel.
+    pub ni: u32,
+    /// Nj - number of points along a meridian.
+    pub nj: u32,
+    /// La1 - latitude of first grid point.
+    pub first_point_lat: i32,
+    /// Lo1 - longitude of first grid point.
+    pub first_point_lon: u32,
+    pub resolution_and_component_flags: param_set::ResolutionAndComponentFlags,
+    /// LaD - Latitude(s) at which the Mercator projection intersects the Earth
+    /// (Latitude(s) where Di and Dj are specified).
+    pub lad: i32,
+    /// La2 - latitude of last grid point.
+    pub last_point_lat: i32,
+    /// Lo2 - longitude of last grid point.
+    pub last_point_lon: u32,
+    pub scanning_mode: param_set::ScanningMode,
+    /// Orientation of the grid, angle between i direction on the map and the
+    /// equator (see Note 1).
+    pub orientation: u32,
+    /// Di - longitudinal direction grid length (see Note 2).
+    pub di: u32,
+    /// Dj - latitudinal direction grid length (see Note 2).
+    pub dj: u32,
 }
 
 /// Grid definition template 3.20 - polar stereographic projection.
@@ -266,6 +315,32 @@ pub struct Template3_40 {
     pub gaussian: param_set::GaussianGrid,
 }
 
+/// Grid definition template 3.41 - rotated Gaussian latitude/longitude.
+#[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
+pub struct Template3_41 {
+    pub earth: param_set::EarthShape,
+    pub gaussian: param_set::GaussianGrid,
+    pub rotation: param_set::Rotation,
+}
+
+/// Grid definition template 3.42 - stretched Gaussian latitude/longitude.
+#[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
+pub struct Template3_42 {
+    pub earth: param_set::EarthShape,
+    pub gaussian: param_set::GaussianGrid,
+    pub stretching: param_set::Stretching,
+}
+
+/// Grid definition template 3.43 - stretched and rotated Gaussian
+/// latitude/longitude.
+#[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
+pub struct Template3_43 {
+    pub earth: param_set::EarthShape,
+    pub gaussian: param_set::GaussianGrid,
+    pub rotation: param_set::Rotation,
+    pub stretching: param_set::Stretching,
+}
+
 /// Grid definition template 3.101 - general unstructured grid.
 #[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
 pub struct Template3_101 {
@@ -372,6 +447,16 @@ pub(crate) mod param_set {
         pub south_pole_lon: u32,
         /// Angle of rotation of projection.
         pub rot_angle: f32,
+    }
+
+    #[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
+    pub struct Stretching {
+        /// Latitude of the pole of stretching.
+        pub pole_lat: i32,
+        /// Longitude of the pole of stretching.
+        pub pole_lon: u32,
+        /// Stretching factor.
+        pub factor: u32,
     }
 
     #[derive(Debug, PartialEq, Eq, Clone, Copy, TryFromSlice, WriteToBuffer, Dump)]
