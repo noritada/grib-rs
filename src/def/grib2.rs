@@ -1,4 +1,8 @@
 //! Definitions of parameters contained in GRIB2 data.
+//!
+//! For parameter values represented as unsigned or signed integers,
+//! [`MissingValue`](crate::MissingValue) trait can be used to check whether
+//! they are missing values.
 
 use grib_template_derive::{Dump, TryFromSlice, WriteToBuffer};
 

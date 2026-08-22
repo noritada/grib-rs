@@ -2,7 +2,10 @@ use std::fmt::{self, Display, Formatter};
 
 use grib_template_derive::{Dump, TryFromSlice, WriteToBuffer};
 
-use crate::codetables::{grib2::*, *};
+use crate::{
+    MissingValue,
+    codetables::{grib2::*, *},
+};
 
 /// Parameter of the product.
 ///
@@ -149,7 +152,7 @@ impl FixedSurface {
     }
 
     pub fn value(&self) -> f64 {
-        if self.value_is_nan() {
+        if self.scaled_value.is_missing() {
             f64::NAN
         } else {
             let factor: f64 = 10_f64.powi(-i32::from(self.scale_factor));
@@ -204,30 +207,16 @@ impl FixedSurface {
         Some(unit)
     }
 
-    /// Checks if the scale factor should be treated as missing.
-    pub fn scale_factor_is_nan(&self) -> bool {
-        // Handle as NaN if all bits are 1. Note that this is i8::MIN + 1 and not
-        // i8::MIN.
-        self.scale_factor == i8::MIN + 1
-    }
-
-    /// Checks if the scaled value should be treated as missing.
-    pub fn value_is_nan(&self) -> bool {
-        // Handle as NaN if all bits are 1. Note that this is i32::MIN + 1 and not
-        // i32::MIN.
-        self.scaled_value == i32::MIN + 1
-    }
-
     pub fn describe(&self) -> (String, String, String) {
         let stype = CodeTable4_5
             .lookup(usize::from(self.surface_type))
             .to_string();
-        let scale_factor = if self.scale_factor_is_nan() {
+        let scale_factor = if self.scale_factor.is_missing() {
             "Missing".to_owned()
         } else {
             self.scale_factor.to_string()
         };
-        let scaled_value = if self.value_is_nan() {
+        let scaled_value = if self.scaled_value.is_missing() {
             "Missing".to_owned()
         } else {
             self.scaled_value.to_string()
