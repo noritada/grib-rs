@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.18.1] - 2026-08-25
+### Enhancements
+
+- Trait implementations are added to improve the usability:
+  - `Clone` for structs and enums under `def::grib2`
+  - public traits (e.g. `encoder::WriteGrib2Ident`) for references
+  (PR #216)
+
+### Versions
+
+```
+grib 0.18.1
+grib-cli 0.18.1
+grib-template-derive 0.2.1
+grib-template-helpers 0.2.1
+```
+
 ## [0.18.0] - 2026-08-22
 ### New supports
 
@@ -1099,7 +1116,8 @@ grib-build 0.1.0
 grib 0.1.0
 ```
 
-[unreleased]: https://github.com/noritada/grib-rs/compare/v0.18.0...HEAD
+[unreleased]: https://github.com/noritada/grib-rs/compare/v0.18.1...HEAD
+[0.18.1]: https://github.com/noritada/grib-rs/compare/v0.18.0...v0.18.1
 [0.18.0]: https://github.com/noritada/grib-rs/compare/v0.17.1...v0.18.0
 [0.17.1]: https://github.com/noritada/grib-rs/compare/v0.17.0...v0.17.1
 [0.17.0]: https://github.com/noritada/grib-rs/compare/v0.16.0...v0.17.0
