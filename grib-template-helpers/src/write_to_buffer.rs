@@ -55,6 +55,16 @@ pub trait WriteToBuffer {
     fn num_bytes_required(&self) -> usize;
 }
 
+impl<T: WriteToBuffer + ?Sized> WriteToBuffer for &T {
+    fn write_to_buffer(&self, buf: &mut [u8]) -> Result<usize, &'static str> {
+        (*self).write_to_buffer(buf)
+    }
+
+    fn num_bytes_required(&self) -> usize {
+        (*self).num_bytes_required()
+    }
+}
+
 macro_rules! add_impl_for_unsigned_integer_types {
     ($($ty:ty,)*) => ($(
         impl WriteToBuffer for $ty {

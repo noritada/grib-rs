@@ -129,7 +129,7 @@ where
     }
 }
 
-impl<'d, P> WriteGrib2MessageIterL3 for &(P, GpvEncoder<'d>)
+impl<'d, P> WriteGrib2MessageIterL3 for (P, GpvEncoder<'d>)
 where
     P: WriteGrib2ProductDef,
 {

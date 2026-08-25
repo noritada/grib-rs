@@ -2,7 +2,7 @@ use grib_template_derive::{Dump, TryFromSlice, WriteToBuffer};
 
 /// Grid definition template 3.0 - latitude/longitude (or equidistant
 /// cylindrical, or Plate Carrée).
-#[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
+#[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump)]
 pub struct Template3_0 {
     pub earth: param_set::EarthShape,
     pub lat_lon: param_set::LatLonGrid,
@@ -77,7 +77,7 @@ pub struct Template3_0 {
 ///     Ok(())
 /// }
 /// ```
-#[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
+#[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump)]
 pub struct Template3_1 {
     pub earth: param_set::EarthShape,
     pub lat_lon: param_set::LatLonGrid,
@@ -86,7 +86,7 @@ pub struct Template3_1 {
 
 /// Grid definition template 3.2 - stretched latitude/longitude (or equidistant
 /// cylindrical, or Plate Carrée).
-#[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
+#[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump)]
 pub struct Template3_2 {
     pub earth: param_set::EarthShape,
     pub lat_lon: param_set::LatLonGrid,
@@ -95,7 +95,7 @@ pub struct Template3_2 {
 
 /// Grid definition template 3.3 - stretched and rotated latitude/longitude (or
 /// equidistant cylindrical, or Plate Carrée).
-#[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
+#[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump)]
 pub struct Template3_3 {
     pub earth: param_set::EarthShape,
     pub lat_lon: param_set::LatLonGrid,
@@ -104,7 +104,7 @@ pub struct Template3_3 {
 }
 
 /// Grid definition template 3.10 - Mercator.
-#[derive(Debug, PartialEq, Eq, TryFromSlice, WriteToBuffer, Dump)]
+#[derive(Debug, PartialEq, Eq, Clone, TryFromSlice, WriteToBuffer, Dump)]
 pub struct Template3_10 {
     pub earth_shape: param_set::EarthShape,
     /// Ni - number of points along a parallel.
@@ -190,7 +190,7 @@ pub struct Template3_10 {
 ///     Ok(())
 /// }
 /// ```
-#[derive(Debug, PartialEq, Eq, TryFromSlice, WriteToBuffer, Dump)]
+#[derive(Debug, PartialEq, Eq, Clone, TryFromSlice, WriteToBuffer, Dump)]
 pub struct Template3_20 {
     pub earth_shape: param_set::EarthShape,
     /// Nx - number of points along the x-axis.
@@ -273,7 +273,7 @@ pub struct Template3_20 {
 ///     Ok(())
 /// }
 /// ```
-#[derive(Debug, PartialEq, Eq, TryFromSlice, WriteToBuffer, Dump)]
+#[derive(Debug, PartialEq, Eq, Clone, TryFromSlice, WriteToBuffer, Dump)]
 pub struct Template3_30 {
     pub earth_shape: param_set::EarthShape,
     /// Nx - number of points along the x-axis.
@@ -309,14 +309,14 @@ pub struct Template3_30 {
 }
 
 /// Grid definition template 3.40 - Gaussian latitude/longitude.
-#[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
+#[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump)]
 pub struct Template3_40 {
     pub earth: param_set::EarthShape,
     pub gaussian: param_set::GaussianGrid,
 }
 
 /// Grid definition template 3.41 - rotated Gaussian latitude/longitude.
-#[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
+#[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump)]
 pub struct Template3_41 {
     pub earth: param_set::EarthShape,
     pub gaussian: param_set::GaussianGrid,
@@ -324,7 +324,7 @@ pub struct Template3_41 {
 }
 
 /// Grid definition template 3.42 - stretched Gaussian latitude/longitude.
-#[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
+#[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump)]
 pub struct Template3_42 {
     pub earth: param_set::EarthShape,
     pub gaussian: param_set::GaussianGrid,
@@ -333,7 +333,7 @@ pub struct Template3_42 {
 
 /// Grid definition template 3.43 - stretched and rotated Gaussian
 /// latitude/longitude.
-#[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
+#[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump)]
 pub struct Template3_43 {
     pub earth: param_set::EarthShape,
     pub gaussian: param_set::GaussianGrid,
@@ -342,7 +342,7 @@ pub struct Template3_43 {
 }
 
 /// Grid definition template 3.101 - general unstructured grid.
-#[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
+#[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump)]
 pub struct Template3_101 {
     /// Shape of the Earth (see Code table 3.2).
     pub earth_shape: u8,
@@ -361,7 +361,7 @@ pub(crate) mod param_set {
 
     use super::super::template::param_set::ScaledValue;
 
-    #[derive(Debug, PartialEq, Eq, TryFromSlice, WriteToBuffer, Dump)]
+    #[derive(Debug, PartialEq, Eq, Clone, TryFromSlice, WriteToBuffer, Dump)]
     pub struct EarthShape {
         /// Shape of the Earth (see Code table 3.2).
         pub shape: u8,
@@ -385,7 +385,7 @@ pub(crate) mod param_set {
         pub minor_axis: ScaledValue<u8, u32>,
     }
 
-    #[derive(Debug, PartialEq, Eq, TryFromSlice, WriteToBuffer, Dump)]
+    #[derive(Debug, PartialEq, Eq, Clone, TryFromSlice, WriteToBuffer, Dump)]
     pub struct LatLonGrid {
         pub grid: Grid,
         /// Di - i direction increment (see Notes 1 and 5).
@@ -395,7 +395,7 @@ pub(crate) mod param_set {
         pub scanning_mode: ScanningMode,
     }
 
-    #[derive(Debug, PartialEq, Eq, TryFromSlice, WriteToBuffer, Dump)]
+    #[derive(Debug, PartialEq, Eq, Clone, TryFromSlice, WriteToBuffer, Dump)]
     pub struct GaussianGrid {
         pub grid: Grid,
         /// Di - i direction increment (see Notes 1 and 5).
@@ -405,7 +405,7 @@ pub(crate) mod param_set {
         pub scanning_mode: ScanningMode,
     }
 
-    #[derive(Debug, PartialEq, Eq, TryFromSlice, WriteToBuffer, Dump)]
+    #[derive(Debug, PartialEq, Eq, Clone, TryFromSlice, WriteToBuffer, Dump)]
     pub struct Grid {
         /// Ni - number of points along a parallel.
         pub ni: u32,
@@ -439,7 +439,7 @@ pub(crate) mod param_set {
         pub u8,
     );
 
-    #[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
+    #[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump)]
     pub struct Rotation {
         /// Latitude of the southern pole of projection.
         pub south_pole_lat: i32,
@@ -449,7 +449,7 @@ pub(crate) mod param_set {
         pub rot_angle: f32,
     }
 
-    #[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
+    #[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump)]
     pub struct Stretching {
         /// Latitude of the pole of stretching.
         pub pole_lat: i32,

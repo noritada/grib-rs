@@ -2,7 +2,7 @@ use grib_template_derive::{Dump, TryFromSlice, WriteToBuffer};
 
 /// Product definition template 4.0 - Analysis or forecast at a horizontal level
 /// or in a horizontal layer at a point in time.
-#[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
+#[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump)]
 pub struct Template4_0 {
     pub param: param_set::ProductParam,
     pub generating_process: param_set::GeneratingProcess,
@@ -17,7 +17,7 @@ pub struct Template4_0 {
 /// Product definition template 4.1 - Individual ensemble forecast, control and
 /// perturbed, at a horizontal level or in a horizontal layer at a point in
 /// time.
-#[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
+#[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump)]
 pub struct Template4_1 {
     pub param: param_set::ProductParam,
     #[dump(doc(
@@ -31,7 +31,7 @@ pub struct Template4_1 {
 
 /// Product definition template 4.2 - Derived forecast based on all ensemble
 /// members at a horizontal level or in a horizontal layer at a point in time.
-#[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
+#[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump)]
 pub struct Template4_2 {
     pub param: param_set::ProductParam,
     #[dump(doc(
@@ -45,7 +45,7 @@ pub struct Template4_2 {
 
 /// Product definition template 4.5 - Probability forecasts at a horizontal
 /// level or in a horizontal layer at a point in time.
-#[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
+#[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump)]
 pub struct Template4_5 {
     pub param: param_set::ProductParam,
     #[dump(doc(
@@ -59,7 +59,7 @@ pub struct Template4_5 {
 
 /// Product definition template 4.6 - Percentile forecasts at a horizontal level
 /// or in a horizontal layer at a point in time.
-#[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
+#[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump)]
 pub struct Template4_6 {
     pub param: param_set::ProductParam,
     pub generating_process: param_set::GeneratingProcess,
@@ -73,7 +73,7 @@ pub(crate) mod param_set {
 
     use super::super::template::param_set::{ScaledValue, TimeRange};
 
-    #[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
+    #[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump)]
     pub struct ProductParam {
         /// Parameter category (see Code Table 4.1).
         pub category: u8,
@@ -81,7 +81,7 @@ pub(crate) mod param_set {
         pub num: u8,
     }
 
-    #[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
+    #[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump)]
     pub struct GeneratingProcess {
         /// Type of generating process (see Code Table 4.3).
         pub process_type: u8,
@@ -93,7 +93,7 @@ pub(crate) mod param_set {
         pub process_id: u8,
     }
 
-    #[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
+    #[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump)]
     pub struct ForecastTime {
         /// Hours after reference time of data cutoff (see Note 1).
         pub cutoff_hours: u16,
@@ -107,7 +107,7 @@ pub(crate) mod param_set {
         pub time: TimeRange<i32>,
     }
 
-    #[derive(Debug, PartialEq, Eq, TryFromSlice, WriteToBuffer, Dump)]
+    #[derive(Debug, PartialEq, Eq, Clone, TryFromSlice, WriteToBuffer, Dump)]
     pub struct Horizontal {
         #[dump(doc(
             surface_type = "Type of first fixed surface (see Code Table 4.5).",
@@ -127,7 +127,7 @@ pub(crate) mod param_set {
         pub second_surface: FixedSurface,
     }
 
-    #[derive(Debug, PartialEq, Eq, TryFromSlice, WriteToBuffer, Dump)]
+    #[derive(Debug, PartialEq, Eq, Clone, TryFromSlice, WriteToBuffer, Dump)]
     pub struct FixedSurface {
         /// Type of fixed surface (see Code Table 4.5).
         pub surface_type: u8,
@@ -135,7 +135,7 @@ pub(crate) mod param_set {
         pub value: ScaledValue<i8, i32>,
     }
 
-    #[derive(Debug, PartialEq, Eq, TryFromSlice, WriteToBuffer, Dump)]
+    #[derive(Debug, PartialEq, Eq, Clone, TryFromSlice, WriteToBuffer, Dump)]
     pub struct EnsembleForecast {
         /// Type of ensemble forecast (see Code Table 4.6).
         pub ensemble_forecast_type: u8,
@@ -145,7 +145,7 @@ pub(crate) mod param_set {
         pub num_forecasts: u8,
     }
 
-    #[derive(Debug, PartialEq, Eq, TryFromSlice, WriteToBuffer, Dump)]
+    #[derive(Debug, PartialEq, Eq, Clone, TryFromSlice, WriteToBuffer, Dump)]
     pub struct DerivedForecast {
         /// Derived forecast (see Code Table 4.7).
         pub derived_forecast_type: u8,
@@ -153,7 +153,7 @@ pub(crate) mod param_set {
         pub num_forecasts: u8,
     }
 
-    #[derive(Debug, PartialEq, Eq, TryFromSlice, WriteToBuffer, Dump)]
+    #[derive(Debug, PartialEq, Eq, Clone, TryFromSlice, WriteToBuffer, Dump)]
     pub struct ProbabilityForecasts {
         /// Forecast probability number.
         pub forecast_probability_num: u8,
@@ -175,7 +175,7 @@ pub(crate) mod param_set {
         pub upper_limit: ScaledValue<i8, i32>,
     }
 
-    #[derive(Debug, PartialEq, Eq, TryFromSlice, WriteToBuffer, Dump)]
+    #[derive(Debug, PartialEq, Eq, Clone, TryFromSlice, WriteToBuffer, Dump)]
     pub struct PercentileForecasts {
         /// Percentile value (from 100% to 0%).
         pub percentile_value: u8,

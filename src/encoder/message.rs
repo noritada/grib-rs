@@ -313,81 +313,6 @@ pub trait WriteGrib2PointValues {
     fn write_data_sections(&self, buf: &mut [u8]) -> Result<usize, &'static str>;
 }
 
-macro_rules! add_impl_for_u8_slices {
-    ($(($trait:ty,$len_method:ident,$write_method:ident,$sect_num:expr),)*) => ($(
-        impl<T: AsRef<[u8]>> $trait for T {
-            fn $len_method(&self) -> usize {
-                self.as_ref().len() + 5
-            }
-
-            fn $write_method(&self, buf: &mut [u8]) -> Result<usize, &'static str> {
-                let len = self.$len_method();
-                if buf.len() < len {
-                    return Err("destination buffer is too small");
-                }
-
-                let mut pos = 0;
-                pos += write_section_header(len as u32, $sect_num, &mut buf[pos..])?;
-                buf[pos..len].copy_from_slice(self.as_ref());
-                Ok(len)
-            }
-        }
-    )*);
-}
-
-add_impl_for_u8_slices![
-    (WriteGrib2Ident, section1_len, write_section1, 1),
-    (WriteGrib2LocalUse, section2_len, write_section2, 2),
-    (WriteGrib2GridDef, section3_len, write_section3, 3),
-    (WriteGrib2ProductDef, section4_len, write_section4, 4),
-];
-
-macro_rules! add_impl_for_payload_structs {
-    ($(($trait:ty,$ty:ty,$len_method:ident,$write_method:ident,$sect_num:expr),)*) => ($(
-        impl $trait for $ty {
-            fn $len_method(&self) -> usize {
-                self.num_bytes_required() + 5
-            }
-
-            fn $write_method(&self, buf: &mut [u8]) -> Result<usize, &'static str> {
-                let len = self.$len_method();
-                if buf.len() < len {
-                    return Err("destination buffer is too small");
-                }
-
-                let mut pos = 0;
-                pos += write_section_header(len as u32, $sect_num, &mut buf[pos..])?;
-                pos += self.write_to_buffer(&mut buf[pos..])?;
-                Ok(pos)
-            }
-        }
-    )*);
-}
-
-add_impl_for_payload_structs![
-    (
-        WriteGrib2Ident,
-        crate::def::grib2::Section1Payload,
-        section1_len,
-        write_section1,
-        1
-    ),
-    (
-        WriteGrib2GridDef,
-        crate::def::grib2::Section3Payload,
-        section3_len,
-        write_section3,
-        3
-    ),
-    (
-        WriteGrib2ProductDef,
-        crate::def::grib2::Section4Payload,
-        section4_len,
-        write_section4,
-        4
-    ),
-];
-
 /// A serializer that writes the byte sequence of sections concerning GPV data
 /// to the output buffer.
 pub trait WriteGrib2DataSections {
@@ -449,29 +374,7 @@ pub(crate) fn write_section_header(
     crate::def::grib2::SectionHeader { len, sect_num }.write_to_buffer(buf)
 }
 
-impl<'a, 'd, P> WriteGrib2MessageIterL3 for (&'a P, &'a GpvEncoder<'d>)
-where
-    P: WriteGrib2ProductDef,
-{
-    type S4<'s>
-        = P
-    where
-        Self: 's;
-
-    type SD<'s>
-        = GpvEncoder<'d>
-    where
-        Self: 's;
-
-    fn section4(&self) -> &Self::S4<'_> {
-        self.0
-    }
-
-    fn data_sections(&self) -> &Self::SD<'_> {
-        self.1
-    }
-}
-
+mod impls;
 mod multigrid;
 mod multiproduct;
 mod single;
