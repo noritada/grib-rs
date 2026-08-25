@@ -60,6 +60,18 @@ pub trait Dump {
     ) -> Result<(), Error>;
 }
 
+impl<T: Dump + ?Sized> Dump for &T {
+    fn dump<'d, W: Write>(
+        &self,
+        parent: Option<&Cow<str>>,
+        doc_overrides: DocOverrides<'d>,
+        pos: &mut usize,
+        output: &mut W,
+    ) -> Result<(), Error> {
+        (*self).dump(parent, doc_overrides, pos, output)
+    }
+}
+
 pub trait DumpField: OctetSize {
     fn dump_field<'d, W: Write>(
         &self,

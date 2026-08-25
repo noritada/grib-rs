@@ -315,7 +315,7 @@ pub trait WriteGrib2PointValues {
 
 macro_rules! add_impl_for_u8_slices {
     ($(($trait:ty,$len_method:ident,$write_method:ident,$sect_num:expr),)*) => ($(
-        impl<T: AsRef<[u8]>> $trait for T {
+        impl $trait for [u8] {
             fn $len_method(&self) -> usize {
                 self.as_ref().len() + 5
             }
@@ -472,6 +472,7 @@ where
     }
 }
 
+mod impls;
 mod multigrid;
 mod multiproduct;
 mod single;

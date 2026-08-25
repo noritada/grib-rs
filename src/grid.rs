@@ -151,6 +151,12 @@ pub trait GridShortName {
     fn short_name(&self) -> &'static str;
 }
 
+impl<T: GridShortName + ?Sized> GridShortName for &T {
+    fn short_name(&self) -> &'static str {
+        (*self).short_name()
+    }
+}
+
 /// A functionality to generate an iterator over latitude/longitude of grid
 /// points.
 pub trait LatLons {
@@ -179,6 +185,17 @@ pub trait LatLons {
             .latlons_unchecked()?
             .map(helpers::normalize_latlon as fn((f32, f32)) -> (f32, f32));
         Ok(iter)
+    }
+}
+
+impl<T: LatLons + ?Sized> LatLons for &T {
+    type Iter<'a>
+        = <T as LatLons>::Iter<'a>
+    where
+        Self: 'a;
+
+    fn latlons_unchecked<'a>(&'a self) -> Result<Self::Iter<'a>, GribError> {
+        (*self).latlons_unchecked()
     }
 }
 
@@ -288,6 +305,16 @@ pub trait GridPointIndex {
     /// Returns an iterator over 2D index `(i, j)` of grid points.
     fn ij(&self) -> Result<GridPointIndexIterator, GribError> {
         GridPointIndexIterator::new(self.grid_shape(), *self.scanning_mode())
+    }
+}
+
+impl<T: GridPointIndex + ?Sized> GridPointIndex for &T {
+    fn grid_shape(&self) -> (usize, usize) {
+        (*self).grid_shape()
+    }
+
+    fn scanning_mode(&self) -> &ScanningMode {
+        (*self).scanning_mode()
     }
 }
 
