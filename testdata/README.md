@@ -77,6 +77,10 @@ Following data files are downloaded from [NDFD (National Digital Forecast Databa
 - `ds.critfireo.bin.xz`
 - `ds.minrh.bin.xz`
 
+Following data files are downloaded from [NHC Gridded Marine Forecasts](https://www.nhc.noaa.gov/marine/grids.php).
+
+- `ds.wwa.bin.xz`
+
 ## Data files from JMA
 
 Following data files are downloaded from [JMA's GPV sample data

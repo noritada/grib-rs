@@ -104,6 +104,61 @@ pub struct Template3_3 {
 }
 
 /// Grid definition template 3.10 - Mercator.
+///
+/// # Examples
+///
+/// ```
+/// use std::io::{BufReader, Read};
+///
+/// use grib::{
+///     TryFromSlice,
+///     def::grib2::template::{Template3_10, param_set},
+/// };
+///
+/// fn main() -> Result<(), Box<dyn std::error::Error>> {
+///     let mut buf = Vec::new();
+///
+///     let f = std::fs::File::open("testdata/ds.wwa.bin.xz")?;
+///     let f = BufReader::new(f);
+///     let mut f = xz2::bufread::XzDecoder::new(f);
+///     f.read_to_end(&mut buf)?;
+///
+///     let mut pos = 0xa6;
+///     let actual = Template3_10::try_from_slice(&buf, &mut pos)?;
+///     let expected = Template3_10 {
+///         earth_shape: param_set::EarthShape {
+///             shape: 1,
+///             spherical_earth_radius: param_set::ScaledValue {
+///                 scale_factor: 0,
+///                 scaled_value: 6371200,
+///             },
+///             major_axis: param_set::ScaledValue {
+///                 scale_factor: 0,
+///                 scaled_value: 0,
+///             },
+///             minor_axis: param_set::ScaledValue {
+///                 scale_factor: 0,
+///                 scaled_value: 0,
+///             },
+///         },
+///         ni: 2517,
+///         nj: 1793,
+///         first_point_lat: -30419200,
+///         first_point_lon: 129906005,
+///         resolution_and_component_flags: param_set::ResolutionAndComponentFlags(0b00000000),
+///         lad: 20000000,
+///         last_point_lat: 80010000,
+///         last_point_lon: 10710000,
+///         scanning_mode: param_set::ScanningMode(0b01010000),
+///         orientation: 0,
+///         di: 10000000,
+///         dj: 10000000,
+///     };
+///     assert_eq!(actual, expected);
+///
+///     Ok(())
+/// }
+/// ```
 #[derive(Debug, PartialEq, Eq, Clone, TryFromSlice, WriteToBuffer, Dump)]
 pub struct Template3_10 {
     pub earth_shape: param_set::EarthShape,
