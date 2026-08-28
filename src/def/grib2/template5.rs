@@ -200,6 +200,36 @@ pub struct Template5_200 {
     pub level_vals: Vec<u16>,
 }
 
+/// Data representation template 5.50002　- Second order packing.
+///
+/// This local template is defined by ECMWF.
+#[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump)]
+pub struct Template5_50002 {
+    pub simple: param_set::SimplePacking,
+    /// Width of first order values.
+    pub first_order_values_width: u8,
+    /// Number of groups.
+    pub num_groups: u32,
+    /// Number of second order packed values.
+    pub second_order_packed_values_width: u32,
+    /// Width of widths.
+    pub widths_width: u8,
+    /// Width of lengths.
+    pub widths_len: u8,
+    pub ordering_flags: param_set::OrderingFlags,
+    /// Order of spatial differencing.
+    pub spd_order: u8,
+    pub optional: Option<Template5_50002Optional>,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, TryFromSlice, WriteToBuffer, Dump)]
+pub struct Template5_50002Optional {
+    /// Width of spatial differencing.
+    pub spd_width: u8,
+    /// SPD.
+    pub spd: [u8; 6],
+}
+
 pub(crate) mod param_set {
     use grib_template_derive::{Dump, TryFromSlice, WriteToBuffer};
 
@@ -251,4 +281,10 @@ pub(crate) mod param_set {
         /// the length increment given in octet 42).
         pub num_group_len_bits: u8,
     }
+
+    #[derive(Debug, PartialEq, Eq, Clone, Copy, TryFromSlice, WriteToBuffer, Dump)]
+    pub struct OrderingFlags(
+        /// Ordering flags (Flag table 5.50002).
+        pub u8,
+    );
 }
