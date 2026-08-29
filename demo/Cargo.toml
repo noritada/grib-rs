@@ -7,7 +7,7 @@ edition = "2024"
 
 [dependencies]
 gloo-file = { version = "0.4", features = ["futures"] }
-grib = { path = "..", version = "0.18.1", default-features = false, features = [
+grib = { path = "..", version = "0.18.2", default-features = false, features = [
     "jpeg2000-unpack-with-hayro",
     "png-unpack-with-png-crate",
     "ccsds-unpack-with-rust-aec",

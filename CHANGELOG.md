@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.18.2] - 2026-08-29
+### New supports
+
+- Reading, accessing, dumping, and writing section/template parameters:
+  - Templates 5.50002 (defined by Météo-France)
+    (#140, PR #218)
+
+### Fixes
+
+- Fixed support for templates 3.2, 3.3, 3.10, 3.41, 3.42, and 3.43.
+  Although template structs were defined, they were not linked to `Section3Payload`.
+  (PR #217)
+
+### Versions
+
+```
+grib 0.18.2
+grib-cli 0.18.2
+```
+
 ## [0.18.1] - 2026-08-25
 ### Enhancements
 
@@ -1116,7 +1136,8 @@ grib-build 0.1.0
 grib 0.1.0
 ```
 
-[unreleased]: https://github.com/noritada/grib-rs/compare/v0.18.1...HEAD
+[unreleased]: https://github.com/noritada/grib-rs/compare/v0.18.2...HEAD
+[0.18.2]: https://github.com/noritada/grib-rs/compare/v0.18.1...v0.18.2
 [0.18.1]: https://github.com/noritada/grib-rs/compare/v0.18.0...v0.18.1
 [0.18.0]: https://github.com/noritada/grib-rs/compare/v0.17.1...v0.18.0
 [0.17.1]: https://github.com/noritada/grib-rs/compare/v0.17.0...v0.17.1
