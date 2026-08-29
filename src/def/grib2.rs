@@ -193,6 +193,7 @@ pub enum DataRepresentationTemplate {
     _5_53(template5::Template5_53) = 53,
     _5_61(template5::Template5_61) = 61,
     _5_200(template5::Template5_200) = 200,
+    _5_50002(template5::Template5_50002) = 50002,
 }
 
 /// Section 6 - Bit-map section.

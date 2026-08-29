@@ -40,6 +40,13 @@ This ECMWF data was published under a Creative Commons Attribution 4.0 Internati
 - `20250912120000-0h-oper-fc.grib2.89.xz`
   (Only the 90th of the 160 messages in `s3://ecmwf-forecasts/20250912/12z/ifs/0p25/oper/20250912120000-0h-oper-fc.grib2`)
 
+## Data files from Météo-France
+
+Following data files are downloaded from [OPEN DATA METEO-FRANCE](https://confluence-meteofrance.atlassian.net/wiki/spaces/OpenDataMeteoFrance/overview).
+
+- `constant-polyn0025.grib2`
+  (download from [the section on AROME Outre-Mer model data](https://confluence-meteofrance.atlassian.net/wiki/spaces/OpenDataMeteoFrance/pages/621019138/Mod+les+et+donn+es+de+pr+vision#AROME-Outre-Mer)
+
 ## Data files from NCMRWF
 
 Following data files are from NCMRWF.
