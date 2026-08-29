@@ -226,8 +226,6 @@ pub struct Template5_50002 {
 pub struct Template5_50002Optional {
     /// Width of spatial differencing.
     pub spd_width: u8,
-    /// SPD.
-    pub spd: [u8; 6],
 }
 
 pub(crate) mod param_set {
