@@ -35,7 +35,7 @@ pub(crate) fn sinhpsi2tanphi(taup: f64, e: f64) -> Option<f64> {
     };
 
     // handles +/-inf and nan and e = 1
-    if !(tau.abs() < tmax) {
+    if tau.abs() >= tmax {
         return Some(tau);
     }
 
@@ -50,7 +50,7 @@ pub(crate) fn sinhpsi2tanphi(taup: f64, e: f64) -> Option<f64> {
         tau += dtau;
 
         // backwards test to allow nans to succeed.
-        if !(dtau.abs() >= stol) {
+        if dtau.abs() < stol {
             return Some(tau);
         }
 
