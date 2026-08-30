@@ -8,15 +8,17 @@ use std::{
 #[cfg(feature = "time-calculation")]
 use crate::TemporalInfo;
 use crate::{
+    Dump as _, GridDefinitionTemplateValues, GridPointIndex, GridPointIndexIterator, LatLons,
+    TemporalRawInfo, TryFromSlice as _,
     codetables::{
         CodeTable3_1, CodeTable4_0, CodeTable4_1, CodeTable4_2, CodeTable4_3, CodeTable5_0, Lookup,
     },
     datatypes::*,
+    def::grib2::{Section1, Section3, Section4, Section5, Section6, SectionHeader},
     error::*,
-    grid::GridPointIterator,
+    grid::GridPointLatLons,
     parser::Grib2SubmessageIndexStream,
-    reader::{Grib2Read, Grib2SectionStream, SeekableGrib2Reader, SECT8_ES_SIZE},
-    GridPointIndexIterator, TemporalRawInfo,
+    reader::{Grib2Read, Grib2SectionStream, SECT8_ES_SIZE, SeekableGrib2Reader},
 };
 
 #[derive(Default, Debug, Clone, PartialEq, Eq)]
@@ -505,6 +507,475 @@ Data Representation:                    {}
         )
     }
 
+    /// Provides access to the parameters in Section 1.
+    ///
+    /// # Examples
+    /// ```
+    /// fn main() -> Result<(), Box<dyn std::error::Error>> {
+    ///     let f = std::fs::File::open(
+    ///         "testdata/Z__C_RJTD_20160822020000_NOWC_GPV_Ggis10km_Pphw10_FH0000-0100_grib2.bin",
+    ///     )?;
+    ///     let f = std::io::BufReader::new(f);
+    ///     let grib2 = grib::from_reader(f)?;
+    ///     let (_index, first_submessage) = grib2.iter().next().unwrap();
+    ///
+    ///     let actual = first_submessage.section1();
+    ///     let expected = Ok(grib::def::grib2::Section1 {
+    ///         header: grib::def::grib2::SectionHeader {
+    ///             len: 21,
+    ///             sect_num: 1,
+    ///         },
+    ///         payload: grib::def::grib2::Section1Payload {
+    ///             centre_id: 34,
+    ///             subcentre_id: 0,
+    ///             master_table_version: 5,
+    ///             local_table_version: 1,
+    ///             ref_time_significance: 0,
+    ///             ref_time: grib::def::grib2::template::param_set::DateTime {
+    ///                 year: 2016,
+    ///                 month: 8,
+    ///                 day: 22,
+    ///                 hour: 2,
+    ///                 minute: 0,
+    ///                 second: 0,
+    ///             },
+    ///             prod_status: 0,
+    ///             data_type: 2,
+    ///             optional: None,
+    ///         },
+    ///     });
+    ///     assert_eq!(actual, expected);
+    ///
+    ///     Ok(())
+    /// }
+    /// ```
+    pub fn section1(&self) -> Result<Section1, GribError> {
+        let Identification { payload } = self.identification();
+        let mut pos = 0;
+        let payload = crate::def::grib2::Section1Payload::try_from_slice(payload, &mut pos)
+            .map_err(|e| GribError::Unknown(e.to_owned()))?;
+
+        let SectionInfo { num, size, .. } = self.1.body;
+        Ok(Section1 {
+            header: SectionHeader {
+                len: *size as u32,
+                sect_num: *num,
+            },
+            payload,
+        })
+    }
+
+    /// Provides access to the parameters in Section 3.
+    ///
+    /// # Examples
+    /// ```
+    /// fn main() -> Result<(), Box<dyn std::error::Error>> {
+    ///     let f = std::fs::File::open(
+    ///         "testdata/Z__C_RJTD_20160822020000_NOWC_GPV_Ggis10km_Pphw10_FH0000-0100_grib2.bin",
+    ///     )?;
+    ///     let f = std::io::BufReader::new(f);
+    ///     let grib2 = grib::from_reader(f)?;
+    ///     let (_index, first_submessage) = grib2.iter().next().unwrap();
+    ///
+    ///     let actual = first_submessage.section3();
+    ///     let expected = Ok(grib::def::grib2::Section3 {
+    ///         header: grib::def::grib2::SectionHeader {
+    ///             len: 72,
+    ///             sect_num: 3,
+    ///         },
+    ///         payload: grib::def::grib2::Section3Payload {
+    ///             grid_def_source: 0,
+    ///             num_points: 86016,
+    ///             num_point_list_octets: 0,
+    ///             point_list_interpretation: 0,
+    ///             template_num: 0,
+    ///             template: grib::def::grib2::GridDefinitionTemplate::_3_0(grib::def::grib2::template::Template3_0 {
+    ///                 earth: grib::def::grib2::template::param_set::EarthShape {
+    ///                     shape: 4,
+    ///                     spherical_earth_radius: grib::def::grib2::template::param_set::ScaledValue {
+    ///                         scale_factor: 0xff,
+    ///                         scaled_value: 0xffffffff,
+    ///                     },
+    ///                     major_axis: grib::def::grib2::template::param_set::ScaledValue {
+    ///                         scale_factor: 1,
+    ///                         scaled_value: 63781370,
+    ///                     },
+    ///                     minor_axis: grib::def::grib2::template::param_set::ScaledValue {
+    ///                         scale_factor: 1,
+    ///                         scaled_value: 63567523,
+    ///                     },
+    ///                 },
+    ///                 lat_lon: grib::def::grib2::template::param_set::LatLonGrid {
+    ///                     grid: grib::def::grib2::template::param_set::Grid {
+    ///                         ni: 256,
+    ///                         nj: 336,
+    ///                         initial_production_domain_basic_angle: 0,
+    ///                         basic_angle_subdivisions: 0xffffffff,
+    ///                         first_point_lat: 47958333,
+    ///                         first_point_lon: 118062500,
+    ///                         resolution_and_component_flags: grib::def::grib2::template::param_set::ResolutionAndComponentFlags(0b00110000),
+    ///                         last_point_lat: 20041667,
+    ///                         last_point_lon: 149937500,
+    ///                     },
+    ///                     i_direction_inc: 125000,
+    ///                     j_direction_inc: 83333,
+    ///                     scanning_mode: grib::def::grib2::template::param_set::ScanningMode(0b00000000),
+    ///                 },
+    ///             }),
+    ///         },
+    ///     });
+    ///     assert_eq!(actual, expected);
+    ///
+    ///     Ok(())
+    /// }
+    /// ```
+    pub fn section3(&self) -> Result<Section3, GribError> {
+        let GridDefinition { payload } = self.grid_def();
+        let mut pos = 0;
+        let payload = crate::def::grib2::Section3Payload::try_from_slice(payload, &mut pos)
+            .map_err(|e| GribError::Unknown(e.to_owned()))?;
+
+        let SectionInfo { num, size, .. } = self.3.body;
+        Ok(Section3 {
+            header: SectionHeader {
+                len: *size as u32,
+                sect_num: *num,
+            },
+            payload,
+        })
+    }
+
+    /// Provides access to the parameters in Section 4.
+    ///
+    /// # Examples
+    /// ```
+    /// fn main() -> Result<(), Box<dyn std::error::Error>> {
+    ///     let f = std::fs::File::open(
+    ///         "testdata/Z__C_RJTD_20160822020000_NOWC_GPV_Ggis10km_Pphw10_FH0000-0100_grib2.bin",
+    ///     )?;
+    ///     let f = std::io::BufReader::new(f);
+    ///     let grib2 = grib::from_reader(f)?;
+    ///     let (_index, first_submessage) = grib2.iter().next().unwrap();
+    ///
+    ///     let actual = first_submessage.section4();
+    ///     let expected = Ok(grib::def::grib2::Section4 {
+    ///         header: grib::def::grib2::SectionHeader {
+    ///             len: 34,
+    ///             sect_num: 4,
+    ///         },
+    ///         payload: grib::def::grib2::Section4Payload {
+    ///             num_coord_values: 0,
+    ///             template_num: 0,
+    ///             template: grib::def::grib2::ProductDefinitionTemplate::_4_0(
+    ///                 grib::def::grib2::template::Template4_0 {
+    ///                     param: grib::def::grib2::template::param_set::ProductParam {
+    ///                         category: 193,
+    ///                         num: 0,
+    ///                     },
+    ///                     generating_process:
+    ///                         grib::def::grib2::template::param_set::GeneratingProcess {
+    ///                             process_type: 0,
+    ///                             background_process: 153,
+    ///                             process_id: 255,
+    ///                         },
+    ///                     forecast_time: grib::def::grib2::template::param_set::ForecastTime {
+    ///                         cutoff_hours: 0,
+    ///                         cutoff_minutes: 0,
+    ///                         time: grib::def::grib2::template::param_set::TimeRange {
+    ///                             unit: 0,
+    ///                             len: 0,
+    ///                         },
+    ///                     },
+    ///                     horizontal: grib::def::grib2::template::param_set::Horizontal {
+    ///                         first_surface: grib::def::grib2::template::param_set::FixedSurface {
+    ///                             surface_type: 1,
+    ///                             value: grib::def::grib2::template::param_set::ScaledValue {
+    ///                                 scale_factor: -127,
+    ///                                 scaled_value: -2147483647,
+    ///                             },
+    ///                         },
+    ///                         second_surface: grib::def::grib2::template::param_set::FixedSurface {
+    ///                             surface_type: 255,
+    ///                             value: grib::def::grib2::template::param_set::ScaledValue {
+    ///                                 scale_factor: -127,
+    ///                                 scaled_value: -2147483647,
+    ///                             },
+    ///                         },
+    ///                     },
+    ///                 },
+    ///             ),
+    ///         },
+    ///     });
+    ///     assert_eq!(actual, expected);
+    ///
+    ///     Ok(())
+    /// }
+    /// ```
+    pub fn section4(&self) -> Result<Section4, GribError> {
+        let ProdDefinition { payload }: &ProdDefinition = self.prod_def();
+        let mut pos = 0;
+        let payload = crate::def::grib2::Section4Payload::try_from_slice(payload, &mut pos)
+            .map_err(|e| GribError::Unknown(e.to_owned()))?;
+
+        let SectionInfo { num, size, .. } = self.4.body;
+        Ok(Section4 {
+            header: SectionHeader {
+                len: *size as u32,
+                sect_num: *num,
+            },
+            payload,
+        })
+    }
+
+    /// Provides access to the parameters in Section 5.
+    ///
+    /// # Examples
+    /// ```
+    /// fn main() -> Result<(), Box<dyn std::error::Error>> {
+    ///     let f = std::fs::File::open(
+    ///         "testdata/Z__C_RJTD_20160822020000_NOWC_GPV_Ggis10km_Pphw10_FH0000-0100_grib2.bin",
+    ///     )?;
+    ///     let f = std::io::BufReader::new(f);
+    ///     let grib2 = grib::from_reader(f)?;
+    ///     let (_index, first_submessage) = grib2.iter().next().unwrap();
+    ///
+    ///     let actual = first_submessage.section5();
+    ///     let expected = Ok(grib::def::grib2::Section5 {
+    ///         header: grib::def::grib2::SectionHeader {
+    ///             len: 23,
+    ///             sect_num: 5,
+    ///         },
+    ///         payload: grib::def::grib2::Section5Payload {
+    ///             num_encoded_points: 86016,
+    ///             template_num: 200,
+    ///             template: grib::def::grib2::DataRepresentationTemplate::_5_200(
+    ///                 grib::def::grib2::template::Template5_200 {
+    ///                     num_bits: 8,
+    ///                     max_val: 3,
+    ///                     max_level: 3,
+    ///                     dec: 0,
+    ///                     level_vals: vec![1, 2, 3],
+    ///                 },
+    ///             ),
+    ///         },
+    ///     });
+    ///     assert_eq!(actual, expected);
+    ///
+    ///     Ok(())
+    /// }
+    /// ```
+    pub fn section5(&self) -> Result<Section5, GribError> {
+        let ReprDefinition { payload } = self.repr_def();
+        let mut pos = 0;
+        let payload = crate::def::grib2::Section5Payload::try_from_slice(payload, &mut pos)
+            .map_err(|e| GribError::Unknown(e.to_owned()))?;
+
+        let SectionInfo { num, size, .. } = self.5.body;
+        Ok(Section5 {
+            header: SectionHeader {
+                len: *size as u32,
+                sect_num: *num,
+            },
+            payload,
+        })
+    }
+
+    /// Provides access to the parameters in Section 6.
+    ///
+    /// # Examples
+    /// ```
+    /// fn main() -> Result<(), Box<dyn std::error::Error>> {
+    ///     let f = std::fs::File::open(
+    ///         "testdata/Z__C_RJTD_20160822020000_NOWC_GPV_Ggis10km_Pphw10_FH0000-0100_grib2.bin",
+    ///     )?;
+    ///     let f = std::io::BufReader::new(f);
+    ///     let grib2 = grib::from_reader(f)?;
+    ///     let (_index, first_submessage) = grib2.iter().next().unwrap();
+    ///
+    ///     let actual = first_submessage.section6();
+    ///     let expected = Ok(grib::def::grib2::Section6 {
+    ///         header: grib::def::grib2::SectionHeader {
+    ///             len: 6,
+    ///             sect_num: 6,
+    ///         },
+    ///         payload: grib::def::grib2::Section6Payload {
+    ///             bitmap_indicator: 255,
+    ///         },
+    ///     });
+    ///     assert_eq!(actual, expected);
+    ///
+    ///     Ok(())
+    /// }
+    /// ```
+    pub fn section6(&self) -> Result<Section6, GribError> {
+        // panics should not happen if data is correct
+        let BitMap { bitmap_indicator } = match self.6.body.body.as_ref().unwrap() {
+            SectionBody::Section6(data) => data,
+            _ => panic!("something unexpected happened"),
+        };
+        let payload = crate::def::grib2::Section6Payload {
+            bitmap_indicator: *bitmap_indicator,
+        };
+
+        let SectionInfo { num, size, .. } = self.6.body;
+        Ok(Section6 {
+            header: SectionHeader {
+                len: *size as u32,
+                sect_num: *num,
+            },
+            payload,
+        })
+    }
+
+    /// Dumps the GRIB2 submessage.
+    ///
+    /// # Examples
+    /// ```
+    /// fn main() -> Result<(), Box<dyn std::error::Error>> {
+    ///     let f = std::fs::File::open(
+    ///         "testdata/Z__C_RJTD_20160822020000_NOWC_GPV_Ggis10km_Pphw10_FH0000-0100_grib2.bin",
+    ///     )?;
+    ///     let f = std::io::BufReader::new(f);
+    ///     let grib2 = grib::from_reader(f)?;
+    ///     let (_index, first_submessage) = grib2.iter().next().unwrap();
+    ///
+    ///     let mut buf = std::io::Cursor::new(Vec::with_capacity(10240));
+    ///     first_submessage.dump(&mut buf)?;
+    ///     let expected = "\
+    /// ##  SUBMESSAGE (total_length = 10321)
+    /// ###  SECTION 0: INDICATOR SECTION (length = 16)
+    /// ###  SECTION 1: IDENTIFICATION SECTION (length = 21)
+    /// 1-4       header.len = 21  // Length of section in octets (nn).
+    /// 5         header.sect_num = 1  // Number of section.
+    /// 6-7       payload.centre_id = 34  // Identification of originating/generating centre (see Common Code table C-11).
+    /// 8-9       payload.subcentre_id = 0  // Identification of originating/generating subcentre (allocated by originating/generating centre).
+    /// 10        payload.master_table_version = 5  // GRIB master table version number (see Common Code table C-0 and Note 1).
+    /// 11        payload.local_table_version = 1  // Version number of GRIB Local tables used to augment Master tables (see Code table 1.1 and Note 2).
+    /// 12        payload.ref_time_significance = 0  // Significance of reference time (see Code table 1.2).
+    /// 13-14     payload.ref_time.year = 2016  // Year (4 digits) - Reference time of data.
+    /// 15        payload.ref_time.month = 8  // Month - Reference time of data.
+    /// 16        payload.ref_time.day = 22  // Day - Reference time of data.
+    /// 17        payload.ref_time.hour = 2  // Hour - Reference time of data.
+    /// 18        payload.ref_time.minute = 0  // Minute - Reference time of data.
+    /// 19        payload.ref_time.second = 0  // Second - Reference time of data.
+    /// 20        payload.prod_status = 0  // Production status of processed data in this GRIB message (see Code table 1.3).
+    /// 21        payload.data_type = 2  // Type of processed data in this GRIB message (see Code table 1.4).
+    /// ###  SECTION 3: GRID DEFINITION SECTION (length = 72)
+    /// 1-4       header.len = 72  // Length of section in octets (nn).
+    /// 5         header.sect_num = 3  // Number of section.
+    /// 6         payload.grid_def_source = 0  // Source of grid definition (see Code table 3.0 and Note 1).
+    /// 7-10      payload.num_points = 86016  // Number of data points.
+    /// 11        payload.num_point_list_octets = 0  // Number of octets for optional list of numbers (see Note 2).
+    /// 12        payload.point_list_interpretation = 0  // Interpretation of list of numbers (see Code table 3.11).
+    /// 13-14     payload.template_num = 0  // Grid definition template number (= N) (see Code table 3.1).
+    /// 15        payload.template.earth.shape = 4  // Shape of the Earth (see Code table 3.2).
+    /// 16        payload.template.earth.spherical_earth_radius.scale_factor = 255  // Scale factor of radius of spherical Earth.
+    /// 17-20     payload.template.earth.spherical_earth_radius.scaled_value = 4294967295  // Scaled value of radius of spherical Earth.
+    /// 21        payload.template.earth.major_axis.scale_factor = 1  // Scale factor of major axis of oblate spheroid Earth.
+    /// 22-25     payload.template.earth.major_axis.scaled_value = 63781370  // Scaled value of major axis of oblate spheroid Earth.
+    /// 26        payload.template.earth.minor_axis.scale_factor = 1  // Scale factor of minor axis of oblate spheroid Earth.
+    /// 27-30     payload.template.earth.minor_axis.scaled_value = 63567523  // Scaled value of minor axis of oblate spheroid Earth.
+    /// 31-34     payload.template.lat_lon.grid.ni = 256  // Ni - number of points along a parallel.
+    /// 35-38     payload.template.lat_lon.grid.nj = 336  // Nj - number of points along a meridian.
+    /// 39-42     payload.template.lat_lon.grid.initial_production_domain_basic_angle = 0  // Basic angle of the initial production domain (see Note 1).
+    /// 43-46     payload.template.lat_lon.grid.basic_angle_subdivisions = 4294967295  // Subdivisions of basic angle used to define extreme longitudes and latitudes, and direction increments (see Note 1).
+    /// 47-50     payload.template.lat_lon.grid.first_point_lat = 47958333  // La1 - latitude of first grid point (see Note 1).
+    /// 51-54     payload.template.lat_lon.grid.first_point_lon = 118062500  // Lo1 - longitude of first grid point (see Note 1).
+    /// 55        payload.template.lat_lon.grid.resolution_and_component_flags = 0b00110000  // Resolution and component flags (see Flag table 3.3).
+    /// 56-59     payload.template.lat_lon.grid.last_point_lat = 20041667  // La2 - latitude of last grid point (see Note 1).
+    /// 60-63     payload.template.lat_lon.grid.last_point_lon = 149937500  // Lo2 - longitude of last grid point (see Note 1).
+    /// 64-67     payload.template.lat_lon.i_direction_inc = 125000  // Di - i direction increment (see Notes 1 and 5).
+    /// 68-71     payload.template.lat_lon.j_direction_inc = 83333  // Dj - j direction increment (see Notes 1 and 5).
+    /// 72        payload.template.lat_lon.scanning_mode = 0b00000000  // Scanning mode (flags - see Flag table 3.4).
+    /// ###  SECTION 4: PRODUCT DEFINITION SECTION (length = 34)
+    /// 1-4       header.len = 34  // Length of section in octets (nn).
+    /// 5         header.sect_num = 4  // Number of section.
+    /// 6-7       payload.num_coord_values = 0  // Number of coordinate values after template or number of information according to 3D vertical coordinate GRIB2 message (see Notes 1 and 5).
+    /// 8-9       payload.template_num = 0  // Product definition template number (see Code table 4.0).
+    /// 10        payload.template.param.category = 193  // Parameter category (see Code Table 4.1).
+    /// 11        payload.template.param.num = 0  // Parameter number (see Code Table 4.2).
+    /// 12        payload.template.generating_process.process_type = 0  // Type of generating process (see Code Table 4.3).
+    /// 13        payload.template.generating_process.background_process = 153  // Background generating process identifier (defined by originating centre).
+    /// 14        payload.template.generating_process.process_id = 255  // Analysis or forecast generating processes identifier (defined by originating centre).
+    /// 15-16     payload.template.forecast_time.cutoff_hours = 0  // Hours of observational data cutoff after reference time (see Note 1)
+    /// 17        payload.template.forecast_time.cutoff_minutes = 0  // Minutes of observational data cutoff after reference time
+    /// 18        payload.template.forecast_time.time.unit = 0  // Indicator of unit of time range (see Code Table 4.4).
+    /// 19-22     payload.template.forecast_time.time.len = 0  // Forecast time in units defined by octet 18.
+    /// 23        payload.template.horizontal.first_surface.surface_type = 1  // Type of first fixed surface (see Code Table 4.5).
+    /// 24        payload.template.horizontal.first_surface.value.scale_factor = -127  // Scale factor of first fixed surface.
+    /// 25-28     payload.template.horizontal.first_surface.value.scaled_value = -2147483647  // Scaled value of first fixed surface.
+    /// 29        payload.template.horizontal.second_surface.surface_type = 255  // Type of second fixed surface (see Code Table 4.5).
+    /// 30        payload.template.horizontal.second_surface.value.scale_factor = -127  // Scale factor of second fixed surface.
+    /// 31-34     payload.template.horizontal.second_surface.value.scaled_value = -2147483647  // Scaled value of second fixed surface.
+    /// ###  SECTION 5: DATA REPRESENTATION SECTION (length = 23)
+    /// 1-4       header.len = 23  // Length of section in octets (nn).
+    /// 5         header.sect_num = 5  // Number of section.
+    /// 6-9       payload.num_encoded_points = 86016  // Number of data points where one or more values are specified in Section 7 when a bit map is present, total number of data points when a bit map is absent.
+    /// 10-11     payload.template_num = 200  // Data representation template number (see Code table 5.0).
+    /// 12        payload.template.num_bits = 8  // Number of bits used for each packed value in the run length packing with level value.
+    /// 13-14     payload.template.max_val = 3  // MV - maximum value within the levels that are used in the packing.
+    /// 15-16     payload.template.max_level = 3  // MVL - maximum value of level (predefined).
+    /// 17        payload.template.dec = 0  // Decimal scale factor of representative value of each level.
+    /// 18-23     payload.template.level_vals = [1, 2, 3]  // List of MVL scaled representative values of each level from lv=1 to MVL.
+    /// ###  SECTION 6: BIT-MAP SECTION (length = 6)
+    /// 1-4       header.len = 6  // Length of section in octets (nn).
+    /// 5         header.sect_num = 6  // Number of section.
+    /// 6         payload.bitmap_indicator = 255  // Bit-map indicator (see Code table 6.0 and the Note).
+    /// ###  SECTION 7: DATA SECTION (length = 1391)
+    /// ###  SECTION 8: END SECTION (length = 4)
+    /// ";
+    ///     assert_eq!(String::from_utf8_lossy(buf.get_ref()), expected);
+    ///
+    ///     Ok(())
+    /// }
+    /// ```
+    pub fn dump<W: std::io::Write>(&self, writer: &mut W) -> Result<(), std::io::Error> {
+        let write_heading =
+            |writer: &mut W, sect: &SectionInfo, sect_name: &str| -> Result<(), std::io::Error> {
+                let SectionInfo { num, size, .. } = sect;
+                let sect_name = sect_name.to_ascii_uppercase();
+                writeln!(writer, "##  SECTION {num}: {sect_name} (length = {size})")
+            };
+
+        macro_rules! write_section {
+            ($sect:expr) => {{
+                let mut pos = 1;
+                match $sect {
+                    Ok(s) => s.dump(
+                        None,
+                        grib_template_helpers::DocOverrides::empty(),
+                        &mut pos,
+                        writer,
+                    )?,
+                    Err(e) => writeln!(writer, "error: {}", e)?,
+                }
+            }};
+        }
+
+        let total_length = self.indicator().total_length;
+        writeln!(writer, "#  SUBMESSAGE (total_length = {total_length})")?;
+        write_heading(writer, self.0.body, "indicator section")?;
+        write_heading(writer, self.1.body, "identification section")?;
+        write_section!(self.section1());
+        if let Some(sect) = &self.2 {
+            write_heading(writer, sect.body, "local use section")?;
+        }
+        write_heading(writer, self.3.body, "grid definition section")?;
+        write_section!(self.section3());
+        write_heading(writer, self.4.body, "product definition section")?;
+        write_section!(self.section4());
+        write_heading(writer, self.5.body, "data representation section")?;
+        write_section!(self.section5());
+        write_heading(writer, self.6.body, "bit-map section")?;
+        write_section!(self.section6());
+        write_heading(writer, self.7.body, "data section")?;
+
+        // Since `self.8.body` might be dummy, we don't use that Section 8 data.
+        writeln!(writer, "##  SECTION 8: END SECTION (length = 4)")?;
+
+        Ok(())
+    }
+
     /// Returns time-related raw information associated with the submessage.
     ///
     /// # Examples
@@ -516,8 +987,9 @@ Data Representation:                    {}
     /// };
     ///
     /// use grib::{
+    ///     Code, ForecastTime, TemporalRawInfo,
     ///     codetables::grib2::{Table1_2, Table4_4},
-    ///     Code, ForecastTime, TemporalRawInfo, UtcDateTime,
+    ///     def::grib2::template::param_set::DateTime,
     /// };
     ///
     /// fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -534,7 +1006,7 @@ Data Representation:                    {}
     ///         let actual = message.temporal_raw_info();
     ///         let expected = TemporalRawInfo {
     ///             ref_time_significance: Code::Name(Table1_2::Analysis),
-    ///             ref_time_unchecked: UtcDateTime::new(2016, 8, 22, 2, 0, 0),
+    ///             ref_time_unchecked: DateTime::new(2016, 8, 22, 2, 0, 0),
     ///             forecast_time_diff: Some(ForecastTime {
     ///                 unit: Code::Name(Table4_4::Minute),
     ///                 value: 0,
@@ -548,7 +1020,7 @@ Data Representation:                    {}
     ///         let actual = message.temporal_raw_info();
     ///         let expected = TemporalRawInfo {
     ///             ref_time_significance: Code::Name(Table1_2::Analysis),
-    ///             ref_time_unchecked: UtcDateTime::new(2016, 8, 22, 2, 0, 0),
+    ///             ref_time_unchecked: DateTime::new(2016, 8, 22, 2, 0, 0),
     ///             forecast_time_diff: Some(ForecastTime {
     ///                 unit: Code::Name(Table4_4::Minute),
     ///                 value: 10,
@@ -582,8 +1054,8 @@ Data Representation:                    {}
     ///
     /// use chrono::{TimeZone, Utc};
     /// use grib::{
+    ///     Code, ForecastTime, TemporalInfo,
     ///     codetables::grib2::{Table1_2, Table4_4},
-    ///     Code, ForecastTime, TemporalInfo, UtcDateTime,
     /// };
     ///
     /// fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -662,7 +1134,8 @@ Data Representation:                    {}
     /// Computes and returns an iterator over `(i, j)` of grid points.
     ///
     /// The order of items is the same as the order of the grid point values,
-    /// defined by the scanning mode ([`ScanningMode`](`crate::ScanningMode`))
+    /// defined by the scanning mode
+    /// ([`ScanningMode`](`crate::def::grib2::template::param_set::ScanningMode`))
     /// in the data.
     ///
     /// This iterator allows users to perform their own coordinate calculations
@@ -709,13 +1182,16 @@ Data Representation:                    {}
             )))
         }
     }
+}
+
+impl<'s, R> LatLons for SubMessage<'s, R> {
+    type Iter<'a>
+        = GridPointLatLons
+    where
+        Self: 'a;
 
     /// Computes and returns an iterator over latitudes and longitudes of grid
-    /// points.
-    ///
-    /// The order of lat/lon data of grid points is the same as the order of the
-    /// grid point values, defined by the scanning mode
-    /// ([`ScanningMode`](`crate::ScanningMode`)) in the data.
+    /// points in degrees. [Read more](`crate::LatLons::latlons`)
     ///
     /// # Examples
     ///
@@ -724,6 +1200,8 @@ Data Representation:                    {}
     ///     fs::File,
     ///     io::{BufReader, Read},
     /// };
+    ///
+    /// use grib::LatLons;
     ///
     /// fn main() -> Result<(), Box<dyn std::error::Error>> {
     ///     let mut buf = Vec::new();
@@ -741,14 +1219,14 @@ Data Representation:                    {}
     ///
     ///     let mut latlons = message.latlons()?;
     ///     assert_eq!(latlons.next(), Some((90.0, 0.0)));
-    ///     assert_eq!(latlons.next(), Some((90.0, 0.25000003)));
+    ///     assert_eq!(latlons.next(), Some((90.0, 0.25)));
     ///     Ok(())
     /// }
     /// ```
-    pub fn latlons(&self) -> Result<GridPointIterator, GribError> {
+    fn latlons_unchecked<'a>(&'a self) -> Result<Self::Iter<'a>, GribError> {
         let grid_def = self.grid_def();
         let num_defined = grid_def.num_points() as usize;
-        let latlons = GridDefinitionTemplateValues::try_from(grid_def)?.latlons()?;
+        let latlons = GridDefinitionTemplateValues::try_from(grid_def)?.latlons_unchecked()?;
         let (num_decoded, _) = latlons.size_hint();
         if num_defined == num_decoded {
             Ok(latlons)
@@ -784,6 +1262,7 @@ mod tests {
     use std::{fs::File, io::BufReader};
 
     use super::*;
+    use crate::test_utils::data::grib2::{DWD_ICON, JMA_MSMGUID, NOAA_GDAS_0_10};
 
     macro_rules! sect_placeholder {
         ($num:expr) => {{
@@ -798,10 +1277,7 @@ mod tests {
 
     #[test]
     fn context_from_buf_reader() {
-        let f = File::open(
-            "testdata/icon_global_icosahedral_single-level_2021112018_000_TOT_PREC.grib2",
-        )
-        .unwrap();
+        let f = File::open(DWD_ICON).unwrap();
         let f = BufReader::new(f);
         let result = from_reader(f);
         assert!(result.is_ok())
@@ -809,13 +1285,7 @@ mod tests {
 
     #[test]
     fn context_from_bytes() {
-        let f = File::open(
-            "testdata/icon_global_icosahedral_single-level_2021112018_000_TOT_PREC.grib2",
-        )
-        .unwrap();
-        let mut f = BufReader::new(f);
-        let mut buf = Vec::new();
-        f.read_to_end(&mut buf).unwrap();
+        let buf = crate::test_utils::decompress_to_vec(DWD_ICON).unwrap();
         let result = from_bytes(&buf);
         assert!(result.is_ok())
     }
@@ -922,12 +1392,7 @@ mod tests {
         ),)*) => ($(
             #[test]
             fn $name() -> Result<(), Box<dyn std::error::Error>> {
-                let mut buf = Vec::new();
-
-                let f = File::open($xz_compressed_input)?;
-                let f = BufReader::new(f);
-                let mut f = xz2::bufread::XzDecoder::new(f);
-                f.read_to_end(&mut buf)?;
+                let buf = crate::test_utils::decompress_to_vec($xz_compressed_input)?;
 
                 let f = Cursor::new(buf);
                 let grib2 = crate::from_reader(f)?;
@@ -946,28 +1411,28 @@ mod tests {
     test_submessage_iterator! {
         (
             item_0_from_submessage_iterator_for_single_message_data_with_multiple_submessages,
-            "testdata/Z__C_RJTD_20190304000000_MSM_GUID_Rjp_P-all_FH03-39_Toorg_grib2.bin.xz",
+            JMA_MSMGUID,
             0,
             (0, 0),
             (0, 1, None, 2, 3, 4, 5, 6, 0),
         ),
         (
             item_1_from_submessage_iterator_for_single_message_data_with_multiple_submessages,
-            "testdata/Z__C_RJTD_20190304000000_MSM_GUID_Rjp_P-all_FH03-39_Toorg_grib2.bin.xz",
+            JMA_MSMGUID,
             1,
             (0, 1),
             (0, 1, None, 2, 7, 8, 9, 10, 0),
         ),
         (
             item_0_from_submessage_iterator_for_multi_message_data,
-            "testdata/gdas.t12z.pgrb2.0p25.f000.0-10.xz",
+            NOAA_GDAS_0_10,
             0,
             (0, 0),
             (0, 1, None, 2, 3, 4, 5, 6, 7),
         ),
         (
             item_1_from_submessage_iterator_for_multi_message_data,
-            "testdata/gdas.t12z.pgrb2.0p25.f000.0-10.xz",
+            NOAA_GDAS_0_10,
             1,
             (1, 0),
             (8, 9, None, 10, 11, 12, 13, 14, 15),

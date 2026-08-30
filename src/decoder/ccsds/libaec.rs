@@ -1,4 +1,4 @@
-use libaec_sys::{aec_decode, aec_decode_end, aec_decode_init, aec_stream, AEC_FLUSH, AEC_OK};
+use libaec_sys::{AEC_FLUSH, AEC_OK, aec_decode, aec_decode_end, aec_decode_init, aec_stream};
 
 pub(crate) struct Stream(aec_stream);
 
@@ -11,6 +11,8 @@ impl Stream {
         raw.flags = flags;
         Self(raw)
     }
+
+    pub(crate) fn set_output_samples(&mut self, _output_samples: usize) {}
 
     pub(crate) fn decode(&mut self, input: &[u8], output: &mut [u8]) -> Result<(), &'static str> {
         self.0.next_in = input.as_ptr();

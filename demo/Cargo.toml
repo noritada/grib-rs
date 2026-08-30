@@ -1,14 +1,16 @@
 [package]
 name = "grib-demo"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-gloo-file = { version = "0.3", features = ["futures"] }
-grib = { path = "..", version = "0.12.1", default-features = false, features = [
+gloo-file = { version = "0.4", features = ["futures"] }
+grib = { path = "..", version = "0.18.2", default-features = false, features = [
+    "jpeg2000-unpack-with-hayro",
     "png-unpack-with-png-crate",
+    "ccsds-unpack-with-rust-aec",
 ] }
 wasm-bindgen = "0.2"
 wasm-bindgen-futures = "0.4"
@@ -23,4 +25,4 @@ web-sys = { version = "0.3", features = [
     "CanvasRenderingContext2d",
     "ImageData",
 ] }
-yew = { version = "0.21", features = ["csr"] }
+yew = { version = "0.23", features = ["csr"] }

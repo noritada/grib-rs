@@ -1,14 +1,15 @@
 use std::vec::IntoIter;
 
 use crate::{
+    TryFromSlice as _,
     context::{SectionBody, SubMessage},
     decoder::{
-        bitmap::{dummy_bitmap_for_nonnullable_data, BitmapDecodeIterator},
+        bitmap::{BitmapDecodeIterator, dummy_bitmap_for_nonnullable_data},
         complex::ComplexPackingDecoded,
-        param::Section5Param,
         simple::SimplePackingDecoder,
         stream::NBitwiseIterator,
     },
+    def::grib2::{DataRepresentationTemplate, Section5},
     error::*,
     reader::Grib2Read,
 };
@@ -84,8 +85,7 @@ use crate::{
 /// ```
 pub struct Grib2SubmessageDecoder {
     num_points_total: usize,
-    sect5_param: Section5Param,
-    pub(crate) sect5_bytes: Vec<u8>,
+    sect5_param: Section5,
     sect6_bytes: Vec<u8>,
     sect7_bytes: Vec<u8>,
 }
@@ -101,7 +101,9 @@ impl Grib2SubmessageDecoder {
         sect6_bytes: Vec<u8>,
         sect7_bytes: Vec<u8>,
     ) -> Result<Self, GribError> {
-        let sect5_param = Section5Param::from_buf(&sect5_bytes[5..11]);
+        let mut pos = 0;
+        let sect5_param = Section5::try_from_slice(&sect5_bytes, &mut pos)
+            .map_err(|e| GribError::DecodeError(DecodeError::from(e)))?;
         let sect6_bytes = match sect6_bytes[5] {
             0x00 => sect6_bytes,
             0xff => {
@@ -113,14 +115,13 @@ impl Grib2SubmessageDecoder {
                 return Err(GribError::DecodeError(DecodeError::NotSupported(
                     "GRIB2 code table 6.0 (bit map indicator)",
                     n.into(),
-                )))
+                )));
             }
         };
 
         Ok(Self {
             num_points_total,
             sect5_param,
-            sect5_bytes,
             sect6_bytes,
             sect7_bytes,
         })
@@ -150,47 +151,118 @@ impl Grib2SubmessageDecoder {
     pub fn dispatch(
         &self,
     ) -> Result<Grib2DecodedValues<'_, impl Iterator<Item = f32> + '_>, GribError> {
-        let decoder = match self.sect5_param.template_num {
-            0 => Grib2ValueIterator::SigSNS(simple::Simple(self).iter()?),
-            2 => Grib2ValueIterator::SigSC(complex::Complex(self).iter()?),
-            3 => Grib2ValueIterator::SigSSCI(complex::ComplexSpatial(self).iter()?),
-            #[cfg(all(
+        let decoder = match &self.sect5_param.payload.template {
+            DataRepresentationTemplate::_5_0(template) => {
+                Grib2ValueIterator::SigSTNS(simple::Simple(self, template).iter()?)
+            }
+            DataRepresentationTemplate::_5_2(template) => {
+                Grib2ValueIterator::SigSC(complex::Complex(self, template).iter()?)
+            }
+            DataRepresentationTemplate::_5_3(template) => {
+                Grib2ValueIterator::SigSSCI(complex::ComplexSpatial(self, template).iter()?)
+            }
+            #[cfg(any(
                 feature = "jpeg2000-unpack-with-openjpeg",
-                feature = "jpeg2000-unpack-with-openjpeg-experimental"
+                feature = "jpeg2000-unpack-with-hayro"
             ))]
-            40 => Grib2ValueIterator::SigSIm(jpeg2000::Jpeg2000(self).iter()?),
-            #[cfg(all(
-                feature = "jpeg2000-unpack-with-openjpeg",
-                not(feature = "jpeg2000-unpack-with-openjpeg-experimental")
-            ))]
-            40 => Grib2ValueIterator::SigSI(jpeg2000::Jpeg2000(self).iter()?),
+            DataRepresentationTemplate::_5_40(template) => {
+                Grib2ValueIterator::SigSIm(jpeg2000::Jpeg2000(self, template).iter()?)
+            }
             #[cfg(feature = "png-unpack-with-png-crate")]
-            41 => Grib2ValueIterator::SigSNV(png::Png(self).iter()?),
-            #[cfg(feature = "ccsds-unpack-with-libaec")]
-            42 => Grib2ValueIterator::SigSNV(ccsds::Ccsds(self).iter()?),
-            200 => Grib2ValueIterator::SigI(run_length::RunLength(self).iter()?),
-            n => {
+            DataRepresentationTemplate::_5_41(template) => {
+                Grib2ValueIterator::SigSNV(png::Png(self, template).iter()?)
+            }
+            #[cfg(any(
+                feature = "ccsds-unpack-with-libaec",
+                feature = "ccsds-unpack-with-rust-aec"
+            ))]
+            DataRepresentationTemplate::_5_42(template) => {
+                Grib2ValueIterator::SigSNV(ccsds::Ccsds(self, template).iter()?)
+            }
+            DataRepresentationTemplate::_5_200(template) => {
+                Grib2ValueIterator::SigI(run_length::RunLength(self, template).iter()?)
+            }
+            #[allow(unreachable_patterns)]
+            _ => {
                 return Err(GribError::DecodeError(DecodeError::NotSupported(
                     "GRIB2 code table 5.0 (data representation template number)",
-                    n,
-                )))
+                    self.sect5_param.payload.template_num,
+                )));
             }
         };
-        let decoder = BitmapDecodeIterator::new(
-            self.sect6_bytes[6..].iter(),
-            decoder,
+
+        let bitmap_slice = &self.sect6_bytes[6..];
+        bitmap::check_consistency(
             self.num_points_total,
+            self.num_encoded_points(),
+            bitmap_slice,
         )?;
+        let decoder =
+            BitmapDecodeIterator::new(bitmap_slice.iter(), decoder, self.num_points_total);
         Ok(Grib2DecodedValues(decoder))
     }
 
-    pub(crate) fn num_points_encoded(&self) -> usize {
-        self.sect5_param.num_points_encoded as usize
+    pub(crate) fn num_encoded_points(&self) -> usize {
+        self.sect5_param.payload.num_encoded_points as usize
     }
 
     pub(crate) fn sect7_payload(&self) -> &[u8] {
         &self.sect7_bytes[5..]
     }
+
+    /// Provides access to the parameters in Section 5.
+    ///
+    /// # Examples
+    /// ```
+    /// use grib::Grib2SubmessageDecoder;
+    ///
+    /// fn main() -> Result<(), Box<dyn std::error::Error>> {
+    ///     let f = std::fs::File::open(
+    ///         "testdata/Z__C_RJTD_20160822020000_NOWC_GPV_Ggis10km_Pphw10_FH0000-0100_grib2.bin",
+    ///     )?;
+    ///     let f = std::io::BufReader::new(f);
+    ///     let grib2 = grib::from_reader(f)?;
+    ///     let (_index, first_submessage) = grib2.iter().next().unwrap();
+    ///
+    ///     let decoder = Grib2SubmessageDecoder::from(first_submessage)?;
+    ///     let actual = decoder.section5();
+    ///     let expected = grib::def::grib2::Section5 {
+    ///         header: grib::def::grib2::SectionHeader {
+    ///             len: 23,
+    ///             sect_num: 5,
+    ///         },
+    ///         payload: grib::def::grib2::Section5Payload {
+    ///             num_encoded_points: 86016,
+    ///             template_num: 200,
+    ///             template: grib::def::grib2::DataRepresentationTemplate::_5_200(
+    ///                 grib::def::grib2::template::Template5_200 {
+    ///                     num_bits: 8,
+    ///                     max_val: 3,
+    ///                     max_level: 3,
+    ///                     dec: 0,
+    ///                     level_vals: vec![1, 2, 3],
+    ///                 },
+    ///             ),
+    ///         },
+    ///     };
+    ///     assert_eq!(actual, &expected);
+    ///
+    ///     Ok(())
+    /// }
+    /// ```
+    pub fn section5(&self) -> &Section5 {
+        &self.sect5_param
+    }
+}
+
+pub(crate) fn orig_field_type_is_supported(orig_field_type: u8) -> Result<(), DecodeError> {
+    if orig_field_type != 0 {
+        return Err(DecodeError::NotSupported(
+            "GRIB2 code table 5.1 (type of original field values)",
+            orig_field_type.into(),
+        ));
+    }
+    Ok(())
 }
 
 pub struct Grib2DecodedValues<'b, I>(BitmapDecodeIterator<std::slice::Iter<'b, u8>, I>);
@@ -213,7 +285,7 @@ where
 }
 
 enum Grib2ValueIterator<'d> {
-    SigSNS(SimplePackingDecoder<NBitwiseIterator<&'d [u8]>>),
+    SigSTNS(SimplePackingDecoder<std::iter::Take<NBitwiseIterator<&'d [u8]>>>),
     SigSC(SimplePackingDecoder<ComplexPackingDecoded<'d>>),
     SigSSCI(
         SimplePackingDecoder<
@@ -222,7 +294,10 @@ enum Grib2ValueIterator<'d> {
     ),
     #[allow(dead_code)]
     SigSI(SimplePackingDecoder<IntoIter<i32>>),
-    #[cfg(feature = "jpeg2000-unpack-with-openjpeg-experimental")]
+    #[cfg(any(
+        feature = "jpeg2000-unpack-with-openjpeg",
+        feature = "jpeg2000-unpack-with-hayro"
+    ))]
     SigSIm(SimplePackingDecoder<self::jpeg2000::ImageIntoIter>),
     #[allow(dead_code)]
     SigSNV(SimplePackingDecoder<NBitwiseIterator<Vec<u8>>>),
@@ -234,11 +309,14 @@ impl<'d> Iterator for Grib2ValueIterator<'d> {
 
     fn next(&mut self) -> Option<Self::Item> {
         match self {
-            Self::SigSNS(inner) => inner.next(),
+            Self::SigSTNS(inner) => inner.next(),
             Self::SigSC(inner) => inner.next(),
             Self::SigSSCI(inner) => inner.next(),
             Self::SigSI(inner) => inner.next(),
-            #[cfg(feature = "jpeg2000-unpack-with-openjpeg-experimental")]
+            #[cfg(any(
+                feature = "jpeg2000-unpack-with-openjpeg",
+                feature = "jpeg2000-unpack-with-hayro"
+            ))]
             Self::SigSIm(inner) => inner.next(),
             Self::SigSNV(inner) => inner.next(),
             Self::SigI(inner) => inner.next(),
@@ -247,11 +325,14 @@ impl<'d> Iterator for Grib2ValueIterator<'d> {
 
     fn size_hint(&self) -> (usize, Option<usize>) {
         match self {
-            Self::SigSNS(inner) => inner.size_hint(),
+            Self::SigSTNS(inner) => inner.size_hint(),
             Self::SigSC(inner) => inner.size_hint(),
             Self::SigSSCI(inner) => inner.size_hint(),
             Self::SigSI(inner) => inner.size_hint(),
-            #[cfg(feature = "jpeg2000-unpack-with-openjpeg-experimental")]
+            #[cfg(any(
+                feature = "jpeg2000-unpack-with-openjpeg",
+                feature = "jpeg2000-unpack-with-hayro"
+            ))]
             Self::SigSIm(inner) => inner.size_hint(),
             Self::SigSNV(inner) => inner.size_hint(),
             Self::SigI(inner) => inner.size_hint(),
@@ -260,6 +341,7 @@ impl<'d> Iterator for Grib2ValueIterator<'d> {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[non_exhaustive]
 pub enum DecodeError {
     NotSupported(&'static str, u16),
     LengthMismatch,
@@ -287,14 +369,22 @@ pub(crate) trait Grib2GpvUnpack {
 }
 
 mod bitmap;
-#[cfg(feature = "ccsds-unpack-with-libaec")]
+#[cfg(any(
+    feature = "ccsds-unpack-with-libaec",
+    feature = "ccsds-unpack-with-rust-aec"
+))]
 mod ccsds;
 mod complex;
-#[cfg(feature = "jpeg2000-unpack-with-openjpeg")]
+mod helpers;
+#[cfg(any(
+    feature = "jpeg2000-unpack-with-openjpeg",
+    feature = "jpeg2000-unpack-with-hayro"
+))]
 mod jpeg2000;
-mod param;
 #[cfg(feature = "png-unpack-with-png-crate")]
 mod png;
 mod run_length;
 mod simple;
 mod stream;
+#[cfg(test)]
+mod tests;

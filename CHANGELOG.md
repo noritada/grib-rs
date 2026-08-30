@@ -7,11 +7,523 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.18.2] - 2026-08-29
+### New supports
+
+- Reading, accessing, dumping, and writing section/template parameters:
+  - Templates 5.50002 (defined by Météo-France)
+    (#140, PR #218)
+
+### Fixes
+
+- Fixed support for templates 3.2, 3.3, 3.10, 3.41, 3.42, and 3.43.
+  Although template structs were defined, they were not linked to `Section3Payload`.
+  (PR #217)
+
+### Versions
+
+```
+grib 0.18.2
+grib-cli 0.18.2
+```
+
+## [0.18.1] - 2026-08-25
+### Enhancements
+
+- Trait implementations are added to improve the usability:
+  - `Clone` for structs and enums under `def::grib2`
+  - public traits (e.g. `encoder::WriteGrib2Ident`) for references
+  (PR #216)
+
+### Versions
+
+```
+grib 0.18.1
+grib-cli 0.18.1
+grib-template-derive 0.2.1
+grib-template-helpers 0.2.1
+```
+
+## [0.18.0] - 2026-08-22
+### New supports
+
+- Reading, accessing, dumping, and writing section/template parameters:
+  - Templates 3.2, 3.3, 3.10, 3.41, 3.42, 3.43
+    (#140, PR #213)
+  - Template 4.0, 4.1, 4.2, 4.5, 4.6
+    (#140, PR #207, PR #208, PR #210)
+
+### Enhancements
+
+- The `WriteToBuffer` trait is now implemented for `Section4Payload`.
+  (PR #207)
+- The `MissingValue` trait has been added to check whether integer parameter values in templates are missing values.
+  (PR #214)
+
+### Breaking changes
+
+- Due to changes in how field descriptions are handled, the signature of `Dump::dump` has changed.
+  (PR #206, PR #210)
+- `def::grib2::RefTime` has now renamed to `def::grib2::template::param_set::DateTime`, which is also intended to be used to represent other data components that denote dates and times.
+  (PR #208)
+- The 7 fields of `def::grib3::template::param_set::EarthShape` have been reorganized into 4 through nesting.
+  (PR #208)
+- The `rotated` field in `def::grib2::Template3_1` has been renamed to `lat_lon`.
+  (PR #213)
+- `FixedSurface::scale_factor_is_nan` and `FixedSurface::value_is_nan` have been removed because their functionality has been replaced by the more general-purpose `MissingValue` trait.
+  Please rewrite your code to use `MissingValue::is_missing`.
+  (PR #214)
+
+### Enhancements to helper crates
+
+- The `Dump` trait provided by grib-template-helpers now allows parent struct fields to override the descriptions of each template parameters (child struct fields) to be displayed for nested structs.
+  This makes it easier to reuse structs.
+  (PR #206, PR #210)
+
+### Versions
+
+```
+grib 0.18.0
+grib-cli 0.18.0
+grib-template-derive 0.2.0
+grib-template-helpers 0.2.0
+```
+
+## [0.17.1] - 2026-08-11
+### Fixes
+
+- Fixed a panic in encoding large finite ranges using simple packing.
+  (#189 (thanks @amoutiers), PR #190 (thanks @amoutiers))
+- Corrected the decoding of unsigned integers that were ultimately packed using complex packing. There was a potential issue where the decoded result would be an incorrect value when those integers were quite large.
+  (PR #204)
+
+### Versions
+
+```
+grib 0.17.1
+grib-cli 0.17.1
+```
+
+## [0.17.0] - 2026-08-02
+### Enhancements
+
+- Public traits defined in `grib-template-helpers` crate are now re-exported in the library crate.
+  It was not ideal for users to have to be aware of the `grib-template-helpers` helper crate.
+  (PR #198)
+- The encoder API (formerly the data encoding API) has been significantly enhanced:
+  - A high-level API has been added. Previously, it was impossible to output GRIB2 messages without understanding the section structure within a message, but using the new high-level API makes it somewhat easier to output GRIB2 messages.
+    (PR #199, PR #200, PR #201, PR #202)
+  - Since the API has grown large enough to require separation from the main API namespace, it has been spun off into a separate "encoder" module.
+    (PR #201)
+  - Documentation has also been added.
+  (PR #201)
+
+### Breaking changes
+
+- All public functions in the encoder API have been replaced with traits in the low-level API and structs in the high-level API.
+  (PR #199)
+
+### Others
+
+- Decoding logic tests are relocated from the CLI crate to the library crate.
+  (PR #197)
+
+### Versions
+
+```
+grib 0.17.0
+grib-cli 0.17.0
+```
+
+## [0.16.0] - 2026-07-18
+### Enhancements
+
+- Pure-Rust backends for following decoding supports are now available:
+  - Template 5.40/7.40 (JPEG 2000 code stream format)
+    (#191 (thanks @amoutiers), PR #192 (thanks @amoutiers))
+  - Template 5.42/7.42 (CCSDS recommended lossless compression)
+    (#185 (thanks @amoutiers), PR #186 (thanks @amoutiers), #187 (thanks @amoutiers), PR #188 (thanks @amoutiers))
+- `wasm-default` feature has been added to provide better defaults for WebAssembly builds.
+    (PR #195)
+
+### Breaking changes
+
+- The `non_exhaustive` attribute has been added to most of public enums to make them extensible;
+  it is now possible to add enum variants for new error kinds, newly supported templates, and new user options without breaking backward compatibility.
+  (PR #193)
+
+### Versions
+
+```
+grib 0.16.0
+grib-cli 0.16.0
+```
+
+## [0.15.6] - 2026-04-27
+### New supports
+
+- Reading, accessing, and dumping section/template parameters:
+  - Template 3.101
+    (#140, #167, PR #184)
+
+### Enhancements to helper crates
+
+- `TryFromSlice`, `WriteToBuffer`, and `Dump` traits, which are provided by grib-template-helpers, are now implemented by `[u8; N]`.
+  (PR #184)
+- Conversion between unsigned integer values and non-standard-length byte sequences is now supported by derive macros `TryFromSlice`, `WriteToBuffer`, and `Dump`, which are provided by grib-template-derive.
+  (PR #184)
+
+### Versions
+
+```
+grib 0.15.6
+grib-cli 0.15.6
+grib-template-derive 0.1.6
+grib-template-helpers 0.1.4
+```
+
+## [0.15.5] - 2026-04-24
+### Enhancements
+
+- `Grib2SubmessageDecoder` now runs a consistency check between the number of grid points and the bit-map before decoding.
+  (PR #182)
+
+### Fixes
+
+- Fix an issue in v0.15.4 that the number of points becomes inconsistent in the generated data containing a bit-map.
+  (PR #181)
+
+### Versions
+
+```
+grib 0.15.5
+grib-cli 0.15.5
+```
+
+## [0.15.4] - 2026-04-21
+### Enhancements
+
+- Data encoding API now supports generating a bit-map from NaN values.
+  (PR #178)
+
+### Fixes
+
+- Fix a minor bug in the iterator length handling in the bit-map decoding.
+  This bug caused NaN padding to be added at the end when the total number of grid points was not divisible by 8 and a bit-map was being used.
+  (PR #179)
+
+### Versions
+
+```
+grib 0.15.4
+grib-cli 0.15.4
+```
+
+## [0.15.3] - 2026-04-17
+### Enhancements
+
+- As with the struct for Section 1 (`def::grib2::Section1Payload`), users can now configure parameters for the struct for Section 3 (`def::grib2::Section3Payload`) and export them as binary data that forms part of the GRIB2 data.
+  (PR #177)
+
+### Versions
+
+```
+grib 0.15.3
+grib-cli 0.15.3
+grib-template-derive 0.1.5
+```
+
+## [0.15.2] - 2026-04-16
+### New supports
+
+- Data encoding methods:
+  - simple packing
+    (PR #172)
+  - complex packing
+    (PR #174, PR #176)
+
+### Enhancements
+
+- Data encoding API is newly available.
+  (PR #172, PR #173, PR #175)
+
+### Versions
+
+```
+grib 0.15.2
+grib-cli 0.15.2
+grib-template-derive 0.1.4
+grib-template-helpers 0.1.3
+```
+
+## [0.15.1] - 2026-04-13
+### Fixes
+
+- Correct wrong multipliers used for latitudes and longitudes.
+  The behavior has now been corrected for following conditions:
+  - rotated latitude/longitude grids with `def::grib2::template::param_set::Rotation::rot_angle` being non-zero
+  - latitude/longitude, rotated latitude/longitude, and Gaussian latitude/longitude grids with `def::grib2::template::param_set::Grid::initial_production_domain_basic_angle` being non-zero
+   (#170 (thanks @CraigglesO), PR #171)
+
+### Versions
+
+```
+grib 0.15.1
+grib-cli 0.15.1
+```
+
+## [0.15.0] - 2026-04-01
+### Breaking changes
+
+- Type improvements:
+  - The type of longitude parameters such as `def::grib2::template::param_set::Grid::first_point_lon` has been changed from a 32-bit signed integer to a 32-bit unsigned integer, in accordance with GRIB2 regulations.
+    (PR #169)
+
+### Versions
+
+```
+grib 0.15.0
+grib-cli 0.15.0
+```
+
+## [0.14.0] - 2026-03-25
+### New supports
+
+- Rotated latitude/longitude grids (Template 3.1)
+  (#154 (thanks @g1mv), PR #157)
+- Reading, accessing, and dumping section/template parameters:
+  - Templates 3.0, 3.1, 3.20, 3.30, 3.40
+    (#140, PR #162, PR #163)
+
+### Enhancements
+
+- `GridShortName`, `GridPointIndex`, and `LatLons` traits are newly introduced for grid-related functionalities.
+  (PR #165)
+
+### Breaking changes
+
+- Type improvements:
+  - `UtcDateTime` has now been replaced by its equivalent type `def::grib2::RefTime`.
+    (PR #159)
+  - `SubMessage::dump` now returns `std::io::Error` instead of `GribError` since this method has been returning only standard IO errors since v0.13.3.
+    (PR #159)
+  - Types for grid definition parameters are replaced by ones under `def::grib2`. For example, `EarthShapeDefinitions` is replaced by `def::grib2::template::param_set::EarthShape`.
+    (PR #162)
+  - Methods `short_name`, `grid_shape`, `ij`, and `latlons` defined for each grids has been replaced by trait methods `GridShortName::short_name`, `GridPointIndex::grid_shape`, `GridPointIndex::ij`, and `LatLons::latlons`, respectively.
+    (PR #165)
+  - `SubMessage::latlons` has been replaced by a trait method `LatLons::latlons`.
+    (PR #165)
+  - `GridPointIterator`, a simple enum that merely wrapped multiple iterator instances into one, has been replaced by enum `GridPointLatLons`.
+    (PR #166)
+- Experimental feature `jpeg2000-unpack-with-openjpeg-experimental` has now been removed. That implementation is now available in `jpeg2000-unpack-with-openjpeg`.
+  (#93 (thanks @sawyerzhu), PR #159)
+- Latitude values returned from `latlons` methods, which are redefined as a trait method `LatLons::latlons` as mentioned above, are now normalized to the range `[-180°, 180°]`. If you want to use unnormalized values, please use `LatLons::latlons_unchecked` instead.
+  (#106 (thanks @coredoesdev), #114 (thanks @ejd), PR #168)
+
+### Enhancements to helper crates
+
+- grib-template-derive now supports tuple structs, which are used for implementation of GRIB2 flags in the main crate.
+  (PR #161)
+
+### Versions
+
+```
+grib 0.14.0
+grib-cli 0.14.0
+grib-template-derive 0.1.3
+grib-template-helpers 0.1.2
+```
+
+## [0.13.7] - 2026-02-26
+### Enhancements
+
+- `num_bits` warning flood during parallel file decode with the PNG format decoder is now avoided.
+  (PR #158 (thanks @andyfangdz))
+- Decoding of data encoded in the PNG format with a non-zero `num_bits` value is now regarded as tested.
+  (PR #158 (thanks @andyfangdz), PR #160)
+
+### Versions
+
+```
+grib 0.13.7
+grib-cli 0.13.7
+```
+
+## [0.13.6] - 2026-02-18
+### Fixes
+
+-  Fix an issue where the decoded iterator length of simple packing could be slightly longer.
+   This issue could occur when `(num_bits * num_encoded_points / 8).floor()` was equal to `(num_bits * (num_encoded_points + 1) / 8).floor()`.
+   (PR #156)
+
+### Fixes to helper crates
+
+-  Fix an `ambiguous_derive_helpers` warning from nightly compiler, which will be a hard error in a futuer compiler release.
+   (PR #155)
+
+### Versions
+
+```
+grib 0.13.6
+grib-cli 0.13.6
+grib-template-derive 0.1.2
+```
+
+## [0.13.5] - 2025-10-31
+### Fixes
+
+-  Fix an error in the decoding logic for CCSDS recommended lossless compression.
+   This issue concerned the calculation of the number of octets and occurred when the parameter `num_bits` was a multiple of 8.
+   (#150 (thanks @KMarshland), PR #151)
+
+### Versions
+
+```
+grib 0.13.5
+grib-cli 0.13.5
+```
+
+## [0.13.4] - 2025-10-19
+### New supports
+
+- Reading, accessing, and dumping section/template parameters:
+  - Sections 3, 4, 6
+    (#140, PR #149)
+
+### Enhancements
+
+- Following new methods are now available:
+  - `SubMessage::section3()`, `SubMessage::section4()` and `SubMessage::section6()` to access the parameters in Sections 3, 4, and 6 of the submessage respectively
+    (#140, PR #149)
+
+### Versions
+
+```
+grib 0.13.4
+grib-cli 0.13.4
+```
+
+## [0.13.3] - 2025-10-16
+### Fixes
+
+- `SubMessage::dump()` now properly dumps sections that were read correctly and displays errors for sections that were not.
+  Previously, if even 1 section failed to read, the entire dump would fail.
+  (PR #147)
+
+### Enhancements for CLI application `gribber`
+
+- The "dump" subcommand now colors dump output by default.
+  Using the `--no-color` option suppresses color output.
+  (PR #146, PR #148)
+
+### Versions
+
+```
+grib 0.13.3
+grib-cli 0.13.3
+```
+
+## [0.13.2] - 2025-10-13
+### New supports
+
+- Reading, accessing, and dumping section/template parameters:
+  - Section 1
+    (#140, PR #145)
+  - Templates 1.0, 1.1, 1.2
+    (#140, PR #145)
+
+### Enhancements
+
+- Following new methods are now available:
+  - `SubMessage::section1()` to access the parameters in Section 1 (and its template) of the submessage
+    (#140, PR #145)
+
+### Documentation improvements
+
+- Documentation of parameter definition modules introduced at v0.13.1.
+- Version information is now included in the CHANGELOG.md for all crates within the workspace.
+
+### Versions
+
+```
+grib 0.13.2
+grib-cli 0.13.2
+grib-template-derive 0.1.1
+grib-template-helpers 0.1.1
+```
+
+## [0.13.1] - 2025-10-07
+### New supports
+
+- Reading, accessing, and dumping section/template parameters:
+  - Section 5
+    (#140, PR #142, PR #144)
+  - Templates 5.0, 5.1, 5.2, 5.3, 5.4, 5.40, 5.41, 5.42, 5.50, 5.51, 5.53, 5.61, 5.200
+    (#140, PR #142, PR #144)
+
+### Enhancements
+
+- Following new methods are now available:
+  - `SubMessage::section5()` to access the parameters in Section 5 (and its template) of the submessage
+    (#140, PR #141, PR #142)
+  - `SubMessage::dump()` to dump the parameters in Section 5 (and its template) of the submessage
+    (#140, PR #141, PR #142)
+  - `Grib2SubmessageDecoder::section5()` to access the parameters in Section 5 (and its template) of the submessage
+    (#140, PR #141, PR #142)
+
+### Enhancements for CLI application `gribber`
+
+- New subcommand "dump" to dump the content of a GRIB submessage is now available.
+  (#140, PR #143)
+
+### Versions
+
+```
+grib 0.13.1
+grib-cli 0.13.1
+grib-template-derive 0.1.0
+grib-template-helpers 0.1.0
+```
+
+## [0.13.0] - 2025-09-26
+### Enhancements
+
+- The separation of optional dependencies into crate features is now complete.
+  Please enable or disable features as needed.
+  - Decoding implementations requiring other crates have been split into separate crate features,
+    allowing users who don't need them to disable them at build time.
+    (#132, #134, #135)
+  - As the number of crate features has increased, the `default` feature has been configured.
+    (#137)
+- Decoding performance improved for JPEG 2000 code stream format data.
+  This improvement is currently available only when an experimental feature called `jpeg2000-unpack-with-openjpeg-experimental` is enabled.
+  (#93, #136)
+
+### Others
+
+- Updated to the Rust 2024 Edition.
+  (#139)
+
+### Versions
+
+```
+grib 0.13.0
+grib-build 0.4.4
+grib-cli 0.13.0
+```
+
 ## [0.12.1] - 2025-09-21
 ### Documentation improvements
 
 - Crate-level documentation.
   (#138)
+
+### Versions
+
+```
+grib 0.12.1
+grib-cli 0.12.1
+```
 
 ## [0.12.0] - 2025-09-08
 ### Enhancements
@@ -28,6 +540,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Updated dependencies on `png` and `proj` crates.
 
+### Versions
+
+```
+grib 0.12.0
+grib-cli 0.12.0
+```
+
 ## [0.11.2] - 2025-08-05
 ### New supports
 
@@ -39,6 +558,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fixed API documentation build failure on docs.rs
   (#124)
+
+### Versions
+
+```
+grib 0.11.2
+grib-cli 0.11.2
+```
 
 ## [0.11.1] - 2025-07-14
 ### Documentation improvements
@@ -52,6 +578,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Correct the dependency on chrono to fix a build failure
   (#123)
+
+### Versions
+
+```
+grib 0.11.1
+grib-cli 0.11.1
+```
 
 ## [0.11.0] - 2025-07-12
 ### New supports
@@ -98,11 +631,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - As usual, updated dependencies.
   (e.g. #116 (thanks @ejd))
 
+### Versions
+
+```
+grib 0.11.0
+grib-cli 0.11.0
+```
+
 ## [0.10.2] - 2024-10-02
 ### Fixed
 
 - Library `grib`
   - Fixed longitude computation failures in the regular lat/lon and Gaussian grids when start/end latitudes are inconsistent with scanning mode. (#51, #103, #104)
+
+### Versions
+
+```
+grib 0.10.2
+grib-cli 0.10.2
+```
 
 ## [0.10.1] - 2024-08-12
 ### Changed
@@ -114,6 +661,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Library `grib`
   - Fixed a possible issue that decoders returned wrong values when nbit is 0 and D is not 0, although no such data have been found so far. (#96)
+
+### Versions
+
+```
+grib 0.10.1
+grib-cli 0.10.1
+```
 
 ## [0.10.0] - 2024-07-04
 ### Added
@@ -139,6 +693,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Thanks for sharing the data that cannot be processed.
   - @BruAPAHE (#85)
 
+### Versions
+
+```
+grib 0.10.0
+grib-cli 0.10.0
+```
+
 ## [0.9.2] - 2024-05-24
 ### Added
 
@@ -151,6 +712,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Thanks for sharing the data that cannot be processed.
   - @animus27 (#77)
 
+### Versions
+
+```
+grib 0.9.2
+grib-cli 0.9.2
+```
+
 ## [0.9.1] - 2024-04-03
 ### Fixed
 
@@ -161,6 +729,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Thanks for reporting a bug and providing its fix.
   - @shastro (#75, #76)
+
+### Versions
+
+```
+grib 0.9.1
+grib-build 0.4.3
+grib-cli 0.9.1
+```
 
 ## [0.9.0] - 2024-02-04
 
@@ -183,6 +759,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Improved the module structure to make the source code a little more readable and easier to contribute. (#66)
 - Others
   - Improved descriptions on template support in README. (#74)
+
+### Versions
+
+```
+grib 0.9.0
+grib-cli 0.9.0
+```
 
 ## [0.8.0] - 2023-11-11
 ### Added
@@ -217,6 +800,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Thanks for sharing the data that cannot be processed.
   - @sapiennervosa (#59)
 
+### Versions
+
+```
+grib 0.8.0
+grib-cli 0.8.0
+```
+
 ## [0.7.1] - 2023-04-20
 ### Added
 
@@ -229,6 +819,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Library `grib`
   - Fixed an issue that `size_hint()` results do not change after consuming iterator items. (#50, #54)
+
+### Versions
+
+```
+grib 0.7.1
+grib-cli 0.7.1
+```
 
 ## [0.7.0] - 2023-02-09
 ### Added
@@ -261,6 +858,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Thanks for reporting issues fixed in this release:
   - @LafeWessel (#37, #38)
 
+### Versions
+
+```
+grib 0.7.0
+grib-build 0.4.2
+grib-cli 0.7.0
+```
+
 ## [0.6.1] - 2023-01-29
 ### Added
 
@@ -292,6 +897,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Thanks for reporting issues concerning this release:
   - @LafeWessel (#29, #32)
+
+### Versions
+
+```
+grib 0.6.1
+grib-build 0.4.1
+grib-cli 0.6.1
+```
 
 ## [0.6.0] - 2022-11-13
 ### Added
@@ -341,6 +954,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CLI application `gribber` built on the top of the Rust library
   - Fixed an issue that "Something unexpected happend" is shown when a wrong message index is given to the "decode" subcommand
 
+### Versions
+
+```
+grib 0.6.0
+grib-build 0.4.0
+grib-cli 0.6.0
+```
+
 ## [0.5.0] - 2022-07-10
 ### Added
 
@@ -360,12 +981,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Thanks for sending PRs to this release:
   - @resistor (#18)
 
+### Versions
+
+```
+grib 0.5.0
+```
+
 ## [0.4.3] - 2022-01-15
 
 ### Changed
 
 - CLI application `gribber` built on the top of the Rust library
   - The performance of the "decode" subcommand is improved for big-endian binary output.
+
+### Versions
+
+```
+grib 0.4.3
+```
 
 ## [0.4.2] - 2022-01-13
 
@@ -375,11 +1008,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - The performance of the "decode" subcommand is improved.
   - The version of `clap` used is now 3 (no change in behavior except for messages).
 
+### Versions
+
+```
+grib 0.4.2
+```
+
 ## [0.4.1] - 2022-01-03
 ### Added
 
 - Library `grib`
   - Simple and easy-to-use reading APIs `from_reader())` and `from_slice()`.
+
+### Versions
+
+```
+grib 0.4.1
+```
 
 ## [0.4.0] - 2021-12-29
 ### Added
@@ -408,6 +1053,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - @crepererum
   - @mulimoen
 
+### Versions
+
+```
+grib 0.4.0
+grib-build 0.3.0
+```
+
 ## [0.3.0] - 2021-05-04
 ### Added
 
@@ -432,6 +1084,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - "inspect" now shows sections and templates used in each surface (submessage).
   - "list" now shows attributes of each surface, such as an element name and forecast time.
 
+### Versions
+
+```
+grib 0.3.0
+grib-build 0.2.0
+```
+
 ## [0.2.0] - 2021-01-24
 ### Added
 
@@ -449,6 +1108,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CLI application `gribber` built on the top of the Rust library
   - Try to colorize even when using a pager.
 
+### Versions
+
+```
+grib 0.2.0
+grib-build 0.1.0
+```
+
 ## [0.1.0] - 2020-06-07
 ### Added
 
@@ -464,7 +1130,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - inspect: display of information mainly for development purpose such as template numbers
     - list: display of a list of sections (the style is still tentative)
 
-[unreleased]: https://github.com/noritada/grib-rs/compare/v0.12.1...HEAD
+### Versions
+
+```
+grib 0.1.0
+```
+
+[unreleased]: https://github.com/noritada/grib-rs/compare/v0.18.2...HEAD
+[0.18.2]: https://github.com/noritada/grib-rs/compare/v0.18.1...v0.18.2
+[0.18.1]: https://github.com/noritada/grib-rs/compare/v0.18.0...v0.18.1
+[0.18.0]: https://github.com/noritada/grib-rs/compare/v0.17.1...v0.18.0
+[0.17.1]: https://github.com/noritada/grib-rs/compare/v0.17.0...v0.17.1
+[0.17.0]: https://github.com/noritada/grib-rs/compare/v0.16.0...v0.17.0
+[0.16.0]: https://github.com/noritada/grib-rs/compare/v0.15.6...v0.16.0
+[0.15.6]: https://github.com/noritada/grib-rs/compare/v0.15.5...v0.15.6
+[0.15.5]: https://github.com/noritada/grib-rs/compare/v0.15.4...v0.15.5
+[0.15.4]: https://github.com/noritada/grib-rs/compare/v0.15.3...v0.15.4
+[0.15.3]: https://github.com/noritada/grib-rs/compare/v0.15.2...v0.15.3
+[0.15.2]: https://github.com/noritada/grib-rs/compare/v0.15.1...v0.15.2
+[0.15.1]: https://github.com/noritada/grib-rs/compare/v0.15.0...v0.15.1
+[0.15.0]: https://github.com/noritada/grib-rs/compare/v0.14.0...v0.15.0
+[0.14.0]: https://github.com/noritada/grib-rs/compare/v0.13.7...v0.14.0
+[0.13.7]: https://github.com/noritada/grib-rs/compare/v0.13.6...v0.13.7
+[0.13.6]: https://github.com/noritada/grib-rs/compare/v0.13.5...v0.13.6
+[0.13.5]: https://github.com/noritada/grib-rs/compare/v0.13.4...v0.13.5
+[0.13.4]: https://github.com/noritada/grib-rs/compare/v0.13.3...v0.13.4
+[0.13.3]: https://github.com/noritada/grib-rs/compare/v0.13.2...v0.13.3
+[0.13.2]: https://github.com/noritada/grib-rs/compare/v0.13.1...v0.13.2
+[0.13.1]: https://github.com/noritada/grib-rs/compare/v0.13.0...v0.13.1
+[0.13.0]: https://github.com/noritada/grib-rs/compare/v0.12.1...v0.13.0
 [0.12.1]: https://github.com/noritada/grib-rs/compare/v0.12.0...v0.12.1
 [0.12.0]: https://github.com/noritada/grib-rs/compare/v0.11.2...v0.12.0
 [0.11.2]: https://github.com/noritada/grib-rs/compare/v0.11.1...v0.11.2

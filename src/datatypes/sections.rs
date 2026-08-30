@@ -1,15 +1,8 @@
 use std::slice::Iter;
 
 use crate::{
-    codetables::SUPPORTED_PROD_DEF_TEMPLATE_NUMBERS,
-    datatypes::*,
-    error::*,
-    grid::{
-        GaussianGridDefinition, GridPointIterator, LambertGridDefinition, LatLonGridDefinition,
-    },
-    helpers::{read_as, GribInt},
-    time::UtcDateTime,
-    GridPointIndexIterator, PolarStereographicGridDefinition,
+    TryFromSlice, codetables::SUPPORTED_PROD_DEF_TEMPLATE_NUMBERS, datatypes::*, error::*,
+    helpers::read_as,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -22,24 +15,23 @@ pub struct Indicator {
 
 impl Indicator {
     pub(crate) fn from_slice(slice: &[u8]) -> Result<Self, ParseError> {
-        let discipline = slice[6];
-        let version = slice[7];
-        if version != 2 {
-            return Err(ParseError::GRIBVersionMismatch(version));
+        let mut pos = 0;
+        let sect = crate::def::grib2::Section0::try_from_slice(slice, &mut pos)
+            .map_err(|_e| ParseError::UnexpectedEndOfData(0))?;
+        if sect.edition_num != 2 {
+            return Err(ParseError::GRIBVersionMismatch(sect.edition_num));
         }
 
-        let total_length = read_as!(u64, slice, 8);
-
         Ok(Self {
-            discipline,
-            total_length,
+            discipline: sect.discipline,
+            total_length: sect.total_len,
         })
     }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Identification {
-    payload: Box<[u8]>,
+    pub(crate) payload: Box<[u8]>,
 }
 
 impl Identification {
@@ -95,16 +87,10 @@ impl Identification {
     /// This method returns unchecked data, so for example, if the data contains
     /// a "date and time" such as "2000-13-32 25:61:62", it will be returned as
     /// is.
-    pub fn ref_time_unchecked(&self) -> UtcDateTime {
-        let payload = &self.payload;
-        UtcDateTime::new(
-            read_as!(u16, payload, 7),
-            payload[9],
-            payload[10],
-            payload[11],
-            payload[12],
-            payload[13],
-        )
+    pub fn ref_time_unchecked(&self) -> crate::def::grib2::template::param_set::DateTime {
+        let mut pos = 7;
+        crate::def::grib2::template::param_set::DateTime::try_from_slice(&self.payload, &mut pos)
+            .unwrap()
     }
 
     /// Production status of processed data in this GRIB message
@@ -138,7 +124,7 @@ impl LocalUse {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct GridDefinition {
-    payload: Box<[u8]>,
+    pub(crate) payload: Box<[u8]>,
 }
 
 impl GridDefinition {
@@ -168,133 +154,11 @@ impl GridDefinition {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
-pub enum GridDefinitionTemplateValues {
-    Template0(LatLonGridDefinition),
-    Template20(PolarStereographicGridDefinition),
-    Template30(LambertGridDefinition),
-    Template40(GaussianGridDefinition),
-}
-
-impl GridDefinitionTemplateValues {
-    /// Returns the shape of the grid, i.e. a tuple of the number of grids in
-    /// the i and j directions.
-    pub fn grid_shape(&self) -> (usize, usize) {
-        match self {
-            Self::Template0(def) => def.grid_shape(),
-            Self::Template20(def) => def.grid_shape(),
-            Self::Template30(def) => def.grid_shape(),
-            Self::Template40(def) => def.grid_shape(),
-        }
-    }
-
-    /// Returns the grid type.
-    ///
-    /// The grid types are denoted as short strings based on `gridType` used in
-    /// ecCodes.
-    ///
-    /// This is provided primarily for debugging and simple notation purposes.
-    /// It is better to use enum variants instead of the string notation to
-    /// determine the grid type.
-    pub fn short_name(&self) -> &'static str {
-        match self {
-            Self::Template0(def) => def.short_name(),
-            Self::Template20(def) => def.short_name(),
-            Self::Template30(def) => def.short_name(),
-            Self::Template40(def) => def.short_name(),
-        }
-    }
-
-    /// Returns an iterator over `(i, j)` of grid points.
-    ///
-    /// Note that this is a low-level API and it is not checked that the number
-    /// of iterator iterations is consistent with the number of grid points
-    /// defined in the data.
-    pub fn ij(&self) -> Result<GridPointIndexIterator, GribError> {
-        match self {
-            Self::Template0(def) => def.ij(),
-            Self::Template20(def) => def.ij(),
-            Self::Template30(def) => def.ij(),
-            Self::Template40(def) => def.ij(),
-        }
-    }
-
-    /// Returns an iterator over latitudes and longitudes of grid points in
-    /// degrees.
-    ///
-    /// Note that this is a low-level API and it is not checked that the number
-    /// of iterator iterations is consistent with the number of grid points
-    /// defined in the data.
-    pub fn latlons(&self) -> Result<GridPointIterator, GribError> {
-        let iter = match self {
-            Self::Template0(def) => GridPointIterator::LatLon(def.latlons()?),
-            #[cfg(feature = "gridpoints-proj")]
-            Self::Template20(def) => GridPointIterator::Lambert(def.latlons()?),
-            #[cfg(feature = "gridpoints-proj")]
-            Self::Template30(def) => GridPointIterator::Lambert(def.latlons()?),
-            Self::Template40(def) => GridPointIterator::LatLon(def.latlons()?),
-            #[cfg(not(feature = "gridpoints-proj"))]
-            _ => {
-                return Err(GribError::NotSupported(
-                    "lat/lon computation support for the template is dropped in this build"
-                        .to_owned(),
-                ))
-            }
-        };
-        Ok(iter)
-    }
-}
-
-impl TryFrom<&GridDefinition> for GridDefinitionTemplateValues {
-    type Error = GribError;
-
-    fn try_from(value: &GridDefinition) -> Result<Self, Self::Error> {
-        let num = value.grid_tmpl_num();
-        match num {
-            0 => {
-                let buf = &value.payload;
-                if buf.len() > 67 {
-                    return Err(GribError::NotSupported(format!(
-                        "template {num} with list of number of points"
-                    )));
-                }
-                Ok(GridDefinitionTemplateValues::Template0(
-                    LatLonGridDefinition::from_buf(&buf[25..]),
-                ))
-            }
-            20 => {
-                let buf = &value.payload;
-                Ok(GridDefinitionTemplateValues::Template20(
-                    PolarStereographicGridDefinition::from_buf(&buf[9..]),
-                ))
-            }
-            30 => {
-                let buf = &value.payload;
-                Ok(GridDefinitionTemplateValues::Template30(
-                    LambertGridDefinition::from_buf(&buf[9..]),
-                ))
-            }
-            40 => {
-                let buf = &value.payload;
-                if buf.len() > 67 {
-                    return Err(GribError::NotSupported(format!(
-                        "template {num} with list of number of points"
-                    )));
-                }
-                Ok(GridDefinitionTemplateValues::Template40(
-                    GaussianGridDefinition::from_buf(&buf[25..]),
-                ))
-            }
-            _ => Err(GribError::NotSupported(format!("template {num}"))),
-        }
-    }
-}
-
 const START_OF_PROD_TEMPLATE: usize = 4;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ProdDefinition {
-    payload: Box<[u8]>,
+    pub(crate) payload: Box<[u8]>,
 }
 
 impl ProdDefinition {
@@ -457,31 +321,19 @@ impl ProdDefinition {
                 _ => None,
             }?;
 
-            let first_surface = self.read_surface_from(index);
-            let second_surface = self.read_surface_from(index + 6);
+            let mut pos = START_OF_PROD_TEMPLATE + index;
+            let first_surface = FixedSurface::try_from_slice(&self.payload, &mut pos).ok();
+            let second_surface = FixedSurface::try_from_slice(&self.payload, &mut pos).ok();
             first_surface.zip(second_surface)
         } else {
             None
         }
     }
-
-    fn read_surface_from(&self, index: usize) -> Option<FixedSurface> {
-        let index = START_OF_PROD_TEMPLATE + index;
-        let surface_type = self.payload.get(index).copied();
-        let scale_factor = self.payload.get(index + 1).map(|v| (*v).as_grib_int());
-        let start = index + 2;
-        let end = index + 6;
-        let scaled_value =
-            u32::from_be_bytes(self.payload[start..end].try_into().unwrap()).as_grib_int();
-        surface_type
-            .zip(scale_factor)
-            .map(|(stype, factor)| FixedSurface::new(stype, factor, scaled_value))
-    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ReprDefinition {
-    payload: Box<[u8]>,
+    pub(crate) payload: Box<[u8]>,
 }
 
 impl ReprDefinition {
@@ -522,36 +374,6 @@ pub struct BitMap {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn grid_definition_template_0() {
-        // data taken from submessage #0.0 of
-        // `Z__C_RJTD_20160822020000_NOWC_GPV_Ggis10km_Pphw10_FH0000-0100_grib2.bin.xz`
-        // in `testdata`
-        let data = GridDefinition::from_payload(
-            vec![
-                0x00, 0x00, 0x01, 0x50, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0xff, 0xff, 0xff, 0xff,
-                0xff, 0x01, 0x03, 0xcd, 0x39, 0xfa, 0x01, 0x03, 0xc9, 0xf6, 0xa3, 0x00, 0x00, 0x01,
-                0x00, 0x00, 0x00, 0x01, 0x50, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x02,
-                0xdb, 0xc9, 0x3d, 0x07, 0x09, 0x7d, 0xa4, 0x30, 0x01, 0x31, 0xcf, 0xc3, 0x08, 0xef,
-                0xdd, 0x5c, 0x00, 0x01, 0xe8, 0x48, 0x00, 0x01, 0x45, 0x85, 0x00,
-            ]
-            .into_boxed_slice(),
-        )
-        .unwrap();
-
-        let actual = GridDefinitionTemplateValues::try_from(&data).unwrap();
-        let expected = GridDefinitionTemplateValues::Template0(LatLonGridDefinition {
-            ni: 256,
-            nj: 336,
-            first_point_lat: 47958333,
-            first_point_lon: 118062500,
-            last_point_lat: 20041667,
-            last_point_lon: 149937500,
-            scanning_mode: crate::grid::ScanningMode(0b00000000),
-        });
-        assert_eq!(actual, expected);
-    }
 
     #[test]
     fn prod_definition_parameters() {

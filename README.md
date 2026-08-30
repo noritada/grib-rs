@@ -7,11 +7,11 @@
 [![License (MIT)](https://img.shields.io/badge/license-MIT-blue)](https://github.com/noritada/grib-rs/blob/master/LICENSE-MIT)
 [![Build](https://github.com/noritada/grib-rs/workflows/CI/badge.svg)](https://github.com/noritada/grib-rs/actions?query=workflow%3ACI)
 
-GRIB format parser for Rust
+GRIB format parser & writer for Rust
 
 ## About
 
-This is a GRIB format parser library written in Rust programming language. This project aims to provide a set of library and tools which is simple-to-use, efficient, and educational.
+This is a GRIB format parser & writer library written in Rust programming language. This project aims to provide a set of library and tools which is simple-to-use, efficient, and educational.
 
 GRIB is a concise data format commonly used in meteorology to store historical and forecast weather data. It is intended to be a container of a collection of records of 2D data. GRIB files are huge and binary and should be processed efficiently. Also, since GRIB is designed to support various grid types and data compression using parameters defined in external code tables and templates, some popular existing softwares cannot handle some GRIB data.
 
@@ -37,9 +37,10 @@ A world where everyone can read weather data easily although its interpretation 
   * Decoding feature supporting templates listed in the following table
   * Support for computation of latitudes and longitudes of grid points for templates listed in the following table
 * CLI application `gribber` built on the top of the Rust library
-  * 5 subcommends:
+  * 6 subcommends:
     * completions: generation of shell completions for your shell
     * decode: data export as text and flat binary files
+    * dump: dump display of the content of a GRIB submessage
     * info: display of identification information
     * inspect: display of information mainly for development purpose such as template numbers
     * list: display of parameters for each layer inside
@@ -54,18 +55,19 @@ Also, since the best encoding method for values varies from data to data, there 
 
 These definitions of grid systems and data representation are represented by sequences of bytes called templates, which should be supported in order for the reader to read GRIB2 data. grib-rs supports the following templates. We would love to support other templates as well, so please let us know if there is any data that is not readable.
 
-#### Supported grid definition templates
+#### Support for computation of latitudes/longitudes of grid points
 
 For data using the following grid systems, latitudes and longitudes of grid points can be computed.
 
 | Template number | Grid system | Notes |
 | --- | --- | --- |
 | 3.0 | latitude/longitude (or equidistant cylindrical, or Plate Carree) | supporting only regular grids |
+| 3.1 | rotated latitude/longitude (or equidistant cylindrical, or Plate Carrée) | supporting only regular grids |
 | 3.20 | Polar stereographic projection | enabling feature `gridpoints-proj` required |
 | 3.30 | Lambert conformal | enabling feature `gridpoints-proj` required |
 | 3.40 | Gaussian latitude/longitude | supporting only regular grids |
 
-#### Supported data representation templates
+#### Support for extraction of grid point values
 
 For data using the following encoding methods, grid point values can be extracted.
 
@@ -74,10 +76,28 @@ For data using the following encoding methods, grid point values can be extracte
 | 5.0 | simple packing ||
 | 5.2 | complex packing ||
 | 5.3 | complex packing and spatial differencing ||
-| 5.40 | JPEG 2000 code stream format | enabling feature `jpeg2000-unpack-with-openjpeg` required |
+| 5.40 | JPEG 2000 code stream format | enabling feature `jpeg2000-unpack-with-openjpeg` or `jpeg2000-unpack-with-hayro` required |
 | 5.41 | Portable Network Graphics (PNG) | enabling feature `png-unpack-with-png-crate` required |
-| 5.42 | CCSDS recommended lossless compression | enabling feature `ccsds-unpack-with-libaec` required |
+| 5.42 | CCSDS recommended lossless compression | enabling feature `ccsds-unpack-with-libaec` or `ccsds-unpack-with-rust-aec` required |
 | 5.200 | run length packing with level values ||
+
+For CCSDS/AEC decoding, `ccsds-unpack-with-libaec` uses `libaec` through
+`libaec-sys`, while `ccsds-unpack-with-rust-aec` uses a pure Rust backend.
+When both CCSDS backend features are enabled, `ccsds-unpack-with-rust-aec` takes
+priority so it can override the default `libaec` backend.
+
+For JPEG 2000 decoding, `jpeg2000-unpack-with-openjpeg` uses OpenJPEG through
+`openjpeg-sys`, while `jpeg2000-unpack-with-hayro` uses a pure Rust backend.
+When both JPEG 2000 backend features are enabled, hayro takes priority.
+
+#### Support for encoding of grid point values
+
+Grid point values can be encoded and written using the following encoding methods.
+
+| Template number | Encoding method | Notes |
+| --- | --- | --- |
+| 5.0 | simple packing ||
+| 5.2 | complex packing ||
 
 ## Planned features
 
@@ -89,10 +109,12 @@ API Documentation of the released version of the library crate is [available on 
 
 If you feel a feature is missing, please send us your suggestions through the [GitHub Issues](https://github.com/noritada/grib-rs/issues/new/choose). We are working on expanding the basic functionality as our top priority in this project, so we would be happy to receive any requests.
 
-### Usage example
+### Usage examples
+
+This is an example of accessing the grid point values and latitude/longitude coordinates for a specific submessage within a GRIB2 file.
 
 ```rust
-use grib::{codetables::grib2::*, ForecastTime, Grib2SubmessageDecoder, Name};
+use grib::{codetables::grib2::*, ForecastTime, Grib2SubmessageDecoder, LatLons, Name};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let fname = "testdata/Z__C_RJTD_20160822020000_NOWC_GPV_Ggis10km_Pphw10_FH0000-0100_grib2.bin";
@@ -125,6 +147,149 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
+This is an example of accessing the parameter values contained within a section and template parameters of a specific submessage in a GRIB2 file.
+
+```rust
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let fname = "testdata/Z__C_RJTD_20160822020000_NOWC_GPV_Ggis10km_Pphw10_FH0000-0100_grib2.bin";
+    let f = std::fs::File::open(fname)?;
+    let f = std::io::BufReader::new(f);
+    let grib2 = grib::from_reader(f)?;
+    let (_index, first_submessage) = grib2.iter().next().unwrap();
+
+    let actual = first_submessage.section5();
+    let expected = Ok(grib::def::grib2::Section5 {
+        header: grib::def::grib2::SectionHeader {
+            len: 23,
+            sect_num: 5,
+        },
+        payload: grib::def::grib2::Section5Payload {
+            num_encoded_points: 86016,
+            template_num: 200,
+            template: grib::def::grib2::DataRepresentationTemplate::_5_200(
+                grib::def::grib2::template::Template5_200 {
+                    num_bits: 8,
+                    max_val: 3,
+                    max_level: 3,
+                    dec: 0,
+                    level_vals: vec![1, 2, 3],
+                },
+            ),
+        },
+    });
+    assert_eq!(actual, expected);
+
+    Ok(())
+}
+```
+
+You can also dump parameters contained within submessages.
+Currently, this is only implemented for certain sections.
+Below is an example of dumping the same submessage as in the previous example.
+
+```rust
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let fname = "testdata/Z__C_RJTD_20160822020000_NOWC_GPV_Ggis10km_Pphw10_FH0000-0100_grib2.bin";
+    let f = std::fs::File::open(fname)?;
+    let f = std::io::BufReader::new(f);
+    let grib2 = grib::from_reader(f)?;
+    let (_index, first_submessage) = grib2.iter().next().unwrap();
+
+    // In the following example, the dump output is written to a buffer for testing purposes.
+    // To dump to standard output, use the following instead:
+    //
+    //     first_submessage.dump(&mut std::io::stdout())?;
+    let mut buf = std::io::Cursor::new(Vec::with_capacity(10240));
+    first_submessage.dump(&mut buf)?;
+    let expected = "\
+##  SUBMESSAGE (total_length = 10321)
+###  SECTION 0: INDICATOR SECTION (length = 16)
+###  SECTION 1: IDENTIFICATION SECTION (length = 21)
+1-4       header.len = 21  // Length of section in octets (nn).
+5         header.sect_num = 1  // Number of section.
+6-7       payload.centre_id = 34  // Identification of originating/generating centre (see Common Code table C-11).
+8-9       payload.subcentre_id = 0  // Identification of originating/generating subcentre (allocated by originating/generating centre).
+10        payload.master_table_version = 5  // GRIB master table version number (see Common Code table C-0 and Note 1).
+11        payload.local_table_version = 1  // Version number of GRIB Local tables used to augment Master tables (see Code table 1.1 and Note 2).
+12        payload.ref_time_significance = 0  // Significance of reference time (see Code table 1.2).
+13-14     payload.ref_time.year = 2016  // Year (4 digits) - Reference time of data.
+15        payload.ref_time.month = 8  // Month - Reference time of data.
+16        payload.ref_time.day = 22  // Day - Reference time of data.
+17        payload.ref_time.hour = 2  // Hour - Reference time of data.
+18        payload.ref_time.minute = 0  // Minute - Reference time of data.
+19        payload.ref_time.second = 0  // Second - Reference time of data.
+20        payload.prod_status = 0  // Production status of processed data in this GRIB message (see Code table 1.3).
+21        payload.data_type = 2  // Type of processed data in this GRIB message (see Code table 1.4).
+###  SECTION 3: GRID DEFINITION SECTION (length = 72)
+1-4       header.len = 72  // Length of section in octets (nn).
+5         header.sect_num = 3  // Number of section.
+6         payload.grid_def_source = 0  // Source of grid definition (see Code table 3.0 and Note 1).
+7-10      payload.num_points = 86016  // Number of data points.
+11        payload.num_point_list_octets = 0  // Number of octets for optional list of numbers (see Note 2).
+12        payload.point_list_interpretation = 0  // Interpretation of list of numbers (see Code table 3.11).
+13-14     payload.template_num = 0  // Grid definition template number (= N) (see Code table 3.1).
+15        payload.template.earth.shape = 4  // Shape of the Earth (see Code table 3.2).
+16        payload.template.earth.spherical_earth_radius.scale_factor = 255  // Scale factor of radius of spherical Earth.
+17-20     payload.template.earth.spherical_earth_radius.scaled_value = 4294967295  // Scaled value of radius of spherical Earth.
+21        payload.template.earth.major_axis.scale_factor = 1  // Scale factor of major axis of oblate spheroid Earth.
+22-25     payload.template.earth.major_axis.scaled_value = 63781370  // Scaled value of major axis of oblate spheroid Earth.
+26        payload.template.earth.minor_axis.scale_factor = 1  // Scale factor of minor axis of oblate spheroid Earth.
+27-30     payload.template.earth.minor_axis.scaled_value = 63567523  // Scaled value of minor axis of oblate spheroid Earth.
+31-34     payload.template.lat_lon.grid.ni = 256  // Ni - number of points along a parallel.
+35-38     payload.template.lat_lon.grid.nj = 336  // Nj - number of points along a meridian.
+39-42     payload.template.lat_lon.grid.initial_production_domain_basic_angle = 0  // Basic angle of the initial production domain (see Note 1).
+43-46     payload.template.lat_lon.grid.basic_angle_subdivisions = 4294967295  // Subdivisions of basic angle used to define extreme longitudes and latitudes, and direction increments (see Note 1).
+47-50     payload.template.lat_lon.grid.first_point_lat = 47958333  // La1 - latitude of first grid point (see Note 1).
+51-54     payload.template.lat_lon.grid.first_point_lon = 118062500  // Lo1 - longitude of first grid point (see Note 1).
+55        payload.template.lat_lon.grid.resolution_and_component_flags = 0b00110000  // Resolution and component flags (see Flag table 3.3).
+56-59     payload.template.lat_lon.grid.last_point_lat = 20041667  // La2 - latitude of last grid point (see Note 1).
+60-63     payload.template.lat_lon.grid.last_point_lon = 149937500  // Lo2 - longitude of last grid point (see Note 1).
+64-67     payload.template.lat_lon.i_direction_inc = 125000  // Di - i direction increment (see Notes 1 and 5).
+68-71     payload.template.lat_lon.j_direction_inc = 83333  // Dj - j direction increment (see Notes 1 and 5).
+72        payload.template.lat_lon.scanning_mode = 0b00000000  // Scanning mode (flags - see Flag table 3.4).
+###  SECTION 4: PRODUCT DEFINITION SECTION (length = 34)
+1-4       header.len = 34  // Length of section in octets (nn).
+5         header.sect_num = 4  // Number of section.
+6-7       payload.num_coord_values = 0  // Number of coordinate values after template or number of information according to 3D vertical coordinate GRIB2 message (see Notes 1 and 5).
+8-9       payload.template_num = 0  // Product definition template number (see Code table 4.0).
+10        payload.template.param.category = 193  // Parameter category (see Code Table 4.1).
+11        payload.template.param.num = 0  // Parameter number (see Code Table 4.2).
+12        payload.template.generating_process.process_type = 0  // Type of generating process (see Code Table 4.3).
+13        payload.template.generating_process.background_process = 153  // Background generating process identifier (defined by originating centre).
+14        payload.template.generating_process.process_id = 255  // Analysis or forecast generating processes identifier (defined by originating centre).
+15-16     payload.template.forecast_time.cutoff_hours = 0  // Hours of observational data cutoff after reference time (see Note 1)
+17        payload.template.forecast_time.cutoff_minutes = 0  // Minutes of observational data cutoff after reference time
+18        payload.template.forecast_time.time.unit = 0  // Indicator of unit of time range (see Code Table 4.4).
+19-22     payload.template.forecast_time.time.len = 0  // Forecast time in units defined by octet 18.
+23        payload.template.horizontal.first_surface.surface_type = 1  // Type of first fixed surface (see Code Table 4.5).
+24        payload.template.horizontal.first_surface.value.scale_factor = -127  // Scale factor of first fixed surface.
+25-28     payload.template.horizontal.first_surface.value.scaled_value = -2147483647  // Scaled value of first fixed surface.
+29        payload.template.horizontal.second_surface.surface_type = 255  // Type of second fixed surface (see Code Table 4.5).
+30        payload.template.horizontal.second_surface.value.scale_factor = -127  // Scale factor of second fixed surface.
+31-34     payload.template.horizontal.second_surface.value.scaled_value = -2147483647  // Scaled value of second fixed surface.
+###  SECTION 5: DATA REPRESENTATION SECTION (length = 23)
+1-4       header.len = 23  // Length of section in octets (nn).
+5         header.sect_num = 5  // Number of section.
+6-9       payload.num_encoded_points = 86016  // Number of data points where one or more values are specified in Section 7 when a bit map is present, total number of data points when a bit map is absent.
+10-11     payload.template_num = 200  // Data representation template number (see Code table 5.0).
+12        payload.template.num_bits = 8  // Number of bits used for each packed value in the run length packing with level value.
+13-14     payload.template.max_val = 3  // MV - maximum value within the levels that are used in the packing.
+15-16     payload.template.max_level = 3  // MVL - maximum value of level (predefined).
+17        payload.template.dec = 0  // Decimal scale factor of representative value of each level.
+18-23     payload.template.level_vals = [1, 2, 3]  // List of MVL scaled representative values of each level from lv=1 to MVL.
+###  SECTION 6: BIT-MAP SECTION (length = 6)
+1-4       header.len = 6  // Length of section in octets (nn).
+5         header.sect_num = 6  // Number of section.
+6         payload.bitmap_indicator = 255  // Bit-map indicator (see Code table 6.0 and the Note).
+###  SECTION 7: DATA SECTION (length = 1391)
+###  SECTION 8: END SECTION (length = 4)
+";
+    assert_eq!(String::from_utf8_lossy(buf.get_ref()), expected);
+
+    Ok(())
+}
+```
+
 The [examples directory][examples] in the source repository may help you understand the API.
 
 [examples]: https://github.com/noritada/grib-rs/tree/master/examples
@@ -145,6 +310,7 @@ Usage: gribber [COMMAND]
 Commands:
   completions  Generate shell completions for your shell to stdout
   decode       Export decoded data with latitudes and longitudes
+  dump         Dump the content of a GRIB submessage
   info         Show identification information
   inspect      Inspect and describes the data structure
   list         List layers contained in the data

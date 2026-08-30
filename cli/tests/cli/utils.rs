@@ -42,23 +42,3 @@ where
 
     Ok(buf)
 }
-
-pub(crate) fn encode_le_bytes_using_simple_packing(
-    input: Vec<u8>,
-    ref_val: f32,
-    exp: i16,
-    dig: i16,
-) -> Vec<i32> {
-    let encode = |value: f32| -> i32 {
-        let dig_factor = 10_f32.powi(dig as i32);
-        let diff = value * dig_factor - ref_val;
-        let encoded = diff * 2_f32.powi(-exp as i32);
-        encoded.round() as i32
-    };
-
-    input
-        .chunks(4)
-        .map(|quad| f32::from_le_bytes(quad.try_into().unwrap())) // should be safely unwrapped
-        .map(encode)
-        .collect::<Vec<_>>()
-}

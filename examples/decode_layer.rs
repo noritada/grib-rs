@@ -1,5 +1,7 @@
 use std::{env, error::Error, fs::File, io::BufReader, path::Path};
 
+use grib::LatLons;
+
 fn main() -> Result<(), Box<dyn Error>> {
     // This example shows how to decode values inside a layer in a GRIB2 message.
     // The example also shows how to obtain the latitude-longitude locations of grid

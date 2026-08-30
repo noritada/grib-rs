@@ -1,28 +1,4 @@
-pub(crate) trait GribInt<I> {
-    fn as_grib_int(&self) -> I;
-}
-
-macro_rules! add_impl_for_ints {
-    ($(($ty_src:ty, $ty_dst:ty),)*) => ($(
-        impl GribInt<$ty_dst> for $ty_src {
-            fn as_grib_int(&self) -> $ty_dst {
-                if self.leading_zeros() == 0 {
-                    let abs = (self << 1 >> 1) as $ty_dst;
-                    -abs
-                } else {
-                    *self as $ty_dst
-                }
-            }
-        }
-    )*);
-}
-
-add_impl_for_ints! {
-    (u8, i8),
-    (u16, i16),
-    (u32, i32),
-    (u64, i64),
-}
+use crate::TryFromSlice as _;
 
 macro_rules! read_as {
     ($ty:ty, $buf:ident, $start:expr) => {{
@@ -36,21 +12,18 @@ pub(crate) fn grib_int_from_bytes(bytes: &[u8]) -> i32 {
     let len = bytes.len();
     // Although there is logic that can be used to generalize, not so many patterns
     // exist that generalization is necessary.
+    let mut pos = 0;
     match len {
-        1 => i32::from(read_as!(u8, bytes, 0).as_grib_int()),
-        2 => i32::from(read_as!(u16, bytes, 0).as_grib_int()),
+        1 => i32::from(i8::try_from_slice(bytes, &mut pos).unwrap()),
+        2 => i32::from(i16::try_from_slice(bytes, &mut pos).unwrap()),
         3 => {
-            let first = read_as!(u8, bytes, 0);
+            let first = u8::try_from_slice(bytes, &mut pos).unwrap();
             let positive = first.leading_zeros() != 0;
-            let rest = i32::from(read_as!(u16, bytes, 1));
+            let rest = i32::from(u16::try_from_slice(bytes, &mut pos).unwrap());
             let abs = i32::from(first << 1 >> 1) * 0x10000 + rest;
-            if positive {
-                abs
-            } else {
-                -abs
-            }
+            if positive { abs } else { -abs }
         }
-        4 => read_as!(u32, bytes, 0).as_grib_int(),
+        4 => i32::try_from_slice(bytes, &mut pos).unwrap(),
         _ => unimplemented!(),
     }
 }
@@ -58,43 +31,6 @@ pub(crate) fn grib_int_from_bytes(bytes: &[u8]) -> i32 {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn into_grib_i8() {
-        let input: Vec<u8> = vec![0b01000000, 0b00000001, 0b10000001, 0b11000000];
-        let output: Vec<i8> = vec![64, 1, -1, -64];
-
-        let mut actual = Vec::new();
-        let mut pos = 0;
-        while pos < input.len() {
-            let val = u8::from_be_bytes(input[pos..pos + 1].try_into().unwrap());
-            pos += 1;
-            let val = val.as_grib_int();
-            actual.push(val);
-        }
-
-        assert_eq!(actual, output);
-    }
-
-    #[test]
-    fn into_grib_i16() {
-        let input: Vec<u8> = vec![
-            0b00000000, 0b01000000, 0b00000000, 0b00000001, 0b10000000, 0b00000001, 0b10000000,
-            0b01000000,
-        ];
-        let output: Vec<i16> = vec![64, 1, -1, -64];
-
-        let mut actual = Vec::new();
-        let mut pos = 0;
-        while pos < input.len() {
-            let val = u16::from_be_bytes(input[pos..pos + 2].try_into().unwrap());
-            pos += 2;
-            let val = val.as_grib_int();
-            actual.push(val);
-        }
-
-        assert_eq!(actual, output);
-    }
 
     macro_rules! test_conversion_from_bytes_to_grib_int {
         ($(($name:ident, $input:expr, $expected:expr),)*) => ($(

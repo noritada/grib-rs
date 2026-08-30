@@ -6,13 +6,20 @@ mod context;
 pub mod cookbook;
 mod datatypes;
 mod decoder;
+pub mod def;
+pub mod encoder;
 mod error;
 mod grid;
 mod helpers;
 mod parser;
 mod reader;
+#[cfg(test)]
+mod test_utils;
 mod time;
 pub mod utils;
+mod value;
+
+pub use grib_template_helpers::{Dump, TryFromSlice, WriteToBuffer};
 
 pub use crate::{
     codetables::Code::{self, Name, Num},
@@ -21,13 +28,13 @@ pub use crate::{
     decoder::*,
     error::*,
     grid::{
-        EarthShapeDefinition, GaussianGridDefinition, GridPointIndexIterator, GridPointIterator,
-        LambertGridDefinition, LatLonGridDefinition, PolarStereographicGridDefinition,
-        ProjectionCentreFlag, ScanningMode,
+        GridDefinitionTemplateValues, GridPointIndex, GridPointIndexIterator, GridPointLatLons,
+        GridShortName, LatLons,
     },
     parser::*,
     reader::*,
     time::*,
+    value::*,
 };
 
 #[doc = include_str!("../README.md")]

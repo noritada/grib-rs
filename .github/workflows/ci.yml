@@ -100,6 +100,34 @@ jobs:
         if: matrix.with_test
         run: cargo test --target ${{ matrix.target }} --verbose ${{ matrix.workspace }} ${{ matrix.features }}
 
+  test_rust_aec_ccsds:
+    name: Test Rust AEC CCSDS backend
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+      - name: Run Rust AEC CCSDS tests
+        run: cargo test --verbose -p grib --no-default-features --features ccsds-unpack-with-rust-aec
+
+  test_hayro_jpeg2000:
+    name: Test hayro JPEG 2000 backend
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+      - name: Run hayro JPEG 2000 tests
+        run: cargo test --verbose -p grib --no-default-features --features jpeg2000-unpack-with-hayro
+      - name: Verify hayro JPEG 2000 priority over OpenJPEG
+        run: cargo test --verbose -p grib --no-default-features --features jpeg2000-unpack-with-openjpeg,jpeg2000-unpack-with-hayro
+
   build_wasm:
     name: Building library for wasm
     runs-on: ubuntu-latest
@@ -114,7 +142,7 @@ jobs:
         with:
           targets: wasm32-unknown-unknown
       - name: Build
-        run: cargo build --target wasm32-unknown-unknown --verbose --no-default-features --features png-unpack-with-png-crate,time-calculation
+        run: cargo build --target wasm32-unknown-unknown --verbose --no-default-features --features wasm-default
 
   address_sanitizer:
     name: Address sanitizer

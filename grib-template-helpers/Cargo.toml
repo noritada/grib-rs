@@ -1,0 +1,14 @@
+[package]
+name = "grib-template-helpers"
+version = "0.2.1"
+description = """
+Trait definitions for the `grib` and `grib-template-derive` crates, used as an internal dependency
+"""
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+readme.workspace = true
+repository.workspace = true
+homepage.workspace = true
+
+[dependencies]

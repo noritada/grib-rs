@@ -10,9 +10,12 @@ pub(crate) fn generate() -> Result<String, String> {
         .parse::<ReadMeSections>()?;
     let about = readme.get("About")?;
     let template_support = readme.get("Template support")?;
-    let gds_template_support = readme.get("Supported grid definition templates")?;
-    let drs_template_support = readme.get("Supported data representation templates")?;
-    let example = readme.get("Usage example")?;
+    let gds_template_support =
+        readme.get("Support for computation of latitudes/longitudes of grid points")?;
+    let drs_template_decoding_support =
+        readme.get("Support for extraction of grid point values")?;
+    let drs_template_encoding_support = readme.get("Support for encoding of grid point values")?;
+    let examples = readme.get("Usage examples")?;
 
     let manifest = read_manifest()
         .map_err(|e| e.to_string())?
@@ -26,17 +29,21 @@ pub(crate) fn generate() -> Result<String, String> {
 
 {template_support}
 
-## Supported grid definition templates
+## Support for computation of latitudes/longitudes of grid points
 
 {gds_template_support}
 
-## Supported data representation templates
+## Support for extraction of grid point values
 
-{drs_template_support}
+{drs_template_decoding_support}
 
-# Example
+## Support for encoding of grid point values
 
-{example}
+{drs_template_encoding_support}
+
+# Examples
+
+{examples}
 
 # Crate features
 
@@ -116,6 +123,7 @@ impl std::str::FromStr for ReadMeSections {
         let mut start = 0;
         let mut pos = 0;
         let mut title: Option<&str> = None;
+        let mut within_code_block = false;
 
         let push = |map: &mut HashMap<String, String>,
                     title: Option<&str>,
@@ -136,6 +144,14 @@ impl std::str::FromStr for ReadMeSections {
                 break;
             };
             pos += line.len();
+
+            if line.starts_with("```") {
+                within_code_block = !within_code_block;
+                continue;
+            }
+            if within_code_block {
+                continue;
+            }
 
             if line.starts_with("#") {
                 push(&mut map, title, s, start, pos - line.len());

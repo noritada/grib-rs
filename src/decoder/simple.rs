@@ -1,12 +1,12 @@
 use num::ToPrimitive;
 
 use crate::{
-    decoder::{
-        param::SimplePackingParam,
-        stream::{FixedValueIterator, NBitwiseIterator},
-        Grib2SubmessageDecoder,
-    },
     DecodeError, Grib2GpvUnpack,
+    decoder::{
+        Grib2SubmessageDecoder,
+        stream::{FixedValueIterator, NBitwiseIterator},
+    },
+    def::grib2::template::param_set,
 };
 
 pub(crate) enum SimplePackingDecoder<I> {
@@ -38,27 +38,33 @@ where
     }
 }
 
-pub(crate) struct Simple<'d>(pub(crate) &'d Grib2SubmessageDecoder);
+pub(crate) struct Simple<'d>(
+    pub(crate) &'d Grib2SubmessageDecoder,
+    pub(crate) &'d crate::def::grib2::template::Template5_0,
+);
 
 impl<'d> Grib2GpvUnpack for Simple<'d> {
     type Iter<'a>
-        = SimplePackingDecoder<NBitwiseIterator<&'d [u8]>>
+        = SimplePackingDecoder<std::iter::Take<NBitwiseIterator<&'d [u8]>>>
     where
         Self: 'a;
 
     fn iter<'a>(&'a self) -> Result<Self::Iter<'d>, DecodeError> {
-        let Self(target) = self;
-        let sect5_data = &target.sect5_bytes;
-        let param = SimplePackingParam::from_buf(&sect5_data[11..21])?;
+        let Self(target, template) = self;
+        super::orig_field_type_is_supported(template.orig_field_type)?;
 
-        let decoder = if param.nbit == 0 {
+        let decoder = if template.simple.num_bits == 0 {
             SimplePackingDecoder::ZeroLength(FixedValueIterator::new(
-                param.zero_bit_reference_value(),
-                target.num_points_encoded(),
+                template.simple.zero_bit_reference_value(),
+                target.num_encoded_points(),
             ))
         } else {
-            let iter = NBitwiseIterator::new(target.sect7_payload(), usize::from(param.nbit));
-            let iter = NonZeroSimplePackingDecoder::new(iter, &param);
+            let iter = NBitwiseIterator::new(
+                target.sect7_payload(),
+                usize::from(template.simple.num_bits),
+            )
+            .take(target.num_encoded_points());
+            let iter = NonZeroSimplePackingDecoder::new(iter, &template.simple);
             SimplePackingDecoder::NonZeroLength(iter)
         };
         Ok(decoder)
@@ -69,16 +75,16 @@ pub(crate) struct NonZeroSimplePackingDecoder<I> {
     iter: I,
     ref_val: f32,
     exp: i32,
-    dig: i32,
+    dec: i32,
 }
 
 impl<I> NonZeroSimplePackingDecoder<I> {
-    pub(crate) fn new(iter: I, param: &SimplePackingParam) -> Self {
+    pub(crate) fn new(iter: I, param: &param_set::SimplePacking) -> Self {
         Self {
             iter,
             ref_val: param.ref_val,
             exp: param.exp.into(),
-            dig: param.dig.into(),
+            dec: param.dec.into(),
         }
     }
 }
@@ -91,7 +97,7 @@ impl<I: Iterator<Item = N>, N: ToPrimitive> Iterator for NonZeroSimplePackingDec
             Some(encoded) => {
                 let encoded = encoded.to_f32().unwrap();
                 let diff = encoded * 2_f32.powi(self.exp);
-                let dig_factor = 10_f32.powi(-self.dig);
+                let dig_factor = 10_f32.powi(-self.dec);
                 let value: f32 = (self.ref_val + diff) * dig_factor;
                 Some(value)
             }
@@ -108,15 +114,17 @@ mod tests {
     };
 
     use super::*;
+    use crate::TryFromSlice as _;
 
     #[test]
     fn decode_simple_packing() {
         let buf = vec![0x35, 0x3e, 0x6b, 0xf6, 0x80, 0x1a, 0x00, 0x00, 0x10, 0x00];
-        let param = SimplePackingParam::from_buf(&buf).unwrap();
+        let mut pos = 0;
+        let param = param_set::SimplePacking::try_from_slice(&buf, &mut pos).unwrap();
         let input: Vec<u8> = vec![0x00, 0x06, 0x00, 0x0d];
         let expected: Vec<f32> = vec![7.987_831_6e-7, 9.030_913e-7];
 
-        let iter = NBitwiseIterator::new(&input, usize::from(param.nbit));
+        let iter = NBitwiseIterator::new(&input, usize::from(param.num_bits));
         let actual = NonZeroSimplePackingDecoder::new(iter, &param).collect::<Vec<_>>();
 
         assert_eq!(actual.len(), expected.len());
@@ -129,11 +137,24 @@ mod tests {
     }
 
     #[test]
+    fn simple_packing_length() {
+        let length = 9;
+        let sect5 = vec![
+            0x00, 0x00, 0x00, 0x15, 0x05, 0x00, 0x00, 0x00, 0x09, 0x00, 0x00, 0x40, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0x00,
+        ];
+        let sect6 = vec![0x00, 0x00, 0x00, 0x06, 0x06, 0xff];
+        let sect7 = vec![0x00, 0x00, 0x00, 0x0a, 0x07, 0x01, 0x23, 0x45, 0x67, 0x80];
+        let decoder = Grib2SubmessageDecoder::new(length, sect5, sect6, sect7).unwrap();
+        let decoded = decoder.dispatch().unwrap();
+        assert_eq!(decoded.size_hint(), (length, Some(length)));
+        let actual = decoded.collect::<Vec<_>>().len();
+        assert_eq!(actual, length);
+    }
+
+    #[test]
     fn decode_simple_packing_when_nbit_is_zero() {
-        let f = File::open(
-            "testdata/icon_global_icosahedral_single-level_2021112018_000_TOT_PREC.grib2",
-        )
-        .unwrap();
+        let f = File::open(crate::test_utils::data::grib2::DWD_ICON).unwrap();
         let mut f = BufReader::new(f);
         let mut buf = Vec::new();
         f.read_to_end(&mut buf).unwrap();
