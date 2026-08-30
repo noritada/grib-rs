@@ -12,6 +12,7 @@ mod error;
 mod grid;
 mod helpers;
 mod parser;
+mod projection;
 mod reader;
 #[cfg(test)]
 mod test_utils;
@@ -32,6 +33,7 @@ pub use crate::{
         GridShortName, LatLons,
     },
     parser::*,
+    projection::*,
     reader::*,
     time::*,
     value::*,
