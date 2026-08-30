@@ -2,7 +2,9 @@
 use proj::Proj;
 
 use super::ScanningMode;
-use crate::{GribError, GridPointIndexIterator, ProjectionParams};
+#[allow(unused_imports)]
+use crate::GribError;
+use crate::GridPointIndexIterator;
 
 pub(crate) fn evenly_spaced_longitudes(
     start_microdegree: i32,
@@ -73,13 +75,12 @@ impl Iterator for RegularGridIterator {
 
 #[cfg(feature = "gridpoints-proj")]
 pub(crate) fn latlons_from_projection_definition_and_first_point(
-    proj_params: &ProjectionParams,
+    proj_def: &str,
     first_point_latlon_in_degrees: (f64, f64),
     delta_in_meters: (f64, f64),
     indices: GridPointIndexIterator,
 ) -> Result<std::vec::IntoIter<(f32, f32)>, GribError> {
-    let projection =
-        Proj::new(&proj_params.osgeo_proj_args()).map_err(|e| GribError::Unknown(e.to_string()))?;
+    let projection = Proj::new(proj_def).map_err(|e| GribError::Unknown(e.to_string()))?;
     let (first_point_lat, first_point_lon) = first_point_latlon_in_degrees;
     let (first_corner_x, first_corner_y) = projection
         .project(
@@ -100,44 +101,6 @@ pub(crate) fn latlons_from_projection_definition_and_first_point(
 
     let lonlat = projection
         .project_array(&mut xy, true)
-        .map_err(|e| GribError::Unknown(e.to_string()))?;
-    let latlon = lonlat
-        .iter_mut()
-        .map(|(lon, lat)| (lat.to_degrees() as f32, lon.to_degrees() as f32))
-        .collect::<Vec<_>>();
-
-    Ok(latlon.into_iter())
-}
-
-#[cfg(not(feature = "gridpoints-proj"))]
-pub(crate) fn latlons_from_projection_definition_and_first_point(
-    proj_params: &ProjectionParams,
-    first_point_latlon_in_degrees: (f64, f64),
-    delta_in_meters: (f64, f64),
-    indices: GridPointIndexIterator,
-) -> Result<std::vec::IntoIter<(f32, f32)>, GribError> {
-    let projection =
-        crate::Projection::new(proj_params).map_err(|e| GribError::Unknown(e.to_owned()))?;
-    let (first_point_lat, first_point_lon) = first_point_latlon_in_degrees;
-    let (first_corner_x, first_corner_y) = projection
-        .project(
-            &(first_point_lon.to_radians(), first_point_lat.to_radians()),
-            false,
-        )
-        .map_err(|e| GribError::Unknown(e.to_string()))?;
-
-    let (dx, dy) = delta_in_meters;
-    let mut lonlat = indices
-        .map(|(i, j)| {
-            projection.project(
-                &(
-                    first_corner_x + dx * i as f64,
-                    first_corner_y + dy * j as f64,
-                ),
-                true,
-            )
-        })
-        .collect::<Result<Vec<_>, _>>()
         .map_err(|e| GribError::Unknown(e.to_string()))?;
     let latlon = lonlat
         .iter_mut()

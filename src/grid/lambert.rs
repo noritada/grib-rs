@@ -2,8 +2,6 @@ use super::{earth::EarthShapeDefinition, GridPointIndexIterator, ScanningMode};
 use crate::{
     error::GribError,
     helpers::{read_as, GribInt},
-    projection::{LccParams, ProjectionParams},
-    Ellipsoid,
 };
 
 #[derive(Debug, PartialEq, Eq)]
@@ -20,40 +18,6 @@ pub struct LambertGridDefinition {
     pub scanning_mode: ScanningMode,
     pub latin1: i32,
     pub latin2: i32,
-}
-
-impl TryFrom<&LambertGridDefinition> for ProjectionParams {
-    type Error = GribError;
-
-    fn try_from(value: &LambertGridDefinition) -> Result<Self, Self::Error> {
-        let LambertGridDefinition {
-            earth_shape,
-            lad,
-            lov,
-            latin1,
-            latin2,
-            ..
-        } = value;
-
-        let lad = *lad as f64 * 1e-6;
-        let lov = *lov as f64 * 1e-6;
-        let latin1 = *latin1 as f64 * 1e-6;
-        let latin2 = *latin2 as f64 * 1e-6;
-        let (a, b) = earth_shape.radii().ok_or_else(|| {
-            GribError::NotSupported(format!(
-                "unknown value of Code Table 3.2 (shape of the Earth): {}",
-                earth_shape.shape_of_the_earth
-            ))
-        })?;
-
-        Ok(Self::Lcc(LccParams {
-            ellipsoid: Ellipsoid::from_a_and_b(a, b),
-            lat_0: lad,
-            lon_0: lov,
-            lat_1: latin1,
-            lat_2: latin2,
-        }))
-    }
 }
 
 impl LambertGridDefinition {
@@ -153,8 +117,23 @@ impl LambertGridDefinition {
     /// Note that this is a low-level API and it is not checked that the number
     /// of iterator iterations is consistent with the number of grid points
     /// defined in the data.
+    #[cfg(feature = "gridpoints-proj")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "gridpoints-proj")))]
     pub fn latlons(&self) -> Result<std::vec::IntoIter<(f32, f32)>, GribError> {
-        let params = ProjectionParams::try_from(self)?;
+        let lad = self.lad as f64 * 1e-6;
+        let lov = self.lov as f64 * 1e-6;
+        let latin1 = self.latin1 as f64 * 1e-6;
+        let latin2 = self.latin2 as f64 * 1e-6;
+        let (a, b) = self.earth_shape.radii().ok_or_else(|| {
+            GribError::NotSupported(format!(
+                "unknown value of Code Table 3.2 (shape of the Earth): {}",
+                self.earth_shape.shape_of_the_earth
+            ))
+        })?;
+        let proj_def = format!(
+            "+a={a} +b={b} +proj=lcc +lat_0={lad} +lon_0={lov} +lat_1={latin1} +lat_2={latin2}"
+        );
+
         let dx = self.dx as f64 * 1e-3;
         let dy = self.dy as f64 * 1e-3;
         let dx = if !self.scanning_mode.scans_positively_for_i() && dx > 0. {
@@ -169,7 +148,7 @@ impl LambertGridDefinition {
         };
 
         super::helpers::latlons_from_projection_definition_and_first_point(
-            &params,
+            &proj_def,
             (
                 self.first_point_lat as f64 * 1e-6,
                 self.first_point_lon as f64 * 1e-6,
@@ -252,6 +231,7 @@ mod tests {
         Ok(())
     }
 
+    #[cfg(feature = "gridpoints-proj")]
     #[test]
     fn lambert_grid_latlon_computation() -> Result<(), Box<dyn std::error::Error>> {
         use crate::grid::helpers::test_helpers::assert_coord_almost_eq;
