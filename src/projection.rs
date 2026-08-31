@@ -1,3 +1,5 @@
+#![allow(unused)] // FIXME
+
 pub enum Projection {
     Lcc(lcc::Projection),
     Merc(merc::Projection),
