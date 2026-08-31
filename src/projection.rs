@@ -21,6 +21,31 @@ impl Projection {
     }
 }
 
+pub trait Project {
+    fn forward(&self, xy: &(f64, f64)) -> Result<(f64, f64), &'static str>;
+    fn inverse(&self, xy: &(f64, f64)) -> Result<(f64, f64), &'static str>;
+    fn a(&self) -> &f64;
+    fn lam0(&self) -> &f64;
+
+    fn project(&self, xy: &(f64, f64), inverse: bool) -> Result<(f64, f64), &'static str> {
+        if inverse {
+            let &(x, y) = xy;
+            let x = x / self.a();
+            let y = y / self.a();
+            let (lambda, phi) = self.inverse(&(x, y))?;
+            let lambda = helpers::normalize_longitude(lambda + self.lam0());
+            Ok((lambda, phi))
+        } else {
+            let &(lambda, phi) = xy;
+            let lambda = helpers::normalize_longitude(lambda - self.lam0());
+            let (x, y) = self.forward(&(lambda, phi))?;
+            let x = x * self.a();
+            let y = y * self.a();
+            Ok((x, y))
+        }
+    }
+}
+
 /// Projection parameters.
 pub enum ProjectionParams {
     /// Lambert Conformal Conic projection

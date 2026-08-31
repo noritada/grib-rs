@@ -1,5 +1,5 @@
 use super::{
-    Ellipsoid, MercParams,
+    Ellipsoid, MercParams, Project,
     helpers::{m, sinhpsi2tanphi},
 };
 
@@ -8,6 +8,7 @@ const HALF_PI: f64 = std::f64::consts::FRAC_PI_2;
 struct MercDefinition {
     lam0: f64,
     phi_ts: f64,
+    a: f64,
     e: f64,
     e_sq: f64,
 }
@@ -15,7 +16,7 @@ struct MercDefinition {
 impl From<&MercParams> for MercDefinition {
     fn from(value: &MercParams) -> Self {
         let MercParams {
-            ellipsoid: Ellipsoid { e, e_sq, .. },
+            ellipsoid: Ellipsoid { a, e, e_sq, .. },
             lat_ts,
             lon_0,
         } = value;
@@ -26,6 +27,7 @@ impl From<&MercParams> for MercDefinition {
         Self {
             lam0,
             phi_ts,
+            a: *a,
             e: *e,
             e_sq: *e_sq,
         }
@@ -34,7 +36,7 @@ impl From<&MercParams> for MercDefinition {
 
 pub struct Projection {
     params: MercDefinition,
-    k0: f64,
+    ak0: f64,
 }
 
 impl Projection {
@@ -52,43 +54,63 @@ impl Projection {
             let (sinφts, cosφts) = p.phi_ts.sin_cos();
             m(sinφts, cosφts, p.e_sq)
         };
-        let context = Projection { params: p, k0 };
+        let ak0 = p.a * k0;
+        let context = Projection { params: p, ak0 };
         Ok(context)
     }
 
-    pub fn project(&self, xy: &(f64, f64), inverse: bool) -> Result<(f64, f64), &'static str> {
-        match (self.params.e_sq == 0.0, inverse) {
-            (true, true) => self.spheroidal_inverse(xy),
-            (true, false) => self.spheroidal_forward(xy),
-            (false, true) => self.ellipsoidal_inverse(xy),
-            (false, false) => self.ellipsoidal_forward(xy),
-        }
-    }
-
     fn ellipsoidal_forward(&self, (lambda, phi): &(f64, f64)) -> Result<(f64, f64), &'static str> {
-        let x = self.k0 * lambda;
+        let &x = lambda;
         let (sinφ, cosφ) = phi.sin_cos();
-        let y = self.k0 * ((sinφ / cosφ).asinh() - self.params.e * (self.params.e * sinφ).atanh());
+        let y = (sinφ / cosφ).asinh() - self.params.e * (self.params.e * sinφ).atanh();
         Ok((x, y))
     }
 
     fn spheroidal_forward(&self, (lambda, phi): &(f64, f64)) -> Result<(f64, f64), &'static str> {
-        let x = self.k0 * lambda;
-        let y = self.k0 * phi.tan().asinh();
+        let &x = lambda;
+        let y = phi.tan().asinh();
         Ok((x, y))
     }
 
     fn ellipsoidal_inverse(&self, (x, y): &(f64, f64)) -> Result<(f64, f64), &'static str> {
-        let phi = sinhpsi2tanphi((y / self.k0).sinh(), self.params.e).ok_or(
-            "the inverse of the isometric latitude function could not be solved numerically",
-        )?;
-        let lambda = x / self.k0;
+        let phi = sinhpsi2tanphi(y.sinh(), self.params.e)
+            .ok_or(
+                "the inverse of the isometric latitude function could not be solved numerically",
+            )?
+            .atan();
+        let &lambda = x;
         Ok((lambda, phi))
     }
 
     fn spheroidal_inverse(&self, (x, y): &(f64, f64)) -> Result<(f64, f64), &'static str> {
-        let phi = (y / self.k0).sinh().atan();
-        let lambda = x / self.k0;
+        let phi = y.sinh().atan();
+        let &lambda = x;
         Ok((lambda, phi))
+    }
+}
+
+impl Project for Projection {
+    fn forward(&self, xy: &(f64, f64)) -> Result<(f64, f64), &'static str> {
+        if self.params.e_sq == 0.0 {
+            self.spheroidal_forward(xy)
+        } else {
+            self.ellipsoidal_forward(xy)
+        }
+    }
+
+    fn inverse(&self, xy: &(f64, f64)) -> Result<(f64, f64), &'static str> {
+        if self.params.e_sq == 0.0 {
+            self.spheroidal_inverse(xy)
+        } else {
+            self.ellipsoidal_inverse(xy)
+        }
+    }
+
+    fn a(&self) -> &f64 {
+        &self.ak0
+    }
+
+    fn lam0(&self) -> &f64 {
+        &self.params.lam0
     }
 }

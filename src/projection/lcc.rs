@@ -1,20 +1,19 @@
-use std::f64::consts::PI;
-
 use super::{
     Ellipsoid, LccParams,
     helpers::{m, phi2, t},
 };
+use crate::Project;
 
-// FIXME: use constant values defined in proj
 const EPS10: f64 = f64::EPSILON;
-const HALF_PI: f64 = PI / 2.;
-const FORTH_PI: f64 = PI / 4.;
+const HALF_PI: f64 = std::f64::consts::FRAC_PI_2;
+const FORTH_PI: f64 = std::f64::consts::FRAC_PI_4;
 
 struct LccDefinition {
     lam0: f64,
     phi0: f64,
     phi1: f64,
     phi2: f64,
+    a: f64,
     e: f64,
     e_sq: f64,
     k0: f64,
@@ -23,7 +22,7 @@ struct LccDefinition {
 impl From<&LccParams> for LccDefinition {
     fn from(value: &LccParams) -> Self {
         let LccParams {
-            ellipsoid: Ellipsoid { e, e_sq, .. },
+            ellipsoid: Ellipsoid { a, e, e_sq, .. },
             lat_0,
             lon_0,
             lat_1,
@@ -40,6 +39,7 @@ impl From<&LccParams> for LccDefinition {
             phi0,
             phi1,
             phi2,
+            a: *a,
             e: *e,
             e_sq: *e_sq,
             k0: 1.,
@@ -123,14 +123,6 @@ impl Projection {
     const ERR_TRANSFORMATION_OUTSIDE_DOMAIN: &str =
         "Coordinate transformation outside projection domain";
 
-    pub fn project(&self, xy: &(f64, f64), inverse: bool) -> Result<(f64, f64), &'static str> {
-        if inverse {
-            self.inverse(xy)
-        } else {
-            self.forward(xy)
-        }
-    }
-
     fn forward(&self, (lambda, phi): &(f64, f64)) -> Result<(f64, f64), &'static str> {
         let Self {
             params: LccDefinition { e, e_sq, k0, .. },
@@ -191,6 +183,24 @@ impl Projection {
         };
 
         Ok(lp)
+    }
+}
+
+impl Project for Projection {
+    fn forward(&self, xy: &(f64, f64)) -> Result<(f64, f64), &'static str> {
+        self.forward(xy)
+    }
+
+    fn inverse(&self, xy: &(f64, f64)) -> Result<(f64, f64), &'static str> {
+        self.inverse(xy)
+    }
+
+    fn a(&self) -> &f64 {
+        &self.params.a
+    }
+
+    fn lam0(&self) -> &f64 {
+        &self.params.lam0
     }
 }
 

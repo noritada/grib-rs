@@ -1,3 +1,5 @@
+const TWO_PI: f64 = std::f64::consts::TAU;
+
 pub(crate) fn m(sin_phi: f64, cos_phi: f64, e_sq: f64) -> f64 {
     cos_phi / (1. - e_sq * sin_phi * sin_phi).sqrt()
 }
@@ -57,4 +59,8 @@ pub(crate) fn sinhpsi2tanphi(taup: f64, e: f64) -> Option<f64> {
         count -= 1;
     }
     None
+}
+
+pub(crate) fn normalize_longitude(lambda: f64) -> f64 {
+    (lambda + std::f64::consts::PI).rem_euclid(TWO_PI) - std::f64::consts::PI
 }
