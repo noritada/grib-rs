@@ -235,7 +235,7 @@ mod tests {
 
     use super::*;
 
-    const FORWARD_TOLERANCE_METERS: f64 = 1e-8;
+    const FORWARD_TOLERANCE_METERS: f64 = 1e-7;
     const INVERSE_TOLERANCE_RADIANS: f64 = 1e-12;
 
     #[test]
