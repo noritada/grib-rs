@@ -114,3 +114,56 @@ impl Project for Projection {
         &self.params.lam0
     }
 }
+
+#[cfg(all(test, feature = "gridpoints-proj"))]
+mod tests {
+    use proj::Proj;
+
+    use super::*;
+
+    const FORWARD_TOLERANCE_METERS: f64 = 1e-8;
+    const INVERSE_TOLERANCE_RADIANS: f64 = 1e-12;
+
+    #[test]
+    fn agrees_with_proj_for_ellipsoid() {
+        assert_agrees_with_proj(MercParams {
+            ellipsoid: Ellipsoid::from_a_and_b(6_378_137., 6_356_752.314_245),
+            lat_ts: 20.,
+            lon_0: 140.,
+        });
+    }
+
+    #[test]
+    fn agrees_with_proj_for_sphere() {
+        assert_agrees_with_proj(MercParams {
+            ellipsoid: Ellipsoid::from_a_and_b(6_371_229., 6_371_229.),
+            lat_ts: -15.,
+            lon_0: -30.,
+        });
+    }
+
+    fn assert_agrees_with_proj(params: MercParams) {
+        let proj = Proj::new(&params.proj_args()).unwrap();
+        let projection = Projection::new(&params).unwrap();
+        let coordinates: [(f64, f64); 4] = [(-10., -70.), (0., 0.), (25., 45.), (80., 170.)];
+
+        for (lat, lon) in coordinates {
+            let lonlat = (lon.to_radians(), lat.to_radians());
+            let expected_xy = proj.project(lonlat, false).unwrap();
+            let actual_xy = projection.project(&lonlat, false).unwrap();
+            assert_coordinates_close(actual_xy, expected_xy, FORWARD_TOLERANCE_METERS);
+
+            let expected_lonlat = proj.project(expected_xy, true).unwrap();
+            let actual_lonlat = projection.project(&expected_xy, true).unwrap();
+            assert_coordinates_close(actual_lonlat, expected_lonlat, INVERSE_TOLERANCE_RADIANS);
+        }
+    }
+
+    fn assert_coordinates_close(actual: (f64, f64), expected: (f64, f64), tolerance: f64) {
+        assert!(
+            (actual.0 - expected.0).abs() <= tolerance
+                && (actual.1 - expected.1).abs() <= tolerance,
+            "actual {actual:?} differs from expected {expected:?} by more than {tolerance}"
+        );
+    }
+}
