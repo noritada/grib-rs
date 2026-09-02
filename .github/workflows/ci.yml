@@ -23,6 +23,8 @@ jobs:
         uses: dtolnay/rust-toolchain@nightly
         with:
           components: rustfmt
+      - name: Print rustfmt version
+        run: cargo fmt --version
       - name: Run rustfmt
         run: cargo fmt --all -- --check
 
@@ -40,6 +42,8 @@ jobs:
           components: clippy
       - name: Install dependencies needed to build proj
         run: sudo apt install libsqlite3-dev
+      - name: Print clippy version
+        run: cargo clippy --version
       - name: Run clippy
         run: cargo clippy --workspace -- -D warnings
 
