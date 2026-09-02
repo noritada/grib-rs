@@ -102,7 +102,7 @@ impl std::str::FromStr for CliMessageIndex {
 
 pub(crate) enum WriteStream {
     File(BufWriter<std::fs::File>),
-    Stdout(std::io::Stdout),
+    Stdout(BufWriter<std::io::Stdout>),
 }
 
 impl WriteStream {
@@ -111,7 +111,7 @@ impl WriteStream {
         P: AsRef<Path>,
     {
         let stream = if is_dash(&out_path) {
-            Self::Stdout(std::io::stdout())
+            Self::Stdout(BufWriter::new(std::io::stdout()))
         } else {
             let f = File::create(out_path)?;
             let f = BufWriter::new(f);
