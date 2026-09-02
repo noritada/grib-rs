@@ -3,12 +3,13 @@ use std::{env, error::Error, fs::File, io::BufReader, path::Path};
 use grib::LatLons;
 
 fn main() -> Result<(), Box<dyn Error>> {
-    // This example shows how to decode values inside a layer in a GRIB2 message.
-    // The example also shows how to obtain the latitude-longitude locations of grid
-    // points, which are usually used in conjunction with the grid point values.
+    // This example shows how to decode values inside a layer in a GRIB2
+    // message. The example also shows how to obtain the latitude-longitude
+    // locations of grid points, which are usually used in conjunction with
+    // the grid point values.
 
-    // Take the first argument as an input file path and the second argument as a
-    // layer index.
+    // Take the first argument as an input file path and the second argument as
+    // a layer index.
     let mut args = env::args().skip(1);
     if let (Some(file_path), Some(index), Some(subindex)) = (args.next(), args.next(), args.next())
     {
@@ -42,9 +43,10 @@ where
     // Prepare a decoder.
     let decoder = grib::Grib2SubmessageDecoder::from(submessage)?;
 
-    // Actually dispatch a decoding process and get an iterator of decoded values.
-    // There are various methods available for compressing GRIB2 data, but some are
-    // not yet supported by this library and may return errors.
+    // Actually dispatch a decoding process and get an iterator of decoded
+    // values. There are various methods available for compressing GRIB2
+    // data, but some are not yet supported by this library and may return
+    // errors.
     let values = decoder.dispatch()?;
 
     // Iterate over decoded values along with locations.

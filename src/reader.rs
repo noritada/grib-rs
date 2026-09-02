@@ -77,8 +77,8 @@ where
     #[inline]
     fn next_sect0(&mut self) -> Option<Result<SectionInfo, ParseError>> {
         if self.whole_size == 0 {
-            // if the offset value is left at the initial value, reset it to the current
-            // position
+            // if the offset value is left at the initial value, reset it to the
+            // current position
             let result = self.reset_pos();
             if let Err(e) = result {
                 return Some(Err(ParseError::ReadError(format!(

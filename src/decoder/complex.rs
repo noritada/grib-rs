@@ -294,13 +294,14 @@ where
             self.length_iter.next(),
         ) {
             (Some(_ref), Some(width), Some(length)) if width.to_usize().unwrap() == 0 => {
-                // The specification states as follows: "For groups with a constant value,
-                // associated field width is 0, and no incremental data are physically present."
+                // The specification states as follows: "For groups with a
+                // constant value, associated field width is 0,
+                // and no incremental data are physically present."
                 let _ref = _ref.to_u32().unwrap();
                 let length = length.to_usize().unwrap();
                 let missing1: u32 = (1 << self.num_bits) - 1;
-                // if missing1 == 0 (i.e. width == 0), missing2 should not be used, so it can be
-                // set to any value.
+                // if missing1 == 0 (i.e. width == 0), missing2 should not be
+                // used, so it can be set to any value.
                 let missing2 = if missing1 == 0 { 0 } else { missing1 - 1 };
 
                 if self.missing_value_management > 0 && _ref == missing1 {

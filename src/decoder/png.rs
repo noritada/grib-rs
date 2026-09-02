@@ -43,11 +43,12 @@ impl<'d> Grib2GpvUnpack for Png<'d> {
         //
         // - 1, 2, 4, 8, or 16 : Treat as greyscale image
         // - 24 : Treat as RGB colour image (each component having 8-bit depth)
-        // - 32 : Treat as RGB w/ alpha sample colour image (each component having 8-bit
-        //   depth)
+        // - 32 : Treat as RGB w/ alpha sample colour image (each component
+        //   having 8-bit depth)
         //
-        // Since we have verified the decoding process through testing for cases where
-        // `num_bits` is 8, 16, and 24, we believe other cases should also be fine.
+        // Since we have verified the decoding process through testing for cases
+        // where `num_bits` is 8, 16, and 24, we believe other cases
+        // should also be fine.
 
         let buf = read_image_buffer(target.sect7_payload())
             .map_err(|e| DecodeError::from(format!("PNG decode error: {e}")))?;
