@@ -97,8 +97,8 @@ impl TryFrom<&GridDefinition> for GridDefinitionTemplateValues {
         // ```
         //
         // However, since the current implementation of the templates has many
-        // limitations, to prevent errors, the template reading process is implemented
-        // as follows.
+        // limitations, to prevent errors, the template reading process is
+        // implemented as follows.
         let buf = &value.payload[9..];
         let mut pos = 0;
         let num = value.grid_tmpl_num();
@@ -420,8 +420,8 @@ mod tests {
     #[test]
     fn grid_definition_template_0() {
         // data taken from submessage #0.0 of
-        // `Z__C_RJTD_20160822020000_NOWC_GPV_Ggis10km_Pphw10_FH0000-0100_grib2.bin.xz`
-        // in `testdata`
+        // `Z__C_RJTD_20160822020000_NOWC_GPV_Ggis10km_Pphw10_FH0000-0100_grib2.
+        // bin.xz` in `testdata`
         let data = GridDefinition::from_payload(
             vec![
                 0x00, 0x00, 0x01, 0x50, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0xff, 0xff, 0xff, 0xff,

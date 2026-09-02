@@ -118,7 +118,8 @@ mod tests {
         };
         let latlons = grid_def.latlons()?.collect::<Vec<_>>();
 
-        // Following lat/lon values are taken from the calculation results using pygrib.
+        // Following lat/lon values are taken from the calculation results using
+        // pygrib.
         let delta = 1e-4;
         assert_coord_almost_eq(latlons[0], (20.19, -121.550004), delta);
         assert_coord_almost_eq(latlons[1], (20.19442682, -121.52621665), delta);
