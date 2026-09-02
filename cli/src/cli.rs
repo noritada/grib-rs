@@ -1,6 +1,6 @@
 use std::{
     fs::File,
-    io::{BufReader, BufWriter, Read, Write},
+    io::{BufReader, BufWriter, Cursor, Read, Seek, SeekFrom, Write},
     path::Path,
     sync::LazyLock,
 };
@@ -12,20 +12,43 @@ use regex::Regex;
 #[cfg(unix)]
 use which::which;
 
-pub fn grib<P>(path: P) -> anyhow::Result<Grib2<SeekableGrib2Reader<std::io::Cursor<Vec<u8>>>>>
+pub(crate) enum GribReader {
+    Stdin(Cursor<Vec<u8>>),
+    File(BufReader<File>),
+}
+
+impl Read for GribReader {
+    fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
+        match self {
+            Self::Stdin(reader) => reader.read(buf),
+            Self::File(reader) => reader.read(buf),
+        }
+    }
+}
+
+impl Seek for GribReader {
+    fn seek(&mut self, pos: SeekFrom) -> std::io::Result<u64> {
+        match self {
+            Self::Stdin(reader) => reader.seek(pos),
+            Self::File(reader) => reader.seek(pos),
+        }
+    }
+}
+
+pub(crate) fn grib<P>(path: P) -> anyhow::Result<Grib2<SeekableGrib2Reader<GribReader>>>
 where
     P: AsRef<Path>,
 {
-    let mut buf = Vec::with_capacity(4096);
-    if is_dash(&path) {
+    let reader = if is_dash(&path) {
+        let mut buf = Vec::with_capacity(4096);
         let mut stdin = std::io::stdin();
         let _size = stdin.read_to_end(&mut buf);
+        GribReader::Stdin(Cursor::new(buf))
     } else {
         let f = File::open(path)?;
-        let mut f = BufReader::new(f);
-        let _size = f.read_to_end(&mut buf);
+        GribReader::File(BufReader::new(f))
     };
-    let grib = grib::from_bytes(buf)?;
+    let grib = grib::from_reader(reader)?;
 
     if grib.is_empty() {
         anyhow::bail!("empty GRIB2 data")
