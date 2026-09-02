@@ -11,6 +11,21 @@ on:
   workflow_dispatch:
 
 jobs:
+  format:
+    name: Format check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: rustfmt
+      - name: Run rustfmt
+        run: cargo fmt --all -- --check
+
   lint_and_clippy:
     name: Lint and Clippy
     runs-on: ubuntu-latest
@@ -22,9 +37,7 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@nightly
         with:
-          components: clippy, rustfmt
-      - name: Run rustfmt
-        run: cargo fmt --all -- --check
+          components: clippy
       - name: Install dependencies needed to build proj
         run: sudo apt install libsqlite3-dev
       - name: Run clippy
