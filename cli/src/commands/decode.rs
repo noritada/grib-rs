@@ -46,7 +46,11 @@ pub fn exec(args: &ArgMatches) -> Result<()> {
         .iter()
         .find(|(index, _)| index == message_index)
         .ok_or_else(|| anyhow::anyhow!("no such index: {}.{}", message_index.0, message_index.1))?;
-    let latlons = submessage.latlons();
+    let latlons = if args.contains_id("big-endian") || args.contains_id("little-endian") {
+        None
+    } else {
+        Some(submessage.latlons())
+    };
     let decoder = grib::Grib2SubmessageDecoder::from(submessage)?;
     let values = decoder.dispatch()?;
 
@@ -58,7 +62,7 @@ pub fn exec(args: &ArgMatches) -> Result<()> {
         write_output(out_path, values, |f| f.to_le_bytes())
     } else {
         let values = values.collect::<Vec<_>>().into_iter(); // workaround for mutability
-        let latlons = match latlons {
+        let latlons = match latlons.expect("lat/lon result is present for text output") {
             Ok(iter) => LatLonIteratorWrapper::LatLon(iter),
             Err(GribError::NotSupported(_)) => {
                 let nan_iter = vec![(f32::NAN, f32::NAN); values.len()].into_iter();
