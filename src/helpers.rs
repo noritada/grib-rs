@@ -10,8 +10,8 @@ pub(crate) use read_as;
 
 pub(crate) fn grib_int_from_bytes(bytes: &[u8]) -> i32 {
     let len = bytes.len();
-    // Although there is logic that can be used to generalize, not so many patterns
-    // exist that generalization is necessary.
+    // Although there is logic that can be used to generalize, not so many
+    // patterns exist that generalization is necessary.
     let mut pos = 0;
     match len {
         1 => i32::from(i8::try_from_slice(bytes, &mut pos).unwrap()),

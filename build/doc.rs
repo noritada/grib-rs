@@ -115,8 +115,8 @@ impl std::str::FromStr for ReadMeSections {
     type Err = &'static str;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        // Line terminators are not included in the lines returned by the iterator from
-        // `str::lines`.
+        // Line terminators are not included in the lines returned by the
+        // iterator from `str::lines`.
         let mut lines = s.split_inclusive("\n");
 
         let mut map = HashMap::<String, String>::new();

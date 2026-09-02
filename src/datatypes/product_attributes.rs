@@ -168,8 +168,8 @@ impl FixedSurface {
     /// assert_eq!(grib::FixedSurface::new(100, 0, 0).unit(), Some("Pa"));
     /// ```
     pub fn unit(&self) -> Option<&str> {
-        // Tentative implementation; pattern matching should be generated from the
-        // CodeFlag CSV file.
+        // Tentative implementation; pattern matching should be generated from
+        // the CodeFlag CSV file.
         let unit = match self.surface_type {
             11 => "m",
             12 => "m",

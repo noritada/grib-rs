@@ -97,7 +97,8 @@ mod tests {
     fn polar_stereographic_grid_latlon_computation() -> Result<(), Box<dyn std::error::Error>> {
         use crate::grid::helpers::test_helpers::assert_coord_almost_eq;
         // grid point definition extracted from
-        // testdata/CMC_RDPA_APCP-024-0100cutoff_SFC_0_ps10km_2023121806_000.grib2.xz
+        // testdata/CMC_RDPA_APCP-024-0100cutoff_SFC_0_ps10km_2023121806_000.
+        // grib2.xz
         let grid_def = Template3_20 {
             earth_shape: param_set::EarthShape {
                 shape: 6,
@@ -128,7 +129,8 @@ mod tests {
         };
         let latlons = grid_def.latlons()?.collect::<Vec<_>>();
 
-        // Following lat/lon values are taken from the calculation results using pygrib.
+        // Following lat/lon values are taken from the calculation results using
+        // pygrib.
         let delta = 1e-4;
         assert_coord_almost_eq(latlons[0], (18.14503, -142.892544), delta);
         assert_coord_almost_eq(latlons[1], (18.17840149, -142.83604096), delta);

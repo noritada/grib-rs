@@ -10,9 +10,9 @@ fn main() -> Result<(), Box<dyn Error>> {
     // This example script checks if all messages/submessages in all given GRIB2
     // files can be decoded.
     //
-    // This script is a practical example and does not include detailed explanatory
-    // comments. If you are interested in how to write code to decode, please check
-    // the example `decode_layers`.
+    // This script is a practical example and does not include detailed
+    // explanatory comments. If you are interested in how to write code to
+    // decode, please check the example `decode_layers`.
 
     let fnames = env::args().skip(1);
     for fname in fnames {
