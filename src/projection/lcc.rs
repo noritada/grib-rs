@@ -8,47 +8,12 @@ const EPS10: f64 = f64::EPSILON;
 const HALF_PI: f64 = std::f64::consts::FRAC_PI_2;
 const FORTH_PI: f64 = std::f64::consts::FRAC_PI_4;
 
-struct LccDefinition {
+pub struct Projection {
     lam0: f64,
-    phi0: f64,
-    phi1: f64,
-    phi2: f64,
     a: f64,
     e: f64,
     e_sq: f64,
     k0: f64,
-}
-
-impl From<&LccParams> for LccDefinition {
-    fn from(value: &LccParams) -> Self {
-        let LccParams {
-            ellipsoid: Ellipsoid { a, e, e_sq, .. },
-            lat_0,
-            lon_0,
-            lat_1,
-            lat_2,
-        } = value;
-
-        let lam0 = lon_0.to_radians();
-        let phi0 = lat_0.to_radians();
-        let phi1 = lat_1.to_radians();
-        let phi2 = lat_2.to_radians();
-
-        Self {
-            lam0,
-            phi0,
-            phi1,
-            phi2,
-            a: *a,
-            e: *e,
-            e_sq: *e_sq,
-            k0: 1.,
-        }
-    }
-}
-
-pub struct Projection {
-    params: LccDefinition,
     n: f64,
     c: f64,
     rho0: f64,
@@ -56,30 +21,42 @@ pub struct Projection {
 
 impl Projection {
     pub fn new(p: &LccParams) -> Result<Self, &'static str> {
-        let p = LccDefinition::from(p);
-        if (p.phi1 + p.phi2).abs() < EPS10 {
+        let LccParams {
+            ellipsoid: Ellipsoid { a, e, e_sq, .. },
+            lat_0,
+            lon_0,
+            lat_1,
+            lat_2,
+        } = p;
+        let lam0 = lon_0.to_radians();
+        let phi0 = lat_0.to_radians();
+        let phi1 = lat_1.to_radians();
+        let phi2 = lat_2.to_radians();
+        let k0 = 1.;
+
+        if (phi1 + phi2).abs() < EPS10 {
             return Err("Invalid value for lat_1 and lat_2: |lat_1 + lat_2| should be > 0");
         }
 
-        let sin_phi1 = p.phi1.sin();
-        let cos_phi1 = p.phi1.cos();
+        let sin_phi1 = phi1.sin();
+        let cos_phi1 = phi1.cos();
 
-        if cos_phi1.abs() < EPS10 || p.phi1.abs() >= HALF_PI {
+        if cos_phi1.abs() < EPS10 || phi1.abs() >= HALF_PI {
             return Err("Invalid value for lat_1: |lat_1| should be < 90°");
         }
-        if p.phi2.cos().abs() < EPS10 || p.phi2.abs() >= HALF_PI {
+        if phi2.cos().abs() < EPS10 || phi2.abs() >= HALF_PI {
             return Err("Invalid value for lat_2: |lat_2| should be < 90°");
         }
 
-        let is_secant_cone = (p.phi1 - p.phi2) >= EPS10; // otherwise, tangent cone
-        let is_ellipsoidal = p.e_sq != 0.;
-        let is_phi0_almost_equal_to_half_pi = (p.phi0.abs() - HALF_PI).abs() < EPS10;
+        let is_secant_cone = (phi1 - phi2) >= EPS10; // otherwise, tangent cone
+        let is_ellipsoidal = *e_sq != 0.;
+        let is_phi0_almost_equal_to_half_pi = (phi0.abs() - HALF_PI).abs() < EPS10;
 
         let context = if is_ellipsoidal {
-            let m1 = m(sin_phi1, cos_phi1, p.e_sq);
-            let t1 = t(cos_phi1, sin_phi1, p.e);
+            let m1 = m(sin_phi1, cos_phi1, *e_sq);
+            let t1 = t(cos_phi1, sin_phi1, *e);
             let n = if is_secant_cone {
-                n_in_secant_cone_ellipsoidal(&p, &m1, &t1)?
+                n_in_secant_cone_ellipsoidal(phi2, *e, *e_sq, m1, t1)?
             } else {
                 sin_phi1
             };
@@ -87,31 +64,39 @@ impl Projection {
             let rho0 = if is_phi0_almost_equal_to_half_pi {
                 0.
             } else {
-                c * t(p.phi0.cos(), p.phi0.sin(), p.e).powf(n)
+                c * t(phi0.cos(), phi0.sin(), *e).powf(n)
             };
             Projection {
-                params: p,
+                lam0,
+                a: *a,
+                e: *e,
+                e_sq: *e_sq,
+                k0,
                 n,
                 c,
                 rho0,
             }
         } else {
             let n = if is_secant_cone {
-                n_in_secant_cone_spherical(&p, cos_phi1, p.phi2.cos())
+                n_in_secant_cone_spherical(phi1, phi2, cos_phi1, phi2.cos())
             } else {
                 sin_phi1
             };
             if n == 0. {
                 return Err("Invalid value for lat_1 and lat_2: |lat_1 + lat_2| should be > 0");
             }
-            let c = cos_phi1 * (FORTH_PI + 0.5 * p.phi1).tan().powf(n) / n;
+            let c = cos_phi1 * (FORTH_PI + 0.5 * phi1).tan().powf(n) / n;
             let rho0 = if is_phi0_almost_equal_to_half_pi {
                 0.
             } else {
-                c * (FORTH_PI + 0.5 * p.phi0).tan().powf(-n)
+                c * (FORTH_PI + 0.5 * phi0).tan().powf(-n)
             };
             Projection {
-                params: p,
+                lam0,
+                a: *a,
+                e: *e,
+                e_sq: *e_sq,
+                k0,
                 n,
                 c,
                 rho0,
@@ -125,10 +110,13 @@ impl Projection {
 
     fn forward(&self, (lambda, phi): &(f64, f64)) -> Result<(f64, f64), &'static str> {
         let Self {
-            params: LccDefinition { e, e_sq, k0, .. },
+            e,
+            e_sq,
+            k0,
             n,
             c,
             rho0,
+            ..
         } = self;
 
         let rho = if (phi.abs() - HALF_PI).abs() < EPS10 {
@@ -151,10 +139,13 @@ impl Projection {
 
     fn inverse(&self, (x, y): &(f64, f64)) -> Result<(f64, f64), &'static str> {
         let Self {
-            params: LccDefinition { e, e_sq, k0, .. },
+            e,
+            e_sq,
+            k0,
             n,
             c,
             rho0,
+            ..
         } = self;
 
         let x = x / k0;
@@ -196,27 +187,29 @@ impl Project for Projection {
     }
 
     fn a(&self) -> &f64 {
-        &self.params.a
+        &self.a
     }
 
     fn lam0(&self) -> &f64 {
-        &self.params.lam0
+        &self.lam0
     }
 }
 
 fn n_in_secant_cone_ellipsoidal(
-    p: &LccDefinition,
-    m1: &f64,
-    t1: &f64,
+    phi2: f64,
+    e: f64,
+    e_sq: f64,
+    m1: f64,
+    t1: f64,
 ) -> Result<f64, &'static str> {
     let err_message = "Invalid value for eccentricity";
-    let sin_phi2 = p.phi2.sin();
-    let cos_phi2 = p.phi2.cos();
-    let n = (m1 / m(sin_phi2, cos_phi2, p.e_sq)).ln();
+    let sin_phi2 = phi2.sin();
+    let cos_phi2 = phi2.cos();
+    let n = (m1 / m(sin_phi2, cos_phi2, e_sq)).ln();
     if n == 0. {
         return Err(err_message);
     }
-    let denom = (t1 / t(cos_phi2, sin_phi2, p.e)).ln();
+    let denom = (t1 / t(cos_phi2, sin_phi2, e)).ln();
     if denom == 0. {
         return Err(err_message);
     }
@@ -224,9 +217,9 @@ fn n_in_secant_cone_ellipsoidal(
     Ok(n)
 }
 
-fn n_in_secant_cone_spherical(p: &LccDefinition, cos_phi1: f64, cos_phi2: f64) -> f64 {
+fn n_in_secant_cone_spherical(phi1: f64, phi2: f64, cos_phi1: f64, cos_phi2: f64) -> f64 {
     (cos_phi1 / cos_phi2).ln()
-        / ((FORTH_PI + 0.5 * p.phi2).tan() / (FORTH_PI + 0.5 * p.phi1).tan()).ln()
+        / ((FORTH_PI + 0.5 * phi2).tan() / (FORTH_PI + 0.5 * phi1).tan()).ln()
 }
 
 #[cfg(all(test, feature = "gridpoints-proj"))]
