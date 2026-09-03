@@ -38,10 +38,9 @@ impl Projection {
             return Err("Invalid value for lat_1 and lat_2: |lat_1 + lat_2| should be > 0");
         }
 
-        let sin_phi1 = phi1.sin();
-        let cos_phi1 = phi1.cos();
+        let (sinφ1, cosφ1) = phi1.sin_cos();
 
-        if cos_phi1.abs() < EPS10 || phi1.abs() >= HALF_PI {
+        if cosφ1.abs() < EPS10 || phi1.abs() >= HALF_PI {
             return Err("Invalid value for lat_1: |lat_1| should be < 90°");
         }
         if phi2.cos().abs() < EPS10 || phi2.abs() >= HALF_PI {
@@ -53,12 +52,12 @@ impl Projection {
         let is_phi0_almost_equal_to_half_pi = (phi0.abs() - HALF_PI).abs() < EPS10;
 
         let context = if is_ellipsoidal {
-            let m1 = m(sin_phi1, cos_phi1, *e_sq);
-            let t1 = t(cos_phi1, sin_phi1, *e);
+            let m1 = m(sinφ1, cosφ1, *e_sq);
+            let t1 = t(cosφ1, sinφ1, *e);
             let n = if is_secant_cone {
                 n_in_secant_cone_ellipsoidal(phi2, *e, *e_sq, m1, t1)?
             } else {
-                sin_phi1
+                sinφ1
             };
             let c = m1 * t1.powf(-n) / n;
             let rho0 = if is_phi0_almost_equal_to_half_pi {
@@ -78,14 +77,14 @@ impl Projection {
             }
         } else {
             let n = if is_secant_cone {
-                n_in_secant_cone_spherical(phi1, phi2, cos_phi1, phi2.cos())
+                n_in_secant_cone_spherical(phi1, phi2, cosφ1, phi2.cos())
             } else {
-                sin_phi1
+                sinφ1
             };
             if n == 0. {
                 return Err("Invalid value for lat_1 and lat_2: |lat_1 + lat_2| should be > 0");
             }
-            let c = cos_phi1 * (FORTH_PI + 0.5 * phi1).tan().powf(n) / n;
+            let c = cosφ1 * (FORTH_PI + 0.5 * phi1).tan().powf(n) / n;
             let rho0 = if is_phi0_almost_equal_to_half_pi {
                 0.
             } else {
@@ -203,13 +202,12 @@ fn n_in_secant_cone_ellipsoidal(
     t1: f64,
 ) -> Result<f64, &'static str> {
     let err_message = "Invalid value for eccentricity";
-    let sin_phi2 = phi2.sin();
-    let cos_phi2 = phi2.cos();
-    let n = (m1 / m(sin_phi2, cos_phi2, e_sq)).ln();
+    let (sinφ2, cosφ2) = phi2.sin_cos();
+    let n = (m1 / m(sinφ2, cosφ2, e_sq)).ln();
     if n == 0. {
         return Err(err_message);
     }
-    let denom = (t1 / t(cos_phi2, sin_phi2, e)).ln();
+    let denom = (t1 / t(cosφ2, sinφ2, e)).ln();
     if denom == 0. {
         return Err(err_message);
     }
@@ -217,9 +215,8 @@ fn n_in_secant_cone_ellipsoidal(
     Ok(n)
 }
 
-fn n_in_secant_cone_spherical(phi1: f64, phi2: f64, cos_phi1: f64, cos_phi2: f64) -> f64 {
-    (cos_phi1 / cos_phi2).ln()
-        / ((FORTH_PI + 0.5 * phi2).tan() / (FORTH_PI + 0.5 * phi1).tan()).ln()
+fn n_in_secant_cone_spherical(phi1: f64, phi2: f64, cosφ1: f64, cosφ2: f64) -> f64 {
+    (cosφ1 / cosφ2).ln() / ((FORTH_PI + 0.5 * phi2).tan() / (FORTH_PI + 0.5 * phi1).tan()).ln()
 }
 
 #[cfg(all(test, feature = "gridpoints-proj"))]
