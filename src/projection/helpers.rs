@@ -1,16 +1,16 @@
 const TWO_PI: f64 = std::f64::consts::TAU;
 
-pub(crate) fn m(sin_phi: f64, cos_phi: f64, e_sq: f64) -> f64 {
-    cos_phi / (1. - e_sq * sin_phi * sin_phi).sqrt()
+pub(crate) fn m(sinφ: f64, cosφ: f64, e_sq: f64) -> f64 {
+    cosφ / (1. - e_sq * sinφ * sinφ).sqrt()
 }
 
 // See formula deformation for pj_tsfn().
-pub(crate) fn t(cos_phi: f64, sin_phi: f64, e: f64) -> f64 {
-    (e * (e * sin_phi).atanh()).exp()
-        * if sin_phi > 0. {
-            cos_phi / (1. + sin_phi)
+pub(crate) fn t(cosφ: f64, sinφ: f64, e: f64) -> f64 {
+    (e * (e * sinφ).atanh()).exp()
+        * if sinφ > 0. {
+            cosφ / (1. + sinφ)
         } else {
-            (1. - sin_phi) / cos_phi
+            (1. - sinφ) / cosφ
         }
 }
 

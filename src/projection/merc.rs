@@ -1,68 +1,76 @@
+#[cfg(feature = "gridpoints-proj")]
+use super::OsgeoProj;
 use super::{
-    Ellipsoid, MercParams, Project,
+    Ellipsoid, Project,
     helpers::{m, sinhpsi2tanphi},
 };
 
 const HALF_PI: f64 = std::f64::consts::FRAC_PI_2;
 
-struct MercDefinition {
-    lam0: f64,
-    phi_ts: f64,
-    a: f64,
-    e: f64,
-    e_sq: f64,
+/// Parameters for Mercator projection.
+pub struct Params {
+    /// Ellipsoid definition
+    pub ellipsoid: Ellipsoid,
+    /// Latitude of true scale (in degree)
+    pub lat_ts: f64,
+    /// Central meridian (in degree)
+    pub lon_0: f64,
 }
 
-impl From<&MercParams> for MercDefinition {
-    fn from(value: &MercParams) -> Self {
-        let MercParams {
-            ellipsoid: Ellipsoid { a, e, e_sq, .. },
+#[cfg(feature = "gridpoints-proj")]
+impl OsgeoProj for Params {
+    fn proj_args(&self) -> String {
+        let Self {
+            ellipsoid: Ellipsoid { a, b, .. },
             lat_ts,
             lon_0,
-        } = value;
-
-        let lam0 = lon_0.to_radians();
-        let phi_ts = lat_ts.to_radians().abs();
-
-        Self {
-            lam0,
-            phi_ts,
-            a: *a,
-            e: *e,
-            e_sq: *e_sq,
-        }
+        } = self;
+        format!("+a={a} +b={b} +proj=merc +lat_ts={lat_ts} +lon_0={lon_0}")
     }
 }
 
 pub struct Projection {
-    params: MercDefinition,
+    lam0: f64,
+    e: f64,
+    e_sq: f64,
     ak0: f64,
 }
 
 impl Projection {
-    pub fn new(p: &MercParams) -> Result<Self, &'static str> {
-        let p = MercDefinition::from(p);
-        if p.phi_ts >= HALF_PI {
+    pub fn new(p: &Params) -> Result<Self, &'static str> {
+        let Params {
+            ellipsoid: Ellipsoid { a, e, e_sq, .. },
+            lat_ts,
+            lon_0,
+        } = p;
+        let lam0 = lon_0.to_radians();
+        let phi_ts = lat_ts.to_radians().abs();
+        if phi_ts >= HALF_PI {
             return Err("Invalid value for lat_ts: |lat_ts| should be <= 90°");
         }
 
-        let k0 = if p.e_sq == 0.0 {
+        let k0 = if *e_sq == 0.0 {
             // sphere
-            p.phi_ts.cos()
+            phi_ts.cos()
         } else {
             // ellipsoid
-            let (sinφts, cosφts) = p.phi_ts.sin_cos();
-            m(sinφts, cosφts, p.e_sq)
+            let (sinφts, cosφts) = phi_ts.sin_cos();
+            m(sinφts, cosφts, *e_sq)
         };
-        let ak0 = p.a * k0;
-        let context = Projection { params: p, ak0 };
+        let ak0 = a * k0;
+        let context = Projection {
+            lam0,
+            e: *e,
+            e_sq: *e_sq,
+            ak0,
+        };
         Ok(context)
     }
 
     fn ellipsoidal_forward(&self, (lambda, phi): &(f64, f64)) -> Result<(f64, f64), &'static str> {
         let &x = lambda;
         let (sinφ, cosφ) = phi.sin_cos();
-        let y = (sinφ / cosφ).asinh() - self.params.e * (self.params.e * sinφ).atanh();
+        let y = (sinφ / cosφ).asinh() - self.e * (self.e * sinφ).atanh();
         Ok((x, y))
     }
 
@@ -73,7 +81,7 @@ impl Projection {
     }
 
     fn ellipsoidal_inverse(&self, (x, y): &(f64, f64)) -> Result<(f64, f64), &'static str> {
-        let phi = sinhpsi2tanphi(y.sinh(), self.params.e)
+        let phi = sinhpsi2tanphi(y.sinh(), self.e)
             .ok_or(
                 "the inverse of the isometric latitude function could not be solved numerically",
             )?
@@ -91,7 +99,7 @@ impl Projection {
 
 impl Project for Projection {
     fn forward(&self, xy: &(f64, f64)) -> Result<(f64, f64), &'static str> {
-        if self.params.e_sq == 0.0 {
+        if self.e_sq == 0.0 {
             self.spheroidal_forward(xy)
         } else {
             self.ellipsoidal_forward(xy)
@@ -99,7 +107,7 @@ impl Project for Projection {
     }
 
     fn inverse(&self, xy: &(f64, f64)) -> Result<(f64, f64), &'static str> {
-        if self.params.e_sq == 0.0 {
+        if self.e_sq == 0.0 {
             self.spheroidal_inverse(xy)
         } else {
             self.ellipsoidal_inverse(xy)
@@ -111,7 +119,7 @@ impl Project for Projection {
     }
 
     fn lam0(&self) -> &f64 {
-        &self.params.lam0
+        &self.lam0
     }
 }
 
@@ -126,7 +134,7 @@ mod tests {
 
     #[test]
     fn agrees_with_proj_for_ellipsoid() {
-        assert_agrees_with_proj(MercParams {
+        assert_agrees_with_proj(Params {
             ellipsoid: Ellipsoid::from_a_and_b(6_378_137., 6_356_752.314_245),
             lat_ts: 20.,
             lon_0: 140.,
@@ -135,14 +143,14 @@ mod tests {
 
     #[test]
     fn agrees_with_proj_for_sphere() {
-        assert_agrees_with_proj(MercParams {
+        assert_agrees_with_proj(Params {
             ellipsoid: Ellipsoid::from_a_and_b(6_371_229., 6_371_229.),
             lat_ts: -15.,
             lon_0: -30.,
         });
     }
 
-    fn assert_agrees_with_proj(params: MercParams) {
+    fn assert_agrees_with_proj(params: Params) {
         let proj = Proj::new(&params.proj_args()).unwrap();
         let projection = Projection::new(&params).unwrap();
         let coordinates: [(f64, f64); 4] = [(-10., -70.), (0., 0.), (25., 45.), (80., 170.)];
