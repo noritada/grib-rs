@@ -1,5 +1,5 @@
 use super::{
-    Ellipsoid, LccParams,
+    Ellipsoid, OsgeoProj,
     helpers::{m, phi2, t},
 };
 use crate::Project;
@@ -7,6 +7,35 @@ use crate::Project;
 const EPS10: f64 = f64::EPSILON;
 const HALF_PI: f64 = std::f64::consts::FRAC_PI_2;
 const FORTH_PI: f64 = std::f64::consts::FRAC_PI_4;
+
+/// Parameters for Lambert Conformal Conic projection.
+pub struct Params {
+    /// Ellipsoid definition
+    pub ellipsoid: Ellipsoid,
+    /// Latitude of origin (in degree)
+    pub lat_0: f64,
+    /// Central meridian (in degree)
+    pub lon_0: f64,
+    /// First standard parallel (in degree)
+    pub lat_1: f64,
+    /// Second standard parallel (in degree)
+    pub lat_2: f64,
+}
+
+impl OsgeoProj for Params {
+    fn proj_args(&self) -> String {
+        let Self {
+            ellipsoid: Ellipsoid { a, b, .. },
+            lat_0,
+            lon_0,
+            lat_1,
+            lat_2,
+        } = self;
+        format!(
+            "+a={a} +b={b} +proj=lcc +lat_0={lat_0} +lon_0={lon_0} +lat_1={lat_1} +lat_2={lat_2}"
+        )
+    }
+}
 
 pub struct Projection {
     lam0: f64,
@@ -20,8 +49,8 @@ pub struct Projection {
 }
 
 impl Projection {
-    pub fn new(p: &LccParams) -> Result<Self, &'static str> {
-        let LccParams {
+    pub fn new(p: &Params) -> Result<Self, &'static str> {
+        let Params {
             ellipsoid: Ellipsoid { a, e, e_sq, .. },
             lat_0,
             lon_0,
@@ -230,7 +259,7 @@ mod tests {
 
     #[test]
     fn agrees_with_proj_for_ellipsoidal_secant_cone() {
-        assert_agrees_with_proj(LccParams {
+        assert_agrees_with_proj(Params {
             ellipsoid: Ellipsoid::from_a_and_b(6_378_137., 6_356_752.314_245),
             lat_0: 40.,
             lon_0: 140.,
@@ -241,7 +270,7 @@ mod tests {
 
     #[test]
     fn agrees_with_proj_for_ellipsoidal_tangent_cone() {
-        assert_agrees_with_proj(LccParams {
+        assert_agrees_with_proj(Params {
             ellipsoid: Ellipsoid::from_a_and_b(6_378_137., 6_356_752.314_245),
             lat_0: 35.,
             lon_0: -100.,
@@ -252,7 +281,7 @@ mod tests {
 
     #[test]
     fn agrees_with_proj_for_spherical_secant_cone() {
-        assert_agrees_with_proj(LccParams {
+        assert_agrees_with_proj(Params {
             ellipsoid: Ellipsoid::from_a_and_b(6_371_229., 6_371_229.),
             lat_0: -40.,
             lon_0: 20.,
@@ -261,7 +290,7 @@ mod tests {
         });
     }
 
-    fn assert_agrees_with_proj(params: LccParams) {
+    fn assert_agrees_with_proj(params: Params) {
         let proj = Proj::new(&params.proj_args()).unwrap();
         let projection = Projection::new(&params).unwrap();
         let coordinates: [(f64, f64); 4] = [(-70., -10.), (0., 0.), (25., 45.), (70., 170.)];

@@ -1,9 +1,30 @@
 use super::{
-    Ellipsoid, MercParams, Project,
+    Ellipsoid, OsgeoProj, Project,
     helpers::{m, sinhpsi2tanphi},
 };
 
 const HALF_PI: f64 = std::f64::consts::FRAC_PI_2;
+
+/// Parameters for Mercator projection.
+pub struct Params {
+    /// Ellipsoid definition
+    pub ellipsoid: Ellipsoid,
+    /// Latitude of true scale (in degree)
+    pub lat_ts: f64,
+    /// Central meridian (in degree)
+    pub lon_0: f64,
+}
+
+impl OsgeoProj for Params {
+    fn proj_args(&self) -> String {
+        let Self {
+            ellipsoid: Ellipsoid { a, b, .. },
+            lat_ts,
+            lon_0,
+        } = self;
+        format!("+a={a} +b={b} +proj=merc +lat_ts={lat_ts} +lon_0={lon_0}")
+    }
+}
 
 pub struct Projection {
     lam0: f64,
@@ -13,8 +34,8 @@ pub struct Projection {
 }
 
 impl Projection {
-    pub fn new(p: &MercParams) -> Result<Self, &'static str> {
-        let MercParams {
+    pub fn new(p: &Params) -> Result<Self, &'static str> {
+        let Params {
             ellipsoid: Ellipsoid { a, e, e_sq, .. },
             lat_ts,
             lon_0,
@@ -110,7 +131,7 @@ mod tests {
 
     #[test]
     fn agrees_with_proj_for_ellipsoid() {
-        assert_agrees_with_proj(MercParams {
+        assert_agrees_with_proj(Params {
             ellipsoid: Ellipsoid::from_a_and_b(6_378_137., 6_356_752.314_245),
             lat_ts: 20.,
             lon_0: 140.,
@@ -119,14 +140,14 @@ mod tests {
 
     #[test]
     fn agrees_with_proj_for_sphere() {
-        assert_agrees_with_proj(MercParams {
+        assert_agrees_with_proj(Params {
             ellipsoid: Ellipsoid::from_a_and_b(6_371_229., 6_371_229.),
             lat_ts: -15.,
             lon_0: -30.,
         });
     }
 
-    fn assert_agrees_with_proj(params: MercParams) {
+    fn assert_agrees_with_proj(params: Params) {
         let proj = Proj::new(&params.proj_args()).unwrap();
         let projection = Projection::new(&params).unwrap();
         let coordinates: [(f64, f64); 4] = [(-10., -70.), (0., 0.), (25., 45.), (80., 170.)];
