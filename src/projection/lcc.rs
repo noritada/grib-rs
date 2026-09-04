@@ -1,8 +1,7 @@
 use super::{
-    Ellipsoid, OsgeoProj,
+    Ellipsoid, OsgeoProj, Project,
     helpers::{m, phi2, t},
 };
-use crate::Project;
 
 const EPS10: f64 = f64::EPSILON;
 const HALF_PI: f64 = std::f64::consts::FRAC_PI_2;
