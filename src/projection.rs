@@ -1,5 +1,3 @@
-#![allow(unused)] // FIXME
-
 pub use lcc::{Params as LccParams, Projection as Lcc};
 pub use merc::{Params as MercParams, Projection as Merc};
 
@@ -28,6 +26,7 @@ pub trait Project {
     }
 }
 
+#[cfg(feature = "gridpoints-proj")]
 pub(crate) trait OsgeoProj {
     fn proj_args(&self) -> String;
 }
@@ -44,6 +43,7 @@ pub struct StereParams {
     pub lon_0: f64,
 }
 
+#[cfg(feature = "gridpoints-proj")]
 impl OsgeoProj for StereParams {
     fn proj_args(&self) -> String {
         let Self {

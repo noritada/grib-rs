@@ -1,10 +1,13 @@
-#[cfg(feature = "gridpoints-proj")]
-use crate::LatLons;
 use crate::{
     GridPointIndex,
     def::grib2::template::{Template3_30, param_set},
     error::GribError,
     grid::AngleUnit,
+};
+#[cfg(feature = "gridpoints-proj")]
+use crate::{
+    LatLons,
+    projection::{self, OsgeoProj},
 };
 
 impl crate::GridShortName for Template3_30 {
@@ -40,9 +43,13 @@ impl LatLons for Template3_30 {
                 self.earth_shape.shape
             ))
         })?;
-        let proj_def = format!(
-            "+a={a} +b={b} +proj=lcc +lat_0={lad} +lon_0={lov} +lat_1={latin1} +lat_2={latin2}"
-        );
+        let params = projection::LccParams {
+            ellipsoid: projection::Ellipsoid::from_a_and_b(a, b),
+            lat_0: lad,
+            lon_0: lov,
+            lat_1: latin1,
+            lat_2: latin2,
+        };
 
         let dx = self.dx as f64 * 1e-3;
         let dy = self.dy as f64 * 1e-3;
@@ -58,7 +65,7 @@ impl LatLons for Template3_30 {
         };
 
         super::helpers::latlons_from_projection_definition_and_first_point(
-            &proj_def,
+            &params.proj_args(),
             (
                 self.first_point_lat as f64 * angle_units,
                 self.first_point_lon as f64 * angle_units,

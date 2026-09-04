@@ -1,5 +1,7 @@
+#[cfg(feature = "gridpoints-proj")]
+use super::OsgeoProj;
 use super::{
-    Ellipsoid, OsgeoProj, Project,
+    Ellipsoid, Project,
     helpers::{m, phi2, t},
 };
 
@@ -21,6 +23,7 @@ pub struct Params {
     pub lat_2: f64,
 }
 
+#[cfg(feature = "gridpoints-proj")]
 impl OsgeoProj for Params {
     fn proj_args(&self) -> String {
         let Self {
