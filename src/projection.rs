@@ -1,27 +1,7 @@
 #![allow(unused)] // FIXME
 
-pub enum Projection {
-    Lcc(lcc::Projection),
-    Merc(merc::Projection),
-}
-
-impl Projection {
-    pub fn new(params: &ProjectionParams) -> Result<Self, &'static str> {
-        let inner = match params {
-            ProjectionParams::Lcc(p) => Self::Lcc(lcc::Projection::new(p)?),
-            ProjectionParams::Merc(p) => Self::Merc(merc::Projection::new(p)?),
-            ProjectionParams::Stere(_) => todo!(),
-        };
-        Ok(inner)
-    }
-
-    pub fn project(&self, xy: &(f64, f64), inverse: bool) -> Result<(f64, f64), &'static str> {
-        match self {
-            Self::Lcc(inner) => inner.project(xy, inverse),
-            Self::Merc(inner) => inner.project(xy, inverse),
-        }
-    }
-}
+pub use lcc::{Params as LccParams, Projection as Lcc};
+pub use merc::{Params as MercParams, Projection as Merc};
 
 pub trait Project {
     fn forward(&self, xy: &(f64, f64)) -> Result<(f64, f64), &'static str>;
@@ -50,26 +30,6 @@ pub trait Project {
 
 pub(crate) trait OsgeoProj {
     fn proj_args(&self) -> String;
-}
-
-/// Projection parameters.
-pub enum ProjectionParams {
-    /// Lambert Conformal Conic projection
-    Lcc(lcc::Params),
-    /// Mercator projection
-    Merc(merc::Params),
-    /// Stereographic projection
-    Stere(StereParams),
-}
-
-impl ProjectionParams {
-    pub(crate) fn osgeo_proj_args(&self) -> String {
-        match self {
-            Self::Lcc(p) => p.proj_args(),
-            Self::Merc(p) => p.proj_args(),
-            Self::Stere(p) => p.proj_args(),
-        }
-    }
 }
 
 /// Parameters for Stereographic projection.
