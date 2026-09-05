@@ -1,13 +1,13 @@
+#[cfg(feature = "gridpoints-proj")]
+use crate::projection::OsgeoProj;
+#[cfg(not(feature = "gridpoints-proj"))]
+use crate::projection::Project;
 use crate::{
-    GridPointIndex,
+    GridPointIndex, LatLons,
     def::grib2::template::{Template3_30, param_set},
     error::GribError,
     grid::AngleUnit,
-};
-#[cfg(feature = "gridpoints-proj")]
-use crate::{
-    LatLons,
-    projection::{self, OsgeoProj},
+    projection,
 };
 
 impl crate::GridShortName for Template3_30 {
@@ -26,8 +26,6 @@ impl GridPointIndex for Template3_30 {
     }
 }
 
-#[cfg(feature = "gridpoints-proj")]
-#[cfg_attr(docsrs, doc(cfg(feature = "gridpoints-proj")))]
 impl LatLons for Template3_30 {
     type Iter<'a> = std::vec::IntoIter<(f32, f32)>;
 
@@ -64,15 +62,47 @@ impl LatLons for Template3_30 {
             dy
         };
 
-        super::helpers::latlons_from_projection_definition_and_first_point(
-            &params.proj_args(),
-            (
-                self.first_point_lat as f64 * angle_units,
-                self.first_point_lon as f64 * angle_units,
-            ),
-            (dx, dy),
-            self.ij()?,
-        )
+        let first_point = (
+            self.first_point_lat as f64 * angle_units,
+            self.first_point_lon as f64 * angle_units,
+        );
+
+        #[cfg(feature = "gridpoints-proj")]
+        {
+            super::helpers::latlons_from_projection_definition_and_first_point(
+                &params.proj_args(),
+                first_point,
+                (dx, dy),
+                self.ij()?,
+            )
+        }
+
+        #[cfg(not(feature = "gridpoints-proj"))]
+        {
+            let projection = projection::Lcc::new(&params)?;
+            let (first_point_lat, first_point_lon) = first_point;
+            let (first_corner_x, first_corner_y) = projection.project(
+                &(first_point_lon.to_radians(), first_point_lat.to_radians()),
+                false,
+            )?;
+
+            let latlons = self
+                .ij()?
+                .map(|(i, j)| {
+                    projection.project(
+                        &(
+                            first_corner_x + dx * i as f64,
+                            first_corner_y + dy * j as f64,
+                        ),
+                        true,
+                    )
+                })
+                .map(|result| {
+                    result.map(|(lon, lat)| (lat.to_degrees() as f32, lon.to_degrees() as f32))
+                })
+                .collect::<Result<Vec<_>, _>>()?;
+            Ok(latlons.into_iter())
+        }
     }
 }
 
@@ -86,7 +116,6 @@ impl AngleUnit for Template3_30 {
 mod tests {
     use super::*;
 
-    #[cfg(feature = "gridpoints-proj")]
     #[test]
     fn lambert_grid_latlon_computation() -> Result<(), Box<dyn std::error::Error>> {
         use crate::grid::helpers::test_helpers::assert_coord_almost_eq;
