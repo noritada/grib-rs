@@ -59,15 +59,15 @@ These definitions of grid systems and data representation are represented by seq
 
 For data using the following grid systems, latitudes and longitudes of grid points can be computed.
 
-| Template number | parameter access | built-in decoding support | decoding with `gridpoints-proj` feature enabled | Grid system |
+| Template number | parameter access | built-in computation support | computation using other libraries | Grid system |
 | --- | --- | --- | --- | --- |
 | 3.0 | ✅ | ✅ | ✅ (built-in) | latitude/longitude (or equidistant cylindrical, or Plate Carree) |
 | 3.1 | ✅ | ✅ | ✅ (built-in) | rotated latitude/longitude (or equidistant cylindrical, or Plate Carrée) |
 | 3.2 | ✅ | | | stretched latitude/longitude (or equidistant cylindrical, or Plate Carrée) |
 | 3.3 | ✅ | | | stretched and rotated latitude/longitude (or equidistant cylindrical, or Plate Carrée) |
 | 3.10 | ✅ | | | Mercator |
-| 3.20 | ✅ | | ✅ (with the help of OSGeo PROJ) | Polar stereographic projection |
-| 3.30 | ✅ | | ✅ (with the help of OSGeo PROJ) | Lambert conformal |
+| 3.20 | ✅ | | ✅ (OSGeo PROJ (`gridpoints-proj` feature)) | Polar stereographic projection |
+| 3.30 | ✅ | ✅ | ✅ (OSGeo PROJ (`gridpoints-proj` feature)) | Lambert conformal |
 | 3.40 | ✅ | ✅ | ✅ (built-in) | Gaussian latitude/longitude |
 | 3.41 | ✅ | | | rotated Gaussian latitude/longitude |
 | 3.42 | ✅ | | | stretched Gaussian latitude/longitude |
