@@ -65,7 +65,6 @@ impl LatLons for GridDefinitionTemplateValues {
             Self::Template1(def) => GridPointLatLons::from(def.latlons_unchecked()?),
             #[cfg(feature = "gridpoints-proj")]
             Self::Template20(def) => GridPointLatLons::from(def.latlons_unchecked()?),
-            #[cfg(feature = "gridpoints-proj")]
             Self::Template30(def) => GridPointLatLons::from(def.latlons_unchecked()?),
             Self::Template40(def) => GridPointLatLons::from(def.gaussian.latlons_unchecked()?),
             #[cfg(not(feature = "gridpoints-proj"))]
