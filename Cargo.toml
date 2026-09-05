@@ -40,7 +40,9 @@ num_enum = "0.7"
 proj = { version = "0.31", optional = true }
 
 libaec-sys = { version = "0.1.1", optional = true }
-hayro-jpeg2000 = { version = "0.4", default-features = false, features = ["std", "simd"], optional = true }
+# Temporary dependency on merged Hayro PR #1355. Replace it with the next
+# released crates.io version before merging this PR.
+hayro-jpeg2000 = { git = "https://github.com/LaurenzV/hayro.git", rev = "a7e3aace112f2db7396bca7402657ca4b66a9d85", default-features = false, features = ["std", "simd"], optional = true }
 openjpeg-sys = { version = "1.0.5", optional = true }
 png = { version = "0.18", optional = true }
 rust-aec = { version = "0.1", optional = true }

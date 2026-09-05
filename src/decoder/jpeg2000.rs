@@ -28,7 +28,7 @@ impl<'d> Grib2GpvUnpack for Jpeg2000<'d> {
             return Ok(decoder);
         };
 
-        let unpacked = decode_j2k(target.sect7_payload())?;
+        let unpacked = decode_j2k(target.sect7_payload(), target.num_encoded_points())?;
         let decoder = NonZeroSimplePackingDecoder::new(unpacked, &template.simple);
         Ok(SimplePackingDecoder::NonZeroLength(decoder))
     }
@@ -43,24 +43,21 @@ pub(crate) type ImageIntoIter = std::vec::IntoIter<i32>;
 pub(crate) type ImageIntoIter = openjpeg::ImageIntoIter;
 
 #[cfg(feature = "jpeg2000-unpack-with-hayro")]
-fn decode_j2k(bytes: &[u8]) -> Result<ImageIntoIter, DecodeError> {
-    hayro::decode_j2k(bytes)
+fn decode_j2k(bytes: &[u8], expected_samples: usize) -> Result<ImageIntoIter, DecodeError> {
+    hayro::decode_j2k(bytes, expected_samples)
 }
 
 #[cfg(all(
     not(feature = "jpeg2000-unpack-with-hayro"),
     feature = "jpeg2000-unpack-with-openjpeg"
 ))]
-fn decode_j2k(bytes: &[u8]) -> Result<ImageIntoIter, DecodeError> {
+fn decode_j2k(bytes: &[u8], _expected_samples: usize) -> Result<ImageIntoIter, DecodeError> {
     openjpeg::decode_j2k(bytes)
 }
 
 #[cfg(test)]
 mod tests {
-    #[cfg(all(
-        feature = "jpeg2000-unpack-with-hayro",
-        feature = "jpeg2000-unpack-with-openjpeg"
-    ))]
+    #[cfg(feature = "jpeg2000-unpack-with-hayro")]
     use std::{fs::File, io::BufReader};
 
     #[allow(dead_code)]
@@ -77,18 +74,60 @@ mod tests {
         let (_index, submessage) = grib2.iter().next().ok_or("GRIB file has no submessages")?;
         let decoder = crate::Grib2SubmessageDecoder::from(submessage)?;
         let payload = decoder.sect7_payload();
+        let expected_samples = decoder.num_encoded_points();
 
         let openjpeg = openjpeg::decode_j2k(payload)
             .map_err(|err| format!("{err:?}"))?
             .collect::<Vec<_>>();
-        let hayro = hayro::decode_j2k(payload)
+        let hayro = hayro::decode_j2k(payload, expected_samples)
             .map_err(|err| format!("{err:?}"))?
             .collect::<Vec<_>>();
         let selected: hayro::ImageIntoIter =
-            decode_j2k(payload).map_err(|err| format!("{err:?}"))?;
+            decode_j2k(payload, expected_samples).map_err(|err| format!("{err:?}"))?;
 
         assert_eq!(hayro, openjpeg);
         assert_eq!(selected.collect::<Vec<_>>(), hayro);
+        Ok(())
+    }
+
+    #[test]
+    #[cfg(all(
+        feature = "jpeg2000-unpack-with-hayro",
+        feature = "jpeg2000-unpack-with-openjpeg"
+    ))]
+    fn hayro_decodes_gfs_wave_wide_codestream_like_openjpeg()
+    -> Result<(), Box<dyn std::error::Error>> {
+        let file = File::open(crate::test_utils::data::grib2::NOAA_GFS_WAVE_HTSGW)?;
+        let grib2 = crate::from_reader(BufReader::new(file))?;
+        let (_, submessage) = grib2.iter().next().ok_or("GRIB file has no submessages")?;
+        let decoder = crate::Grib2SubmessageDecoder::from(submessage)?;
+        let payload = decoder.sect7_payload();
+
+        let openjpeg = openjpeg::decode_j2k(payload)
+            .map_err(|error| format!("{error:?}"))?
+            .collect::<Vec<_>>();
+        let hayro = hayro::decode_j2k(payload, decoder.num_encoded_points())
+            .map_err(|error| format!("{error:?}"))?
+            .collect::<Vec<_>>();
+
+        assert_eq!(hayro.len(), 546_583);
+        assert_eq!(hayro, openjpeg);
+        assert_eq!(decoder.dispatch()?.count(), 876_960);
+        Ok(())
+    }
+
+    #[test]
+    #[cfg(feature = "jpeg2000-unpack-with-hayro")]
+    fn hayro_rejects_gfs_wave_with_mismatched_encoded_point_count()
+    -> Result<(), Box<dyn std::error::Error>> {
+        let file = File::open(crate::test_utils::data::grib2::NOAA_GFS_WAVE_HTSGW)?;
+        let grib2 = crate::from_reader(BufReader::new(file))?;
+        let (_, submessage) = grib2.iter().next().ok_or("GRIB file has no submessages")?;
+        let decoder = crate::Grib2SubmessageDecoder::from(submessage)?;
+
+        assert!(
+            hayro::decode_j2k(decoder.sect7_payload(), decoder.num_encoded_points() - 1,).is_err()
+        );
         Ok(())
     }
 }
