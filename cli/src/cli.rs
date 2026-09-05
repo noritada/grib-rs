@@ -60,19 +60,22 @@ pub(crate) fn display_in_pager<V>(view: V)
 where
     V: PredictableNumLines + std::fmt::Display,
 {
+    prepare_pager(view.num_lines());
+    print!("{view}");
+}
+
+pub(crate) fn prepare_pager(num_lines: usize) {
     let user_attended = console::user_attended();
 
     let term = console::Term::stdout();
     let (height, _width) = term.size();
-    if view.num_lines() > height.into() {
+    if num_lines > height.into() {
         start_pager();
     }
 
     if user_attended {
         console::set_colors_enabled(true);
     }
-
-    print!("{view}");
 }
 
 pub(crate) trait PredictableNumLines {
