@@ -59,27 +59,42 @@ These definitions of grid systems and data representation are represented by seq
 
 For data using the following grid systems, latitudes and longitudes of grid points can be computed.
 
-| Template number | Grid system | Notes |
-| --- | --- | --- |
-| 3.0 | latitude/longitude (or equidistant cylindrical, or Plate Carree) | supporting only regular grids |
-| 3.1 | rotated latitude/longitude (or equidistant cylindrical, or Plate Carrée) | supporting only regular grids |
-| 3.20 | Polar stereographic projection | enabling feature `gridpoints-proj` required |
-| 3.30 | Lambert conformal | enabling feature `gridpoints-proj` required |
-| 3.40 | Gaussian latitude/longitude | supporting only regular grids |
+| Template number | parameter access | built-in computation support | computation using other libraries | Grid system |
+| --- | --- | --- | --- | --- |
+| 3.0 | ✅ | ✅ | ✅ (built-in) | latitude/longitude (or equidistant cylindrical, or Plate Carree) |
+| 3.1 | ✅ | ✅ | ✅ (built-in) | rotated latitude/longitude (or equidistant cylindrical, or Plate Carrée) |
+| 3.2 | ✅ | | | stretched latitude/longitude (or equidistant cylindrical, or Plate Carrée) |
+| 3.3 | ✅ | | | stretched and rotated latitude/longitude (or equidistant cylindrical, or Plate Carrée) |
+| 3.10 | ✅ | | | Mercator |
+| 3.20 | ✅ | | ✅ (OSGeo PROJ (`gridpoints-proj` feature)) | Polar stereographic projection |
+| 3.30 | ✅ | ✅ | ✅ (OSGeo PROJ (`gridpoints-proj` feature)) | Lambert conformal |
+| 3.40 | ✅ | ✅ | ✅ (built-in) | Gaussian latitude/longitude |
+| 3.41 | ✅ | | | rotated Gaussian latitude/longitude |
+| 3.42 | ✅ | | | stretched Gaussian latitude/longitude |
+| 3.43 | ✅ | | | stretched and rotated Gaussian latitude/longitude |
+| 3.101 | ✅ | | | general unstructured grid |
 
-#### Support for extraction of grid point values
+#### Support for extraction/compression of grid point values
 
 For data using the following encoding methods, grid point values can be extracted.
 
-| Template number | Encoding method | Notes |
-| --- | --- | --- |
-| 5.0 | simple packing ||
-| 5.2 | complex packing ||
-| 5.3 | complex packing and spatial differencing ||
-| 5.40 | JPEG 2000 code stream format | enabling feature `jpeg2000-unpack-with-openjpeg` or `jpeg2000-unpack-with-hayro` required |
-| 5.41 | Portable Network Graphics (PNG) | enabling feature `png-unpack-with-png-crate` required |
-| 5.42 | CCSDS recommended lossless compression | enabling feature `ccsds-unpack-with-libaec` or `ccsds-unpack-with-rust-aec` required |
-| 5.200 | run length packing with level values ||
+| Template number | parameter access | built-in extraction support | extraction using other libraries | built-in compression support | Encoding method |
+| --- | --- | --- | --- | --- | --- |
+| 5.0 | ✅ | ✅ | ✅ (built-in) | ✅ | grid point data - simple packing |
+| 5.1 | ✅ | | | | matrix value at grid point - simple packing |
+| 5.2 | ✅ | ✅ | ✅ (built-in) | ✅ | grid point data - complex packing |
+| 5.3 | ✅ | ✅ | ✅ (built-in) | | grid point data - complex packing and spatial differencing |
+| 5.4 | ✅ | | | | grid point data - IEEE floating point data |
+| 5.40 | ✅ | | ✅ (OpenJPEG (`jpeg2000-unpack-with-openjpeg` feature) / Haryo (`jpeg2000-unpack-with-hayro` feature)) | | grid point data - JPEG 2000 code stream format |
+| 5.41 | ✅ | | ✅ (png crate (`png-unpack-with-png-crate` feature)) | | grid point data - Portable Network Graphics (PNG) |
+| 5.42 | ✅ | | ✅ (libaec (`ccsds-unpack-with-libaec` feature) / rust-aec crate (`ccsds-unpack-with-rust-aec` feature)) | | grid point data - CCSDS recommended lossless compression |
+| 5.50 | ✅ | | | | spectral data - simple packing |
+| 5.51 | ✅ | | | | spherical harmonics data - complex packing |
+| 5.52 | ✅ | | | | spherical harmonics data - complex packing |
+| 5.53 | ✅ | | | | spectral data for limited area models - complex packing |
+| 5.61 | ✅ | | | | grid point data - simple packing with logarithm pre-processing |
+| 5.200 | ✅ | ✅ | ✅ (built-in) | | run length packing with level values |
+| 5.50002 (Météo-France) | ✅ | | | | second order packing |
 
 For CCSDS/AEC decoding, `ccsds-unpack-with-libaec` uses `libaec` through
 `libaec-sys`, while `ccsds-unpack-with-rust-aec` uses a pure Rust backend.
@@ -89,15 +104,6 @@ priority so it can override the default `libaec` backend.
 For JPEG 2000 decoding, `jpeg2000-unpack-with-openjpeg` uses OpenJPEG through
 `openjpeg-sys`, while `jpeg2000-unpack-with-hayro` uses a pure Rust backend.
 When both JPEG 2000 backend features are enabled, hayro takes priority.
-
-#### Support for encoding of grid point values
-
-Grid point values can be encoded and written using the following encoding methods.
-
-| Template number | Encoding method | Notes |
-| --- | --- | --- |
-| 5.0 | simple packing ||
-| 5.2 | complex packing ||
 
 ## Planned features
 
