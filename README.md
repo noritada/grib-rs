@@ -65,7 +65,7 @@ For data using the following grid systems, latitudes and longitudes of grid poin
 | 3.1 | ✅ | ✅ | ✅ (built-in) | rotated latitude/longitude (or equidistant cylindrical, or Plate Carrée) |
 | 3.2 | ✅ | | | stretched latitude/longitude (or equidistant cylindrical, or Plate Carrée) |
 | 3.3 | ✅ | | | stretched and rotated latitude/longitude (or equidistant cylindrical, or Plate Carrée) |
-| 3.10 | ✅ | | | Mercator |
+| 3.10 | ✅ | ✅ | ✅ (OSGeo PROJ (`gridpoints-proj` feature)) | Mercator |
 | 3.20 | ✅ | | ✅ (OSGeo PROJ (`gridpoints-proj` feature)) | Polar stereographic projection |
 | 3.30 | ✅ | ✅ | ✅ (OSGeo PROJ (`gridpoints-proj` feature)) | Lambert conformal |
 | 3.40 | ✅ | ✅ | ✅ (built-in) | Gaussian latitude/longitude |

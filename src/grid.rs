@@ -4,7 +4,7 @@ pub use self::{gaussian::compute_gaussian_latitudes, rotated_ll::Unrotate};
 use crate::{
     GribError, GridDefinition, TryFromSlice,
     def::grib2::template::{
-        Template3_0, Template3_1, Template3_20, Template3_30, Template3_40,
+        Template3_0, Template3_1, Template3_10, Template3_20, Template3_30, Template3_40,
         param_set::{Grid, ScanningMode},
     },
 };
@@ -14,6 +14,7 @@ use crate::{
 pub enum GridDefinitionTemplateValues {
     Template0(Template3_0),
     Template1(Template3_1),
+    Template10(Template3_10),
     Template20(Template3_20),
     Template30(Template3_30),
     Template40(Template3_40),
@@ -24,6 +25,7 @@ impl GridShortName for GridDefinitionTemplateValues {
         match self {
             Self::Template0(def) => def.lat_lon.short_name(),
             Self::Template1(def) => def.short_name(),
+            Self::Template10(def) => def.short_name(),
             Self::Template20(def) => def.short_name(),
             Self::Template30(def) => def.short_name(),
             Self::Template40(def) => def.gaussian.short_name(),
@@ -36,6 +38,7 @@ impl GridPointIndex for GridDefinitionTemplateValues {
         match self {
             Self::Template0(def) => def.lat_lon.grid_shape(),
             Self::Template1(def) => def.grid_shape(),
+            Self::Template10(def) => def.grid_shape(),
             Self::Template20(def) => def.grid_shape(),
             Self::Template30(def) => def.grid_shape(),
             Self::Template40(def) => def.gaussian.grid_shape(),
@@ -46,6 +49,7 @@ impl GridPointIndex for GridDefinitionTemplateValues {
         match self {
             Self::Template0(def) => def.lat_lon.scanning_mode(),
             Self::Template1(def) => def.scanning_mode(),
+            Self::Template10(def) => def.scanning_mode(),
             Self::Template20(def) => def.scanning_mode(),
             Self::Template30(def) => def.scanning_mode(),
             Self::Template40(def) => def.gaussian.scanning_mode(),
@@ -63,6 +67,7 @@ impl LatLons for GridDefinitionTemplateValues {
         let iter = match self {
             Self::Template0(def) => GridPointLatLons::from(def.lat_lon.latlons_unchecked()?),
             Self::Template1(def) => GridPointLatLons::from(def.latlons_unchecked()?),
+            Self::Template10(def) => GridPointLatLons::from(def.latlons_unchecked()?),
             #[cfg(feature = "gridpoints-proj")]
             Self::Template20(def) => GridPointLatLons::from(def.latlons_unchecked()?),
             Self::Template30(def) => GridPointLatLons::from(def.latlons_unchecked()?),
@@ -108,6 +113,10 @@ impl TryFrom<&GridDefinition> for GridDefinitionTemplateValues {
             ),
             1 => GridDefinitionTemplateValues::Template1(
                 Template3_1::try_from_slice(buf, &mut pos)
+                    .map_err(|e| GribError::Unknown(e.to_owned()))?,
+            ),
+            10 => GridDefinitionTemplateValues::Template10(
+                Template3_10::try_from_slice(buf, &mut pos)
                     .map_err(|e| GribError::Unknown(e.to_owned()))?,
             ),
             20 => GridDefinitionTemplateValues::Template20(
@@ -480,5 +489,6 @@ mod gaussian;
 mod helpers;
 mod lambert;
 mod latlon;
+mod mercator;
 mod polar_stereographic;
 mod rotated_ll;
