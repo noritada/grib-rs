@@ -622,8 +622,7 @@ Data Representation:                    {}
     pub fn section1(&self) -> Result<Section1, GribError> {
         let Identification { payload } = self.identification();
         let mut pos = 0;
-        let payload = crate::def::grib2::Section1Payload::try_from_slice(payload, &mut pos)
-            .map_err(|e| GribError::Unknown(e.to_owned()))?;
+        let payload = crate::def::grib2::Section1Payload::try_from_slice(payload, &mut pos)?;
 
         let SectionInfo { num, size, .. } = self.1.body;
         Ok(Section1 {
@@ -702,8 +701,7 @@ Data Representation:                    {}
     pub fn section3(&self) -> Result<Section3, GribError> {
         let GridDefinition { payload } = self.grid_def();
         let mut pos = 0;
-        let payload = crate::def::grib2::Section3Payload::try_from_slice(payload, &mut pos)
-            .map_err(|e| GribError::Unknown(e.to_owned()))?;
+        let payload = crate::def::grib2::Section3Payload::try_from_slice(payload, &mut pos)?;
 
         let SectionInfo { num, size, .. } = self.3.body;
         Ok(Section3 {
@@ -784,8 +782,7 @@ Data Representation:                    {}
     pub fn section4(&self) -> Result<Section4, GribError> {
         let ProdDefinition { payload }: &ProdDefinition = self.prod_def();
         let mut pos = 0;
-        let payload = crate::def::grib2::Section4Payload::try_from_slice(payload, &mut pos)
-            .map_err(|e| GribError::Unknown(e.to_owned()))?;
+        let payload = crate::def::grib2::Section4Payload::try_from_slice(payload, &mut pos)?;
 
         let SectionInfo { num, size, .. } = self.4.body;
         Ok(Section4 {
@@ -837,8 +834,7 @@ Data Representation:                    {}
     pub fn section5(&self) -> Result<Section5, GribError> {
         let ReprDefinition { payload } = self.repr_def();
         let mut pos = 0;
-        let payload = crate::def::grib2::Section5Payload::try_from_slice(payload, &mut pos)
-            .map_err(|e| GribError::Unknown(e.to_owned()))?;
+        let payload = crate::def::grib2::Section5Payload::try_from_slice(payload, &mut pos)?;
 
         let SectionInfo { num, size, .. } = self.5.body;
         Ok(Section5 {

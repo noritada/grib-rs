@@ -93,8 +93,7 @@ impl TryFrom<&GridDefinition> for GridDefinitionTemplateValues {
         // ```
         // let buf = &value.payload;
         // let mut pos = 0;
-        // let payload = crate::def::grib2::Section3Payload::try_from_slice(buf, &mut pos)
-        //     .map_err(|e| GribError::Unknown(e.to_owned()))?;
+        // let payload = crate::def::grib2::Section3Payload::try_from_slice(buf, &mut pos)?;
         // let template = match payload.template {
         // ..
         // }
@@ -107,30 +106,24 @@ impl TryFrom<&GridDefinition> for GridDefinitionTemplateValues {
         let mut pos = 0;
         let num = value.grid_tmpl_num();
         let template = match num {
-            0 => GridDefinitionTemplateValues::Template0(
-                Template3_0::try_from_slice(buf, &mut pos)
-                    .map_err(|e| GribError::Unknown(e.to_owned()))?,
-            ),
-            1 => GridDefinitionTemplateValues::Template1(
-                Template3_1::try_from_slice(buf, &mut pos)
-                    .map_err(|e| GribError::Unknown(e.to_owned()))?,
-            ),
-            10 => GridDefinitionTemplateValues::Template10(
-                Template3_10::try_from_slice(buf, &mut pos)
-                    .map_err(|e| GribError::Unknown(e.to_owned()))?,
-            ),
-            20 => GridDefinitionTemplateValues::Template20(
-                Template3_20::try_from_slice(buf, &mut pos)
-                    .map_err(|e| GribError::Unknown(e.to_owned()))?,
-            ),
-            30 => GridDefinitionTemplateValues::Template30(
-                Template3_30::try_from_slice(buf, &mut pos)
-                    .map_err(|e| GribError::Unknown(e.to_owned()))?,
-            ),
-            40 => GridDefinitionTemplateValues::Template40(
-                Template3_40::try_from_slice(buf, &mut pos)
-                    .map_err(|e| GribError::Unknown(e.to_owned()))?,
-            ),
+            0 => {
+                GridDefinitionTemplateValues::Template0(Template3_0::try_from_slice(buf, &mut pos)?)
+            }
+            1 => {
+                GridDefinitionTemplateValues::Template1(Template3_1::try_from_slice(buf, &mut pos)?)
+            }
+            10 => GridDefinitionTemplateValues::Template10(Template3_10::try_from_slice(
+                buf, &mut pos,
+            )?),
+            20 => GridDefinitionTemplateValues::Template20(Template3_20::try_from_slice(
+                buf, &mut pos,
+            )?),
+            30 => GridDefinitionTemplateValues::Template30(Template3_30::try_from_slice(
+                buf, &mut pos,
+            )?),
+            40 => GridDefinitionTemplateValues::Template40(Template3_40::try_from_slice(
+                buf, &mut pos,
+            )?),
             _ => {
                 return Err(GribError::NotSupported(format!(
                     "lat/lon computation support for the template {num} is dropped in this build"
@@ -426,21 +419,12 @@ mod tests {
     use crate::def::grib2::template::param_set::{EarthShape, ScaledValue};
 
     #[test]
-    fn grid_definition_template_0() {
-        // data taken from submessage #0.0 of
-        // `Z__C_RJTD_20160822020000_NOWC_GPV_Ggis10km_Pphw10_FH0000-0100_grib2.
-        // bin.xz` in `testdata`
-        let data = GridDefinition::from_payload(
-            vec![
-                0x00, 0x00, 0x01, 0x50, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0xff, 0xff, 0xff, 0xff,
-                0xff, 0x01, 0x03, 0xcd, 0x39, 0xfa, 0x01, 0x03, 0xc9, 0xf6, 0xa3, 0x00, 0x00, 0x01,
-                0x00, 0x00, 0x00, 0x01, 0x50, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x02,
-                0xdb, 0xc9, 0x3d, 0x07, 0x09, 0x7d, 0xa4, 0x30, 0x01, 0x31, 0xcf, 0xc3, 0x08, 0xef,
-                0xdd, 0x5c, 0x00, 0x01, 0xe8, 0x48, 0x00, 0x01, 0x45, 0x85, 0x00,
-            ]
-            .into_boxed_slice(),
-        )
-        .unwrap();
+    fn grid_definition_template_0() -> Result<(), Box<dyn std::error::Error>> {
+        let buf = crate::test_utils::decompress_to_vec(
+            crate::test_utils::data::grib2::JMA_TORNADO_NOWCAST,
+        )?;
+        let data =
+            GridDefinition::from_payload(buf[0x2a..0x6d].to_vec().into_boxed_slice()).unwrap();
 
         let actual = GridDefinitionTemplateValues::try_from(&data).unwrap();
         let expected = GridDefinitionTemplateValues::Template0(Template3_0 {
@@ -480,6 +464,7 @@ mod tests {
             },
         });
         assert_eq!(actual, expected);
+        Ok(())
     }
 }
 

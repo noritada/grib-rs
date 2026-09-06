@@ -31,8 +31,7 @@ impl crate::LatLons for param_set::GaussianGrid {
         }
 
         let ij = self.ij()?;
-        let mut lat = compute_gaussian_latitudes_in_degrees(self.grid.nj as usize)
-            .map_err(|e| GribError::Unknown(e.to_owned()))?;
+        let mut lat = compute_gaussian_latitudes_in_degrees(self.grid.nj as usize)?;
         if self.scanning_mode.scans_positively_for_j() {
             lat.reverse()
         };
