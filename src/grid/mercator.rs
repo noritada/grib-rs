@@ -117,3 +117,72 @@ impl AngleUnit for Template3_10 {
         1e-6
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::grid::helpers::test_helpers::assert_coord_almost_eq;
+
+    fn grid_definition() -> Template3_10 {
+        // grid point definition extracted from testdata/ds.wwa.bin.xz
+        Template3_10 {
+            earth_shape: param_set::EarthShape {
+                shape: 1,
+                spherical_earth_radius: param_set::ScaledValue {
+                    scale_factor: 0,
+                    scaled_value: 6371200,
+                },
+                major_axis: param_set::ScaledValue {
+                    scale_factor: 0,
+                    scaled_value: 0,
+                },
+                minor_axis: param_set::ScaledValue {
+                    scale_factor: 0,
+                    scaled_value: 0,
+                },
+            },
+            ni: 2517,
+            nj: 1793,
+            first_point_lat: -30419200,
+            first_point_lon: 129906005,
+            resolution_and_component_flags: param_set::ResolutionAndComponentFlags(0b00000000),
+            lad: 20000000,
+            last_point_lat: 80010000,
+            last_point_lon: 10710000,
+            scanning_mode: param_set::ScanningMode(0b01010000),
+            orientation: 0,
+            di: 10000000,
+            dj: 10000000,
+        }
+    }
+
+    #[test]
+    fn mercator_grid_latlon_computation() -> Result<(), Box<dyn std::error::Error>> {
+        let grid_def = grid_definition();
+        let latlons = grid_def.latlons()?.collect::<Vec<_>>();
+
+        // Following lat/lon values are taken from the calculation results using
+        // pygrib.
+        let num_points = latlons.len();
+        let ni = grid_def.ni as usize;
+        let delta = 3e-2;
+        // lat[0], lon[0]
+        assert_coord_almost_eq(latlons[0], (-30.4192, 129.906005), delta);
+        // lat[0], lon[1]
+        assert_coord_almost_eq(latlons[1], (-30.4192, 130.00171406), delta);
+        // lat[1], lon[-1]
+        assert_coord_almost_eq(latlons[ni], (-30.33658686, 10.71), delta);
+        // lat[-2], lon[0]
+        assert_coord_almost_eq(
+            latlons[num_points - ni - 1],
+            (79.9933742, 129.906005),
+            delta,
+        );
+        // lat[-1], lon[-2]
+        assert_coord_almost_eq(latlons[num_points - 2], (80.01, 10.61429094), delta);
+        // lat[-1], lon[-1]
+        assert_coord_almost_eq(latlons[num_points - 1], (80.01, 10.71), delta);
+
+        Ok(())
+    }
+}
