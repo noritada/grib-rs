@@ -7,6 +7,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.18.3] - 2026-09-06
+### New supports
+
+- Computation of grid point latitudes and longitudes:
+  - Template 3.10 (Mercator)
+    (Both a built-in implementation in pure Rust and an implementation using OSGeo PROJ (available through the `gridpoints-proj` feature) have been newly added.)
+    (PR #238)
+  - Template 3.30 (Lambert conformal)
+    (A built-in implementation in pure Rust has been newly added. The implementation using OSGeo PROJ remains available through the `gridpoints-proj` feature.)
+    (PR #236)
+
+### Enhancements
+
+- An API for implementing coordinate transformations based on projection methods in pure Rust has been added as the `projection` module.
+  Currently, only the Mercator and Lambert conformal conic projections are available.
+  (PR #219, PR #235)
+- Decoding performance for data encoded using simple packing has improved by about 12.5%.
+  (#220 (thanks @amoutiers), PR #221 (thanks @amoutiers))
+
+### Enhancements to the CLI application `gribber`
+
+- The CLI now uses less memory and performs less unnecessary work when decoding:
+  - Latitude/longitude coordinates are no longer computed for binary exports.
+    (#224 (thanks @amoutiers), PR #225 (thanks @amoutiers))
+  - Decoded values in text exports are streamed without being collected first.
+    (#233 (thanks @amoutiers), PR #234 (thanks @amoutiers))
+- CLI input and output buffering has been improved:
+  - Regular input files are read through a buffered reader instead of being loaded entirely into memory.
+    (#229 (thanks @amoutiers), PR #232 (thanks @amoutiers))
+  - Standard output is buffered for binary exports.
+    (#227 (thanks @amoutiers), PR #231 (thanks @amoutiers))
+
+### Versions
+
+```
+grib 0.18.3
+grib-cli 0.18.3
+```
+
 ## [0.18.2] - 2026-08-29
 ### New supports
 
@@ -1136,7 +1175,8 @@ grib-build 0.1.0
 grib 0.1.0
 ```
 
-[unreleased]: https://github.com/noritada/grib-rs/compare/v0.18.2...HEAD
+[unreleased]: https://github.com/noritada/grib-rs/compare/v0.18.3...HEAD
+[0.18.3]: https://github.com/noritada/grib-rs/compare/v0.18.2...v0.18.3
 [0.18.2]: https://github.com/noritada/grib-rs/compare/v0.18.1...v0.18.2
 [0.18.1]: https://github.com/noritada/grib-rs/compare/v0.18.0...v0.18.1
 [0.18.0]: https://github.com/noritada/grib-rs/compare/v0.17.1...v0.18.0
