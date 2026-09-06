@@ -80,15 +80,12 @@ impl LatLons for Template3_10 {
 
         #[cfg(not(feature = "gridpoints-proj"))]
         {
-            let projection =
-                projection::Merc::new(&params).map_err(|e| GribError::Unknown(e.to_owned()))?;
+            let projection = projection::Merc::new(&params)?;
             let (first_point_lat, first_point_lon) = first_point;
-            let (first_corner_x, first_corner_y) = projection
-                .project(
-                    &(first_point_lon.to_radians(), first_point_lat.to_radians()),
-                    false,
-                )
-                .map_err(|e| GribError::Unknown(e.to_owned()))?;
+            let (first_corner_x, first_corner_y) = projection.project(
+                &(first_point_lon.to_radians(), first_point_lat.to_radians()),
+                false,
+            )?;
 
             let latlons = self
                 .ij()?

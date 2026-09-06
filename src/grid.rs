@@ -93,8 +93,7 @@ impl TryFrom<&GridDefinition> for GridDefinitionTemplateValues {
         // ```
         // let buf = &value.payload;
         // let mut pos = 0;
-        // let payload = crate::def::grib2::Section3Payload::try_from_slice(buf, &mut pos)
-        //     .map_err(|e| GribError::Unknown(e.to_owned()))?;
+        // let payload = crate::def::grib2::Section3Payload::try_from_slice(buf, &mut pos)?;
         // let template = match payload.template {
         // ..
         // }
@@ -107,30 +106,24 @@ impl TryFrom<&GridDefinition> for GridDefinitionTemplateValues {
         let mut pos = 0;
         let num = value.grid_tmpl_num();
         let template = match num {
-            0 => GridDefinitionTemplateValues::Template0(
-                Template3_0::try_from_slice(buf, &mut pos)
-                    .map_err(|e| GribError::Unknown(e.to_owned()))?,
-            ),
-            1 => GridDefinitionTemplateValues::Template1(
-                Template3_1::try_from_slice(buf, &mut pos)
-                    .map_err(|e| GribError::Unknown(e.to_owned()))?,
-            ),
-            10 => GridDefinitionTemplateValues::Template10(
-                Template3_10::try_from_slice(buf, &mut pos)
-                    .map_err(|e| GribError::Unknown(e.to_owned()))?,
-            ),
-            20 => GridDefinitionTemplateValues::Template20(
-                Template3_20::try_from_slice(buf, &mut pos)
-                    .map_err(|e| GribError::Unknown(e.to_owned()))?,
-            ),
-            30 => GridDefinitionTemplateValues::Template30(
-                Template3_30::try_from_slice(buf, &mut pos)
-                    .map_err(|e| GribError::Unknown(e.to_owned()))?,
-            ),
-            40 => GridDefinitionTemplateValues::Template40(
-                Template3_40::try_from_slice(buf, &mut pos)
-                    .map_err(|e| GribError::Unknown(e.to_owned()))?,
-            ),
+            0 => {
+                GridDefinitionTemplateValues::Template0(Template3_0::try_from_slice(buf, &mut pos)?)
+            }
+            1 => {
+                GridDefinitionTemplateValues::Template1(Template3_1::try_from_slice(buf, &mut pos)?)
+            }
+            10 => GridDefinitionTemplateValues::Template10(Template3_10::try_from_slice(
+                buf, &mut pos,
+            )?),
+            20 => GridDefinitionTemplateValues::Template20(Template3_20::try_from_slice(
+                buf, &mut pos,
+            )?),
+            30 => GridDefinitionTemplateValues::Template30(Template3_30::try_from_slice(
+                buf, &mut pos,
+            )?),
+            40 => GridDefinitionTemplateValues::Template40(Template3_40::try_from_slice(
+                buf, &mut pos,
+            )?),
             _ => {
                 return Err(GribError::NotSupported(format!(
                     "lat/lon computation support for the template {num} is dropped in this build"
