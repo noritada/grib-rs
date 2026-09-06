@@ -85,7 +85,7 @@ For data using the following encoding methods, grid point values can be extracte
 | 5.2 | ✅ | ✅ | ✅ (built-in) | ✅ | grid point data - complex packing |
 | 5.3 | ✅ | ✅ | ✅ (built-in) | | grid point data - complex packing and spatial differencing |
 | 5.4 | ✅ | | | | grid point data - IEEE floating point data |
-| 5.40 | ✅ | | ✅ (OpenJPEG (`jpeg2000-unpack-with-openjpeg` feature) / Haryo (`jpeg2000-unpack-with-hayro` feature)) | | grid point data - JPEG 2000 code stream format |
+| 5.40 | ✅ | | ✅ (OpenJPEG (`jpeg2000-unpack-with-openjpeg` feature) / Hayro (`jpeg2000-unpack-with-hayro` feature)) | | grid point data - JPEG 2000 code stream format |
 | 5.41 | ✅ | | ✅ (png crate (`png-unpack-with-png-crate` feature)) | | grid point data - Portable Network Graphics (PNG) |
 | 5.42 | ✅ | | ✅ (libaec (`ccsds-unpack-with-libaec` feature) / rust-aec crate (`ccsds-unpack-with-rust-aec` feature)) | | grid point data - CCSDS recommended lossless compression |
 | 5.50 | ✅ | | | | spectral data - simple packing |
