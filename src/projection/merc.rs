@@ -9,11 +9,11 @@ const HALF_PI: f64 = std::f64::consts::FRAC_PI_2;
 
 /// Parameters for Mercator projection.
 pub struct Params {
-    /// Ellipsoid definition
+    /// Ellipsoid definition.
     pub ellipsoid: Ellipsoid,
-    /// Latitude of true scale (in degree)
+    /// Latitude of true scale (in degrees).
     pub lat_ts: f64,
-    /// Central meridian (in degree)
+    /// Central meridian (in degrees).
     pub lon_0: f64,
 }
 
@@ -29,6 +29,7 @@ impl OsgeoProj for Params {
     }
 }
 
+/// Mercator projection.
 pub struct Projection {
     lam0: f64,
     e: f64,

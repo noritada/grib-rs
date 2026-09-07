@@ -11,15 +11,15 @@ const FORTH_PI: f64 = std::f64::consts::FRAC_PI_4;
 
 /// Parameters for Lambert Conformal Conic projection.
 pub struct Params {
-    /// Ellipsoid definition
+    /// Ellipsoid definition.
     pub ellipsoid: Ellipsoid,
-    /// Latitude of origin (in degree)
+    /// Latitude of origin (in degrees).
     pub lat_0: f64,
-    /// Central meridian (in degree)
+    /// Central meridian (in degrees).
     pub lon_0: f64,
-    /// First standard parallel (in degree)
+    /// First standard parallel (in degrees).
     pub lat_1: f64,
-    /// Second standard parallel (in degree)
+    /// Second standard parallel (in degrees).
     pub lat_2: f64,
 }
 
@@ -39,6 +39,7 @@ impl OsgeoProj for Params {
     }
 }
 
+/// Lambert Conformal Conic projection.
 pub struct Projection {
     lam0: f64,
     a: f64,
