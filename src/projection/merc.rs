@@ -8,6 +8,7 @@ use super::{
 const HALF_PI: f64 = std::f64::consts::FRAC_PI_2;
 
 /// Parameters for Mercator projection.
+#[derive(Debug, PartialEq, Clone)]
 pub struct Params {
     /// Ellipsoid definition.
     pub ellipsoid: Ellipsoid,

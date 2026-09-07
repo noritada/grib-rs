@@ -48,6 +48,7 @@ pub(crate) trait OsgeoProj {
 }
 
 /// Parameters for Stereographic projection.
+#[derive(Debug, PartialEq, Clone)]
 pub struct StereParams {
     /// Ellipsoid definition.
     pub ellipsoid: Ellipsoid,
@@ -73,6 +74,7 @@ impl OsgeoProj for StereParams {
 }
 
 /// Ellipsoid definition.
+#[derive(Debug, PartialEq, Clone)]
 pub struct Ellipsoid {
     /// Semimajor radius of the ellipsoid axis (in meters).
     pub a: f64,

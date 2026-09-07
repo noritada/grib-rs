@@ -10,6 +10,7 @@ const HALF_PI: f64 = std::f64::consts::FRAC_PI_2;
 const FORTH_PI: f64 = std::f64::consts::FRAC_PI_4;
 
 /// Parameters for Lambert Conformal Conic projection.
+#[derive(Debug, PartialEq, Clone)]
 pub struct Params {
     /// Ellipsoid definition.
     pub ellipsoid: Ellipsoid,
