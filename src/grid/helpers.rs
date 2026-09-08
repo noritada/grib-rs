@@ -75,20 +75,18 @@ impl Iterator for RegularGridIterator {
 }
 
 #[cfg(feature = "gridpoints-proj")]
-pub(crate) fn latlons_from_projection_definition_and_first_point(
+pub(crate) fn latlons_from_projection_with_first_point_and_delta(
     proj_def: &str,
     first_point_latlon_in_degrees: (f64, f64),
     delta_in_meters: (f64, f64),
     indices: GridPointIndexIterator,
 ) -> Result<std::vec::IntoIter<(f32, f32)>, GribError> {
-    let projection = Proj::new(proj_def).map_err(|e| GribError::Unknown(e.to_string()))?;
+    let projection = Proj::new(proj_def)?;
     let (first_point_lat, first_point_lon) = first_point_latlon_in_degrees;
-    let (first_corner_x, first_corner_y) = projection
-        .project(
-            (first_point_lon.to_radians(), first_point_lat.to_radians()),
-            false,
-        )
-        .map_err(|e| GribError::Unknown(e.to_string()))?;
+    let (first_corner_x, first_corner_y) = projection.project(
+        (first_point_lon.to_radians(), first_point_lat.to_radians()),
+        false,
+    )?;
 
     let (dx, dy) = delta_in_meters;
     let mut xy = indices
@@ -100,9 +98,7 @@ pub(crate) fn latlons_from_projection_definition_and_first_point(
         })
         .collect::<Vec<_>>();
 
-    let lonlat = projection
-        .project_array(&mut xy, true)
-        .map_err(|e| GribError::Unknown(e.to_string()))?;
+    let lonlat = projection.project_array(&mut xy, true)?;
     let latlon = lonlat
         .iter_mut()
         .map(|(lon, lat)| (lat.to_degrees() as f32, lon.to_degrees() as f32))
@@ -114,6 +110,20 @@ pub(crate) fn latlons_from_projection_definition_and_first_point(
 pub(crate) fn normalize_latlon((lat, lon): (f32, f32)) -> (f32, f32) {
     let lon = (lon + 540.) % 360. - 180.;
     (lat, lon)
+}
+
+#[cfg(feature = "gridpoints-proj")]
+impl From<proj::ProjCreateError> for GribError {
+    fn from(e: proj::ProjCreateError) -> Self {
+        Self::Unknown(e.to_string())
+    }
+}
+
+#[cfg(feature = "gridpoints-proj")]
+impl From<proj::ProjError> for GribError {
+    fn from(e: proj::ProjError) -> Self {
+        Self::Unknown(e.to_string())
+    }
 }
 
 #[cfg(test)]

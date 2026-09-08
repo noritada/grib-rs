@@ -69,7 +69,7 @@ impl LatLons for Template3_30 {
 
         #[cfg(feature = "gridpoints-proj")]
         {
-            super::helpers::latlons_from_projection_definition_and_first_point(
+            super::helpers::latlons_from_projection_with_first_point_and_delta(
                 &params.proj_args(),
                 first_point,
                 (dx, dy),
@@ -89,16 +89,15 @@ impl LatLons for Template3_30 {
             let latlons = self
                 .ij()?
                 .map(|(i, j)| {
-                    projection.project(
-                        &(
-                            first_corner_x + dx * i as f64,
-                            first_corner_y + dy * j as f64,
-                        ),
-                        true,
-                    )
-                })
-                .map(|result| {
-                    result.map(|(lon, lat)| (lat.to_degrees() as f32, lon.to_degrees() as f32))
+                    projection
+                        .project(
+                            &(
+                                first_corner_x + dx * i as f64,
+                                first_corner_y + dy * j as f64,
+                            ),
+                            true,
+                        )
+                        .map(|(lon, lat)| (lat.to_degrees() as f32, lon.to_degrees() as f32))
                 })
                 .collect::<Result<Vec<_>, _>>()?;
             Ok(latlons.into_iter())
