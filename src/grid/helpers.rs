@@ -107,6 +107,46 @@ pub(crate) fn latlons_from_projection_with_first_point_and_delta(
     Ok(latlon.into_iter())
 }
 
+#[cfg(feature = "gridpoints-proj")]
+pub(crate) fn latlons_from_projection_with_first_point_and_last_point(
+    proj_def: &str,
+    first_point_latlon_in_degrees: (f64, f64),
+    last_point_latlon_in_degrees: (f64, f64),
+    (ni, nj): (usize, usize),
+    indices: GridPointIndexIterator,
+) -> Result<std::vec::IntoIter<(f32, f32)>, GribError> {
+    let projection = Proj::new(proj_def)?;
+    let (first_point_lat, first_point_lon) = first_point_latlon_in_degrees;
+    let (first_corner_x, first_corner_y) = projection.project(
+        (first_point_lon.to_radians(), first_point_lat.to_radians()),
+        false,
+    )?;
+    let (last_point_lat, last_point_lon) = last_point_latlon_in_degrees;
+    let (last_corner_x, last_corner_y) = projection.project(
+        (last_point_lon.to_radians(), last_point_lat.to_radians()),
+        false,
+    )?;
+
+    let dx = (last_corner_x - first_corner_x) / (ni - 1) as f64;
+    let dy = (last_corner_y - first_corner_y) / (nj - 1) as f64;
+    let mut xy = indices
+        .map(|(i, j)| {
+            (
+                first_corner_x + dx * i as f64,
+                first_corner_y + dy * j as f64,
+            )
+        })
+        .collect::<Vec<_>>();
+
+    let lonlat = projection.project_array(&mut xy, true)?;
+    let latlon = lonlat
+        .iter_mut()
+        .map(|(lon, lat)| (lat.to_degrees() as f32, lon.to_degrees() as f32))
+        .collect::<Vec<_>>();
+
+    Ok(latlon.into_iter())
+}
+
 pub(crate) fn normalize_latlon((lat, lon): (f32, f32)) -> (f32, f32) {
     let lon = (lon + 540.) % 360. - 180.;
     (lat, lon)
