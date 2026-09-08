@@ -76,7 +76,7 @@ For data using the following grid systems, latitudes and longitudes of grid poin
 
 #### Support for extraction/compression of grid point values
 
-For data using the following encoding methods, grid point values can be extracted.
+For data using the following encoding methods, grid point values can be extracted/compressed.
 
 | Template number | parameter access | built-in extraction support | extraction using other libraries | built-in compression support | Encoding method |
 | --- | --- | --- | --- | --- | --- |

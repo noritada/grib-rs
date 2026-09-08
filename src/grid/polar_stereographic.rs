@@ -77,7 +77,7 @@ impl LatLons for Template3_20 {
             dy
         };
 
-        super::helpers::latlons_from_projection_definition_and_first_point(
+        super::helpers::latlons_from_projection_with_first_point_and_delta(
             &params.proj_args(),
             (
                 self.first_point_lat as f64 * angle_units,
