@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.18.4] - 2026-09-08
+### Enhancements
+
+- API documentation and basic trait implementations has been added for structs in the projection module.
+  (PR #240)
+- The accuracy of latitudes/longitudes computed for the Mercator grids has been improved.
+  (PR #241)
+
+### Versions
+
+```
+grib 0.18.4
+grib-cli 0.18.4
+```
+
 ## [0.18.3] - 2026-09-06
 ### New supports
 
@@ -1175,7 +1190,8 @@ grib-build 0.1.0
 grib 0.1.0
 ```
 
-[unreleased]: https://github.com/noritada/grib-rs/compare/v0.18.3...HEAD
+[unreleased]: https://github.com/noritada/grib-rs/compare/v0.18.4...HEAD
+[0.18.4]: https://github.com/noritada/grib-rs/compare/v0.18.3...v0.18.4
 [0.18.3]: https://github.com/noritada/grib-rs/compare/v0.18.2...v0.18.3
 [0.18.2]: https://github.com/noritada/grib-rs/compare/v0.18.1...v0.18.2
 [0.18.1]: https://github.com/noritada/grib-rs/compare/v0.18.0...v0.18.1
