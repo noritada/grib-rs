@@ -1,3 +1,5 @@
+#[cfg(feature = "gridpoints-proj")]
+use helpers::ProjectionLatLonIterator;
 use helpers::RegularGridIterator;
 
 pub use self::{gaussian::compute_gaussian_latitudes, rotation::Unrotate};
@@ -227,6 +229,8 @@ impl Iterator for GridPointLatLons {
             Self(LatLonsWrapper::SigR(iter)) => iter.next(),
             Self(LatLonsWrapper::SigUR(iter)) => iter.next(),
             Self(LatLonsWrapper::SigIf(iter)) => iter.next(),
+            #[cfg(feature = "gridpoints-proj")]
+            Self(LatLonsWrapper::SigP(iter)) => iter.next(),
         }
     }
 
@@ -235,6 +239,8 @@ impl Iterator for GridPointLatLons {
             Self(LatLonsWrapper::SigR(iter)) => iter.size_hint(),
             Self(LatLonsWrapper::SigUR(iter)) => iter.size_hint(),
             Self(LatLonsWrapper::SigIf(iter)) => iter.size_hint(),
+            #[cfg(feature = "gridpoints-proj")]
+            Self(LatLonsWrapper::SigP(iter)) => iter.size_hint(),
         }
     }
 }
@@ -257,11 +263,20 @@ impl From<std::vec::IntoIter<(f32, f32)>> for GridPointLatLons {
     }
 }
 
+#[cfg(feature = "gridpoints-proj")]
+impl From<ProjectionLatLonIterator> for GridPointLatLons {
+    fn from(value: ProjectionLatLonIterator) -> Self {
+        Self(LatLonsWrapper::SigP(value))
+    }
+}
+
 #[derive(Clone)]
 enum LatLonsWrapper {
     SigR(RegularGridIterator),
     SigUR(Unrotate<RegularGridIterator>),
     SigIf(std::vec::IntoIter<(f32, f32)>),
+    #[cfg(feature = "gridpoints-proj")]
+    SigP(ProjectionLatLonIterator),
 }
 
 /// A functionality to generate an iterator over 2D index `(i, j)` of grid

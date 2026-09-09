@@ -29,7 +29,7 @@ impl GridPointIndex for Template3_20 {
 #[cfg_attr(docsrs, doc(cfg(feature = "gridpoints-proj")))]
 impl LatLons for Template3_20 {
     type Iter<'a>
-        = std::vec::IntoIter<(f32, f32)>
+        = super::helpers::ProjectionLatLonIterator
     where
         Self: 'a;
 

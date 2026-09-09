@@ -27,6 +27,9 @@ impl GridPointIndex for Template3_30 {
 }
 
 impl LatLons for Template3_30 {
+    #[cfg(feature = "gridpoints-proj")]
+    type Iter<'a> = super::helpers::ProjectionLatLonIterator;
+    #[cfg(not(feature = "gridpoints-proj"))]
     type Iter<'a> = std::vec::IntoIter<(f32, f32)>;
 
     fn latlons_unchecked<'a>(&'a self) -> Result<Self::Iter<'a>, GribError> {
