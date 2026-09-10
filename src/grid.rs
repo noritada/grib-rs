@@ -5,6 +5,7 @@ use crate::{
     GribError, GridDefinition, TryFromSlice,
     def::grib2::template::{
         Template3_0, Template3_1, Template3_10, Template3_20, Template3_30, Template3_40,
+        Template3_41,
         param_set::{Grid, ScanningMode},
     },
 };
@@ -18,6 +19,7 @@ pub enum GridDefinitionTemplateValues {
     Template20(Template3_20),
     Template30(Template3_30),
     Template40(Template3_40),
+    Template41(Template3_41),
 }
 
 impl GridShortName for GridDefinitionTemplateValues {
@@ -29,6 +31,7 @@ impl GridShortName for GridDefinitionTemplateValues {
             Self::Template20(def) => def.short_name(),
             Self::Template30(def) => def.short_name(),
             Self::Template40(def) => def.gaussian.short_name(),
+            Self::Template41(def) => def.short_name(),
         }
     }
 }
@@ -42,6 +45,7 @@ impl GridPointIndex for GridDefinitionTemplateValues {
             Self::Template20(def) => def.grid_shape(),
             Self::Template30(def) => def.grid_shape(),
             Self::Template40(def) => def.gaussian.grid_shape(),
+            Self::Template41(def) => def.grid_shape(),
         }
     }
 
@@ -53,6 +57,7 @@ impl GridPointIndex for GridDefinitionTemplateValues {
             Self::Template20(def) => def.scanning_mode(),
             Self::Template30(def) => def.scanning_mode(),
             Self::Template40(def) => def.gaussian.scanning_mode(),
+            Self::Template41(def) => def.scanning_mode(),
         }
     }
 }
@@ -72,6 +77,7 @@ impl LatLons for GridDefinitionTemplateValues {
             Self::Template20(def) => GridPointLatLons::from(def.latlons_unchecked()?),
             Self::Template30(def) => GridPointLatLons::from(def.latlons_unchecked()?),
             Self::Template40(def) => GridPointLatLons::from(def.gaussian.latlons_unchecked()?),
+            Self::Template41(def) => GridPointLatLons::from(def.latlons_unchecked()?),
             #[cfg(not(feature = "gridpoints-proj"))]
             _ => {
                 return Err(GribError::NotSupported(
@@ -122,6 +128,9 @@ impl TryFrom<&GridDefinition> for GridDefinitionTemplateValues {
                 buf, &mut pos,
             )?),
             40 => GridDefinitionTemplateValues::Template40(Template3_40::try_from_slice(
+                buf, &mut pos,
+            )?),
+            41 => GridDefinitionTemplateValues::Template41(Template3_41::try_from_slice(
                 buf, &mut pos,
             )?),
             _ => {
