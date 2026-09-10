@@ -1,52 +1,4 @@
-use super::GridPointIndexIterator;
-use crate::{
-    GridPointIndex, LatLons,
-    def::grib2::template::{Template3_1, param_set::Rotation},
-    error::GribError,
-    grid::{AngleUnit, helpers::RegularGridIterator},
-};
-
-impl crate::GridShortName for Template3_1 {
-    fn short_name(&self) -> &'static str {
-        "rotated_ll"
-    }
-}
-
-impl GridPointIndex for Template3_1 {
-    fn grid_shape(&self) -> (usize, usize) {
-        self.lat_lon.grid_shape()
-    }
-
-    fn scanning_mode(&self) -> &crate::def::grib2::template::param_set::ScanningMode {
-        self.lat_lon.scanning_mode()
-    }
-
-    fn ij(&self) -> Result<GridPointIndexIterator, GribError> {
-        self.lat_lon.ij()
-    }
-}
-
-impl LatLons for Template3_1 {
-    type Iter<'a>
-        = Unrotate<RegularGridIterator>
-    where
-        Self: 'a;
-
-    fn latlons_unchecked<'a>(&'a self) -> Result<Self::Iter<'a>, GribError> {
-        let iter = Unrotate::new(
-            self.lat_lon.latlons_unchecked()?,
-            &self.rotation,
-            self.angle_unit() as f32,
-        );
-        Ok(iter)
-    }
-}
-
-impl AngleUnit for Template3_1 {
-    fn angle_unit(&self) -> f64 {
-        self.lat_lon.grid.angle_unit()
-    }
-}
+use crate::def::grib2::template::param_set::Rotation;
 
 #[derive(Clone)]
 pub struct Unrotate<I> {
@@ -58,7 +10,7 @@ pub struct Unrotate<I> {
 }
 
 impl<I> Unrotate<I> {
-    fn new(latlons: I, rot: &Rotation, angle_units: f32) -> Self {
+    pub(crate) fn new(latlons: I, rot: &Rotation, angle_units: f32) -> Self {
         let φp = (rot.south_pole_lat as f32 * angle_units).to_radians();
         let λp = (rot.south_pole_lon as f32 * angle_units).to_radians();
         let gamma = (rot.rot_angle * angle_units).to_radians();

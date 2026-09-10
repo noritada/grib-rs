@@ -1,6 +1,6 @@
 use helpers::RegularGridIterator;
 
-pub use self::{gaussian::compute_gaussian_latitudes, rotated_ll::Unrotate};
+pub use self::{gaussian::compute_gaussian_latitudes, rotation::Unrotate};
 use crate::{
     GribError, GridDefinition, TryFromSlice,
     def::grib2::template::{
@@ -476,4 +476,4 @@ mod lambert;
 mod latlon;
 mod mercator;
 mod polar_stereographic;
-mod rotated_ll;
+mod rotation;

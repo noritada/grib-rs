@@ -1,6 +1,12 @@
-use super::helpers::{RegularGridIterator, evenly_spaced_degrees, evenly_spaced_longitudes};
+use super::{
+    GridPointIndexIterator, Unrotate,
+    helpers::{RegularGridIterator, evenly_spaced_degrees, evenly_spaced_longitudes},
+};
 use crate::{
-    GridPointIndex, LatLons, def::grib2::template::param_set, error::GribError, grid::AngleUnit,
+    GridPointIndex, LatLons,
+    def::grib2::template::{Template3_1, param_set},
+    error::GribError,
+    grid::AngleUnit,
 };
 
 impl crate::GridShortName for param_set::LatLonGrid {
@@ -61,6 +67,48 @@ impl param_set::LatLonGrid {
     pub(crate) fn is_consistent_for_j(&self) -> bool {
         let lat_diff = self.grid.last_point_lat - self.grid.first_point_lat;
         !((lat_diff > 0) ^ self.scanning_mode.scans_positively_for_j())
+    }
+}
+
+impl crate::GridShortName for Template3_1 {
+    fn short_name(&self) -> &'static str {
+        "rotated_ll"
+    }
+}
+
+impl GridPointIndex for Template3_1 {
+    fn grid_shape(&self) -> (usize, usize) {
+        self.lat_lon.grid_shape()
+    }
+
+    fn scanning_mode(&self) -> &crate::def::grib2::template::param_set::ScanningMode {
+        self.lat_lon.scanning_mode()
+    }
+
+    fn ij(&self) -> Result<GridPointIndexIterator, GribError> {
+        self.lat_lon.ij()
+    }
+}
+
+impl LatLons for Template3_1 {
+    type Iter<'a>
+        = Unrotate<RegularGridIterator>
+    where
+        Self: 'a;
+
+    fn latlons_unchecked<'a>(&'a self) -> Result<Self::Iter<'a>, GribError> {
+        let iter = Unrotate::new(
+            self.lat_lon.latlons_unchecked()?,
+            &self.rotation,
+            self.angle_unit() as f32,
+        );
+        Ok(iter)
+    }
+}
+
+impl AngleUnit for Template3_1 {
+    fn angle_unit(&self) -> f64 {
+        self.lat_lon.grid.angle_unit()
     }
 }
 
