@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.18.5] - 2026-09-12
+### New supports
+
+- Computation of grid point latitudes and longitudes:
+  - Template 3.41 (rotated Gaussian latitude/longitude)
+    (PR #244)
+
+### Enhancements
+
+- The peak memory usage during grid point coordinate computations has been reduced.
+  (#242 (thanks @amoutiers), PR #243 (thanks @amoutiers))
+
+### Versions
+
+```
+grib 0.18.5
+grib-cli 0.18.5
+```
+
 ## [0.18.4] - 2026-09-08
 ### Enhancements
 
@@ -1190,7 +1209,8 @@ grib-build 0.1.0
 grib 0.1.0
 ```
 
-[unreleased]: https://github.com/noritada/grib-rs/compare/v0.18.4...HEAD
+[unreleased]: https://github.com/noritada/grib-rs/compare/v0.18.5...HEAD
+[0.18.5]: https://github.com/noritada/grib-rs/compare/v0.18.4...v0.18.5
 [0.18.4]: https://github.com/noritada/grib-rs/compare/v0.18.3...v0.18.4
 [0.18.3]: https://github.com/noritada/grib-rs/compare/v0.18.2...v0.18.3
 [0.18.2]: https://github.com/noritada/grib-rs/compare/v0.18.1...v0.18.2
