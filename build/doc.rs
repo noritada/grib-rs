@@ -4,6 +4,8 @@ use std::{
     str::FromStr,
 };
 
+// TODO: "Crate features" section when deleted once RFC 3485 is implemented.
+// That RFC was merged to the main branch on 2026-09-06.
 pub(crate) fn generate() -> Result<String, String> {
     let readme = read_readme()
         .map_err(|e| e.to_string())?
