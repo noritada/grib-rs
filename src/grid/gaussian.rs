@@ -1,5 +1,13 @@
-use super::helpers::{RegularGridIterator, evenly_spaced_longitudes};
-use crate::{GridPointIndex, def::grib2::template::param_set, error::GribError, grid::AngleUnit};
+use super::{
+    GridPointIndexIterator, Unrotate,
+    helpers::{RegularGridIterator, evenly_spaced_longitudes},
+};
+use crate::{
+    GridPointIndex, LatLons,
+    def::grib2::template::{Template3_41, param_set},
+    error::GribError,
+    grid::AngleUnit,
+};
 
 const MAX_ITER: usize = 10;
 
@@ -19,7 +27,7 @@ impl GridPointIndex for param_set::GaussianGrid {
     }
 }
 
-impl crate::LatLons for param_set::GaussianGrid {
+impl LatLons for param_set::GaussianGrid {
     type Iter<'a> = RegularGridIterator;
 
     fn latlons_unchecked<'a>(&'a self) -> Result<Self::Iter<'a>, GribError> {
@@ -59,6 +67,48 @@ impl param_set::GaussianGrid {
     pub(crate) fn is_consistent_for_j(&self) -> bool {
         let lat_diff = self.grid.last_point_lat - self.grid.first_point_lat;
         !((lat_diff > 0) ^ self.scanning_mode.scans_positively_for_j())
+    }
+}
+
+impl crate::GridShortName for Template3_41 {
+    fn short_name(&self) -> &'static str {
+        "rotated_gg"
+    }
+}
+
+impl GridPointIndex for Template3_41 {
+    fn grid_shape(&self) -> (usize, usize) {
+        self.gaussian.grid_shape()
+    }
+
+    fn scanning_mode(&self) -> &crate::def::grib2::template::param_set::ScanningMode {
+        self.gaussian.scanning_mode()
+    }
+
+    fn ij(&self) -> Result<GridPointIndexIterator, GribError> {
+        self.gaussian.ij()
+    }
+}
+
+impl LatLons for Template3_41 {
+    type Iter<'a>
+        = Unrotate<RegularGridIterator>
+    where
+        Self: 'a;
+
+    fn latlons_unchecked<'a>(&'a self) -> Result<Self::Iter<'a>, GribError> {
+        let iter = Unrotate::new(
+            self.gaussian.latlons_unchecked()?,
+            &self.rotation,
+            self.angle_unit() as f32,
+        );
+        Ok(iter)
+    }
+}
+
+impl AngleUnit for Template3_41 {
+    fn angle_unit(&self) -> f64 {
+        self.gaussian.grid.angle_unit()
     }
 }
 

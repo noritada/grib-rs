@@ -69,7 +69,7 @@ For data using the following grid systems, latitudes and longitudes of grid poin
 | 3.20 | ✅ | | ✅ (OSGeo PROJ (`gridpoints-proj` feature)) | Polar stereographic projection |
 | 3.30 | ✅ | ✅ | ✅ (OSGeo PROJ (`gridpoints-proj` feature)) | Lambert conformal |
 | 3.40 | ✅ | ✅ | ✅ (built-in) | Gaussian latitude/longitude |
-| 3.41 | ✅ | | | rotated Gaussian latitude/longitude |
+| 3.41 | ✅ | ✅ | ✅ (built-in) | rotated Gaussian latitude/longitude |
 | 3.42 | ✅ | | | stretched Gaussian latitude/longitude |
 | 3.43 | ✅ | | | stretched and rotated Gaussian latitude/longitude |
 | 3.101 | ✅ | | | general unstructured grid |
