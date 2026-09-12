@@ -59,17 +59,17 @@ These definitions of grid systems and data representation are represented by seq
 
 For data using the following grid systems, latitudes and longitudes of grid points can be computed.
 
-| Template number | parameter access | built-in computation support | computation using other libraries | Grid system |
+| Template number | parameter access | computation support | availability of computation support | Grid system |
 | --- | --- | --- | --- | --- |
-| 3.0 | ✅ | ✅ | ✅ (built-in) | latitude/longitude (or equidistant cylindrical, or Plate Carree) |
-| 3.1 | ✅ | ✅ | ✅ (built-in) | rotated latitude/longitude (or equidistant cylindrical, or Plate Carrée) |
+| 3.0 | ✅ | ✅ | built-in | latitude/longitude (or equidistant cylindrical, or Plate Carree) |
+| 3.1 | ✅ | ✅ | built-in | rotated latitude/longitude (or equidistant cylindrical, or Plate Carrée) |
 | 3.2 | ✅ | | | stretched latitude/longitude (or equidistant cylindrical, or Plate Carrée) |
 | 3.3 | ✅ | | | stretched and rotated latitude/longitude (or equidistant cylindrical, or Plate Carrée) |
-| 3.10 | ✅ | ✅ | ✅ (OSGeo PROJ (`gridpoints-proj` feature)) | Mercator |
-| 3.20 | ✅ | | ✅ (OSGeo PROJ (`gridpoints-proj` feature)) | Polar stereographic projection |
-| 3.30 | ✅ | ✅ | ✅ (OSGeo PROJ (`gridpoints-proj` feature)) | Lambert conformal |
-| 3.40 | ✅ | ✅ | ✅ (built-in) | Gaussian latitude/longitude |
-| 3.41 | ✅ | ✅ | ✅ (built-in) | rotated Gaussian latitude/longitude |
+| 3.10 | ✅ | ✅ | built-in / OSGeo PROJ (`gridpoints-proj` feature) | Mercator |
+| 3.20 | ✅ | ✅ | OSGeo PROJ (`gridpoints-proj` feature) | Polar stereographic projection |
+| 3.30 | ✅ | ✅ | built-in / OSGeo PROJ (`gridpoints-proj` feature) | Lambert conformal |
+| 3.40 | ✅ | ✅ | built-in | Gaussian latitude/longitude |
+| 3.41 | ✅ | ✅ | built-in | rotated Gaussian latitude/longitude |
 | 3.42 | ✅ | | | stretched Gaussian latitude/longitude |
 | 3.43 | ✅ | | | stretched and rotated Gaussian latitude/longitude |
 | 3.101 | ✅ | | | general unstructured grid |
@@ -78,22 +78,22 @@ For data using the following grid systems, latitudes and longitudes of grid poin
 
 For data using the following encoding methods, grid point values can be extracted/compressed.
 
-| Template number | parameter access | built-in extraction support | extraction using other libraries | built-in compression support | Encoding method |
+| Template number | parameter access | extraction support | availability of extraction support | built-in compression support | Encoding method |
 | --- | --- | --- | --- | --- | --- |
-| 5.0 | ✅ | ✅ | ✅ (built-in) | ✅ | grid point data - simple packing |
+| 5.0 | ✅ | ✅ | built-in | ✅ | grid point data - simple packing |
 | 5.1 | ✅ | | | | matrix value at grid point - simple packing |
-| 5.2 | ✅ | ✅ | ✅ (built-in) | ✅ | grid point data - complex packing |
-| 5.3 | ✅ | ✅ | ✅ (built-in) | | grid point data - complex packing and spatial differencing |
+| 5.2 | ✅ | ✅ | built-in | ✅ | grid point data - complex packing |
+| 5.3 | ✅ | ✅ | built-in | | grid point data - complex packing and spatial differencing |
 | 5.4 | ✅ | | | | grid point data - IEEE floating point data |
-| 5.40 | ✅ | | ✅ (OpenJPEG (`jpeg2000-unpack-with-openjpeg` feature) / Hayro (`jpeg2000-unpack-with-hayro` feature)) | | grid point data - JPEG 2000 code stream format |
-| 5.41 | ✅ | | ✅ (png crate (`png-unpack-with-png-crate` feature)) | | grid point data - Portable Network Graphics (PNG) |
-| 5.42 | ✅ | | ✅ (libaec (`ccsds-unpack-with-libaec` feature) / rust-aec crate (`ccsds-unpack-with-rust-aec` feature)) | | grid point data - CCSDS recommended lossless compression |
+| 5.40 | ✅ | ✅ | OpenJPEG (`jpeg2000-unpack-with-openjpeg` feature) / Hayro (`jpeg2000-unpack-with-hayro` feature) | | grid point data - JPEG 2000 code stream format |
+| 5.41 | ✅ | ✅ | png crate (`png-unpack-with-png-crate` feature) | | grid point data - Portable Network Graphics (PNG) |
+| 5.42 | ✅ | ✅ | libaec (`ccsds-unpack-with-libaec` feature) / rust-aec crate (`ccsds-unpack-with-rust-aec` feature) | | grid point data - CCSDS recommended lossless compression |
 | 5.50 | ✅ | | | | spectral data - simple packing |
 | 5.51 | ✅ | | | | spherical harmonics data - complex packing |
 | 5.52 | ✅ | | | | spherical harmonics data - complex packing |
 | 5.53 | ✅ | | | | spectral data for limited area models - complex packing |
 | 5.61 | ✅ | | | | grid point data - simple packing with logarithm pre-processing |
-| 5.200 | ✅ | ✅ | ✅ (built-in) | | run length packing with level values |
+| 5.200 | ✅ | ✅ | built-in | | run length packing with level values |
 | 5.50002 (Météo-France) | ✅ | | | | second order packing |
 
 For CCSDS/AEC decoding, `ccsds-unpack-with-libaec` uses `libaec` through
