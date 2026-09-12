@@ -74,13 +74,34 @@ impl Iterator for RegularGridIterator {
     }
 }
 
+#[derive(Clone)]
+#[cfg(feature = "gridpoints-proj")]
+pub struct ProjectionLatLonIterator {
+    xy: std::vec::IntoIter<(f64, f64)>,
+}
+
+#[cfg(feature = "gridpoints-proj")]
+impl Iterator for ProjectionLatLonIterator {
+    type Item = (f32, f32);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.xy
+            .next()
+            .map(|(lon, lat)| (lat.to_degrees() as f32, lon.to_degrees() as f32))
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.xy.size_hint()
+    }
+}
+
 #[cfg(feature = "gridpoints-proj")]
 pub(crate) fn latlons_from_projection_with_first_point_and_delta(
     proj_def: &str,
     first_point_latlon_in_degrees: (f64, f64),
     delta_in_meters: (f64, f64),
     indices: GridPointIndexIterator,
-) -> Result<std::vec::IntoIter<(f32, f32)>, GribError> {
+) -> Result<ProjectionLatLonIterator, GribError> {
     let projection = Proj::new(proj_def)?;
     let (first_point_lat, first_point_lon) = first_point_latlon_in_degrees;
     let (first_corner_x, first_corner_y) = projection.project(
@@ -98,13 +119,9 @@ pub(crate) fn latlons_from_projection_with_first_point_and_delta(
         })
         .collect::<Vec<_>>();
 
-    let lonlat = projection.project_array(&mut xy, true)?;
-    let latlon = lonlat
-        .iter_mut()
-        .map(|(lon, lat)| (lat.to_degrees() as f32, lon.to_degrees() as f32))
-        .collect::<Vec<_>>();
+    projection.project_array(&mut xy, true)?;
 
-    Ok(latlon.into_iter())
+    Ok(ProjectionLatLonIterator { xy: xy.into_iter() })
 }
 
 #[cfg(feature = "gridpoints-proj")]
