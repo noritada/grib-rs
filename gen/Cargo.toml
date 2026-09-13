@@ -7,7 +7,6 @@ edition.workspace = true
 license.workspace = true
 readme.workspace = true
 repository.workspace = true
-homepage.workspace = true
 
 [dependencies]
 csv = "1"

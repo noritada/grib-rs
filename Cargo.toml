@@ -7,7 +7,6 @@ edition.workspace = true
 license.workspace = true
 readme.workspace = true
 repository.workspace = true
-homepage.workspace = true
 categories.workspace = true
 keywords.workspace = true
 build = "build/main.rs"
@@ -27,7 +26,6 @@ edition = "2024"
 license = "MIT OR Apache-2.0"
 readme = "README.md"
 repository = "https://github.com/noritada/grib-rs"
-homepage = "https://github.com/noritada/grib-rs"
 categories = ["science"]
 keywords = ["GRIB", "weather", "meteorology"]
 
