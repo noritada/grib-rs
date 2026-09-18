@@ -63,7 +63,10 @@ mod tests {
     ))]
     use std::{fs::File, io::BufReader};
 
-    #[allow(dead_code)]
+    #[cfg(all(
+        feature = "jpeg2000-unpack-with-hayro",
+        feature = "jpeg2000-unpack-with-openjpeg"
+    ))]
     use super::*;
 
     #[test]
