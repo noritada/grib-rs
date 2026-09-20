@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Enhancements
 
 - The peak memory usage during grid point coordinate computations has been reduced.
+  This improvement applies only when grid computation using PROJ is enabled and the grid definition template used is either 3.20 (polar stereographic) or 3.30 (Lambert conformal).
   (#242 (thanks @amoutiers), PR #243 (thanks @amoutiers))
 
 ### Versions
