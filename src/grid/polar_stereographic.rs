@@ -63,6 +63,7 @@ impl LatLons for Template3_20 {
             lat_ts: lad,
             lat_0: lat_origin,
             lon_0: lov,
+            k_0: 1.0,
         };
 
         let dx = self.dx as f64 * 1e-3;
