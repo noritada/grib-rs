@@ -1,5 +1,26 @@
 use crate::{Grib2SubmessageDecoder, test_utils};
 
+#[test]
+fn constructor_rejects_undersized_sections() {
+    let sect5 = vec![
+        0x00, 0x00, 0x00, 0x15, 0x05, 0x00, 0x00, 0x00, 0x09, 0x00, 0x00, 0x40, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x04, 0x00,
+    ];
+    let sect6 = vec![0x00, 0x00, 0x00, 0x06, 0x06, 0xff];
+    let sect7 = vec![0x00, 0x00, 0x00, 0x05, 0x07];
+
+    for (section, sect5_bytes, sect6_bytes, sect7_bytes) in [
+        (5, vec![0; 4], sect6.clone(), sect7.clone()),
+        (6, sect5.clone(), vec![0; 5], sect7.clone()),
+        (7, sect5.clone(), sect6.clone(), vec![0; 4]),
+    ] {
+        assert!(
+            Grib2SubmessageDecoder::new(9, sect5_bytes, sect6_bytes, sect7_bytes).is_err(),
+            "Section {section} shorter than its required prefix must return Err"
+        );
+    }
+}
+
 macro_rules! test_operation_with_data_without_nan_values {
     (
         $(
