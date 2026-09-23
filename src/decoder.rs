@@ -101,6 +101,11 @@ impl Grib2SubmessageDecoder {
         sect6_bytes: Vec<u8>,
         sect7_bytes: Vec<u8>,
     ) -> Result<Self, GribError> {
+        if sect5_bytes.len() < 5 || sect6_bytes.len() < 6 || sect7_bytes.len() < 5 {
+            return Err(GribError::DecodeError(DecodeError::from(
+                "GRIB2 section is too short",
+            )));
+        }
         let mut pos = 0;
         let sect5_param = Section5::try_from_slice(&sect5_bytes, &mut pos)
             .map_err(|e| GribError::DecodeError(DecodeError::from(e)))?;
