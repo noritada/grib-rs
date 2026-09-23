@@ -20,6 +20,7 @@ fn app() -> Html {
     let dropped_file = use_state(|| None);
     let grib_context = use_state(|| None);
     let image_data = use_state(|| None);
+    let rendering_error = use_state(|| None::<String>);
 
     let first_time_ = first_time.clone();
     let on_file_drop = {
@@ -108,36 +109,49 @@ fn app() -> Html {
 
                 let grib_context_ = grib_context.clone();
                 let image_data_ = image_data.clone();
+                let rendering_error_ = rendering_error.clone();
                 let on_click_submessage_row = {
                     Callback::from(move |e: MouseEvent| {
                         e.prevent_default();
                         if let Some(grib) = grib_context_.as_ref() {
-                            let image_data = if let Some((_i, submessage)) =
-                                grib.submessages().nth(index)
-                            {
-                                if let Ok((w, h)) = submessage.grid_shape() {
-                                    let decoder =
-                                        grib::Grib2SubmessageDecoder::from(submessage).unwrap(); // FIXME
-                                    let values = decoder.dispatch().unwrap(); // FIXME
+                            let result = grib
+                                .submessages()
+                                .nth(index)
+                                .ok_or_else(|| "it is no longer available".to_owned())
+                                .and_then(|(_i, submessage)| {
+                                    let (w, h) = submessage
+                                        .grid_shape()
+                                        .map_err(|error| error.to_string())?;
+                                    let decoder = grib::Grib2SubmessageDecoder::from(submessage)
+                                        .map_err(|error| error.to_string())?;
+                                    let values =
+                                        decoder.dispatch().map_err(|error| error.to_string())?;
                                     let pixel_bytes = values
                                         .flat_map(palette::jma_amedas_temperature)
                                         .collect::<Vec<_>>();
-                                    let pixel_bytes: &[u8] = &pixel_bytes;
-                                    let pixel_bytes = wasm_bindgen::Clamped(pixel_bytes);
-                                    let image_data = ImageData::new_with_u8_clamped_array_and_sh(
-                                        pixel_bytes,
+                                    ImageData::new_with_u8_clamped_array_and_sh(
+                                        wasm_bindgen::Clamped(pixel_bytes.as_slice()),
                                         w as u32,
                                         h as u32,
                                     )
-                                    .unwrap(); // FIXME
-                                    Some(image_data)
-                                } else {
-                                    None
+                                    .map_err(|error| {
+                                        format!(
+                                            "the browser could not create image data: {error:?}"
+                                        )
+                                    })
+                                });
+                            match result {
+                                Ok(image_data) => {
+                                    image_data_.set(Some(image_data));
+                                    rendering_error_.set(None);
                                 }
-                            } else {
-                                None // is not expected to happen
+                                Err(error) => {
+                                    image_data_.set(None);
+                                    rendering_error_.set(Some(format!(
+                                        "Unable to render this submessage: {error}"
+                                    )));
+                                }
                             };
-                            image_data_.set(image_data);
                         }
                         submessage_modal::display_submessage_modal();
                     })
@@ -188,6 +202,7 @@ fn app() -> Html {
     };
 
     let image_data = image_data.as_ref().map(|i| i.clone());
+    let rendering_error = rendering_error.as_ref().map(String::clone);
 
     html! {
         <>
@@ -198,6 +213,7 @@ fn app() -> Html {
             </div>
             <SubmessageModal
                 image_data={image_data}
+                rendering_error={rendering_error}
                 on_click={on_click_submessage_modal}
                 on_drag_over={on_drag_over}
             />
