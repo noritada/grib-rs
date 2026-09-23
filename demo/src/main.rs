@@ -101,6 +101,10 @@ fn app() -> Html {
                 let grid_def = submessage.grid_def();
                 let num_grid_points = grid_def.num_points();
                 let num_points_represented = submessage.repr_def().num_points();
+                let num_missing = num_grid_points
+                    .checked_sub(num_points_represented)
+                    .map(|count| count.to_string())
+                    .unwrap_or_else(|| "invalid".to_owned());
                 let grid_type = grib::GridDefinitionTemplateValues::try_from(grid_def)
                     .map(|def| Cow::from(def.short_name()))
                     .unwrap_or_else(|_| {
@@ -165,7 +169,7 @@ fn app() -> Html {
                         <td>{forecast_time}</td>
                         <td>{surfaces.0}</td>
                         <td>{surfaces.1}</td>
-                        <td>{num_grid_points - num_points_represented}</td>
+                        <td>{num_missing}</td>
                         <td>{num_grid_points}</td>
                         <td>{grid_type}</td>
                     </tr>
