@@ -285,8 +285,13 @@ impl ProdDefinition {
             let unit = self.payload.get(unit_index).copied();
             let start = unit_index + 1;
             let end = unit_index + 5;
-            let time = u32::from_be_bytes(self.payload[start..end].try_into().unwrap());
-            unit.map(|v| ForecastTime::from_numbers(v, time))
+            let time = self
+                .payload
+                .get(start..end)
+                .and_then(|bytes| <[u8; 4]>::try_from(bytes).ok())
+                .map(u32::from_be_bytes);
+            unit.zip(time)
+                .map(|(unit, time)| ForecastTime::from_numbers(unit, time))
         } else {
             None
         }
@@ -399,5 +404,12 @@ mod tests {
                 FixedSurface::new(255, -127, -2147483647)
             ))
         );
+    }
+
+    #[test]
+    fn forecast_time_returns_none_for_short_supported_payload() {
+        let data = ProdDefinition::from_payload(vec![0, 0, 0, 0].into_boxed_slice()).unwrap();
+
+        assert_eq!(data.forecast_time(), None);
     }
 }
