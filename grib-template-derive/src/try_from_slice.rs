@@ -169,11 +169,7 @@ pub(crate) fn impl_for_enum(
                 let discriminant = discriminant.into();
                 match discriminant {
                     #(#arms),*,
-                    _ => panic!(
-                        "unknown variant for {} (discriminant = {})",
-                        stringify!(#name),
-                        &discriminant
-                    ),
+                    _ => Err("unknown enum discriminant"),
                 }
             }
         }
