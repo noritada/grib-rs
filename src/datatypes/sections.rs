@@ -283,13 +283,8 @@ impl ProdDefinition {
             }?;
             let unit_index = START_OF_PROD_TEMPLATE + unit_index;
             let unit = self.payload.get(unit_index).copied();
-            let start = unit_index + 1;
-            let end = unit_index + 5;
-            let time = self
-                .payload
-                .get(start..end)
-                .and_then(|bytes| <[u8; 4]>::try_from(bytes).ok())
-                .map(u32::from_be_bytes);
+            let mut pos = unit_index + 1;
+            let time = u32::try_from_slice(&self.payload, &mut pos).ok();
             unit.zip(time)
                 .map(|(unit, time)| ForecastTime::from_numbers(unit, time))
         } else {
