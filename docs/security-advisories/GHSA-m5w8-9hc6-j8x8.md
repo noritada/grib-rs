@@ -10,7 +10,7 @@ The issue affects calls to `ProdDefinition::forecast_time()` when the product de
 
 Applications that list, index, or display metadata from externally supplied files can therefore be affected. The method returns `Option<ForecastTime>`, but malformed input can panic instead of returning `None`.
 
-A panic does not necessarily cause denial of service. Depending on the application's panic handling and build settings, it may interrupt a processing thread or terminate the process. This can become a denial-of-service vulnerability when an attacker can supply input to the affected operation and the resulting failure disrupts service for legitimate users. A failure confined to the attacker's request does not by itself establish service-wide denial of service; the impact depends on how the application isolates failures and maintains processing capacity.
+A panic does not necessarily cause denial of service. Depending on the application's panic handling and configured panic strategy (unwind or abort), a panic may interrupt a processing thread or terminate the process. This can become a denial-of-service vulnerability when an attacker can supply input to the affected operation and the resulting failure disrupts service for legitimate users. A failure confined to the attacker's request does not by itself establish service-wide denial of service; the impact depends on how the application isolates failures and maintains processing capacity.
 
 No confidentiality or integrity impact has been established.
 
