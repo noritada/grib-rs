@@ -26,4 +26,4 @@ Upgrade the `grib` crate to version **0.18.6**, which fixes this issue.
 
 ## Version and publication status
 
-Draft for [GHSA-m5w8-9hc6-j8x8](https://github.com/noritada/grib-rs/security/advisories/GHSA-m5w8-9hc6-j8x8). The fix is confirmed in `grib` version **0.18.6**. Affected versions of `grib`: `>= 0.3.0, < 0.18.6`.
+The final version of [GHSA-m5w8-9hc6-j8x8](https://github.com/noritada/grib-rs/security/advisories/GHSA-m5w8-9hc6-j8x8). The fix is confirmed in `grib` version **0.18.6**. Affected versions of `grib`: `>= 0.3.0, < 0.18.6`.
