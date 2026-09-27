@@ -1,10 +1,11 @@
 use crate::{
-    GridPointIndex, LatLons,
+    GridPointIndex,
     def::grib2::template::{Template3_20, param_set},
     grid::AngleUnit,
 };
 #[cfg(feature = "gridpoints-proj")]
 use crate::{
+    LatLons,
     error::GribError,
     projection::{self, OsgeoProj},
 };
@@ -97,6 +98,7 @@ impl AngleUnit for Template3_20 {
 
 #[cfg(test)]
 mod tests {
+    #[cfg(feature = "gridpoints-proj")]
     use super::*;
 
     #[cfg(feature = "gridpoints-proj")]
