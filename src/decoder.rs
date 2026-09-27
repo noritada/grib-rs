@@ -107,7 +107,7 @@ impl Grib2SubmessageDecoder {
     }
 
     fn check_section_slice(sect_num: u8, bytes: &[u8]) -> Result<(), GribError> {
-        let header = SectionHeader::try_from_slice(&bytes, &mut 0)
+        let header = SectionHeader::try_from_slice(bytes, &mut 0)
             .map_err(|e| GribError::DecodeError(DecodeError::from(e)))?;
         if header.sect_num != sect_num || header.len as usize != bytes.len() {
             return Err(GribError::DecodeError(DecodeError::from(format!(
