@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.18.6] - 2026-09-27
+### Security fixes
+
+This version fixes 3 types of panic cases.
+
+A panic does not necessarily cause denial of service. Depending on the application's panic handling and build settings, it may interrupt a processing thread or terminate the process. This can become a denial-of-service vulnerability when an attacker can supply input to the affected operation and the resulting failure disrupts service for legitimate users. A failure confined to the attacker's request does not by itself establish service-wide denial of service; the impact depends on how the application isolates failures and maintains processing capacity.
+
+The 3 types of fixed panic mentioned above are as follows:
+
+- A panic during deserialization when encountering an unrecognized template number.
+  This panic occurs not only with invalid data but also with valid data for which the template is not supported.
+  ([GHSA-6j96-629m-89w4] (thanks @amoutiers))
+- A panic during reading forecast-time metadata from a truncated GRIB product definition.
+  This panic does not occur with valid GRIB2 data.
+  ([GHSA-m5w8-9hc6-j8x8] (thanks @amoutiers))
+- A panic when short section buffers are passed to the decoder.
+　　This panic does not occur with valid data, nor does it occur when constructing the decoder based on submessages.
+  ([GHSA-v8g4-j727-859g] (thanks @amoutiers))
+
+[GHSA-6j96-629m-89w4]: https://github.com/noritada/grib-rs/security/advisories/GHSA-6j96-629m-89w4
+[GHSA-m5w8-9hc6-j8x8]: https://github.com/noritada/grib-rs/security/advisories/GHSA-m5w8-9hc6-j8x8
+[GHSA-v8g4-j727-859g]: https://github.com/noritada/grib-rs/security/advisories/GHSA-v8g4-j727-859g
+
+### Versions
+
+```
+grib 0.18.6
+grib-cli 0.18.6
+grib-template-derive 0.2.2
+```
+
 ## [0.18.5] - 2026-09-12
 ### New supports
 
@@ -1210,7 +1241,8 @@ grib-build 0.1.0
 grib 0.1.0
 ```
 
-[unreleased]: https://github.com/noritada/grib-rs/compare/v0.18.5...HEAD
+[unreleased]: https://github.com/noritada/grib-rs/compare/v0.18.6...HEAD
+[0.18.6]: https://github.com/noritada/grib-rs/compare/v0.18.5...v0.18.6
 [0.18.5]: https://github.com/noritada/grib-rs/compare/v0.18.4...v0.18.5
 [0.18.4]: https://github.com/noritada/grib-rs/compare/v0.18.3...v0.18.4
 [0.18.3]: https://github.com/noritada/grib-rs/compare/v0.18.2...v0.18.3
