@@ -1,5 +1,9 @@
 # AGENTS.md
 
+## Coding style & conventions
+
+- Do not use dynamic dispatch in library code. However, it is acceptable to use it for error handling in code examples and tests.
+
 ## Testing instructions
 
 - If an error unrelated to what you are testing occurs within the test code, instead of using a panic triggered by methods such as `unwrap` or `expect`, set the return type of the test function to `Result<(), Box<dyn std::error::Error>>`.
