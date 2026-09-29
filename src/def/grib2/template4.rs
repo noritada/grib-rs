@@ -83,7 +83,7 @@ pub struct Template4_8 {
 pub(crate) mod param_set {
     use grib_template_derive::{Dump, TryFromSlice, WriteToBuffer};
 
-    use super::super::template::param_set::{ScaledValue, TimeRange};
+    use super::super::template::param_set::{DateTime, ScaledValue, TimeRange};
 
     #[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
     pub struct ProductParam {
@@ -194,7 +194,7 @@ pub(crate) mod param_set {
     #[derive(Debug, PartialEq, Eq, TryFromSlice, WriteToBuffer)]
     pub struct Statistical {
         /// Time of end of overall time interval.
-        pub end_of_overall_time_interval: super::super::RefTime,
+        pub end_of_overall_time_interval: DateTime,
         /// n - Number of time range specifications describing the time
         /// intervals used to calculate the statistically processed field.
         pub num_time_ranges: u8,
@@ -213,17 +213,17 @@ pub(crate) mod param_set {
         /// Type of time increment between successive fields used in the
         /// statistical processing (see Code Table 4.11).
         pub time_increment_type: u8,
-        /// Indicator of unit of time for time range over which statistical
-        /// processing is done (see Code Table 4.4).
-        pub time_range_unit: u8,
-        /// Length of the time range over which statistical processing is done,
-        /// in units defined by the previous octet.
-        pub time_range_len: u32,
-        /// Indicator of unit of time for the increment between the successive
-        /// fields used (see Code Table 4.4).
-        pub time_increment_unit: u8,
-        /// Time increment between successive fields, in units defined by the
-        /// previous octet (see Notes 3 and 4).
-        pub time_increment: u32,
+        /// Time range over which statistical processing is done.
+        #[dump(doc(
+            unit = "Indicator of unit of time for time range over which statistical processing is done (see Code Table 4.4).",
+            len = "Length of the time range over which statistical processing is done, in units defined by the previous octet.",
+        ))]
+        pub time_range: TimeRange<u32>,
+        /// Time increment between successive fields.
+        #[dump(doc(
+            unit = "Indicator of unit of time for the increment between the successive fields used (see Code Table 4.4).",
+            len = "Time increment between successive fields, in units defined by the previous octet (see Notes 3 and 4).",
+        ))]
+        pub time_increment: TimeRange<u32>,
     }
 }
