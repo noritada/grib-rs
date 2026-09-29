@@ -35,12 +35,18 @@ pub struct Template3_0 {
 ///     let expected = Template3_1 {
 ///         earth: param_set::EarthShape {
 ///             shape: 6,
-///             spherical_earth_radius_scale_factor: 0xff,
-///             spherical_earth_radius_scaled_value: 0xffffffff,
-///             major_axis_scale_factor: 0xff,
-///             major_axis_scaled_value: 0xffffffff,
-///             minor_axis_scale_factor: 0xff,
-///             minor_axis_scaled_value: 0xffffffff,
+///             spherical_earth_radius: param_set::ScaledValue {
+///                 scale_factor: 0xff,
+///                 scaled_value: 0xffffffff,
+///             },
+///             major_axis: param_set::ScaledValue {
+///                 scale_factor: 0xff,
+///                 scaled_value: 0xffffffff,
+///             },
+///             minor_axis: param_set::ScaledValue {
+///                 scale_factor: 0xff,
+///                 scaled_value: 0xffffffff,
+///             },
 ///         },
 ///         rotated: param_set::LatLonGrid {
 ///             grid: param_set::Grid {
@@ -105,12 +111,18 @@ pub struct Template3_1 {
 ///     let expected = Template3_20 {
 ///         earth_shape: param_set::EarthShape {
 ///             shape: 6,
-///             spherical_earth_radius_scale_factor: 0xff,
-///             spherical_earth_radius_scaled_value: 0xffffffff,
-///             major_axis_scale_factor: 0xff,
-///             major_axis_scaled_value: 0xffffffff,
-///             minor_axis_scale_factor: 0xff,
-///             minor_axis_scaled_value: 0xffffffff,
+///             spherical_earth_radius: param_set::ScaledValue {
+///                 scale_factor: 0xff,
+///                 scaled_value: 0xffffffff,
+///             },
+///             major_axis: param_set::ScaledValue {
+///                 scale_factor: 0xff,
+///                 scaled_value: 0xffffffff,
+///             },
+///             minor_axis: param_set::ScaledValue {
+///                 scale_factor: 0xff,
+///                 scaled_value: 0xffffffff,
+///             },
 ///         },
 ///         ni: 935,
 ///         nj: 824,
@@ -178,12 +190,18 @@ pub struct Template3_20 {
 ///     let expected = Template3_30 {
 ///         earth_shape: param_set::EarthShape {
 ///             shape: 1,
-///             spherical_earth_radius_scale_factor: 0,
-///             spherical_earth_radius_scaled_value: 6371200,
-///             major_axis_scale_factor: 0,
-///             major_axis_scaled_value: 0,
-///             minor_axis_scale_factor: 0,
-///             minor_axis_scaled_value: 0,
+///             spherical_earth_radius: param_set::ScaledValue {
+///                 scale_factor: 0,
+///                 scaled_value: 6371200,
+///             },
+///             major_axis: param_set::ScaledValue {
+///                 scale_factor: 0,
+///                 scaled_value: 0,
+///             },
+///             minor_axis: param_set::ScaledValue {
+///                 scale_factor: 0,
+///                 scaled_value: 0,
+///             },
 ///         },
 ///         ni: 2145,
 ///         nj: 1377,
@@ -266,22 +284,30 @@ pub struct Template3_101 {
 pub(crate) mod param_set {
     use grib_template_derive::{Dump, TryFromSlice, WriteToBuffer};
 
+    use super::super::template::param_set::ScaledValue;
+
     #[derive(Debug, PartialEq, Eq, TryFromSlice, WriteToBuffer, Dump)]
     pub struct EarthShape {
         /// Shape of the Earth (see Code table 3.2).
         pub shape: u8,
-        /// Scale factor of radius of spherical Earth.
-        pub spherical_earth_radius_scale_factor: u8,
-        /// Scaled value of radius of spherical Earth.
-        pub spherical_earth_radius_scaled_value: u32,
-        /// Scale factor of major axis of oblate spheroid Earth.
-        pub major_axis_scale_factor: u8,
-        /// Scaled value of major axis of oblate spheroid Earth.
-        pub major_axis_scaled_value: u32,
-        /// Scale factor of minor axis of oblate spheroid Earth.
-        pub minor_axis_scale_factor: u8,
-        /// Scaled value of minor axis of oblate spheroid Earth.
-        pub minor_axis_scaled_value: u32,
+        /// Radius of spherical Earth.
+        #[dump(doc(
+            scale_factor = "Scale factor of radius of spherical Earth.",
+            scaled_value = "Scaled value of radius of spherical Earth.",
+        ))]
+        pub spherical_earth_radius: ScaledValue<u8, u32>,
+        /// Major axis of oblate spheroid Earth.
+        #[dump(doc(
+            scale_factor = "Scale factor of major axis of oblate spheroid Earth.",
+            scaled_value = "Scaled value of major axis of oblate spheroid Earth.",
+        ))]
+        pub major_axis: ScaledValue<u8, u32>,
+        /// Minor axis of oblate spheroid Earth.
+        #[dump(doc(
+            scale_factor = "Scale factor of minor axis of oblate spheroid Earth.",
+            scaled_value = "Scaled value of minor axis of oblate spheroid Earth.",
+        ))]
+        pub minor_axis: ScaledValue<u8, u32>,
     }
 
     #[derive(Debug, PartialEq, Eq, TryFromSlice, WriteToBuffer, Dump)]

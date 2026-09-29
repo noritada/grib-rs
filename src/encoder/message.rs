@@ -180,7 +180,7 @@ pub trait WriteGrib2MessageIterL3 {
 ///             master_table_version: 29,
 ///             local_table_version: 0,
 ///             ref_time_significance: 0,
-///             ref_time: grib2::RefTime {
+///             ref_time: grib2::template::param_set::DateTime {
 ///                 year: 2026,
 ///                 month: 1,
 ///                 day: 2,
@@ -231,7 +231,7 @@ pub trait WriteGrib2MessageIterL3 {
 ///             master_table_version: 29,
 ///             local_table_version: 0,
 ///             ref_time_significance: 0,
-///             ref_time: grib2::RefTime {
+///             ref_time: grib2::template::param_set::DateTime {
 ///                 year: 2026,
 ///                 month: 1,
 ///                 day: 2,

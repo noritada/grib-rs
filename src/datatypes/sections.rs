@@ -87,9 +87,10 @@ impl Identification {
     /// This method returns unchecked data, so for example, if the data contains
     /// a "date and time" such as "2000-13-32 25:61:62", it will be returned as
     /// is.
-    pub fn ref_time_unchecked(&self) -> crate::def::grib2::RefTime {
+    pub fn ref_time_unchecked(&self) -> crate::def::grib2::template::param_set::DateTime {
         let mut pos = 7;
-        crate::def::grib2::RefTime::try_from_slice(&self.payload, &mut pos).unwrap()
+        crate::def::grib2::template::param_set::DateTime::try_from_slice(&self.payload, &mut pos)
+            .unwrap()
     }
 
     /// Production status of processed data in this GRIB message
