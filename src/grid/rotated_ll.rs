@@ -14,15 +14,15 @@ impl crate::GridShortName for Template3_1 {
 
 impl GridPointIndex for Template3_1 {
     fn grid_shape(&self) -> (usize, usize) {
-        self.rotated.grid_shape()
+        self.lat_lon.grid_shape()
     }
 
     fn scanning_mode(&self) -> &crate::def::grib2::template::param_set::ScanningMode {
-        self.rotated.scanning_mode()
+        self.lat_lon.scanning_mode()
     }
 
     fn ij(&self) -> Result<GridPointIndexIterator, GribError> {
-        self.rotated.ij()
+        self.lat_lon.ij()
     }
 }
 
@@ -34,7 +34,7 @@ impl LatLons for Template3_1 {
 
     fn latlons_unchecked<'a>(&'a self) -> Result<Self::Iter<'a>, GribError> {
         let iter = Unrotate::new(
-            self.rotated.latlons_unchecked()?,
+            self.lat_lon.latlons_unchecked()?,
             &self.rotation,
             self.angle_unit() as f32,
         );
@@ -44,7 +44,7 @@ impl LatLons for Template3_1 {
 
 impl AngleUnit for Template3_1 {
     fn angle_unit(&self) -> f64 {
-        self.rotated.grid.angle_unit()
+        self.lat_lon.grid.angle_unit()
     }
 }
 

@@ -1,8 +1,12 @@
 //! Definitions of parameters contained in GRIB2 data.
+//!
+//! For parameter values represented as unsigned or signed integers,
+//! [`MissingValue`](crate::MissingValue) trait can be used to check whether
+//! they are missing values.
 
 use grib_template_derive::{Dump, TryFromSlice, WriteToBuffer};
 
-#[derive(Debug, PartialEq, TryFromSlice, Dump)]
+#[derive(Debug, PartialEq, Clone, TryFromSlice, Dump)]
 pub struct Section<T>
 where
     T: PartialEq + crate::TryFromSlice + crate::Dump,
@@ -11,7 +15,7 @@ where
     pub payload: T,
 }
 
-#[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
+#[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump)]
 pub struct SectionHeader {
     /// Length of section in octets (nn).
     pub len: u32,
@@ -20,7 +24,7 @@ pub struct SectionHeader {
 }
 
 /// SECTION 0 - Indicator section.
-#[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
+#[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump)]
 pub struct Section0 {
     /// "GRIB" (coded according to the International Alphabet No. 5).
     pub identifier: [u8; 4],
@@ -37,7 +41,7 @@ pub struct Section0 {
 /// Section 1 - Identification section.
 pub type Section1 = Section<Section1Payload>;
 
-#[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
+#[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump)]
 pub struct Section1Payload {
     /// Identification of originating/generating centre (see Common Code table
     /// C-11).
@@ -70,7 +74,7 @@ pub struct Section1Payload {
     pub optional: Option<Section1PayloadOptional>,
 }
 
-#[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
+#[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump)]
 pub struct Section1PayloadOptional {
     /// Identification template number (optional, see Code table 1.5).
     pub template_num: u16,
@@ -80,7 +84,7 @@ pub struct Section1PayloadOptional {
     pub template: IdentificationTemplate,
 }
 
-#[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
+#[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump)]
 #[non_exhaustive]
 #[repr(u16)]
 pub enum IdentificationTemplate {
@@ -92,7 +96,7 @@ pub enum IdentificationTemplate {
 /// Section 3 - Grid definition section.
 pub type Section3 = Section<Section3Payload>;
 
-#[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
+#[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump)]
 pub struct Section3Payload {
     /// Source of grid definition (see Code table 3.0 and Note 1).
     pub grid_def_source: u8,
@@ -110,7 +114,7 @@ pub struct Section3Payload {
     pub template: GridDefinitionTemplate,
 }
 
-#[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
+#[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump)]
 #[non_exhaustive]
 #[repr(u16)]
 pub enum GridDefinitionTemplate {
@@ -125,7 +129,7 @@ pub enum GridDefinitionTemplate {
 /// Section 4 - Product definition section.
 pub type Section4 = Section<Section4Payload>;
 
-#[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
+#[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump)]
 pub struct Section4Payload {
     /// Number of coordinate values after template or number of information
     /// according to 3D vertical coordinate GRIB2 message (see Notes 1 and 5).
@@ -138,7 +142,7 @@ pub struct Section4Payload {
     pub template: ProductDefinitionTemplate,
 }
 
-#[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
+#[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump)]
 #[non_exhaustive]
 #[repr(u16)]
 pub enum ProductDefinitionTemplate {
@@ -152,7 +156,7 @@ pub enum ProductDefinitionTemplate {
 /// Section 5 - Data representation section.
 pub type Section5 = Section<Section5Payload>;
 
-#[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
+#[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump)]
 pub struct Section5Payload {
     /// Number of data points where one or more values are specified in Section
     /// 7 when a bit map is present, total number of data points when a bit map
@@ -166,7 +170,7 @@ pub struct Section5Payload {
     pub template: DataRepresentationTemplate,
 }
 
-#[derive(Debug, PartialEq, TryFromSlice, WriteToBuffer, Dump)]
+#[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump)]
 #[non_exhaustive]
 #[repr(u16)]
 pub enum DataRepresentationTemplate {
@@ -188,7 +192,7 @@ pub enum DataRepresentationTemplate {
 /// Section 6 - Bit-map section.
 pub type Section6 = Section<Section6Payload>;
 
-#[derive(Debug, PartialEq, TryFromSlice, Dump)]
+#[derive(Debug, PartialEq, Clone, TryFromSlice, Dump)]
 pub struct Section6Payload {
     /// Bit-map indicator (see Code table 6.0 and the Note).
     pub bitmap_indicator: u8,
@@ -209,7 +213,7 @@ pub mod template {
         };
 
         /// Date and time.
-        #[derive(Debug, PartialEq, Eq, TryFromSlice, WriteToBuffer, Dump)]
+        #[derive(Debug, PartialEq, Eq, Clone, TryFromSlice, WriteToBuffer, Dump)]
         pub struct DateTime {
             /// Year (4 digits).
             pub year: u16,
@@ -226,7 +230,7 @@ pub mod template {
         }
 
         /// Value with a scaling.
-        #[derive(Debug, PartialEq, Eq, TryFromSlice, WriteToBuffer, Dump)]
+        #[derive(Debug, PartialEq, Eq, Clone, TryFromSlice, WriteToBuffer, Dump)]
         pub struct ScaledValue<F, V>
         where
             F: crate::TryFromSlice + crate::WriteToBuffer + grib_template_helpers::DumpField,
@@ -239,7 +243,7 @@ pub mod template {
         }
 
         /// Time range.
-        #[derive(Debug, PartialEq, Eq, TryFromSlice, WriteToBuffer, Dump)]
+        #[derive(Debug, PartialEq, Eq, Clone, TryFromSlice, WriteToBuffer, Dump)]
         pub struct TimeRange<L>
         where
             L: crate::TryFromSlice + crate::WriteToBuffer + grib_template_helpers::DumpField,

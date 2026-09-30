@@ -1,4 +1,4 @@
-use quote::quote;
+use quote::{ToTokens, quote};
 
 pub(crate) fn impl_for_struct(
     input: &syn::DeriveInput,
@@ -35,37 +35,27 @@ pub(crate) fn impl_for_struct(
         let ident = field.ident.as_ref().unwrap();
         let ty = &field.ty;
 
-        let num_octets_attr = field
-            .attrs
-            .iter()
-            .find_map(|attr| super::helpers::NumOctets::try_from(attr).ok());
-        if let Some(num_octets) = num_octets_attr {
-            writes.push(quote! {
-                pos += <grib_template_helpers::NonStdLenUint<#ty> as grib_template_helpers::WriteToBuffer>::write_to_buffer(
-                    &grib_template_helpers::NonStdLenUint::new(self.#ident, #num_octets),
-                    &mut buf[pos..],
-                )?;
-            });
-
-            sizes.push(quote! {
-                size += <grib_template_helpers::NonStdLenUint<#ty> as grib_template_helpers::WriteToBuffer>::num_bytes_required(
-                    &grib_template_helpers::NonStdLenUint::new(self.#ident, #num_octets),
-                );
-            });
-
-            continue;
-        }
+        let (ty, self_ident) = if let Ok(num_octets) = super::helpers::NumOctets::try_from(field) {
+            (
+                quote! { grib_template_helpers::NonStdLenUint<#ty> },
+                quote! {
+                    &grib_template_helpers::NonStdLenUint::new(self.#ident, #num_octets)
+                },
+            )
+        } else {
+            (ty.to_token_stream(), quote! { &self.#ident })
+        };
 
         writes.push(quote! {
             pos += <#ty as grib_template_helpers::WriteToBuffer>::write_to_buffer(
-                &self.#ident,
+                #self_ident,
                 &mut buf[pos..],
             )?;
         });
 
         sizes.push(quote! {
             size += <#ty as grib_template_helpers::WriteToBuffer>::num_bytes_required(
-                &self.#ident,
+                #self_ident,
             );
         });
     }

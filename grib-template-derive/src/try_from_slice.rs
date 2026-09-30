@@ -1,4 +1,4 @@
-use quote::quote;
+use quote::{ToTokens, quote};
 
 use super::helpers::attr_value;
 
@@ -41,11 +41,7 @@ pub(crate) fn impl_for_struct(
         let ident = field.ident.as_ref().unwrap();
         let ty = &field.ty;
 
-        let num_octets_attr = field
-            .attrs
-            .iter()
-            .find_map(|attr| super::helpers::NumOctets::try_from(attr).ok());
-        if let Some(num_octets) = num_octets_attr {
+        if let Ok(num_octets) = super::helpers::NumOctets::try_from(field) {
             field_reads.push(quote! {
                 let #ident = grib_template_helpers::NonStdLenUint::try_from(
                         <[u8; #num_octets] as grib_template_helpers::TryFromSlice>::try_from_slice(
@@ -58,11 +54,7 @@ pub(crate) fn impl_for_struct(
             continue;
         }
 
-        let len_attr = field
-            .attrs
-            .iter()
-            .find_map(|attr| LenKind::try_from(attr).ok());
-        if let Some(len) = len_attr {
+        if let Ok(len) = LenKind::try_from(field) {
             if let syn::Type::Path(type_path) = ty
                 && let Some((inner_ty, has_option)) = extract_vec_inner(type_path)
             {
@@ -100,11 +92,7 @@ pub(crate) fn impl_for_struct(
             );
         }
 
-        let disc_attr = field
-            .attrs
-            .iter()
-            .find_map(|attr| Variant::try_from(attr).ok());
-        if let Some(disc_ident) = disc_attr {
+        if let Ok(disc_ident) = Variant::try_from(field) {
             field_reads.push(quote! {
                 let #ident = <#ty as grib_template_helpers::TryEnumFromSlice>::try_enum_from_slice(
                     #disc_ident,
@@ -198,6 +186,18 @@ pub(crate) enum LenKind {
     Ident(syn::Ident),
 }
 
+impl TryFrom<&syn::Field> for LenKind {
+    type Error = &'static str;
+
+    fn try_from(value: &syn::Field) -> Result<Self, Self::Error> {
+        value
+            .attrs
+            .iter()
+            .find_map(|attr| LenKind::try_from(attr).ok())
+            .ok_or(r#""len" not found"#)
+    }
+}
+
 impl TryFrom<&syn::Attribute> for LenKind {
     type Error = &'static str;
 
@@ -221,7 +221,7 @@ impl TryFrom<&syn::Attribute> for LenKind {
     }
 }
 
-impl quote::ToTokens for LenKind {
+impl ToTokens for LenKind {
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
         match self {
             LenKind::Literal(n) => {
@@ -236,6 +236,18 @@ impl quote::ToTokens for LenKind {
 
 #[derive(Debug, PartialEq, Eq)]
 struct Variant(syn::Ident);
+
+impl TryFrom<&syn::Field> for Variant {
+    type Error = &'static str;
+
+    fn try_from(value: &syn::Field) -> Result<Self, Self::Error> {
+        value
+            .attrs
+            .iter()
+            .find_map(|attr| Variant::try_from(attr).ok())
+            .ok_or(r#""variant" not found"#)
+    }
+}
 
 impl TryFrom<&syn::Attribute> for Variant {
     type Error = &'static str;
@@ -253,7 +265,7 @@ impl TryFrom<&syn::Attribute> for Variant {
     }
 }
 
-impl quote::ToTokens for Variant {
+impl ToTokens for Variant {
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
         self.0.to_tokens(tokens);
     }
