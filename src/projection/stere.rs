@@ -412,3 +412,109 @@ fn psi(phit: f64, sinφ: f64, e: f64) -> f64 {
     let sinφ = sinφ * e;
     (0.5 * (HALF_PI + phit)).tan() * ((1. - sinφ) / (1. + sinφ)).powf(0.5 * e)
 }
+
+#[cfg(all(test, feature = "gridpoints-proj"))]
+mod tests {
+    use proj::Proj;
+
+    use super::*;
+
+    const FORWARD_TOLERANCE_METERS: f64 = 1e-7;
+    const INVERSE_TOLERANCE_RADIANS: f64 = 1e-12;
+
+    macro_rules! projection_comparison_tests {
+        ($(($name:ident, $params:expr, $coordinates:expr),)*) => ($(
+            #[test]
+            fn $name() -> Result<(), Box<dyn std::error::Error>> {
+                assert_agrees_with_proj($params, $coordinates)
+            }
+        )*);
+    }
+
+    projection_comparison_tests! {
+        (
+            agrees_with_proj_for_ellipsoidal_north_pole,
+            Params {
+                ellipsoid: Ellipsoid::from_a_and_b(6_378_137., 6_356_752.314_245),
+                lat_ts: 60.,
+                lat_0: 90.,
+                lon_0: -111.,
+                k_0: 1.,
+            },
+            [(20., -140.), (45., -100.), (70., 10.), (89., 170.)]
+        ),
+        (
+            agrees_with_proj_for_ellipsoidal_south_pole,
+            Params {
+                ellipsoid: Ellipsoid::from_a_and_b(6_378_137., 6_356_752.314_245),
+                lat_ts: -71.,
+                lat_0: -90.,
+                lon_0: 20.,
+                k_0: 1.,
+            },
+            [(-20., -160.), (-45., -30.), (-70., 80.), (-89., 170.)]
+        ),
+        (
+            agrees_with_proj_for_spherical_north_pole,
+            Params {
+                ellipsoid: Ellipsoid::from_a_and_b(6_371_229., 6_371_229.),
+                lat_ts: 60.,
+                lat_0: 90.,
+                lon_0: 140.,
+                k_0: 1.,
+            },
+            [(20., -170.), (45., -40.), (70., 100.), (89., 179.)]
+        ),
+        (
+            agrees_with_proj_for_spherical_equatorial,
+            Params {
+                ellipsoid: Ellipsoid::from_a_and_b(6_371_229., 6_371_229.),
+                lat_ts: 0.,
+                lat_0: 0.,
+                lon_0: 15.,
+                k_0: 0.9996,
+            },
+            [(-70., -20.), (-20., 0.), (25., 45.), (70., 100.)]
+        ),
+        (
+            agrees_with_proj_for_ellipsoidal_oblique,
+            Params {
+                ellipsoid: Ellipsoid::from_a_and_b(6_378_137., 6_356_752.314_245),
+                lat_ts: 40.,
+                lat_0: 40.,
+                lon_0: -100.,
+                k_0: 0.9996,
+            },
+            [(-20., -140.), (0., -100.), (45., -70.), (75., 20.)]
+        ),
+    }
+
+    fn assert_agrees_with_proj(
+        params: Params,
+        coordinates: [(f64, f64); 4],
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let proj = Proj::new(&params.proj_args())?;
+        let projection = Projection::new(&params)?;
+
+        for (lat, lon) in coordinates {
+            let lonlat = (lon.to_radians(), lat.to_radians());
+            let expected_xy = proj.project(lonlat, false)?;
+            let actual_xy = projection.project(&lonlat, false)?;
+            assert_coordinates_close(actual_xy, expected_xy, FORWARD_TOLERANCE_METERS);
+
+            let expected_lonlat = proj.project(expected_xy, true)?;
+            let actual_lonlat = projection.project(&expected_xy, true)?;
+            assert_coordinates_close(actual_lonlat, expected_lonlat, INVERSE_TOLERANCE_RADIANS);
+        }
+
+        Ok(())
+    }
+
+    fn assert_coordinates_close(actual: (f64, f64), expected: (f64, f64), tolerance: f64) {
+        assert!(
+            (actual.0 - expected.0).abs() <= tolerance
+                && (actual.1 - expected.1).abs() <= tolerance,
+            "actual {actual:?} differs from expected {expected:?} by more than {tolerance}"
+        );
+    }
+}
