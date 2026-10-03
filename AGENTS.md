@@ -3,6 +3,7 @@
 ## Coding style & conventions
 
 - Do not use dynamic dispatch in library code. However, it is acceptable to use it for error handling in code examples and tests.
+  - When setting the return type to `Result<(), Box<dyn std::error::Error>>` in code examples or test code, do not perform unnecessary error type conversions using `map_err`; instead, return the error directly using the `?` operator.
 
 ## Testing instructions
 
