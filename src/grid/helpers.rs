@@ -3,6 +3,8 @@ use proj::Proj;
 
 #[allow(unused_imports)]
 use crate::GribError;
+#[cfg(not(feature = "gridpoints-proj"))]
+use crate::projection::Project;
 use crate::{GridPointIndexIterator, def::grib2::template::param_set::ScanningMode};
 
 pub(crate) fn evenly_spaced_longitudes(
@@ -122,6 +124,36 @@ pub(crate) fn latlons_from_projection_with_first_point_and_delta(
     projection.project_array(&mut xy, true)?;
 
     Ok(ProjectionLatLonIterator { xy: xy.into_iter() })
+}
+
+#[cfg(not(feature = "gridpoints-proj"))]
+pub(crate) fn latlons_from_projection_with_first_point_and_delta<P: Project>(
+    projection: &P,
+    first_point_latlon_in_degrees: (f64, f64),
+    delta_in_meters: (f64, f64),
+    indices: GridPointIndexIterator,
+) -> Result<std::vec::IntoIter<(f32, f32)>, GribError> {
+    let (first_point_lat, first_point_lon) = first_point_latlon_in_degrees;
+    let (first_corner_x, first_corner_y) = projection.project(
+        &(first_point_lon.to_radians(), first_point_lat.to_radians()),
+        false,
+    )?;
+
+    let (dx, dy) = delta_in_meters;
+    let latlons = indices
+        .map(|(i, j)| {
+            projection
+                .project(
+                    &(
+                        first_corner_x + dx * i as f64,
+                        first_corner_y + dy * j as f64,
+                    ),
+                    true,
+                )
+                .map(|(lon, lat)| (lat.to_degrees() as f32, lon.to_degrees() as f32))
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+    Ok(latlons.into_iter())
 }
 
 #[cfg(feature = "gridpoints-proj")]

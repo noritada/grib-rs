@@ -1,7 +1,5 @@
 #[cfg(feature = "gridpoints-proj")]
 use crate::projection::OsgeoProj;
-#[cfg(not(feature = "gridpoints-proj"))]
-use crate::projection::Project;
 use crate::{
     GridPointIndex, LatLons,
     def::grib2::template::{Template3_30, param_set},
@@ -83,27 +81,12 @@ impl LatLons for Template3_30 {
         #[cfg(not(feature = "gridpoints-proj"))]
         {
             let projection = projection::Lcc::new(&params)?;
-            let (first_point_lat, first_point_lon) = first_point;
-            let (first_corner_x, first_corner_y) = projection.project(
-                &(first_point_lon.to_radians(), first_point_lat.to_radians()),
-                false,
-            )?;
-
-            let latlons = self
-                .ij()?
-                .map(|(i, j)| {
-                    projection
-                        .project(
-                            &(
-                                first_corner_x + dx * i as f64,
-                                first_corner_y + dy * j as f64,
-                            ),
-                            true,
-                        )
-                        .map(|(lon, lat)| (lat.to_degrees() as f32, lon.to_degrees() as f32))
-                })
-                .collect::<Result<Vec<_>, _>>()?;
-            Ok(latlons.into_iter())
+            super::helpers::latlons_from_projection_with_first_point_and_delta(
+                &projection,
+                first_point,
+                (dx, dy),
+                self.ij()?,
+            )
         }
     }
 }

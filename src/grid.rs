@@ -75,18 +75,10 @@ impl LatLons for GridDefinitionTemplateValues {
             Self::Template0(def) => GridPointLatLons::from(def.lat_lon.latlons_unchecked()?),
             Self::Template1(def) => GridPointLatLons::from(def.latlons_unchecked()?),
             Self::Template10(def) => GridPointLatLons::from(def.latlons_unchecked()?),
-            #[cfg(feature = "gridpoints-proj")]
             Self::Template20(def) => GridPointLatLons::from(def.latlons_unchecked()?),
             Self::Template30(def) => GridPointLatLons::from(def.latlons_unchecked()?),
             Self::Template40(def) => GridPointLatLons::from(def.gaussian.latlons_unchecked()?),
             Self::Template41(def) => GridPointLatLons::from(def.latlons_unchecked()?),
-            #[cfg(not(feature = "gridpoints-proj"))]
-            _ => {
-                return Err(GribError::NotSupported(
-                    "lat/lon computation support for the template is dropped in this build"
-                        .to_owned(),
-                ));
-            }
         };
         Ok(iter)
     }
