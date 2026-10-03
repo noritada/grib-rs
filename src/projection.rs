@@ -2,7 +2,7 @@
 
 pub use lcc::{Params as LccParams, Projection as Lcc};
 pub use merc::{Params as MercParams, Projection as Merc};
-pub use stere::Params as StereParams;
+pub use stere::{Params as StereParams, Projection as Stere};
 
 /// Map projection functionality.
 pub trait Project {
