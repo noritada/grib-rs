@@ -43,12 +43,11 @@ impl LatLons for param_set::GaussianGrid {
         if self.scanning_mode.scans_positively_for_j() {
             lat.reverse()
         };
-        let lat = lat.into_iter().map(|v| v as f32).collect();
         let lon = evenly_spaced_longitudes(
             self.grid.first_point_lon,
             self.grid.last_point_lon,
             (self.grid.ni - 1) as usize,
-            self.angle_unit() as f32,
+            self.angle_unit(),
             self.scanning_mode,
         );
 
@@ -100,7 +99,7 @@ impl LatLons for Template3_41 {
         let iter = Unrotate::new(
             self.gaussian.latlons_unchecked()?,
             &self.rotation,
-            self.angle_unit() as f32,
+            self.angle_unit(),
         );
         Ok(iter)
     }
@@ -254,7 +253,7 @@ mod tests {
             ";
         let first_160_lats_expected = first_160_lats_expected
             .split_whitespace()
-            .filter_map(|s| s.parse::<f32>().ok());
+            .filter_map(|s| s.parse::<f64>().ok());
 
         let delta = 1.0e-6;
         let first_160_lats = first_submessage
@@ -297,7 +296,7 @@ mod tests {
                 ";
         let first_160_lons_expected = first_160_lons_expected
             .split_whitespace()
-            .filter_map(|s| s.parse::<f32>().ok());
+            .filter_map(|s| s.parse::<f64>().ok());
 
         let delta = 2.0e-6;
         let first_160_lons = first_submessage.latlons()?.map(|(_lat, lon)| lon).take(160);
