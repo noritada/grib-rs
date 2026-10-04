@@ -7,6 +7,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.19.0] - 2026-10-04
+
+### Breaking changes
+
+- `LatLons` and its coordinate iterators now return `(f64, f64)` instead of `(f32, f32)`.
+  Coordinate calculations use double precision throughout.
+  Downstream implementations and explicit coordinate type annotations must be updated.
+  Decoded grid point values remain `f32`.
+  (PR #249)
+- The library now uses the built-in implementation for grid point coordinate
+  computation by default.
+  To use PROJ, explicitly enable the `gridpoints-proj` feature.
+  (PR #250)
+- A field named `k_0` has been added to `projection::StereParams`.
+  Downstream struct literals must be updated to include this field.
+  (PR #248)
+
+### New supports
+
+- Computation of grid point latitudes and longitudes:
+  - Template 3.20 (polar stereographic)
+    (A built-in implementation in pure Rust has been newly added. The implementation using OSGeo PROJ remains available through the `gridpoints-proj` feature.)
+    (PR #248)
+
+### Enhancements
+
+- A pure Rust implementation of the stereographic projection has been added
+  to the `projection` module.
+  (PR #248)
+
+### Versions
+
+```
+grib 0.19.0
+grib-cli 0.19.0
+```
+
 ## [0.18.6] - 2026-09-27
 ### Security fixes
 
@@ -1241,7 +1278,8 @@ grib-build 0.1.0
 grib 0.1.0
 ```
 
-[unreleased]: https://github.com/noritada/grib-rs/compare/v0.18.6...HEAD
+[unreleased]: https://github.com/noritada/grib-rs/compare/v0.19.0...HEAD
+[0.19.0]: https://github.com/noritada/grib-rs/compare/v0.18.6...v0.19.0
 [0.18.6]: https://github.com/noritada/grib-rs/compare/v0.18.5...v0.18.6
 [0.18.5]: https://github.com/noritada/grib-rs/compare/v0.18.4...v0.18.5
 [0.18.4]: https://github.com/noritada/grib-rs/compare/v0.18.3...v0.18.4
