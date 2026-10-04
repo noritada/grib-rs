@@ -57,7 +57,6 @@ default = [
   "jpeg2000-unpack-with-openjpeg",
   "png-unpack-with-png-crate",
   "ccsds-unpack-with-libaec",
-  "gridpoints-proj",
 ]
 
 # Provide an alternative to the `default` feature for WebAssembly builds.
