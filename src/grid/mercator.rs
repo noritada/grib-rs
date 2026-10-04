@@ -27,7 +27,7 @@ impl GridPointIndex for Template3_10 {
 }
 
 impl LatLons for Template3_10 {
-    type Iter<'a> = std::vec::IntoIter<(f32, f32)>;
+    type Iter<'a> = std::vec::IntoIter<(f64, f64)>;
 
     fn latlons_unchecked<'a>(&'a self) -> Result<Self::Iter<'a>, GribError> {
         if self.orientation != 0 {
@@ -112,7 +112,7 @@ impl LatLons for Template3_10 {
                             ),
                             true,
                         )
-                        .map(|(lon, lat)| (lat.to_degrees() as f32, lon.to_degrees() as f32))
+                        .map(|(lon, lat)| (lat.to_degrees(), lon.to_degrees()))
                 })
                 .collect::<Result<Vec<_>, _>>()?;
             Ok(latlons.into_iter())

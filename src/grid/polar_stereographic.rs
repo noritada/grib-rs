@@ -28,7 +28,7 @@ impl LatLons for Template3_20 {
     #[cfg(feature = "gridpoints-proj")]
     type Iter<'a> = super::helpers::ProjectionLatLonIterator;
     #[cfg(not(feature = "gridpoints-proj"))]
-    type Iter<'a> = std::vec::IntoIter<(f32, f32)>;
+    type Iter<'a> = std::vec::IntoIter<(f64, f64)>;
 
     fn latlons_unchecked<'a>(&'a self) -> Result<Self::Iter<'a>, GribError> {
         let angle_units = self.angle_unit();

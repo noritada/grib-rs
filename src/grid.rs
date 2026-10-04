@@ -163,8 +163,11 @@ impl<T: GridShortName + ?Sized> GridShortName for &T {
 
 /// A functionality to generate an iterator over latitude/longitude of grid
 /// points.
+///
+/// Coordinates are returned as `(latitude, longitude)` in degrees using
+/// double-precision (`f64`) values.
 pub trait LatLons {
-    type Iter<'a>: Iterator<Item = (f32, f32)>
+    type Iter<'a>: Iterator<Item = (f64, f64)>
     where
         Self: 'a;
 
@@ -184,10 +187,10 @@ pub trait LatLons {
     #[allow(clippy::type_complexity)]
     fn latlons<'a>(
         &'a self,
-    ) -> Result<std::iter::Map<Self::Iter<'a>, fn((f32, f32)) -> (f32, f32)>, GribError> {
+    ) -> Result<std::iter::Map<Self::Iter<'a>, fn((f64, f64)) -> (f64, f64)>, GribError> {
         let iter = self
             .latlons_unchecked()?
-            .map(helpers::normalize_latlon as fn((f32, f32)) -> (f32, f32));
+            .map(helpers::normalize_latlon as fn((f64, f64)) -> (f64, f64));
         Ok(iter)
     }
 }
@@ -214,7 +217,7 @@ impl<T: LatLons + ?Sized> LatLons for &T {
 pub struct GridPointLatLons(LatLonsWrapper);
 
 impl Iterator for GridPointLatLons {
-    type Item = (f32, f32);
+    type Item = (f64, f64);
 
     fn next(&mut self) -> Option<Self::Item> {
         match self {
@@ -249,8 +252,8 @@ impl From<Unrotate<RegularGridIterator>> for GridPointLatLons {
     }
 }
 
-impl From<std::vec::IntoIter<(f32, f32)>> for GridPointLatLons {
-    fn from(value: std::vec::IntoIter<(f32, f32)>) -> Self {
+impl From<std::vec::IntoIter<(f64, f64)>> for GridPointLatLons {
+    fn from(value: std::vec::IntoIter<(f64, f64)>) -> Self {
         Self(LatLonsWrapper::SigIf(value))
     }
 }
@@ -266,7 +269,7 @@ impl From<ProjectionLatLonIterator> for GridPointLatLons {
 enum LatLonsWrapper {
     SigR(RegularGridIterator),
     SigUR(Unrotate<RegularGridIterator>),
-    SigIf(std::vec::IntoIter<(f32, f32)>),
+    SigIf(std::vec::IntoIter<(f64, f64)>),
     #[cfg(feature = "gridpoints-proj")]
     SigP(ProjectionLatLonIterator),
 }

@@ -68,7 +68,7 @@ pub fn exec(args: &ArgMatches) -> Result<()> {
         let latlons = match latlons.expect("lat/lon result is present for text output") {
             Ok(iter) => LatLonIteratorWrapper::LatLon(iter),
             Err(GribError::NotSupported(_)) => {
-                let nan_iter = std::iter::repeat_n((f32::NAN, f32::NAN), num_values);
+                let nan_iter = std::iter::repeat_n((f64::NAN, f64::NAN), num_values);
                 LatLonIteratorWrapper::NaN(nan_iter)
             }
             Err(e) => anyhow::bail!("something unexpected happened:: {e}"),
@@ -84,10 +84,10 @@ enum LatLonIteratorWrapper<L, N> {
 
 impl<L, N> Iterator for LatLonIteratorWrapper<L, N>
 where
-    L: Iterator<Item = (f32, f32)>,
-    N: Iterator<Item = (f32, f32)>,
+    L: Iterator<Item = (f64, f64)>,
+    N: Iterator<Item = (f64, f64)>,
 {
-    type Item = (f32, f32);
+    type Item = (f64, f64);
 
     fn next(&mut self) -> Option<Self::Item> {
         match self {
@@ -104,7 +104,7 @@ where
     }
 }
 
-fn write_text_output(values: impl Iterator<Item = ((f32, f32), f32)>) -> Result<()>
+fn write_text_output(values: impl Iterator<Item = ((f64, f64), f32)>) -> Result<()>
 where
 {
     let num_lines = values.size_hint().0 + 1;
