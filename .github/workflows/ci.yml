@@ -11,20 +11,39 @@ on:
   workflow_dispatch:
 
 jobs:
-  lint_and_clippy:
-    name: Lint and Clippy
+  format:
+    name: Format check
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           submodules: recursive
       - name: Install Rust
         uses: dtolnay/rust-toolchain@nightly
         with:
-          components: clippy, rustfmt
+          components: rustfmt
+      - name: Print rustfmt version
+        run: cargo fmt --version
       - name: Run rustfmt
         run: cargo fmt --all -- --check
+
+  lint_and_clippy:
+    name: Lint and Clippy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          submodules: recursive
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: clippy
+      - name: Install dependencies needed to build proj
+        run: sudo apt install libsqlite3-dev
+      - name: Print clippy version
+        run: cargo clippy --version
       - name: Run clippy
         run: cargo clippy --workspace -- -D warnings
 
@@ -41,7 +60,7 @@ jobs:
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
             workspace: --workspace
-            features: --features time-calculation
+            features: --features time-calculation,gridpoints-proj
             with_test: true
           # - os: ubuntu-latest
           #   target: x86_64-unknown-linux-musl
@@ -60,7 +79,7 @@ jobs:
           - os: macOS-latest
             target: x86_64-apple-darwin
             workspace: --workspace
-            features: --features time-calculation
+            features: --features time-calculation,gridpoints-proj
             with_test: true
           - os: macOS-latest
             target: aarch64-apple-darwin
@@ -70,14 +89,14 @@ jobs:
           - os: macOS-latest
             target: aarch64-apple-darwin
             workspace: --workspace
-            features: --features time-calculation
+            features: --features time-calculation,gridpoints-proj
             with_test: false
 
     runs-on: ${{ matrix.os }}
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           submodules: recursive
       - name: Install Rust
@@ -94,6 +113,9 @@ jobs:
       #   run: |
       #     sudo apt -qq install build-essential g++-multilib
       #     sudo ln -s /usr/bin/g++ /usr/bin/musl-g++
+      - name: Install dependencies needed to build proj
+        run: sudo apt install libsqlite3-dev
+        if: matrix.os == 'ubuntu-latest'
       - name: Build
         run: cargo build --target ${{ matrix.target }} --verbose ${{ matrix.workspace }} ${{ matrix.features }}
       - name: Run tests
@@ -105,7 +127,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           submodules: recursive
       - name: Install Rust
@@ -118,7 +140,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           submodules: recursive
       - name: Install Rust
@@ -134,7 +156,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           submodules: recursive
       - name: Install Rust
@@ -149,11 +171,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           submodules: recursive
       - name: Install Rust
         uses: dtolnay/rust-toolchain@nightly
+      - name: Install dependencies needed to build proj
+        run: sudo apt install libsqlite3-dev
       - name: Run test with sanitizer
         env:
           RUSTFLAGS: -Z sanitizer=address
@@ -165,7 +189,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Install Prettier
         run: npm install -g prettier
       - name: Run prettier

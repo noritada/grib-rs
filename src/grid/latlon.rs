@@ -1,6 +1,12 @@
-use super::helpers::{RegularGridIterator, evenly_spaced_degrees, evenly_spaced_longitudes};
+use super::{
+    GridPointIndexIterator, Unrotate,
+    helpers::{RegularGridIterator, evenly_spaced_degrees, evenly_spaced_longitudes},
+};
 use crate::{
-    GridPointIndex, LatLons, def::grib2::template::param_set, error::GribError, grid::AngleUnit,
+    GridPointIndex, LatLons,
+    def::grib2::template::{Template3_1, param_set},
+    error::GribError,
+    grid::AngleUnit,
 };
 
 impl crate::GridShortName for param_set::LatLonGrid {
@@ -31,10 +37,10 @@ impl LatLons for param_set::LatLonGrid {
         }
 
         let ij = self.ij()?;
-        let angle_units = self.angle_unit() as f32;
+        let angle_units = self.angle_unit();
         let lat = evenly_spaced_degrees(
-            self.grid.first_point_lat as f32,
-            self.grid.last_point_lat as f32,
+            self.grid.first_point_lat as f64,
+            self.grid.last_point_lat as f64,
             (self.grid.nj - 1) as usize,
             angle_units,
         );
@@ -64,6 +70,48 @@ impl param_set::LatLonGrid {
     }
 }
 
+impl crate::GridShortName for Template3_1 {
+    fn short_name(&self) -> &'static str {
+        "rotated_ll"
+    }
+}
+
+impl GridPointIndex for Template3_1 {
+    fn grid_shape(&self) -> (usize, usize) {
+        self.lat_lon.grid_shape()
+    }
+
+    fn scanning_mode(&self) -> &crate::def::grib2::template::param_set::ScanningMode {
+        self.lat_lon.scanning_mode()
+    }
+
+    fn ij(&self) -> Result<GridPointIndexIterator, GribError> {
+        self.lat_lon.ij()
+    }
+}
+
+impl LatLons for Template3_1 {
+    type Iter<'a>
+        = Unrotate<RegularGridIterator>
+    where
+        Self: 'a;
+
+    fn latlons_unchecked<'a>(&'a self) -> Result<Self::Iter<'a>, GribError> {
+        let iter = Unrotate::new(
+            self.lat_lon.latlons_unchecked()?,
+            &self.rotation,
+            self.angle_unit(),
+        );
+        Ok(iter)
+    }
+}
+
+impl AngleUnit for Template3_1 {
+    fn angle_unit(&self) -> f64 {
+        self.lat_lon.grid.angle_unit()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -88,7 +136,7 @@ mod tests {
                 let latlons = grid.latlons();
                 assert!(latlons.is_ok());
 
-                let delta = 1e-4;
+                let delta = 1e-10;
 
                 let latlons = latlons.unwrap();
                 let actual = latlons.clone().take(3).collect::<Vec<_>>();
@@ -108,6 +156,23 @@ mod tests {
     }
 
     test_lat_lon_calculation_for_inconsistent_longitude_definitions! {
+        (
+            lat_lon_calculation_preserves_microdegree_precision,
+            param_set::Grid {
+                ni: 3,
+                nj: 2,
+                initial_production_domain_basic_angle: 0,
+                basic_angle_subdivisions: 0xffffffff,
+                first_point_lat: 35000001,
+                first_point_lon: 139000001,
+                resolution_and_component_flags: param_set::ResolutionAndComponentFlags(0b00110000),
+                last_point_lat: 35000002,
+                last_point_lon: 139000003,
+            },
+            param_set::ScanningMode(0b01000000),
+            vec![(35.000001, 139.000001), (35.000001, 139.000002), (35.000001, 139.000003)],
+            vec![(35.000002, 139.000001), (35.000002, 139.000002), (35.000002, 139.000003)]
+        ),
         (
             lat_lon_calculation_for_increasing_longitudes_and_positive_direction_scan,
             param_set::Grid {
@@ -142,7 +207,7 @@ mod tests {
             },
             param_set::ScanningMode(0b01000000),
             vec![(-90.0, -180.0), (-90.0, -179.76), (-90.0, -179.52)],
-            vec![(90.0, 179.28003), (90.0, 179.52002), (90.0, 179.76001)]
+            vec![(90.0, 179.28), (90.0, 179.52), (90.0, 179.76)]
         ),
         (
             lat_lon_calculation_for_decreasing_longitudes_and_negative_direction_scan,
@@ -175,7 +240,7 @@ mod tests {
                 last_point_lon: 180000000,
             },
             param_set::ScanningMode(0b11000000),
-            vec![(-90.0, 179.76001), (-90.0, 179.52002), (-90.0, 179.28003)],
+            vec![(-90.0, 179.76), (-90.0, 179.52), (-90.0, 179.28)],
             vec![(90.0, -179.52), (90.0, -179.76), (90.0, -180.0)]
         ),
     }

@@ -39,6 +39,19 @@ pub struct EnumVar2 {
     field1: i16,
 }
 
+#[derive(Debug, PartialEq, grib_template_derive::TryFromSlice)]
+struct TemplateHeader {
+    template_num: u8,
+    #[grib_template(variant = "template_num")]
+    template: Template,
+}
+
+#[derive(Debug, PartialEq, grib_template_derive::TryFromSlice)]
+#[repr(u8)]
+enum Template {
+    Known(u8) = 0,
+}
+
 macro_rules! test {
     ($((
         $buf:expr,
@@ -71,5 +84,6 @@ fn main() {
                 field2: NonExhaustiveEnum::Var2(EnumVar2 { field1: -0x0002 }),
             }),
         ),
+        ([0x01], TemplateHeader, Err("unknown enum discriminant"),),
     ];
 }

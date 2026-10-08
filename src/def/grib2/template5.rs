@@ -200,6 +200,77 @@ pub struct Template5_200 {
     pub level_vals: Vec<u16>,
 }
 
+/// Data representation template 5.50002　- Second order packing.
+///
+/// This local template is defined by Météo-France.
+///
+/// # Examples
+///
+/// ```
+/// use std::io::Read;
+///
+/// use grib::{
+///     TryFromSlice,
+///     def::grib2::template::{Template5_50002, Template5_50002Optional, param_set},
+/// };
+///
+/// fn main() -> Result<(), Box<dyn std::error::Error>> {
+///     let mut buf = Vec::new();
+///
+///     let f = std::fs::File::open("testdata/constant-polyn0025.grib2")?;
+///     let mut f = std::io::BufReader::new(f);
+///     f.read_to_end(&mut buf)?;
+///
+///     let mut pos = 0x9a;
+///     let actual = Template5_50002::try_from_slice(&buf, &mut pos)?;
+///     let expected = Template5_50002 {
+///         simple: param_set::SimplePacking {
+///             ref_val: -0.46913582,
+///             exp: -13,
+///             dec: 0,
+///             num_bits: 24,
+///         },
+///         first_order_values_width: 23,
+///         num_groups: 379,
+///         second_order_packed_values_width: 264145,
+///         widths_width: 5,
+///         widths_len: 14,
+///         ordering_flags: param_set::OrderingFlags(0b00000000),
+///         spd_order: 2,
+///         optional: Some(Template5_50002Optional {
+///             num_spd_width_bits: 24,
+///         }),
+///     };
+///     assert_eq!(actual, expected);
+///
+///     Ok(())
+/// }
+/// ```
+#[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump)]
+pub struct Template5_50002 {
+    pub simple: param_set::SimplePacking,
+    /// Width of first order values.
+    pub first_order_values_width: u8,
+    /// Number of groups.
+    pub num_groups: u32,
+    /// Number of second order packed values.
+    pub second_order_packed_values_width: u32,
+    /// Width of widths.
+    pub widths_width: u8,
+    /// Width of lengths.
+    pub widths_len: u8,
+    pub ordering_flags: param_set::OrderingFlags,
+    /// Order of spatial differencing.
+    pub spd_order: u8,
+    pub optional: Option<Template5_50002Optional>,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, TryFromSlice, WriteToBuffer, Dump)]
+pub struct Template5_50002Optional {
+    /// Width of spatial differencing.
+    pub num_spd_width_bits: u8,
+}
+
 pub(crate) mod param_set {
     use grib_template_derive::{Dump, TryFromSlice, WriteToBuffer};
 
@@ -251,4 +322,10 @@ pub(crate) mod param_set {
         /// the length increment given in octet 42).
         pub num_group_len_bits: u8,
     }
+
+    #[derive(Debug, PartialEq, Eq, Clone, Copy, TryFromSlice, WriteToBuffer, Dump)]
+    pub struct OrderingFlags(
+        /// Ordering flags (Flag table 5.50002).
+        pub u8,
+    );
 }

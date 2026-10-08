@@ -12,6 +12,7 @@ mod error;
 mod grid;
 mod helpers;
 mod parser;
+pub mod projection;
 mod reader;
 #[cfg(test)]
 mod test_utils;

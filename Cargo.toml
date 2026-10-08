@@ -7,7 +7,6 @@ edition.workspace = true
 license.workspace = true
 readme.workspace = true
 repository.workspace = true
-homepage.workspace = true
 categories.workspace = true
 keywords.workspace = true
 build = "build/main.rs"
@@ -21,20 +20,19 @@ rustdoc-args = ["--cfg", "docsrs"]
 members = ["grib-template-derive", "grib-template-helpers", "gen", "cli", "demo"]
 
 [workspace.package]
-version = "0.18.0"
+version = "0.19.0"
 authors = ["Noritada Kobayashi <noritada.kobayashi@gmail.com>"]
 edition = "2024"
 license = "MIT OR Apache-2.0"
 readme = "README.md"
 repository = "https://github.com/noritada/grib-rs"
-homepage = "https://github.com/noritada/grib-rs"
 categories = ["science"]
 keywords = ["GRIB", "weather", "meteorology"]
 
 [dependencies]
 chrono = { version = "0.4.34", optional = true }
-grib-template-derive = { path = "grib-template-derive", version = "0.2.0" }
-grib-template-helpers = { path = "grib-template-helpers", version = "0.2.0" }
+grib-template-derive = { path = "grib-template-derive", version = "0.2.2" }
+grib-template-helpers = { path = "grib-template-helpers", version = "0.2.1" }
 num = "0.4"
 num_enum = "0.7"
 proj = { version = "0.31", optional = true }
@@ -59,7 +57,6 @@ default = [
   "jpeg2000-unpack-with-openjpeg",
   "png-unpack-with-png-crate",
   "ccsds-unpack-with-libaec",
-  "gridpoints-proj",
 ]
 
 # Provide an alternative to the `default` feature for WebAssembly builds.

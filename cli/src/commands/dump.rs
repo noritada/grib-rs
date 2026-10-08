@@ -38,9 +38,10 @@ pub fn exec(args: &ArgMatches) -> Result<()> {
         submessage.dump(&mut stream)?;
     } else {
         // TODO: Implement multithreading for the coloring process.
-        // Since the current `SubMessage` is not thread-safe and cannot be used in a
-        // multithreaded environment, we will first write everything to a buffer and
-        // then apply the coloring process to it.
+        // Since the current `SubMessage` is not thread-safe and cannot be used
+        // in a multithreaded environment, we will first write
+        // everything to a buffer and then apply the coloring process to
+        // it.
 
         let mut buf = std::io::Cursor::new(Vec::with_capacity(4096));
         submessage.dump(&mut buf)?;

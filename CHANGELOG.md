@@ -7,6 +7,185 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.19.0] - 2026-10-04
+
+### Breaking changes
+
+- `LatLons` and its coordinate iterators now return `(f64, f64)` instead of `(f32, f32)`.
+  Coordinate calculations use double precision throughout.
+  Downstream implementations and explicit coordinate type annotations must be updated.
+  Decoded grid point values remain `f32`.
+  (PR #249)
+- The library now uses the built-in implementation for grid point coordinate
+  computation by default.
+  To use PROJ, explicitly enable the `gridpoints-proj` feature.
+  (PR #250)
+- A field named `k_0` has been added to `projection::StereParams`.
+  Downstream struct literals must be updated to include this field.
+  (PR #248)
+
+### New supports
+
+- Computation of grid point latitudes and longitudes:
+  - Template 3.20 (polar stereographic)
+    (A built-in implementation in pure Rust has been newly added. The implementation using OSGeo PROJ remains available through the `gridpoints-proj` feature.)
+    (PR #248)
+
+### Enhancements
+
+- A pure Rust implementation of the stereographic projection has been added
+  to the `projection` module.
+  (PR #248)
+
+### Versions
+
+```
+grib 0.19.0
+grib-cli 0.19.0
+```
+
+## [0.18.6] - 2026-09-27
+### Security fixes
+
+This version fixes 3 types of panic cases.
+
+A panic does not necessarily cause denial of service. Depending on the application's panic handling and configured panic strategy (unwind or abort), a panic may interrupt a processing thread or terminate the process. This can become a denial-of-service vulnerability when an attacker can supply input to the affected operation and the resulting failure disrupts service for legitimate users. A failure confined to the attacker's request does not by itself establish service-wide denial of service; the impact depends on how the application isolates failures and maintains processing capacity.
+
+The 3 types of fixed panic mentioned above are as follows:
+
+- A panic during deserialization when encountering an unrecognized template number.
+  This panic occurs not only with invalid data but also with valid data for which the template is not supported.
+  ([GHSA-6j96-629m-89w4] (thanks @amoutiers))
+- A panic during reading forecast-time metadata from a truncated GRIB product definition.
+  This panic does not occur with valid GRIB2 data.
+  ([GHSA-m5w8-9hc6-j8x8] (thanks @amoutiers))
+- A panic when short section buffers are passed to the decoder.
+　　This panic does not occur with valid data, nor does it occur when constructing the decoder based on submessages.
+  ([GHSA-v8g4-j727-859g] (thanks @amoutiers))
+
+[GHSA-6j96-629m-89w4]: https://github.com/noritada/grib-rs/security/advisories/GHSA-6j96-629m-89w4
+[GHSA-m5w8-9hc6-j8x8]: https://github.com/noritada/grib-rs/security/advisories/GHSA-m5w8-9hc6-j8x8
+[GHSA-v8g4-j727-859g]: https://github.com/noritada/grib-rs/security/advisories/GHSA-v8g4-j727-859g
+
+### Versions
+
+```
+grib 0.18.6
+grib-cli 0.18.6
+grib-template-derive 0.2.2
+```
+
+## [0.18.5] - 2026-09-12
+### New supports
+
+- Computation of grid point latitudes and longitudes:
+  - Template 3.41 (rotated Gaussian latitude/longitude)
+    (PR #244)
+
+### Enhancements
+
+- The peak memory usage during grid point coordinate computations has been reduced.
+  This improvement applies only when grid computation using PROJ is enabled and the grid definition template used is either 3.20 (polar stereographic) or 3.30 (Lambert conformal).
+  (#242 (thanks @amoutiers), PR #243 (thanks @amoutiers))
+
+### Versions
+
+```
+grib 0.18.5
+grib-cli 0.18.5
+```
+
+## [0.18.4] - 2026-09-08
+### Enhancements
+
+- API documentation and basic trait implementations has been added for structs in the projection module.
+  (PR #240)
+- The accuracy of latitudes/longitudes computed for the Mercator grids has been improved.
+  (PR #241)
+
+### Versions
+
+```
+grib 0.18.4
+grib-cli 0.18.4
+```
+
+## [0.18.3] - 2026-09-06
+### New supports
+
+- Computation of grid point latitudes and longitudes:
+  - Template 3.10 (Mercator)
+    (Both a built-in implementation in pure Rust and an implementation using OSGeo PROJ (available through the `gridpoints-proj` feature) have been newly added.)
+    (PR #238)
+  - Template 3.30 (Lambert conformal)
+    (A built-in implementation in pure Rust has been newly added. The implementation using OSGeo PROJ remains available through the `gridpoints-proj` feature.)
+    (PR #236)
+
+### Enhancements
+
+- An API for implementing coordinate transformations based on projection methods in pure Rust has been added as the `projection` module.
+  Currently, only the Mercator and Lambert conformal conic projections are available.
+  (PR #219, PR #235)
+- Decoding performance for data encoded using simple packing has improved by about 12.5%.
+  (#220 (thanks @amoutiers), PR #221 (thanks @amoutiers))
+
+### Enhancements to the CLI application `gribber`
+
+- The CLI now uses less memory and performs less unnecessary work when decoding:
+  - Latitude/longitude coordinates are no longer computed for binary exports.
+    (#224 (thanks @amoutiers), PR #225 (thanks @amoutiers))
+  - Decoded values in text exports are streamed without being collected first.
+    (#233 (thanks @amoutiers), PR #234 (thanks @amoutiers))
+- CLI input and output buffering has been improved:
+  - Regular input files are read through a buffered reader instead of being loaded entirely into memory.
+    (#229 (thanks @amoutiers), PR #232 (thanks @amoutiers))
+  - Standard output is buffered for binary exports.
+    (#227 (thanks @amoutiers), PR #231 (thanks @amoutiers))
+
+### Versions
+
+```
+grib 0.18.3
+grib-cli 0.18.3
+```
+
+## [0.18.2] - 2026-08-29
+### New supports
+
+- Reading, accessing, dumping, and writing section/template parameters:
+  - Templates 5.50002 (defined by Météo-France)
+    (#140, PR #218)
+
+### Fixes
+
+- Fixed support for templates 3.2, 3.3, 3.10, 3.41, 3.42, and 3.43.
+  Although template structs were defined, they were not linked to `Section3Payload`.
+  (PR #217)
+
+### Versions
+
+```
+grib 0.18.2
+grib-cli 0.18.2
+```
+
+## [0.18.1] - 2026-08-25
+### Enhancements
+
+- Trait implementations are added to improve the usability:
+  - `Clone` for structs and enums under `def::grib2`
+  - public traits (e.g. `encoder::WriteGrib2Ident`) for references
+  (PR #216)
+
+### Versions
+
+```
+grib 0.18.1
+grib-cli 0.18.1
+grib-template-derive 0.2.1
+grib-template-helpers 0.2.1
+```
+
 ## [0.18.0] - 2026-08-22
 ### New supports
 
@@ -1099,7 +1278,14 @@ grib-build 0.1.0
 grib 0.1.0
 ```
 
-[unreleased]: https://github.com/noritada/grib-rs/compare/v0.18.0...HEAD
+[unreleased]: https://github.com/noritada/grib-rs/compare/v0.19.0...HEAD
+[0.19.0]: https://github.com/noritada/grib-rs/compare/v0.18.6...v0.19.0
+[0.18.6]: https://github.com/noritada/grib-rs/compare/v0.18.5...v0.18.6
+[0.18.5]: https://github.com/noritada/grib-rs/compare/v0.18.4...v0.18.5
+[0.18.4]: https://github.com/noritada/grib-rs/compare/v0.18.3...v0.18.4
+[0.18.3]: https://github.com/noritada/grib-rs/compare/v0.18.2...v0.18.3
+[0.18.2]: https://github.com/noritada/grib-rs/compare/v0.18.1...v0.18.2
+[0.18.1]: https://github.com/noritada/grib-rs/compare/v0.18.0...v0.18.1
 [0.18.0]: https://github.com/noritada/grib-rs/compare/v0.17.1...v0.18.0
 [0.17.1]: https://github.com/noritada/grib-rs/compare/v0.17.0...v0.17.1
 [0.17.0]: https://github.com/noritada/grib-rs/compare/v0.16.0...v0.17.0

@@ -23,6 +23,12 @@ impl Error for GribError {
     }
 }
 
+impl From<&str> for GribError {
+    fn from(e: &str) -> Self {
+        Self::Unknown(e.to_string())
+    }
+}
+
 impl From<io::Error> for GribError {
     fn from(e: io::Error) -> Self {
         Self::Unknown(e.to_string())

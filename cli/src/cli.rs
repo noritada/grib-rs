@@ -1,6 +1,6 @@
 use std::{
     fs::File,
-    io::{BufReader, BufWriter, Read, Write},
+    io::{BufReader, BufWriter, Cursor, Read, Seek, SeekFrom, Write},
     path::Path,
     sync::LazyLock,
 };
@@ -12,20 +12,43 @@ use regex::Regex;
 #[cfg(unix)]
 use which::which;
 
-pub fn grib<P>(path: P) -> anyhow::Result<Grib2<SeekableGrib2Reader<std::io::Cursor<Vec<u8>>>>>
+pub(crate) enum GribReader {
+    Stdin(Cursor<Vec<u8>>),
+    File(BufReader<File>),
+}
+
+impl Read for GribReader {
+    fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
+        match self {
+            Self::Stdin(reader) => reader.read(buf),
+            Self::File(reader) => reader.read(buf),
+        }
+    }
+}
+
+impl Seek for GribReader {
+    fn seek(&mut self, pos: SeekFrom) -> std::io::Result<u64> {
+        match self {
+            Self::Stdin(reader) => reader.seek(pos),
+            Self::File(reader) => reader.seek(pos),
+        }
+    }
+}
+
+pub(crate) fn grib<P>(path: P) -> anyhow::Result<Grib2<SeekableGrib2Reader<GribReader>>>
 where
     P: AsRef<Path>,
 {
-    let mut buf = Vec::with_capacity(4096);
-    if is_dash(&path) {
+    let reader = if is_dash(&path) {
+        let mut buf = Vec::with_capacity(4096);
         let mut stdin = std::io::stdin();
         let _size = stdin.read_to_end(&mut buf);
+        GribReader::Stdin(Cursor::new(buf))
     } else {
         let f = File::open(path)?;
-        let mut f = BufReader::new(f);
-        let _size = f.read_to_end(&mut buf);
+        GribReader::File(BufReader::new(f))
     };
-    let grib = grib::from_bytes(buf)?;
+    let grib = grib::from_reader(reader)?;
 
     if grib.is_empty() {
         anyhow::bail!("empty GRIB2 data")
@@ -37,19 +60,22 @@ pub(crate) fn display_in_pager<V>(view: V)
 where
     V: PredictableNumLines + std::fmt::Display,
 {
+    prepare_pager(view.num_lines());
+    print!("{view}");
+}
+
+pub(crate) fn prepare_pager(num_lines: usize) {
     let user_attended = console::user_attended();
 
     let term = console::Term::stdout();
     let (height, _width) = term.size();
-    if view.num_lines() > height.into() {
+    if num_lines > height.into() {
         start_pager();
     }
 
     if user_attended {
         console::set_colors_enabled(true);
     }
-
-    print!("{view}");
 }
 
 pub(crate) trait PredictableNumLines {
@@ -102,7 +128,7 @@ impl std::str::FromStr for CliMessageIndex {
 
 pub(crate) enum WriteStream {
     File(BufWriter<std::fs::File>),
-    Stdout(std::io::Stdout),
+    Stdout(BufWriter<std::io::Stdout>),
 }
 
 impl WriteStream {
@@ -111,7 +137,7 @@ impl WriteStream {
         P: AsRef<Path>,
     {
         let stream = if is_dash(&out_path) {
-            Self::Stdout(std::io::stdout())
+            Self::Stdout(BufWriter::new(std::io::stdout()))
         } else {
             let f = File::create(out_path)?;
             let f = BufWriter::new(f);

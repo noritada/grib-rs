@@ -9,7 +9,7 @@ use crate::{
         simple::SimplePackingDecoder,
         stream::NBitwiseIterator,
     },
-    def::grib2::{DataRepresentationTemplate, Section5},
+    def::grib2::{DataRepresentationTemplate, Section5, SectionHeader},
     error::*,
     reader::Grib2Read,
 };
@@ -101,6 +101,28 @@ impl Grib2SubmessageDecoder {
         sect6_bytes: Vec<u8>,
         sect7_bytes: Vec<u8>,
     ) -> Result<Self, GribError> {
+        Self::check_section_slice(6, &sect6_bytes)?;
+        Self::check_section_slice(7, &sect7_bytes)?;
+        Self::new_from_checked_slices(num_points_total, sect5_bytes, sect6_bytes, sect7_bytes)
+    }
+
+    fn check_section_slice(sect_num: u8, bytes: &[u8]) -> Result<(), GribError> {
+        let header = SectionHeader::try_from_slice(bytes, &mut 0)
+            .map_err(|e| GribError::DecodeError(DecodeError::from(e)))?;
+        if header.sect_num != sect_num || header.len as usize != bytes.len() {
+            return Err(GribError::DecodeError(DecodeError::from(format!(
+                "invalid section {sect_num} slice"
+            ))));
+        }
+        Ok(())
+    }
+
+    fn new_from_checked_slices(
+        num_points_total: usize,
+        sect5_bytes: Vec<u8>,
+        sect6_bytes: Vec<u8>,
+        sect7_bytes: Vec<u8>,
+    ) -> Result<Self, GribError> {
         let mut pos = 0;
         let sect5_param = Section5::try_from_slice(&sect5_bytes, &mut pos)
             .map_err(|e| GribError::DecodeError(DecodeError::from(e)))?;
@@ -139,7 +161,7 @@ impl Grib2SubmessageDecoder {
         };
         let sect3_num_points = sect3_body.num_points() as usize;
 
-        Self::new(
+        Self::new_from_checked_slices(
             sect3_num_points,
             reader.read_sect_as_slice(sect5)?,
             reader.read_sect_as_slice(sect6)?,

@@ -9,7 +9,6 @@ edition.workspace = true
 license.workspace = true
 readme.workspace = true
 repository.workspace = true
-homepage.workspace = true
 categories.workspace = true
 keywords.workspace = true
 
@@ -25,12 +24,12 @@ console = "0.16"
 regex = "1.8"
 
 [target.'cfg(unix)'.dependencies]
-grib = { path = "..", version = "=0.18.0", features = ["gridpoints-proj", "jpeg2000-unpack-with-openjpeg", "png-unpack-with-png-crate", "ccsds-unpack-with-libaec"] }
+grib = { path = "..", version = "=0.19.0", features = ["gridpoints-proj", "jpeg2000-unpack-with-openjpeg", "png-unpack-with-png-crate", "ccsds-unpack-with-libaec"] }
 pager = "0.16"
 which = "8"
 
 [target.'cfg(not(unix))'.dependencies]
-grib = { path = "..", version = "=0.18.0", features = ["jpeg2000-unpack-with-openjpeg", "png-unpack-with-png-crate", "ccsds-unpack-with-libaec"] }
+grib = { path = "..", version = "=0.19.0", features = ["jpeg2000-unpack-with-openjpeg", "png-unpack-with-png-crate", "ccsds-unpack-with-libaec"] }
 
 [dev-dependencies]
 assert_cmd = "2"

@@ -4,6 +4,8 @@ use std::{
     str::FromStr,
 };
 
+// TODO: "Crate features" section when deleted once RFC 3485 is implemented.
+// That RFC was merged to the main branch on 2026-09-06.
 pub(crate) fn generate() -> Result<String, String> {
     let readme = read_readme()
         .map_err(|e| e.to_string())?
@@ -12,9 +14,8 @@ pub(crate) fn generate() -> Result<String, String> {
     let template_support = readme.get("Template support")?;
     let gds_template_support =
         readme.get("Support for computation of latitudes/longitudes of grid points")?;
-    let drs_template_decoding_support =
-        readme.get("Support for extraction of grid point values")?;
-    let drs_template_encoding_support = readme.get("Support for encoding of grid point values")?;
+    let drs_template_support =
+        readme.get("Support for extraction/compression of grid point values")?;
     let examples = readme.get("Usage examples")?;
 
     let manifest = read_manifest()
@@ -33,13 +34,9 @@ pub(crate) fn generate() -> Result<String, String> {
 
 {gds_template_support}
 
-## Support for extraction of grid point values
+## Support for extraction/compression of grid point values
 
-{drs_template_decoding_support}
-
-## Support for encoding of grid point values
-
-{drs_template_encoding_support}
+{drs_template_support}
 
 # Examples
 
@@ -115,8 +112,8 @@ impl std::str::FromStr for ReadMeSections {
     type Err = &'static str;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        // Line terminators are not included in the lines returned by the iterator from
-        // `str::lines`.
+        // Line terminators are not included in the lines returned by the
+        // iterator from `str::lines`.
         let mut lines = s.split_inclusive("\n");
 
         let mut map = HashMap::<String, String>::new();

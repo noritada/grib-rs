@@ -120,9 +120,15 @@ pub struct Section3Payload {
 pub enum GridDefinitionTemplate {
     _3_0(template3::Template3_0) = 0,
     _3_1(template3::Template3_1) = 1,
+    _3_2(template3::Template3_2) = 2,
+    _3_3(template3::Template3_3) = 3,
+    _3_10(template3::Template3_10) = 10,
     _3_20(template3::Template3_20) = 20,
     _3_30(template3::Template3_30) = 30,
     _3_40(template3::Template3_40) = 40,
+    _3_41(template3::Template3_41) = 41,
+    _3_42(template3::Template3_42) = 42,
+    _3_43(template3::Template3_43) = 43,
     _3_101(template3::Template3_101) = 101,
 }
 
@@ -187,6 +193,7 @@ pub enum DataRepresentationTemplate {
     _5_53(template5::Template5_53) = 53,
     _5_61(template5::Template5_61) = 61,
     _5_200(template5::Template5_200) = 200,
+    _5_50002(template5::Template5_50002) = 50002,
 }
 
 /// Section 6 - Bit-map section.

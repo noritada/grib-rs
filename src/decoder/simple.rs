@@ -74,8 +74,8 @@ impl<'d> Grib2GpvUnpack for Simple<'d> {
 pub(crate) struct NonZeroSimplePackingDecoder<I> {
     iter: I,
     ref_val: f32,
-    exp: i32,
-    dec: i32,
+    binary_factor: f32,
+    decimal_factor: f32,
 }
 
 impl<I> NonZeroSimplePackingDecoder<I> {
@@ -83,8 +83,8 @@ impl<I> NonZeroSimplePackingDecoder<I> {
         Self {
             iter,
             ref_val: param.ref_val,
-            exp: param.exp.into(),
-            dec: param.dec.into(),
+            binary_factor: 2_f32.powi(param.exp.into()),
+            decimal_factor: 10_f32.powi(-i32::from(param.dec)),
         }
     }
 }
@@ -96,9 +96,8 @@ impl<I: Iterator<Item = N>, N: ToPrimitive> Iterator for NonZeroSimplePackingDec
         match self.iter.next() {
             Some(encoded) => {
                 let encoded = encoded.to_f32().unwrap();
-                let diff = encoded * 2_f32.powi(self.exp);
-                let dig_factor = 10_f32.powi(-self.dec);
-                let value: f32 = (self.ref_val + diff) * dig_factor;
+                let diff = encoded * self.binary_factor;
+                let value: f32 = (self.ref_val + diff) * self.decimal_factor;
                 Some(value)
             }
             _ => None,

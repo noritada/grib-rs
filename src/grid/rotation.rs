@@ -1,71 +1,23 @@
-use super::GridPointIndexIterator;
-use crate::{
-    GridPointIndex, LatLons,
-    def::grib2::template::{Template3_1, param_set::Rotation},
-    error::GribError,
-    grid::{AngleUnit, helpers::RegularGridIterator},
-};
-
-impl crate::GridShortName for Template3_1 {
-    fn short_name(&self) -> &'static str {
-        "rotated_ll"
-    }
-}
-
-impl GridPointIndex for Template3_1 {
-    fn grid_shape(&self) -> (usize, usize) {
-        self.lat_lon.grid_shape()
-    }
-
-    fn scanning_mode(&self) -> &crate::def::grib2::template::param_set::ScanningMode {
-        self.lat_lon.scanning_mode()
-    }
-
-    fn ij(&self) -> Result<GridPointIndexIterator, GribError> {
-        self.lat_lon.ij()
-    }
-}
-
-impl LatLons for Template3_1 {
-    type Iter<'a>
-        = Unrotate<RegularGridIterator>
-    where
-        Self: 'a;
-
-    fn latlons_unchecked<'a>(&'a self) -> Result<Self::Iter<'a>, GribError> {
-        let iter = Unrotate::new(
-            self.lat_lon.latlons_unchecked()?,
-            &self.rotation,
-            self.angle_unit() as f32,
-        );
-        Ok(iter)
-    }
-}
-
-impl AngleUnit for Template3_1 {
-    fn angle_unit(&self) -> f64 {
-        self.lat_lon.grid.angle_unit()
-    }
-}
+use crate::def::grib2::template::param_set::Rotation;
 
 #[derive(Clone)]
 pub struct Unrotate<I> {
     latlons: I,
-    sinφp: f32,
-    cosφp: f32,
-    λp: f32,
-    gamma: f32,
+    sinφp: f64,
+    cosφp: f64,
+    λp: f64,
+    gamma: f64,
 }
 
 impl<I> Unrotate<I> {
-    fn new(latlons: I, rot: &Rotation, angle_units: f32) -> Self {
-        let φp = (rot.south_pole_lat as f32 * angle_units).to_radians();
-        let λp = (rot.south_pole_lon as f32 * angle_units).to_radians();
-        let gamma = (rot.rot_angle * angle_units).to_radians();
+    pub(crate) fn new(latlons: I, rot: &Rotation, angle_units: f64) -> Self {
+        let φp = (rot.south_pole_lat as f64 * angle_units).to_radians();
+        let λp = (rot.south_pole_lon as f64 * angle_units).to_radians();
+        let gamma = (f64::from(rot.rot_angle) * angle_units).to_radians();
 
         // south pole to north pole
         let φp = -φp;
-        let λp = λp + std::f32::consts::PI;
+        let λp = λp + std::f64::consts::PI;
 
         let (sinφp, cosφp) = φp.sin_cos();
         Self {
@@ -80,9 +32,9 @@ impl<I> Unrotate<I> {
 
 impl<I> Iterator for Unrotate<I>
 where
-    I: Iterator<Item = (f32, f32)>,
+    I: Iterator<Item = (f64, f64)>,
 {
-    type Item = (f32, f32);
+    type Item = (f64, f64);
 
     fn next(&mut self) -> Option<Self::Item> {
         let (lat, lon) = self.latlons.next()?;
@@ -115,6 +67,21 @@ mod tests {
 
     use super::*;
 
+    #[test]
+    fn unrotation_preserves_double_precision() {
+        let expected = (35.123456789012, 139.123456789012);
+        let rotation = Rotation {
+            south_pole_lat: -90000000,
+            south_pole_lon: 0,
+            rot_angle: 0.,
+        };
+        let actual = Unrotate::new(std::iter::once(expected), &rotation, 1e-6)
+            .next()
+            .unwrap();
+        assert!((actual.0 - expected.0).abs() < 1e-12);
+        assert!((actual.1 - expected.1).abs() < 1e-12);
+    }
+
     macro_rules! test_rotation{
         ($(($name:ident, $rot:expr, $input:expr, $expected:expr),)*) => ($(
             #[test]
@@ -140,8 +107,8 @@ mod tests {
                 south_pole_lon: 0,
                 rot_angle: 0.,
             },
-            (-12.302501_f32, 345.178780_f32),
-            (-12.302501_f32, 345.178780_f32)
+            (-12.302501_f64, 345.178780_f64),
+            (-12.302501_f64, 345.178780_f64)
         ),
         (
             // grid point definition extracted from
@@ -152,7 +119,7 @@ mod tests {
                 south_pole_lon: 245305142,
                 rot_angle: 0.,
             },
-            (-12.302501_f32, 345.178780_f32),
+            (-12.302501_f64, 345.178780_f64),
             // taken from results from pygrib
             (39.626032, -133.62952 + 720.)
         ),

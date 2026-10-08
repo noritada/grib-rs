@@ -1,4 +1,7 @@
-use std::{fmt, path::PathBuf};
+use std::{
+    io::{BufWriter, Write},
+    path::PathBuf,
+};
 
 use anyhow::Result;
 use clap::{ArgMatches, Command, arg};
@@ -46,7 +49,11 @@ pub fn exec(args: &ArgMatches) -> Result<()> {
         .iter()
         .find(|(index, _)| index == message_index)
         .ok_or_else(|| anyhow::anyhow!("no such index: {}.{}", message_index.0, message_index.1))?;
-    let latlons = submessage.latlons();
+    let latlons = if args.contains_id("big-endian") || args.contains_id("little-endian") {
+        None
+    } else {
+        Some(submessage.latlons())
+    };
     let decoder = grib::Grib2SubmessageDecoder::from(submessage)?;
     let values = decoder.dispatch()?;
 
@@ -57,22 +64,19 @@ pub fn exec(args: &ArgMatches) -> Result<()> {
         let out_path = args.get_one::<PathBuf>("little-endian").unwrap();
         write_output(out_path, values, |f| f.to_le_bytes())
     } else {
-        let values = values.collect::<Vec<_>>().into_iter(); // workaround for mutability
-        let latlons = match latlons {
+        let num_values = values.size_hint().0;
+        let latlons = match latlons.expect("lat/lon result is present for text output") {
             Ok(iter) => LatLonIteratorWrapper::LatLon(iter),
             Err(GribError::NotSupported(_)) => {
-                let nan_iter = vec![(f32::NAN, f32::NAN); values.len()].into_iter();
+                let nan_iter = std::iter::repeat_n((f64::NAN, f64::NAN), num_values);
                 LatLonIteratorWrapper::NaN(nan_iter)
             }
             Err(e) => anyhow::bail!("something unexpected happened:: {e}"),
         };
-        let values = latlons.zip(values);
-        cli::display_in_pager(DecodeTextDisplay(values));
-        Ok(())
+        write_text_output(latlons.zip(values))
     }
 }
 
-#[derive(Clone)]
 enum LatLonIteratorWrapper<L, N> {
     LatLon(L),
     NaN(N),
@@ -80,10 +84,10 @@ enum LatLonIteratorWrapper<L, N> {
 
 impl<L, N> Iterator for LatLonIteratorWrapper<L, N>
 where
-    L: Iterator<Item = (f32, f32)>,
-    N: Iterator<Item = (f32, f32)>,
+    L: Iterator<Item = (f64, f64)>,
+    N: Iterator<Item = (f64, f64)>,
 {
-    type Item = (f32, f32);
+    type Item = (f64, f64);
 
     fn next(&mut self) -> Option<Self::Item> {
         match self {
@@ -100,34 +104,22 @@ where
     }
 }
 
-struct DecodeTextDisplay<I>(I);
-
-impl<I> cli::PredictableNumLines for DecodeTextDisplay<I>
+fn write_text_output(values: impl Iterator<Item = ((f64, f64), f32)>) -> Result<()>
 where
-    I: Iterator<Item = ((f32, f32), f32)>,
 {
-    fn num_lines(&self) -> usize {
-        let Self(inner) = self;
-        let (len, _) = inner.size_hint();
-        len + 1
-    }
-}
+    let num_lines = values.size_hint().0 + 1;
+    cli::prepare_pager(num_lines);
 
-impl<I> fmt::Display for DecodeTextDisplay<I>
-where
-    I: Iterator<Item = ((f32, f32), f32)> + Clone,
-{
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let header = format!("{:>10} {:>11} {:>9}", "Latitude", "Longitude", "Value",);
-        let style = Style::new().bold();
-        writeln!(f, "{}", style.apply_to(header.trim_end()))?;
+    let stdout = std::io::stdout();
+    let mut out = BufWriter::new(stdout.lock());
+    let header = format!("{:>10} {:>11} {:>9}", "Latitude", "Longitude", "Value",);
+    let style = Style::new().bold();
+    writeln!(out, "{}", style.apply_to(header.trim_end()))?;
 
-        let Self(inner) = self;
-        // cloning just to work around a mutability issue
-        for ((lat, lon), value) in inner.clone() {
-            // lat/lons are formatted in "-?\d{2}.\d{6} -?\d{2}.\d{6}"
-            writeln!(f, "{lat:>10.6} {lon:>11.6} {value:>9}")?;
-        }
-        Ok(())
+    for ((lat, lon), value) in values {
+        // lat/lons are formatted in "-?\d{2}.\d{6} -?\d{2}.\d{6}"
+        writeln!(out, "{lat:>10.6} {lon:>11.6} {value:>9}")?;
     }
+
+    Ok(())
 }

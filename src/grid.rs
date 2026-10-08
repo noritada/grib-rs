@@ -1,10 +1,13 @@
+#[cfg(feature = "gridpoints-proj")]
+use helpers::ProjectionLatLonIterator;
 use helpers::RegularGridIterator;
 
-pub use self::{gaussian::compute_gaussian_latitudes, rotated_ll::Unrotate};
+pub use self::{gaussian::compute_gaussian_latitudes, rotation::Unrotate};
 use crate::{
     GribError, GridDefinition, TryFromSlice,
     def::grib2::template::{
-        Template3_0, Template3_1, Template3_20, Template3_30, Template3_40,
+        Template3_0, Template3_1, Template3_10, Template3_20, Template3_30, Template3_40,
+        Template3_41,
         param_set::{Grid, ScanningMode},
     },
 };
@@ -14,9 +17,11 @@ use crate::{
 pub enum GridDefinitionTemplateValues {
     Template0(Template3_0),
     Template1(Template3_1),
+    Template10(Template3_10),
     Template20(Template3_20),
     Template30(Template3_30),
     Template40(Template3_40),
+    Template41(Template3_41),
 }
 
 impl GridShortName for GridDefinitionTemplateValues {
@@ -24,9 +29,11 @@ impl GridShortName for GridDefinitionTemplateValues {
         match self {
             Self::Template0(def) => def.lat_lon.short_name(),
             Self::Template1(def) => def.short_name(),
+            Self::Template10(def) => def.short_name(),
             Self::Template20(def) => def.short_name(),
             Self::Template30(def) => def.short_name(),
             Self::Template40(def) => def.gaussian.short_name(),
+            Self::Template41(def) => def.short_name(),
         }
     }
 }
@@ -36,9 +43,11 @@ impl GridPointIndex for GridDefinitionTemplateValues {
         match self {
             Self::Template0(def) => def.lat_lon.grid_shape(),
             Self::Template1(def) => def.grid_shape(),
+            Self::Template10(def) => def.grid_shape(),
             Self::Template20(def) => def.grid_shape(),
             Self::Template30(def) => def.grid_shape(),
             Self::Template40(def) => def.gaussian.grid_shape(),
+            Self::Template41(def) => def.grid_shape(),
         }
     }
 
@@ -46,9 +55,11 @@ impl GridPointIndex for GridDefinitionTemplateValues {
         match self {
             Self::Template0(def) => def.lat_lon.scanning_mode(),
             Self::Template1(def) => def.scanning_mode(),
+            Self::Template10(def) => def.scanning_mode(),
             Self::Template20(def) => def.scanning_mode(),
             Self::Template30(def) => def.scanning_mode(),
             Self::Template40(def) => def.gaussian.scanning_mode(),
+            Self::Template41(def) => def.scanning_mode(),
         }
     }
 }
@@ -63,18 +74,11 @@ impl LatLons for GridDefinitionTemplateValues {
         let iter = match self {
             Self::Template0(def) => GridPointLatLons::from(def.lat_lon.latlons_unchecked()?),
             Self::Template1(def) => GridPointLatLons::from(def.latlons_unchecked()?),
-            #[cfg(feature = "gridpoints-proj")]
+            Self::Template10(def) => GridPointLatLons::from(def.latlons_unchecked()?),
             Self::Template20(def) => GridPointLatLons::from(def.latlons_unchecked()?),
-            #[cfg(feature = "gridpoints-proj")]
             Self::Template30(def) => GridPointLatLons::from(def.latlons_unchecked()?),
             Self::Template40(def) => GridPointLatLons::from(def.gaussian.latlons_unchecked()?),
-            #[cfg(not(feature = "gridpoints-proj"))]
-            _ => {
-                return Err(GribError::NotSupported(
-                    "lat/lon computation support for the template is dropped in this build"
-                        .to_owned(),
-                ));
-            }
+            Self::Template41(def) => GridPointLatLons::from(def.latlons_unchecked()?),
         };
         Ok(iter)
     }
@@ -89,40 +93,40 @@ impl TryFrom<&GridDefinition> for GridDefinitionTemplateValues {
         // ```
         // let buf = &value.payload;
         // let mut pos = 0;
-        // let payload = crate::def::grib2::Section3Payload::try_from_slice(buf, &mut pos)
-        //     .map_err(|e| GribError::Unknown(e.to_owned()))?;
+        // let payload = crate::def::grib2::Section3Payload::try_from_slice(buf, &mut pos)?;
         // let template = match payload.template {
         // ..
         // }
         // ```
         //
         // However, since the current implementation of the templates has many
-        // limitations, to prevent errors, the template reading process is implemented
-        // as follows.
+        // limitations, to prevent errors, the template reading process is
+        // implemented as follows.
         let buf = &value.payload[9..];
         let mut pos = 0;
         let num = value.grid_tmpl_num();
         let template = match num {
-            0 => GridDefinitionTemplateValues::Template0(
-                Template3_0::try_from_slice(buf, &mut pos)
-                    .map_err(|e| GribError::Unknown(e.to_owned()))?,
-            ),
-            1 => GridDefinitionTemplateValues::Template1(
-                Template3_1::try_from_slice(buf, &mut pos)
-                    .map_err(|e| GribError::Unknown(e.to_owned()))?,
-            ),
-            20 => GridDefinitionTemplateValues::Template20(
-                Template3_20::try_from_slice(buf, &mut pos)
-                    .map_err(|e| GribError::Unknown(e.to_owned()))?,
-            ),
-            30 => GridDefinitionTemplateValues::Template30(
-                Template3_30::try_from_slice(buf, &mut pos)
-                    .map_err(|e| GribError::Unknown(e.to_owned()))?,
-            ),
-            40 => GridDefinitionTemplateValues::Template40(
-                Template3_40::try_from_slice(buf, &mut pos)
-                    .map_err(|e| GribError::Unknown(e.to_owned()))?,
-            ),
+            0 => {
+                GridDefinitionTemplateValues::Template0(Template3_0::try_from_slice(buf, &mut pos)?)
+            }
+            1 => {
+                GridDefinitionTemplateValues::Template1(Template3_1::try_from_slice(buf, &mut pos)?)
+            }
+            10 => GridDefinitionTemplateValues::Template10(Template3_10::try_from_slice(
+                buf, &mut pos,
+            )?),
+            20 => GridDefinitionTemplateValues::Template20(Template3_20::try_from_slice(
+                buf, &mut pos,
+            )?),
+            30 => GridDefinitionTemplateValues::Template30(Template3_30::try_from_slice(
+                buf, &mut pos,
+            )?),
+            40 => GridDefinitionTemplateValues::Template40(Template3_40::try_from_slice(
+                buf, &mut pos,
+            )?),
+            41 => GridDefinitionTemplateValues::Template41(Template3_41::try_from_slice(
+                buf, &mut pos,
+            )?),
             _ => {
                 return Err(GribError::NotSupported(format!(
                     "lat/lon computation support for the template {num} is dropped in this build"
@@ -159,8 +163,11 @@ impl<T: GridShortName + ?Sized> GridShortName for &T {
 
 /// A functionality to generate an iterator over latitude/longitude of grid
 /// points.
+///
+/// Coordinates are returned as `(latitude, longitude)` in degrees using
+/// double-precision (`f64`) values.
 pub trait LatLons {
-    type Iter<'a>: Iterator<Item = (f32, f32)>
+    type Iter<'a>: Iterator<Item = (f64, f64)>
     where
         Self: 'a;
 
@@ -180,10 +187,10 @@ pub trait LatLons {
     #[allow(clippy::type_complexity)]
     fn latlons<'a>(
         &'a self,
-    ) -> Result<std::iter::Map<Self::Iter<'a>, fn((f32, f32)) -> (f32, f32)>, GribError> {
+    ) -> Result<std::iter::Map<Self::Iter<'a>, fn((f64, f64)) -> (f64, f64)>, GribError> {
         let iter = self
             .latlons_unchecked()?
-            .map(helpers::normalize_latlon as fn((f32, f32)) -> (f32, f32));
+            .map(helpers::normalize_latlon as fn((f64, f64)) -> (f64, f64));
         Ok(iter)
     }
 }
@@ -210,13 +217,15 @@ impl<T: LatLons + ?Sized> LatLons for &T {
 pub struct GridPointLatLons(LatLonsWrapper);
 
 impl Iterator for GridPointLatLons {
-    type Item = (f32, f32);
+    type Item = (f64, f64);
 
     fn next(&mut self) -> Option<Self::Item> {
         match self {
             Self(LatLonsWrapper::SigR(iter)) => iter.next(),
             Self(LatLonsWrapper::SigUR(iter)) => iter.next(),
             Self(LatLonsWrapper::SigIf(iter)) => iter.next(),
+            #[cfg(feature = "gridpoints-proj")]
+            Self(LatLonsWrapper::SigP(iter)) => iter.next(),
         }
     }
 
@@ -225,6 +234,8 @@ impl Iterator for GridPointLatLons {
             Self(LatLonsWrapper::SigR(iter)) => iter.size_hint(),
             Self(LatLonsWrapper::SigUR(iter)) => iter.size_hint(),
             Self(LatLonsWrapper::SigIf(iter)) => iter.size_hint(),
+            #[cfg(feature = "gridpoints-proj")]
+            Self(LatLonsWrapper::SigP(iter)) => iter.size_hint(),
         }
     }
 }
@@ -241,9 +252,16 @@ impl From<Unrotate<RegularGridIterator>> for GridPointLatLons {
     }
 }
 
-impl From<std::vec::IntoIter<(f32, f32)>> for GridPointLatLons {
-    fn from(value: std::vec::IntoIter<(f32, f32)>) -> Self {
+impl From<std::vec::IntoIter<(f64, f64)>> for GridPointLatLons {
+    fn from(value: std::vec::IntoIter<(f64, f64)>) -> Self {
         Self(LatLonsWrapper::SigIf(value))
+    }
+}
+
+#[cfg(feature = "gridpoints-proj")]
+impl From<ProjectionLatLonIterator> for GridPointLatLons {
+    fn from(value: ProjectionLatLonIterator) -> Self {
+        Self(LatLonsWrapper::SigP(value))
     }
 }
 
@@ -251,7 +269,9 @@ impl From<std::vec::IntoIter<(f32, f32)>> for GridPointLatLons {
 enum LatLonsWrapper {
     SigR(RegularGridIterator),
     SigUR(Unrotate<RegularGridIterator>),
-    SigIf(std::vec::IntoIter<(f32, f32)>),
+    SigIf(std::vec::IntoIter<(f64, f64)>),
+    #[cfg(feature = "gridpoints-proj")]
+    SigP(ProjectionLatLonIterator),
 }
 
 /// A functionality to generate an iterator over 2D index `(i, j)` of grid
@@ -418,21 +438,12 @@ mod tests {
     use crate::def::grib2::template::param_set::{EarthShape, ScaledValue};
 
     #[test]
-    fn grid_definition_template_0() {
-        // data taken from submessage #0.0 of
-        // `Z__C_RJTD_20160822020000_NOWC_GPV_Ggis10km_Pphw10_FH0000-0100_grib2.bin.xz`
-        // in `testdata`
-        let data = GridDefinition::from_payload(
-            vec![
-                0x00, 0x00, 0x01, 0x50, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0xff, 0xff, 0xff, 0xff,
-                0xff, 0x01, 0x03, 0xcd, 0x39, 0xfa, 0x01, 0x03, 0xc9, 0xf6, 0xa3, 0x00, 0x00, 0x01,
-                0x00, 0x00, 0x00, 0x01, 0x50, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x02,
-                0xdb, 0xc9, 0x3d, 0x07, 0x09, 0x7d, 0xa4, 0x30, 0x01, 0x31, 0xcf, 0xc3, 0x08, 0xef,
-                0xdd, 0x5c, 0x00, 0x01, 0xe8, 0x48, 0x00, 0x01, 0x45, 0x85, 0x00,
-            ]
-            .into_boxed_slice(),
-        )
-        .unwrap();
+    fn grid_definition_template_0() -> Result<(), Box<dyn std::error::Error>> {
+        let buf = crate::test_utils::decompress_to_vec(
+            crate::test_utils::data::grib2::JMA_TORNADO_NOWCAST,
+        )?;
+        let data =
+            GridDefinition::from_payload(buf[0x2a..0x6d].to_vec().into_boxed_slice()).unwrap();
 
         let actual = GridDefinitionTemplateValues::try_from(&data).unwrap();
         let expected = GridDefinitionTemplateValues::Template0(Template3_0 {
@@ -472,6 +483,7 @@ mod tests {
             },
         });
         assert_eq!(actual, expected);
+        Ok(())
     }
 }
 
@@ -481,5 +493,6 @@ mod gaussian;
 mod helpers;
 mod lambert;
 mod latlon;
+mod mercator;
 mod polar_stereographic;
-mod rotated_ll;
+mod rotation;

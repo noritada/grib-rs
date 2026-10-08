@@ -1,9 +1,11 @@
 #[cfg(feature = "gridpoints-proj")]
-use crate::error::GribError;
+use crate::projection::OsgeoProj;
 use crate::{
     GridPointIndex, LatLons,
     def::grib2::template::{Template3_20, param_set},
+    error::GribError,
     grid::AngleUnit,
+    projection,
 };
 
 impl crate::GridShortName for Template3_20 {
@@ -22,13 +24,11 @@ impl GridPointIndex for Template3_20 {
     }
 }
 
-#[cfg(feature = "gridpoints-proj")]
-#[cfg_attr(docsrs, doc(cfg(feature = "gridpoints-proj")))]
 impl LatLons for Template3_20 {
-    type Iter<'a>
-        = std::vec::IntoIter<(f32, f32)>
-    where
-        Self: 'a;
+    #[cfg(feature = "gridpoints-proj")]
+    type Iter<'a> = super::helpers::ProjectionLatLonIterator;
+    #[cfg(not(feature = "gridpoints-proj"))]
+    type Iter<'a> = std::vec::IntoIter<(f64, f64)>;
 
     fn latlons_unchecked<'a>(&'a self) -> Result<Self::Iter<'a>, GribError> {
         let angle_units = self.angle_unit();
@@ -54,8 +54,13 @@ impl LatLons for Template3_20 {
             -90.
         };
 
-        let proj_def =
-            format!("+a={a} +b={b} +proj=stere +lat_ts={lad} +lat_0={lat_origin} +lon_0={lov}");
+        let params = projection::StereParams {
+            ellipsoid: projection::Ellipsoid::from_a_and_b(a, b),
+            lat_ts: lad,
+            lat_0: lat_origin,
+            lon_0: lov,
+            k_0: 1.0,
+        };
 
         let dx = self.dx as f64 * 1e-3;
         let dy = self.dy as f64 * 1e-3;
@@ -70,15 +75,31 @@ impl LatLons for Template3_20 {
             dy
         };
 
-        super::helpers::latlons_from_projection_definition_and_first_point(
-            &proj_def,
-            (
-                self.first_point_lat as f64 * angle_units,
-                self.first_point_lon as f64 * angle_units,
-            ),
-            (dx, dy),
-            self.ij()?,
-        )
+        let first_point = (
+            self.first_point_lat as f64 * angle_units,
+            self.first_point_lon as f64 * angle_units,
+        );
+
+        #[cfg(feature = "gridpoints-proj")]
+        {
+            super::helpers::latlons_from_projection_with_first_point_and_delta(
+                &params.proj_args(),
+                first_point,
+                (dx, dy),
+                self.ij()?,
+            )
+        }
+
+        #[cfg(not(feature = "gridpoints-proj"))]
+        {
+            let projection = projection::Stere::new(&params)?;
+            super::helpers::latlons_from_projection_with_first_point_and_delta(
+                &projection,
+                first_point,
+                (dx, dy),
+                self.ij()?,
+            )
+        }
     }
 }
 
@@ -92,12 +113,12 @@ impl AngleUnit for Template3_20 {
 mod tests {
     use super::*;
 
-    #[cfg(feature = "gridpoints-proj")]
     #[test]
     fn polar_stereographic_grid_latlon_computation() -> Result<(), Box<dyn std::error::Error>> {
         use crate::grid::helpers::test_helpers::assert_coord_almost_eq;
         // grid point definition extracted from
-        // testdata/CMC_RDPA_APCP-024-0100cutoff_SFC_0_ps10km_2023121806_000.grib2.xz
+        // testdata/CMC_RDPA_APCP-024-0100cutoff_SFC_0_ps10km_2023121806_000.
+        // grib2.xz
         let grid_def = Template3_20 {
             earth_shape: param_set::EarthShape {
                 shape: 6,
@@ -128,7 +149,8 @@ mod tests {
         };
         let latlons = grid_def.latlons()?.collect::<Vec<_>>();
 
-        // Following lat/lon values are taken from the calculation results using pygrib.
+        // Following lat/lon values are taken from the calculation results using
+        // pygrib.
         let delta = 1e-4;
         assert_coord_almost_eq(latlons[0], (18.14503, -142.892544), delta);
         assert_coord_almost_eq(latlons[1], (18.17840149, -142.83604096), delta);
