@@ -71,7 +71,7 @@ pub struct Template4_6 {
 /// Product definition template 4.8 - Average, accumulation, and/or extreme
 /// values or other statistically processed values at a horizontal level or in a
 /// horizontal layer in a continuous or non-continuous time interval.
-#[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer)]
+#[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump)]
 pub struct Template4_8 {
     pub param: param_set::ProductParam,
     pub generating_process: param_set::GeneratingProcess,
@@ -193,7 +193,7 @@ pub(crate) mod param_set {
         pub percentile_value: u8,
     }
 
-    #[derive(Debug, PartialEq, Eq, Clone, TryFromSlice, WriteToBuffer)]
+    #[derive(Debug, PartialEq, Eq, Clone, TryFromSlice, WriteToBuffer, Dump)]
     pub struct Statistical {
         /// Time of end of overall time interval.
         pub end_of_overall_time_interval: DateTime,
