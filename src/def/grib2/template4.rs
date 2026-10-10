@@ -71,6 +71,79 @@ pub struct Template4_6 {
 /// Product definition template 4.8 - Average, accumulation, and/or extreme
 /// values or other statistically processed values at a horizontal level or in a
 /// horizontal layer in a continuous or non-continuous time interval.
+///
+/// # Examples
+///
+/// ```
+/// use grib::{
+///     TryFromSlice,
+///     def::grib2::template::{Template4_8, param_set},
+/// };
+///
+/// fn main() -> Result<(), Box<dyn std::error::Error>> {
+///     let buf = std::fs::read(
+///         "testdata/icon_global_icosahedral_single-level_2021112018_000_TOT_PREC.grib2",
+///     )?;
+///
+///     // Section 4 starts at 0x63; the template follows its 9-octet header.
+///     let mut pos = 0x6c;
+///     let actual = Template4_8::try_from_slice(&buf, &mut pos)?;
+///     let expected = Template4_8 {
+///         param: param_set::ProductParam {
+///             category: 1,
+///             num: 52,
+///         },
+///         generating_process: param_set::GeneratingProcess {
+///             process_type: 2,
+///             background_process: 0,
+///             process_id: 1,
+///         },
+///         forecast_time: param_set::ForecastTime {
+///             cutoff_hours: 0,
+///             cutoff_minutes: 0,
+///             time: param_set::TimeRange { unit: 0, len: 0 },
+///         },
+///         horizontal: param_set::Horizontal {
+///             first_surface: param_set::FixedSurface {
+///                 surface_type: 1,
+///                 value: param_set::ScaledValue {
+///                     scale_factor: 0,
+///                     scaled_value: 0,
+///                 },
+///             },
+///             second_surface: param_set::FixedSurface {
+///                 surface_type: 255,
+///                 value: param_set::ScaledValue {
+///                     scale_factor: -127,
+///                     scaled_value: -2147483647,
+///                 },
+///             },
+///         },
+///         percentile: param_set::Statistical {
+///             end_of_overall_time_interval: param_set::DateTime {
+///                 year: 2021,
+///                 month: 11,
+///                 day: 20,
+///                 hour: 18,
+///                 minute: 0,
+///                 second: 0,
+///             },
+///             num_time_ranges: 1,
+///             num_missing: 0,
+///             time_ranges: vec![param_set::StatisticalProcess {
+///                 statistical_process_type: 1,
+///                 time_increment_type: 2,
+///                 time_range: param_set::TimeRange { unit: 0, len: 0 },
+///                 time_increment: param_set::TimeRange { unit: 255, len: 0 },
+///             }],
+///         },
+///     };
+///     assert_eq!(actual, expected);
+///     assert_eq!(pos, 0x9d);
+///
+///     Ok(())
+/// }
+/// ```
 #[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump)]
 pub struct Template4_8 {
     pub param: param_set::ProductParam,
