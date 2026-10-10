@@ -4,6 +4,7 @@
 
 - Do not use dynamic dispatch in library code. However, it is acceptable to use it for error handling in code examples and tests.
   - When setting the return type to `Result<(), Box<dyn std::error::Error>>` in code examples or test code, do not perform unnecessary error type conversions using `map_err`; instead, return the error directly using the `?` operator.
+- To format the code, use the nightly toolchain by running `cargo +nightly fmt`. This project uses `rustfmt.toml` to configure several formatting settings, but some of them will not work unless you use the nightly toolchain.
 
 ## Testing instructions
 
