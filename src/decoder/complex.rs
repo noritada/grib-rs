@@ -57,7 +57,7 @@ impl<'d> Grib2GpvUnpack for Complex<'d> {
             0,
             template.simple.num_bits,
             0,
-        );
+        )?;
         let decoder = NonZeroSimplePackingDecoder::new(unpacked_data, &template.simple);
         let decoder = SimplePackingDecoder::NonZeroLength(decoder);
         Ok(decoder)
@@ -115,7 +115,7 @@ impl<'d> Grib2GpvUnpack for ComplexSpatial<'d> {
             sect7_params.len(),
             template.simple.num_bits,
             sect7_params.minimum(),
-        );
+        )?;
         let first_values = sect7_params.first_values();
         let first_values = first_values.collect::<Vec<_>>().into_iter();
         let spdiff_unpacked = match spdiff_order {
@@ -151,18 +151,35 @@ fn decode_complex_packing<'a>(
     sect7_offset: usize,
     num_bits: u8,
     z_min: i32,
-) -> ComplexPackingDecoded<'a> {
-    fn get_octet_length(num_bits: u8, num_groups: u32) -> usize {
-        super::helpers::num_octets((num_groups * u32::from(num_bits)) as usize)
+) -> Result<ComplexPackingDecoded<'a>, DecodeError> {
+    fn get_octet_length(num_bits: u8, num_groups: usize) -> Result<usize, DecodeError> {
+        num_groups
+            .checked_mul(usize::from(num_bits))
+            .map(super::helpers::num_octets)
+            .ok_or(DecodeError::LengthMismatch)
     }
 
+    let num_groups = complex_param.num_groups as usize;
     let params_end_octet = sect7_offset;
-    let group_refs_end_octet =
-        params_end_octet + get_octet_length(num_bits, complex_param.num_groups);
+    let group_refs_end_octet = params_end_octet
+        .checked_add(get_octet_length(num_bits, num_groups)?)
+        .ok_or(DecodeError::LengthMismatch)?;
     let group_widths_end_octet = group_refs_end_octet
-        + get_octet_length(complex_param.num_group_width_bits, complex_param.num_groups);
+        .checked_add(get_octet_length(
+            complex_param.num_group_width_bits,
+            num_groups,
+        )?)
+        .ok_or(DecodeError::LengthMismatch)?;
     let group_lens_end_octet = group_widths_end_octet
-        + get_octet_length(complex_param.num_group_len_bits, complex_param.num_groups);
+        .checked_add(get_octet_length(
+            complex_param.num_group_len_bits,
+            num_groups,
+        )?)
+        .ok_or(DecodeError::LengthMismatch)?;
+
+    if group_lens_end_octet > sect7_data.len() {
+        return Err(DecodeError::LengthMismatch);
+    }
 
     let group_refs_iter = BitStream::new(
         &sect7_data[params_end_octet..group_refs_end_octet],
@@ -194,7 +211,7 @@ fn decode_complex_packing<'a>(
     .take((complex_param.num_groups - 1) as usize)
     .chain(iter::once(complex_param.group_len_last));
 
-    ComplexPackingValueDecodeIterator::new(
+    Ok(ComplexPackingValueDecodeIterator::new(
         group_refs_iter,
         group_widths_iter,
         group_lens_iter,
@@ -203,7 +220,7 @@ fn decode_complex_packing<'a>(
         z_min,
         sect7_data[group_lens_end_octet..].to_vec(),
     )
-    .flatten()
+    .flatten())
 }
 
 // Types of closures with captures cannot be denoted.
@@ -348,3 +365,32 @@ where
 
 mod diff;
 mod missing;
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn params() -> param_set::ComplexPacking {
+        param_set::ComplexPacking {
+            group_splitting_method: 1,
+            missing_value_management: 0,
+            primary_missing_value: 0,
+            secondary_missing_value: 0,
+            num_groups: 1,
+            group_width_ref: 0,
+            num_group_width_bits: 1,
+            group_len_ref: 0,
+            group_len_inc: 1,
+            group_len_last: 1,
+            num_group_len_bits: 1,
+        }
+    }
+
+    #[test]
+    fn complex_packing_rejects_truncated_group_metadata() {
+        assert!(matches!(
+            decode_complex_packing(&params(), &[0, 0], 0, 1, 0),
+            Err(DecodeError::LengthMismatch)
+        ));
+    }
+}
