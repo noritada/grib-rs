@@ -72,6 +72,25 @@ impl<T: Dump + ?Sized> Dump for &T {
     }
 }
 
+impl<T: Dump> Dump for Vec<T> {
+    fn dump<'d, W: Write>(
+        &self,
+        parent: Option<&Cow<str>>,
+        doc_overrides: DocOverrides<'d>,
+        pos: &mut usize,
+        output: &mut W,
+    ) -> Result<(), Error> {
+        for (index, item) in self.iter().enumerate() {
+            let parent = Cow::Owned(match parent {
+                Some(parent) => format!("{parent}[{index}]"),
+                None => format!("[{index}]"),
+            });
+            item.dump(Some(&parent), doc_overrides.clone(), pos, output)?;
+        }
+        Ok(())
+    }
+}
+
 pub trait DumpField: OctetSize {
     fn dump_field<'d, W: Write>(
         &self,
@@ -296,7 +315,7 @@ pub fn write_position_column<W: Write>(
     Ok(())
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DocOverrides<'a>(Vec<(&'a str, &'a str)>);
 
 impl<'a> DocOverrides<'a> {

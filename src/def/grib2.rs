@@ -157,6 +157,7 @@ pub enum ProductDefinitionTemplate {
     _4_2(template4::Template4_2) = 2,
     _4_5(template4::Template4_5) = 5,
     _4_6(template4::Template4_6) = 6,
+    _4_8(template4::Template4_8) = 8,
 }
 
 /// Section 5 - Data representation section.

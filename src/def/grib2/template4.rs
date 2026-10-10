@@ -68,10 +68,95 @@ pub struct Template4_6 {
     pub percentile_forecasts: param_set::PercentileForecasts,
 }
 
+/// Product definition template 4.8 - Average, accumulation, and/or extreme
+/// values or other statistically processed values at a horizontal level or in a
+/// horizontal layer in a continuous or non-continuous time interval.
+///
+/// # Examples
+///
+/// ```
+/// use grib::{
+///     TryFromSlice,
+///     def::grib2::template::{Template4_8, param_set},
+/// };
+///
+/// fn main() -> Result<(), Box<dyn std::error::Error>> {
+///     let buf = std::fs::read(
+///         "testdata/icon_global_icosahedral_single-level_2021112018_000_TOT_PREC.grib2",
+///     )?;
+///
+///     // Section 4 starts at 0x63; the template follows its 9-octet header.
+///     let mut pos = 0x6c;
+///     let actual = Template4_8::try_from_slice(&buf, &mut pos)?;
+///     let expected = Template4_8 {
+///         param: param_set::ProductParam {
+///             category: 1,
+///             num: 52,
+///         },
+///         generating_process: param_set::GeneratingProcess {
+///             process_type: 2,
+///             background_process: 0,
+///             process_id: 1,
+///         },
+///         forecast_time: param_set::ForecastTime {
+///             cutoff_hours: 0,
+///             cutoff_minutes: 0,
+///             time: param_set::TimeRange { unit: 0, len: 0 },
+///         },
+///         horizontal: param_set::Horizontal {
+///             first_surface: param_set::FixedSurface {
+///                 surface_type: 1,
+///                 value: param_set::ScaledValue {
+///                     scale_factor: 0,
+///                     scaled_value: 0,
+///                 },
+///             },
+///             second_surface: param_set::FixedSurface {
+///                 surface_type: 255,
+///                 value: param_set::ScaledValue {
+///                     scale_factor: -127,
+///                     scaled_value: -2147483647,
+///                 },
+///             },
+///         },
+///         percentile: param_set::Statistical {
+///             end_of_overall_time_interval: param_set::DateTime {
+///                 year: 2021,
+///                 month: 11,
+///                 day: 20,
+///                 hour: 18,
+///                 minute: 0,
+///                 second: 0,
+///             },
+///             num_time_ranges: 1,
+///             num_missing: 0,
+///             time_ranges: vec![param_set::StatisticalProcess {
+///                 statistical_process_type: 1,
+///                 time_increment_type: 2,
+///                 time_range: param_set::TimeRange { unit: 0, len: 0 },
+///                 time_increment: param_set::TimeRange { unit: 255, len: 0 },
+///             }],
+///         },
+///     };
+///     assert_eq!(actual, expected);
+///     assert_eq!(pos, 0x9d);
+///
+///     Ok(())
+/// }
+/// ```
+#[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump)]
+pub struct Template4_8 {
+    pub param: param_set::ProductParam,
+    pub generating_process: param_set::GeneratingProcess,
+    pub forecast_time: param_set::ForecastTime,
+    pub horizontal: param_set::Horizontal,
+    pub percentile: param_set::Statistical,
+}
+
 pub(crate) mod param_set {
     use grib_template_derive::{Dump, TryFromSlice, WriteToBuffer};
 
-    use super::super::template::param_set::{ScaledValue, TimeRange};
+    use super::super::template::param_set::{DateTime, ScaledValue, TimeRange};
 
     #[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump)]
     pub struct ProductParam {
@@ -179,5 +264,41 @@ pub(crate) mod param_set {
     pub struct PercentileForecasts {
         /// Percentile value (from 100% to 0%).
         pub percentile_value: u8,
+    }
+
+    #[derive(Debug, PartialEq, Eq, Clone, TryFromSlice, WriteToBuffer, Dump)]
+    pub struct Statistical {
+        /// Time of end of overall time interval.
+        pub end_of_overall_time_interval: DateTime,
+        /// n - Number of time range specifications describing the time
+        /// intervals used to calculate the statistically processed field.
+        pub num_time_ranges: u8,
+        /// Total number of data values missing in statistical process.
+        pub num_missing: u32,
+        #[grib_template(len = "num_time_ranges")]
+        pub time_ranges: Vec<StatisticalProcess>,
+    }
+
+    #[derive(Debug, PartialEq, Eq, Clone, TryFromSlice, WriteToBuffer, Dump)]
+    pub struct StatisticalProcess {
+        /// Statistical process used to calculate the processed field from the
+        /// field at each time increment during the time range (see Code Table
+        /// 4.10).
+        pub statistical_process_type: u8,
+        /// Type of time increment between successive fields used in the
+        /// statistical processing (see Code Table 4.11).
+        pub time_increment_type: u8,
+        /// Time range over which statistical processing is done.
+        #[dump(doc(
+            unit = "Indicator of unit of time for time range over which statistical processing is done (see Code Table 4.4).",
+            len = "Length of the time range over which statistical processing is done, in units defined by the previous octet.",
+        ))]
+        pub time_range: TimeRange<u32>,
+        /// Time increment between successive fields.
+        #[dump(doc(
+            unit = "Indicator of unit of time for the increment between the successive fields used (see Code Table 4.4).",
+            len = "Time increment between successive fields, in units defined by the previous octet (see Notes 3 and 4).",
+        ))]
+        pub time_increment: TimeRange<u32>,
     }
 }
