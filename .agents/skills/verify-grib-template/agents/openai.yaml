@@ -1,0 +1,4 @@
+interface:
+  display_name: "Verify GRIB Template"
+  short_description: "Check GRIB specifications, code, and test evidence"
+  default_prompt: "Use $verify-grib-template to check GRIB2 template 5.0 against the applicable specification, implementation, and tests."

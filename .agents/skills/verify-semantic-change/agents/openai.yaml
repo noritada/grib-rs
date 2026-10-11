@@ -1,0 +1,4 @@
+interface:
+  display_name: "Verify Semantic Change"
+  short_description: "Check numeric migrations, APIs, binary formats, and tests"
+  default_prompt: "Use $verify-semantic-change to assess an f32 to f64 migration in grib-rs, tracing conversions, calculations, public APIs, binary formats, and test evidence."
