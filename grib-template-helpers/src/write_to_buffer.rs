@@ -66,7 +66,7 @@ impl<T: WriteToBuffer + ?Sized> WriteToBuffer for &T {
 }
 
 macro_rules! add_impl_for_unsigned_integer_types {
-    ($($ty:ty,)*) => ($(
+    ($($ty:ty),* $(,)?) => ($(
         impl WriteToBuffer for $ty {
             fn write_to_buffer(&self, buf: &mut [u8]) -> Result<usize, &'static str> {
                 let len = self.num_bytes_required();
@@ -86,10 +86,10 @@ macro_rules! add_impl_for_unsigned_integer_types {
     )*);
 }
 
-add_impl_for_unsigned_integer_types![u8, u16, u32, u64,];
+add_impl_for_unsigned_integer_types![u8, u16, u32, u64];
 
 macro_rules! add_impl_for_signed_integer_types {
-    ($($ty:ty,)*) => ($(
+    ($($ty:ty),* $(,)?) => ($(
         impl WriteToBuffer for $ty {
             fn write_to_buffer(&self, buf: &mut [u8]) -> Result<usize, &'static str> {
                 self.to_grib_signed().write_to_buffer(buf)
@@ -102,7 +102,7 @@ macro_rules! add_impl_for_signed_integer_types {
     )*);
 }
 
-add_impl_for_signed_integer_types![i8, i16, i32,];
+add_impl_for_signed_integer_types![i8, i16, i32];
 
 impl WriteToBuffer for f32 {
     fn write_to_buffer(&self, buf: &mut [u8]) -> Result<usize, &'static str> {
@@ -166,7 +166,7 @@ impl<T: WriteToBuffer> WriteToBuffer for Vec<T> {
 }
 
 macro_rules! add_impl_for_non_standard_length_unsigned_integer_types {
-    ($($ty:ty,)*) => ($(
+    ($($ty:ty),* $(,)?) => ($(
         impl WriteToBuffer for crate::NonStdLenUint<$ty> {
             fn write_to_buffer(&self, buf: &mut [u8]) -> Result<usize, &'static str> {
                 let len = self.num_bytes_required();
@@ -187,7 +187,7 @@ macro_rules! add_impl_for_non_standard_length_unsigned_integer_types {
     )*);
 }
 
-add_impl_for_non_standard_length_unsigned_integer_types![u16, u32, u64,];
+add_impl_for_non_standard_length_unsigned_integer_types![u16, u32, u64];
 
 mod to_grib_signed;
 
@@ -196,7 +196,7 @@ mod tests {
     use super::*;
 
     macro_rules! test_writing_to_buffer {
-        ($(($name:ident, $input:expr, $expected:expr),)*) => ($(
+        ($(($name:ident, $input:expr, $expected:expr $(,)?)),* $(,)?) => ($(
             #[test]
             fn $name() {
                 let mut buf = vec![0; 4];

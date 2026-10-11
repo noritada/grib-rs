@@ -72,7 +72,7 @@ impl<const N: usize> TryFromSlice for [u8; N] {
 }
 
 macro_rules! add_impl_for_unsigned_integer_and_float_types {
-    ($($ty:ty,)*) => ($(
+    ($($ty:ty),* $(,)?) => ($(
         impl TryFromSlice for $ty {
             fn try_from_slice(slice: &[u8], pos: &mut usize) -> TryFromSliceResult<$ty> {
                 let n = <$ty>::from_be_bytes(TryFromSlice::try_from_slice(slice, pos)?);
@@ -82,10 +82,10 @@ macro_rules! add_impl_for_unsigned_integer_and_float_types {
     )*);
 }
 
-add_impl_for_unsigned_integer_and_float_types![u8, u16, u32, u64, f32, f64,];
+add_impl_for_unsigned_integer_and_float_types![u8, u16, u32, u64, f32, f64];
 
 macro_rules! add_impl_for_signed_integer_types {
-    ($(($ty_src:ty, $ty_dst:ty),)*) => ($(
+    ($(($ty_src:ty, $ty_dst:ty $(,)?)),* $(,)?) => ($(
         impl TryFromSlice for $ty_dst {
             fn try_from_slice(slice: &[u8], pos: &mut usize) -> TryFromSliceResult<$ty_dst> {
                 let n = <$ty_src>::from_be_bytes(TryFromSlice::try_from_slice(slice, pos)?)
@@ -96,7 +96,7 @@ macro_rules! add_impl_for_signed_integer_types {
     )*);
 }
 
-add_impl_for_signed_integer_types![(u8, i8), (u16, i16), (u32, i32), (u64, i64),];
+add_impl_for_signed_integer_types![(u8, i8), (u16, i16), (u32, i32), (u64, i64)];
 
 impl<T: TryFromSlice> TryFromSlice for Option<T> {
     fn try_from_slice(slice: &[u8], pos: &mut usize) -> TryFromSliceResult<Option<T>> {
@@ -110,7 +110,7 @@ impl<T: TryFromSlice> TryFromSlice for Option<T> {
 }
 
 macro_rules! add_try_from_array_impl_for_unsigned_integer_types {
-    ($($ty:ty,)*) => ($(
+    ($($ty:ty),* $(,)?) => ($(
         impl<const N: usize> TryFrom<[u8; N]> for crate::NonStdLenUint<$ty> {
             type Error = &'static str;
 
@@ -129,7 +129,7 @@ macro_rules! add_try_from_array_impl_for_unsigned_integer_types {
     )*);
 }
 
-add_try_from_array_impl_for_unsigned_integer_types![u8, u16, u32, u64,];
+add_try_from_array_impl_for_unsigned_integer_types![u8, u16, u32, u64];
 
 pub trait TryEnumFromSlice {
     fn try_enum_from_slice(
