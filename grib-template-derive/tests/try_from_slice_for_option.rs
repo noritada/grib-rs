@@ -49,8 +49,8 @@ macro_rules! test {
     ($((
         $buf:expr,
         $ty:ident,
-        $expected:expr,
-    ),)*) => ($(
+        $expected:expr $(,)?
+    )),* $(,)?) => ($(
         let buf: [u8; _] = $buf;
         let mut pos = 0;
         let actual = $ty::try_from_slice(&buf, &mut pos);

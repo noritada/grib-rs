@@ -56,8 +56,8 @@ macro_rules! test {
     ($((
         $buf:expr,
         $ty:ident,
-        $expected:expr,
-    ),)*) => ($(
+        $expected:expr $(,)?
+    )),* $(,)?) => ($(
         let buf: [u8; _] = $buf;
         let mut pos = 0;
         let actual = $ty::try_from_slice(&buf, &mut pos);
@@ -84,6 +84,6 @@ fn main() {
                 field2: NonExhaustiveEnum::Var2(EnumVar2 { field1: -0x0002 }),
             }),
         ),
-        ([0x01], TemplateHeader, Err("unknown enum discriminant"),),
+        ([0x01], TemplateHeader, Err("unknown enum discriminant")),
     ];
 }
