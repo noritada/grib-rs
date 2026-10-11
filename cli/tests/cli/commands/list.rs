@@ -19,7 +19,7 @@ crate::commands::test_simple_display! {
      0.4 │ code '0' is not implemented     Forecast                   40 [m]                               NaN                               NaN │          0/     86016 regular_ll           
      0.5 │ code '0' is not implemented     Forecast                   50 [m]                               NaN                               NaN │          0/     86016 regular_ll           
      0.6 │ code '0' is not implemented     Forecast                   60 [m]                               NaN                               NaN │          0/     86016 regular_ll           
-"
+",
     ),
     (
         displaying_grib2_with_multiple_submessages_with_nan_values,
@@ -72,7 +72,7 @@ crate::commands::test_simple_display! {
     0.42 │ Thunderstorm probability        Forecast                   30 [h]                               NaN                               NaN │      14446/     17061 regular_ll           
     0.43 │ Thunderstorm probability        Forecast                   33 [h]                               NaN                               NaN │      14446/     17061 regular_ll           
     0.44 │ Thunderstorm probability        Forecast                   36 [h]                               NaN                               NaN │      14446/     17061 regular_ll           
-"
+",
     ),
     (
         displaying_grib2_with_multiple_messages,
@@ -83,7 +83,7 @@ crate::commands::test_simple_display! {
      0.0 │ Total precipitation rate        Forecast                    0 [m]                                 0                               NaN │          0/   2949120 unknown (template 101)
      1.0 │ Total precipitation rate        Forecast                    0 [m]                                 0                               NaN │          0/   2949120 unknown (template 101)
      2.0 │ Total precipitation rate        Forecast                    0 [m]                                 0                               NaN │          0/   2949120 unknown (template 101)
-"#
+"#,
     ),
     (
         displaying_grib2_with_multiple_submessages_with_opt_d,
@@ -217,7 +217,7 @@ Product:                                Analysis or forecast at a horizontal lev
 Data Representation:                    Run length packing with level values
   Number of represented values:         86016
 
-"
+",
     ),
     (
         displaying_grib2_with_multiple_messages_with_opt_d,
@@ -279,6 +279,6 @@ Product:                                Average, accumulation, extreme values or
 Data Representation:                    Grid point data - simple packing
   Number of represented values:         2949120
 
-"
+",
     ),
 }

@@ -25,7 +25,7 @@ Message 0
     Production status of processed data:    Operational products
     Type of processed data:                 Analysis and forecast products
 
-"
+",
     ),
     (
         display_of_multi_message_data,
@@ -72,6 +72,6 @@ Message 2
     Production status of processed data:    Operational products
     Type of processed data:                 Forecast products
 
-"
+",
     ),
 }

@@ -178,7 +178,7 @@ mod tests {
     }
 
     macro_rules! test_message_index_parsing_failures {
-        ($(($name:ident, $input:expr),)*) => ($(
+        ($(($name:ident, $input:expr $(,)?)),* $(,)?) => ($(
             #[test]
             fn $name() {
                 let result= $input.parse::<CliMessageIndex>();

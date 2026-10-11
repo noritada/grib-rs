@@ -60,7 +60,7 @@ Templates:
 3.0      - Latitude/longitude
 4.0      - Analysis or forecast at a horizontal level or in a horizontal layer at a point in time
 5.200    - Run length packing with level values
-"
+",
     ),
     (
         display_multiple_messages_without_options,
@@ -107,7 +107,7 @@ Templates:
 3.101    - General unstructured grid
 4.8      - Average, accumulation, extreme values or other statistically processed values at a horizontal level or in a horizontal layer in a continuous or non-continuous time interval
 5.0      - Grid point data - simple packing
-"
+",
     ),
     (
         display_multiple_messages_with_non_grib_byte_sequences_in_between,
@@ -142,7 +142,7 @@ Templates:
 3.30     - Lambert conformal
 4.8      - Average, accumulation, extreme values or other statistically processed values at a horizontal level or in a horizontal layer in a continuous or non-continuous time interval
 5.3      - Grid point data - complex packing and spatial differencing
-"
+",
     ),
     (
         display_with_opt_s,
@@ -181,7 +181,7 @@ Templates:
    29 │ 00000000000022dd - 00000000000022e3 │ Section 6
    30 │ 00000000000022e3 - 000000000000284d │ Section 7
    31 │ 000000000000284d - 0000000000002851 │ Section 8
-"
+",
     ),
     (
         display_with_opt_m,
@@ -196,7 +196,7 @@ Templates:
      0.4 │     -     2    19    20    21    22 │ 3.0     4.0     5.200  
      0.5 │     -     2    23    24    25    26 │ 3.0     4.0     5.200  
      0.6 │     -     2    27    28    29    30 │ 3.0     4.0     5.200  
-"
+",
     ),
     (
         display_with_opt_t,
@@ -207,7 +207,7 @@ Templates:
 3.0      - Latitude/longitude
 4.0      - Analysis or forecast at a horizontal level or in a horizontal layer at a point in time
 5.200    - Run length packing with level values
-"
+",
     ),
 }
 
