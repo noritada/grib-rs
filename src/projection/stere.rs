@@ -423,7 +423,7 @@ mod tests {
     const INVERSE_TOLERANCE_RADIANS: f64 = 1e-12;
 
     macro_rules! projection_comparison_tests {
-        ($(($name:ident, $params:expr, $coordinates:expr),)*) => ($(
+        ($(($name:ident, $params:expr, $coordinates:expr $(,)?)),* $(,)?) => ($(
             #[test]
             fn $name() -> Result<(), Box<dyn std::error::Error>> {
                 assert_agrees_with_proj($params, $coordinates)
@@ -441,7 +441,7 @@ mod tests {
                 lon_0: -111.,
                 k_0: 1.,
             },
-            [(20., -140.), (45., -100.), (70., 10.), (89., 170.)]
+            [(20., -140.), (45., -100.), (70., 10.), (89., 170.)],
         ),
         (
             agrees_with_proj_for_ellipsoidal_south_pole,
@@ -452,7 +452,7 @@ mod tests {
                 lon_0: 20.,
                 k_0: 1.,
             },
-            [(-20., -160.), (-45., -30.), (-70., 80.), (-89., 170.)]
+            [(-20., -160.), (-45., -30.), (-70., 80.), (-89., 170.)],
         ),
         (
             agrees_with_proj_for_spherical_north_pole,
@@ -463,7 +463,7 @@ mod tests {
                 lon_0: 140.,
                 k_0: 1.,
             },
-            [(20., -170.), (45., -40.), (70., 100.), (89., 179.)]
+            [(20., -170.), (45., -40.), (70., 100.), (89., 179.)],
         ),
         (
             agrees_with_proj_for_spherical_equatorial,
@@ -474,7 +474,7 @@ mod tests {
                 lon_0: 15.,
                 k_0: 0.9996,
             },
-            [(-70., -20.), (-20., 0.), (25., 45.), (70., 100.)]
+            [(-70., -20.), (-20., 0.), (25., 45.), (70., 100.)],
         ),
         (
             agrees_with_proj_for_ellipsoidal_oblique,
@@ -485,7 +485,7 @@ mod tests {
                 lon_0: -100.,
                 k_0: 0.9996,
             },
-            [(-20., -140.), (0., -100.), (45., -70.), (75., 20.)]
+            [(-20., -140.), (0., -100.), (45., -70.), (75., 20.)],
         ),
     }
 

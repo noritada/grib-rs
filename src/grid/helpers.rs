@@ -218,7 +218,7 @@ impl From<proj::ProjError> for GribError {
 #[cfg(test)]
 pub(crate) mod test_helpers {
     macro_rules! assert_almost_eq {
-        ($a1:expr, $a2:expr, $d:expr) => {
+        ($a1:expr, $a2:expr, $d:expr $(,)?) => {
             if $a1 - $a2 > $d {
                 panic!(
                     "assertion a1 - a2 <= delta failed\n a1 - a2: {} - {}\n   delta: {}",
@@ -239,8 +239,8 @@ pub(crate) mod test_helpers {
             $name:ident,
             $a1:expr,
             $a2:expr,
-            $d:expr
-        ),)*) => ($(
+            $d:expr $(,)?
+        )),* $(,)?) => ($(
             #[test]
             fn $name() {
                 assert_almost_eq!($a1, $a2, $d)
@@ -263,8 +263,8 @@ pub(crate) mod test_helpers {
             $a1:expr,
             $a2:expr,
             $d:expr,
-            $message:expr
-        ),)*) => ($(
+            $message:expr $(,)?
+        )),* $(,)?) => ($(
             #[test]
             #[should_panic(expected = $message)]
             fn $name() {
@@ -276,31 +276,31 @@ pub(crate) mod test_helpers {
     test_assert_almost_eq_panic! {
         (
             assert_almost_eq_panics_for_positive_lt_positive, 1.01, 1.02, 0.001,
-            " a2 - a1: 1.02 - 1.01\n   delta: 0.001"
+            " a2 - a1: 1.02 - 1.01\n   delta: 0.001",
         ),
         (
             assert_almost_eq_panics_for_positive_gt_positive, 1.02, 1.01, 0.001,
-            " a1 - a2: 1.02 - 1.01\n   delta: 0.001"
+            " a1 - a2: 1.02 - 1.01\n   delta: 0.001",
         ),
         (
             assert_almost_eq_panics_for_negative_lt_negative, -1.02, -1.01, 0.001,
-            " a2 - a1: -1.01 - -1.02\n   delta: 0.001"
+            " a2 - a1: -1.01 - -1.02\n   delta: 0.001",
         ),
         (
             assert_almost_eq_panics_for_negative_gt_negative, -1.01, -1.02, 0.001,
-            " a1 - a2: -1.01 - -1.02\n   delta: 0.001"
+            " a1 - a2: -1.01 - -1.02\n   delta: 0.001",
         ),
         (
             assert_almost_eq_panics_for_positive_negative, 0.01, -0.01, 0.001,
-            " a1 - a2: 0.01 - -0.01\n   delta: 0.001"
+            " a1 - a2: 0.01 - -0.01\n   delta: 0.001",
         ),
         (
             assert_almost_eq_panics_for_negative_positive, -0.01, 0.01, 0.001,
-            " a2 - a1: 0.01 - -0.01\n   delta: 0.001"
+            " a2 - a1: 0.01 - -0.01\n   delta: 0.001",
         ),
         (
             assert_almost_eq_panic_message_containing_trailing_zeros, -0.0100, 0.0100, 0.0010,
-            " a2 - a1: 0.01 - -0.01\n   delta: 0.001"
+            " a2 - a1: 0.01 - -0.01\n   delta: 0.001",
         ),
     }
 
@@ -316,7 +316,7 @@ mod tests {
     use super::*;
 
     macro_rules! test_lat_lon_grid_iter {
-        ($(($name:ident, $scanning_mode:expr, $expected:expr),)*) => ($(
+        ($(($name:ident, $scanning_mode:expr, $expected:expr $(,)?)),* $(,)?) => ($(
             #[test]
             fn $name() {
                 let lat = (0..3).into_iter().map(|i| i as f64).collect::<Vec<_>>();
@@ -340,7 +340,7 @@ mod tests {
                 (1., 11.),
                 (2., 10.),
                 (2., 11.),
-            ]
+            ],
         ),
         (
             lat_lon_grid_iter_with_scanning_mode_0b00100000,
@@ -352,7 +352,7 @@ mod tests {
                 (0., 11.),
                 (1., 11.),
                 (2., 11.),
-            ]
+            ],
         ),
         (
             lat_lon_grid_iter_with_scanning_mode_0b00010000,
@@ -364,7 +364,7 @@ mod tests {
                 (1., 10.),
                 (2., 10.),
                 (2., 11.),
-            ]
+            ],
         ),
         (
             lat_lon_grid_iter_with_scanning_mode_0b00110000,
@@ -376,7 +376,7 @@ mod tests {
                 (2., 11.),
                 (1., 11.),
                 (0., 11.),
-            ]
+            ],
         ),
     }
 

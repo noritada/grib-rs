@@ -311,8 +311,8 @@ mod tests {
         ($((
             $name:ident,
             $n:expr,
-            $expected:expr,
-        ),)*) => ($(
+            $expected:expr $(,)?
+        )),* $(,)?) => ($(
             #[test]
             fn $name() {
                 let actual = legendre_roots_iterator($n);

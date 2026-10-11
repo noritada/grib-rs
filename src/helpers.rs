@@ -1,7 +1,7 @@
 use crate::TryFromSlice as _;
 
 macro_rules! read_as {
-    ($ty:ty, $buf:ident, $start:expr) => {{
+    ($ty:ty, $buf:ident, $start:expr $(,)?) => {{
         let end = $start + std::mem::size_of::<$ty>();
         <$ty>::from_be_bytes($buf[$start..end].try_into().unwrap())
     }};
@@ -33,7 +33,7 @@ mod tests {
     use super::*;
 
     macro_rules! test_conversion_from_bytes_to_grib_int {
-        ($(($name:ident, $input:expr, $expected:expr),)*) => ($(
+        ($(($name:ident, $input:expr, $expected:expr $(,)?)),* $(,)?) => ($(
             #[test]
             fn $name() {
                 let bytes = $input;
@@ -48,47 +48,47 @@ mod tests {
         (
             conversion_from_bytes_to_grib_int_for_1_byte_positive,
             vec![0b01010101],
-            0b01010101
+            0b01010101,
         ),
         (
             conversion_from_bytes_to_grib_int_for_1_byte_negative,
             vec![0b11010101],
-            -0b01010101
+            -0b01010101,
         ),
         (
             conversion_from_bytes_to_grib_int_for_2_bytes_positive,
             vec![0b01010101, 0b10101010],
-            0b0101_0101_1010_1010
+            0b0101_0101_1010_1010,
         ),
         (
             conversion_from_bytes_to_grib_int_for_2_bytes_negative,
             vec![0b11010101, 0b10101010],
-            -0b0101_0101_1010_1010
+            -0b0101_0101_1010_1010,
         ),
         (
             conversion_from_bytes_to_grib_int_for_3_bytes_positive,
             vec![0b01010101, 0b10101010, 0b10101010],
-            0b0101_0101_1010_1010_1010_1010
+            0b0101_0101_1010_1010_1010_1010,
         ),
         (
             conversion_from_bytes_to_grib_int_for_3_bytes_negative,
             vec![0b11010101, 0b10101010, 0b10101010],
-            -0b0101_0101_1010_1010_1010_1010
+            -0b0101_0101_1010_1010_1010_1010,
         ),
         (
             conversion_from_bytes_to_grib_int_for_3_bytes_negative_starting_from_0x80,
             vec![0b10000000, 0b10101010, 0b10101010],
-            -0b0000_0000_1010_1010_1010_1010
+            -0b0000_0000_1010_1010_1010_1010,
         ),
         (
             conversion_from_bytes_to_grib_int_for_4_bytes_positive,
             vec![0b01010101, 0b10101010, 0b10101010, 0b10101010],
-            0b0101_0101_1010_1010_1010_1010_1010_1010
+            0b0101_0101_1010_1010_1010_1010_1010_1010,
         ),
         (
             conversion_from_bytes_to_grib_int_for_4_bytes_negative,
             vec![0b11010101, 0b10101010, 0b10101010, 0b10101010],
-            -0b0101_0101_1010_1010_1010_1010_1010_1010
+            -0b0101_0101_1010_1010_1010_1010_1010_1010,
         ),
     }
 }

@@ -25,7 +25,7 @@ pub trait MissingValue {
 }
 
 macro_rules! add_missing_value_impl_for_unsigned_integer_types {
-    ($($ty:ty,)*) => ($(
+    ($($ty:ty),* $(,)?) => ($(
         impl MissingValue for $ty {
             fn missing() -> Self {
                 Self::MAX
@@ -38,10 +38,10 @@ macro_rules! add_missing_value_impl_for_unsigned_integer_types {
     )*);
 }
 
-add_missing_value_impl_for_unsigned_integer_types![u8, u16, u32, u64,];
+add_missing_value_impl_for_unsigned_integer_types![u8, u16, u32, u64];
 
 macro_rules! add_missing_value_impl_for_signed_integer_types {
-    ($($ty:ty,)*) => ($(
+    ($($ty:ty),* $(,)?) => ($(
         impl MissingValue for $ty {
             fn missing() -> Self {
                 Self::MIN + 1
@@ -54,7 +54,7 @@ macro_rules! add_missing_value_impl_for_signed_integer_types {
     )*);
 }
 
-add_missing_value_impl_for_signed_integer_types![i8, i16, i32, i64,];
+add_missing_value_impl_for_signed_integer_types![i8, i16, i32, i64];
 
 #[cfg(test)]
 mod tests {
@@ -62,7 +62,7 @@ mod tests {
     use crate::TryFromSlice as _;
 
     macro_rules! test_missing_values {
-        ($(($name:ident, $ty:ty),)*) => ($(
+        ($(($name:ident, $ty:ty $(,)?)),* $(,)?) => ($(
             #[test]
             fn $name() -> Result<(), Box<dyn std::error::Error>> {
                 let expected = [0xff_u8; (<$ty>::BITS / 8) as usize];

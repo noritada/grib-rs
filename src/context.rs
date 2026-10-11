@@ -934,7 +934,7 @@ Data Representation:                    {}
             };
 
         macro_rules! write_section {
-            ($sect:expr) => {{
+            ($sect:expr $(,)?) => {{
                 let mut pos = 1;
                 match $sect {
                     Ok(s) => s.dump(
@@ -1261,7 +1261,7 @@ mod tests {
     use crate::test_utils::data::grib2::{DWD_ICON, JMA_MSMGUID, NOAA_GDAS_0_10};
 
     macro_rules! sect_placeholder {
-        ($num:expr) => {{
+        ($num:expr $(,)?) => {{
             SectionInfo {
                 num: $num,
                 offset: 0,
@@ -1384,8 +1384,8 @@ mod tests {
             $xz_compressed_input:expr,
             $nth:expr,
             $expected_index:expr,
-            $expected_section_indices:expr,
-        ),)*) => ($(
+            $expected_section_indices:expr $(,)?
+        )),* $(,)?) => ($(
             #[test]
             fn $name() -> Result<(), Box<dyn std::error::Error>> {
                 let buf = crate::test_utils::decompress_to_vec($xz_compressed_input)?;

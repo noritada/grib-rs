@@ -2,8 +2,9 @@ macro_rules! definitions_of_test_data {
     (
         $(
             $(#[$meta:meta])*
-            ($name:ident, $file_name:expr),
-        )*
+            ($name:ident, $file_name:expr $(,)?)
+        ),*
+        $(,)?
     ) => ($(
         $(#[$meta])*
         #[allow(dead_code)]
@@ -20,13 +21,13 @@ pub(crate) mod grib2 {
         (ECMWF_REALTIME_OPER_FC_89, "testdata/20250912120000-0h-oper-fc.grib2.89.xz"),
         (
             JMA_KOUSA,
-            "testdata/Z__C_RJTD_20170221120000_MSG_GPV_Gll0p5deg_Pys_B20170221120000_F2017022115-2017022212_grib2.bin.xz"
+            "testdata/Z__C_RJTD_20170221120000_MSG_GPV_Gll0p5deg_Pys_B20170221120000_F2017022115-2017022212_grib2.bin.xz",
         ),
         (JMA_MEPS, "testdata/Z__C_RJTD_20190605000000_MEPS_GPV_Rjp_L-pall_FH00-15_grib2.bin.0-20.xz"),
         (JMA_MSMGUID, "testdata/Z__C_RJTD_20190304000000_MSM_GUID_Rjp_P-all_FH03-39_Toorg_grib2.bin.xz"),
         (
             JMA_TORNADO_NOWCAST,
-            "testdata/Z__C_RJTD_20160822020000_NOWC_GPV_Ggis10km_Pphw10_FH0000-0100_grib2.bin"
+            "testdata/Z__C_RJTD_20160822020000_NOWC_GPV_Ggis10km_Pphw10_FH0000-0100_grib2.bin",
         ),
         (NCMRWF_WIND_SOLAR, "testdata/wind_solar_ind_0.125_20240521_12Z.grib2.0.xz"),
         (NOAA_GDAS_0_10, "testdata/gdas.t12z.pgrb2.0p25.f000.0-10.xz"),

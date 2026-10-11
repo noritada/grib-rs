@@ -89,7 +89,7 @@ mod tests {
     use super::*;
 
     macro_rules! test_writing_to_buffer {
-        ($(($name:ident, $input:expr, $expected:expr),)*) => ($(
+        ($(($name:ident, $input:expr, $expected:expr $(,)?)),* $(,)?) => ($(
             #[test]
             fn $name() {
                 let mut buf = vec![0; 4];
@@ -107,7 +107,7 @@ mod tests {
     }
 
     macro_rules! test_nbitwise {
-        ($(($name:ident, $input:expr, $num_bits:expr, $offset:expr, $expected:expr),)*) => ($(
+        ($(($name:ident, $input:expr, $num_bits:expr, $offset:expr, $expected:expr $(,)?)),* $(,)?) => ($(
             #[test]
             fn $name() {
                 let src = NBitwise::new($input, $num_bits).with_offset_bits($offset);
@@ -135,14 +135,14 @@ mod tests {
             vec![
                 0x00, 0x00, 0x00, 0x01, 0x00, 0x02, 0x00, 0x03, 0x00, 0x04, 0x00, 0x05, 0x00, 0x06,
                 0x00, 0x07, 0x00, 0x08, 0x00, 0x09, 0x00, 0x0a,
-            ]
+            ],
         ),
         (
             nbitwise_for_4_modulo_8_with_offset_0,
             (0_u32..11).collect::<Vec<_>>(),
             4,
             0,
-            vec![0x01, 0x23, 0x45, 0x67, 0x89, 0xa0]
+            vec![0x01, 0x23, 0x45, 0x67, 0x89, 0xa0],
         ),
         (
             nbitwise_for_5_modulo_8_with_offset_0,
@@ -152,7 +152,7 @@ mod tests {
             vec![
                 0b00000_000, 0b01_00010_0, 0b0011_0010, 0b0_00101_00, 0b110_00111, 0b01000_010,
                 0b01_01010_0
-            ]
+            ],
         ),
         (
             nbitwise_for_3_modulo_8_larger_than_8_with_offset_0,
@@ -163,7 +163,7 @@ mod tests {
                 0b00000000, 0b000_00000, 0b000001_00, 0b00000001, 0b0_0000000, 0b0011_0000,
                 0b0000100_0, 0b00000001, 0b01_000000, 0b00110_000, 0b00000111, 0b00000001,
                 0b000_00000, 0b001001_00, 0b00000101, 0b0_0000000
-            ]
+            ],
         ),
         (
             nbitwise_for_0_modulo_8_with_offset_4,
@@ -173,7 +173,7 @@ mod tests {
             vec![
                 0x00, 0x00, 0x00, 0x00, 0x10, 0x00, 0x20, 0x00, 0x30, 0x00, 0x40, 0x00, 0x50, 0x00,
                 0x60, 0x00, 0x70, 0x00, 0x80, 0x00, 0x90, 0x00, 0xa0,
-            ]
+            ],
         ),
     }
 }

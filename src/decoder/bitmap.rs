@@ -108,7 +108,7 @@ mod test {
     use super::*;
 
     macro_rules! test_bitmap_iterator {
-        ($(($name:ident, $bitmap:expr, $values:expr, $len:expr, $expected:expr,),)*) => ($(
+        ($(($name:ident, $bitmap:expr, $values:expr, $len:expr, $expected:expr $(,)?)),* $(,)?) => ($(
             #[test]
             fn $name() {
                 let iter = BitmapDecodeIterator::new($bitmap.iter(), $values.into_iter(), $len);
@@ -198,8 +198,8 @@ mod test {
             $num_points_total:expr,
             $num_points_encoded:expr,
             $bitmap:expr,
-            $expected:expr,
-        ),)*) => ($(
+            $expected:expr $(,)?
+        )),* $(,)?) => ($(
             #[test]
             fn $name() {
                 let actual = check_consistency($num_points_total, $num_points_encoded, &$bitmap);

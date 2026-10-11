@@ -226,8 +226,8 @@ mod tests {
             $name:ident,
             $input:expr,
             $decimal:expr,
-            $expected_params:expr,
-        ),)*) => ($(
+            $expected_params:expr $(,)?
+        )),* $(,)?) => ($(
             #[test]
             fn $name() {
                 let values = $input;
@@ -294,7 +294,7 @@ mod tests {
     }
 
     macro_rules! grib2_coded_values_roundtrip_tests {
-        ($(($name:ident, $input:expr, $decimal:expr),)*) => ($(
+        ($(($name:ident, $input:expr, $decimal:expr $(,)?)),* $(,)?) => ($(
             #[test]
             fn $name() -> Result<(), Box<dyn std::error::Error>> {
                 let values = $input;
@@ -326,12 +326,12 @@ mod tests {
         (
             grib2_coded_values_roundtrip_test_with_decimal_0_and_nonunique_values,
             (2..11).map(|val| val as f64).collect::<Vec<_>>(),
-            0
+            0,
         ),
         (
             grib2_coded_values_roundtrip_test_with_decimal_0_and_unique_values,
             vec![10.0_f64; 256],
-            0
+            0,
         ),
         (
             grib2_coded_values_roundtrip_test_with_data_containing_nan_values,
@@ -343,7 +343,7 @@ mod tests {
                 .chain([f64::NAN; 32].into_iter())
                 .chain([8., 9., 10., 11.].into_iter())
                 .collect::<Vec<_>>(),
-            0
+            0,
         ),
     }
 }
