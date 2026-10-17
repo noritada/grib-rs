@@ -153,6 +153,70 @@ pub struct Template4_8 {
     pub time_interval: param_set::Statistical,
 }
 
+/// Product definition template 4.9 - Probability forecasts at a horizontal
+/// level or in a horizontal layer in a continuous or non-continuous time
+/// interval.
+#[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump)]
+pub struct Template4_9 {
+    pub param: param_set::ProductParam,
+    #[dump(doc(
+        process_id = "Forecast generating process identifier (defined by originating centre).",
+    ))]
+    pub generating_process: param_set::GeneratingProcess,
+    pub forecast_time: param_set::ForecastTime,
+    pub horizontal: param_set::Horizontal,
+    pub probability_forecasts: param_set::ProbabilityForecasts,
+    pub time_interval: param_set::Statistical,
+}
+
+/// Product definition template 4.10 - Percentile forecasts at a horizontal
+/// level or in a horizontal layer in a continuous or non-continuous time
+/// interval.
+#[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump)]
+pub struct Template4_10 {
+    pub param: param_set::ProductParam,
+    #[dump(doc(
+        process_id = "Forecast generating process identifier (defined by originating centre).",
+    ))]
+    pub generating_process: param_set::GeneratingProcess,
+    pub forecast_time: param_set::ForecastTime,
+    pub horizontal: param_set::Horizontal,
+    pub percentile_forecasts: param_set::PercentileForecasts,
+    pub time_interval: param_set::Statistical,
+}
+
+/// Product definition template 4.11 - Individual ensemble forecast, control and
+/// perturbed, at a horizontal level or in a horizontal layer in a continuous or
+/// non-continuous time interval.
+#[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump)]
+pub struct Template4_11 {
+    pub param: param_set::ProductParam,
+    #[dump(doc(
+        process_id = "Forecast generating process identifier (defined by originating centre).",
+    ))]
+    pub generating_process: param_set::GeneratingProcess,
+    pub forecast_time: param_set::ForecastTime,
+    pub horizontal: param_set::Horizontal,
+    pub emsemble_forecast: param_set::EnsembleForecast,
+    pub time_interval: param_set::Statistical,
+}
+
+/// Product definition template 4.12 - Derived forecasts based on all ensemble
+/// members at a horizontal level or in a horizontal layer in a continuous or
+/// non-continuous time interval.
+#[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump)]
+pub struct Template4_12 {
+    pub param: param_set::ProductParam,
+    #[dump(doc(
+        process_id = "Forecast generating process identifier (defined by originating centre).",
+    ))]
+    pub generating_process: param_set::GeneratingProcess,
+    pub forecast_time: param_set::ForecastTime,
+    pub horizontal: param_set::Horizontal,
+    pub derived_forecast: param_set::DerivedForecast,
+    pub time_interval: param_set::Statistical,
+}
+
 pub(crate) mod param_set {
     use grib_template_derive::{Dump, TryFromSlice, WriteToBuffer};
 
