@@ -119,7 +119,7 @@ pub struct Template4_6 {
 ///                 },
 ///             },
 ///         },
-///         percentile: param_set::Statistical {
+///         time_interval: param_set::Statistical {
 ///             end_of_overall_time_interval: param_set::DateTime {
 ///                 year: 2021,
 ///                 month: 11,
@@ -150,7 +150,7 @@ pub struct Template4_8 {
     pub generating_process: param_set::GeneratingProcess,
     pub forecast_time: param_set::ForecastTime,
     pub horizontal: param_set::Horizontal,
-    pub percentile: param_set::Statistical,
+    pub time_interval: param_set::Statistical,
 }
 
 pub(crate) mod param_set {
