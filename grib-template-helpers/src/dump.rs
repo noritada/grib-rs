@@ -104,7 +104,7 @@ pub trait DumpField: OctetSize {
 }
 
 macro_rules! add_impl_of_dump_field_for_number_types {
-    ($($ty:ty,)*) => ($(
+    ($($ty:ty),* $(,)?) => ($(
         impl DumpField for $ty {
             fn dump_field<'d, W: Write>(
                 &self,
@@ -238,7 +238,7 @@ pub trait OctetSize {
 }
 
 macro_rules! add_impl_of_octet_size_for_number_types {
-    ($($ty:ty,)*) => ($(
+    ($($ty:ty),* $(,)?) => ($(
         impl OctetSize for $ty {
             fn octet_size(&self) -> usize {
                 std::mem::size_of::<Self>()
@@ -253,7 +253,7 @@ macro_rules! add_impl_of_octet_size_for_number_types {
     )*);
 }
 
-add_impl_of_octet_size_for_number_types![u8, u16, u32, u64, i8, i16, i32, i64, f32, f64,];
+add_impl_of_octet_size_for_number_types![u8, u16, u32, u64, i8, i16, i32, i64, f32, f64];
 
 impl<T: Dump> OctetSize for T {
     fn octet_size(&self) -> usize {
@@ -437,7 +437,7 @@ mod tests {
     }
 
     macro_rules! test_doc_overrides_get_children {
-        ($(($name:ident, $input:expr, $expected:expr),)*) => ($(
+        ($(($name:ident, $input:expr, $expected:expr $(,)?)),* $(,)?) => ($(
             #[test]
             fn $name() {
                 let parent = $input;
@@ -456,7 +456,7 @@ mod tests {
                 ("key2.key1", "field2.1"),
                 ("key3", "field3"),
             ]),
-            DocOverrides::new(vec![("key1", "field2.1")])
+            DocOverrides::new(vec![("key1", "field2.1")]),
         ),
         (
             doc_overrides_get_children_returns_none,
@@ -465,7 +465,7 @@ mod tests {
                 ("key2", "field2"),
                 ("key3", "field3"),
             ]),
-            DocOverrides::empty()
+            DocOverrides::empty(),
         ),
     }
 }

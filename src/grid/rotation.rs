@@ -83,7 +83,7 @@ mod tests {
     }
 
     macro_rules! test_rotation{
-        ($(($name:ident, $rot:expr, $input:expr, $expected:expr),)*) => ($(
+        ($(($name:ident, $rot:expr, $input:expr, $expected:expr $(,)?)),* $(,)?) => ($(
             #[test]
             fn $name() {
                 let rot = $rot;
@@ -108,7 +108,7 @@ mod tests {
                 rot_angle: 0.,
             },
             (-12.302501_f64, 345.178780_f64),
-            (-12.302501_f64, 345.178780_f64)
+            (-12.302501_f64, 345.178780_f64),
         ),
         (
             // grid point definition extracted from
@@ -121,7 +121,7 @@ mod tests {
             },
             (-12.302501_f64, 345.178780_f64),
             // taken from results from pygrib
-            (39.626032, -133.62952 + 720.)
+            (39.626032, -133.62952 + 720.),
         ),
     }
 }

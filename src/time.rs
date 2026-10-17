@@ -149,8 +149,8 @@ mod tests {
             $hour:expr,
             $minute:expr,
             $second:expr,
-            $ok_expected:expr
-        ),)*) => ($(
+            $ok_expected:expr $(,)?
+        )),* $(,)?) => ($(
             #[cfg(feature = "time-calculation")]
             #[test]
             fn $name() {

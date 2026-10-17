@@ -100,7 +100,7 @@ impl<T: WriteGrib2MessageIterL3 + ?Sized> WriteGrib2MessageIterL3 for &T {
 }
 
 macro_rules! add_impl_for_references {
-    ($(($trait:path,$len_method:ident,$write_method:ident),)*) => ($(
+    ($(($trait:path,$len_method:ident,$write_method:ident $(,)?)),* $(,)?) => ($(
         impl<T: $trait + ?Sized> $trait for &T {
             fn $len_method(&self) -> usize {
                 (*self).$len_method()
@@ -121,12 +121,12 @@ add_impl_for_references![
     (
         WriteGrib2PointValues,
         data_sections_len,
-        write_data_sections
+        write_data_sections,
     ),
 ];
 
 macro_rules! add_impl_for_u8_slices {
-    ($(($trait:ty,$len_method:ident,$write_method:ident,$sect_num:expr),)*) => ($(
+    ($(($trait:ty,$len_method:ident,$write_method:ident,$sect_num:expr $(,)?)),* $(,)?) => ($(
         impl $trait for [u8] {
             fn $len_method(&self) -> usize {
                 self.as_ref().len() + 5
@@ -155,7 +155,7 @@ add_impl_for_u8_slices![
 ];
 
 macro_rules! add_impl_for_payload_structs {
-    ($(($trait:ty,$ty:ty,$len_method:ident,$write_method:ident,$sect_num:expr),)*) => ($(
+    ($(($trait:ty,$ty:ty,$len_method:ident,$write_method:ident,$sect_num:expr $(,)?)),* $(,)?) => ($(
         impl $trait for $ty {
             fn $len_method(&self) -> usize {
                 self.num_bytes_required() + 5
@@ -182,21 +182,21 @@ add_impl_for_payload_structs![
         crate::def::grib2::Section1Payload,
         section1_len,
         write_section1,
-        1
+        1,
     ),
     (
         WriteGrib2GridDef,
         crate::def::grib2::Section3Payload,
         section3_len,
         write_section3,
-        3
+        3,
     ),
     (
         WriteGrib2ProductDef,
         crate::def::grib2::Section4Payload,
         section4_len,
         write_section4,
-        4
+        4,
     ),
 ];
 

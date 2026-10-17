@@ -7,7 +7,7 @@ use tempfile::TempDir;
 use crate::{CMD_NAME, utils};
 
 macro_rules! test_subcommands_without_args {
-    ($(($name:ident, $str:expr),)*) => ($(
+    ($(($name:ident, $str:expr $(,)?)),* $(,)?) => ($(
         #[test]
         fn $name() -> Result<(), Box<dyn std::error::Error>> {
             let mut cmd = Command::cargo_bin(CMD_NAME)?;
@@ -37,7 +37,7 @@ test_subcommands_without_args! {
 }
 
 macro_rules! test_subcommands_with_nonexisting_file {
-    ($(($name:ident, $command:expr, $args:expr),)*) => ($(
+    ($(($name:ident, $command:expr, $args:expr $(,)?)),* $(,)?) => ($(
         #[test]
         fn $name() -> Result<(), Box<dyn std::error::Error>> {
             let dir = TempDir::new()?;
@@ -64,7 +64,7 @@ test_subcommands_with_nonexisting_file! {
 }
 
 macro_rules! test_subcommands_with_wrong_input_files {
-    ($(($name:ident, $command:expr, $input:expr, $args:expr, $stderr:expr),)*) => ($(
+    ($(($name:ident, $command:expr, $input:expr, $args:expr, $stderr:expr $(,)?)),* $(,)?) => ($(
         #[test]
         fn $name() -> Result<(), Box<dyn std::error::Error>> {
             let input = $input;
@@ -87,104 +87,104 @@ test_subcommands_with_wrong_input_files! {
         "decode",
         utils::testdata::non_grib_file()?,
         vec!["1.1"],
-        predicate::str::diff("error: empty GRIB2 data\n")
+        predicate::str::diff("error: empty GRIB2 data\n"),
     ),
     (
         dump_with_non_grib,
         "dump",
         utils::testdata::non_grib_file()?,
         vec!["1.1"],
-        predicate::str::diff("error: empty GRIB2 data\n")
+        predicate::str::diff("error: empty GRIB2 data\n"),
     ),
     (
         info_with_non_grib,
         "info",
         utils::testdata::non_grib_file()?,
         Vec::<&str>::new(),
-        predicate::str::diff("error: empty GRIB2 data\n")
+        predicate::str::diff("error: empty GRIB2 data\n"),
     ),
     (
         inspect_with_non_grib,
         "inspect",
         utils::testdata::non_grib_file()?,
         Vec::<&str>::new(),
-        predicate::str::diff("error: empty GRIB2 data\n")
+        predicate::str::diff("error: empty GRIB2 data\n"),
     ),
     (
         list_with_non_grib,
         "list",
         utils::testdata::non_grib_file()?,
         Vec::<&str>::new(),
-        predicate::str::diff("error: empty GRIB2 data\n")
+        predicate::str::diff("error: empty GRIB2 data\n"),
     ),
     (
         decode_with_empty_file,
         "decode",
         utils::testdata::empty_file()?,
         vec!["1.1"],
-        predicate::str::diff("error: empty GRIB2 data\n")
+        predicate::str::diff("error: empty GRIB2 data\n"),
     ),
     (
         dump_with_empty_file,
         "dump",
         utils::testdata::empty_file()?,
         vec!["1.1"],
-        predicate::str::diff("error: empty GRIB2 data\n")
+        predicate::str::diff("error: empty GRIB2 data\n"),
     ),
     (
         info_with_empty_file,
         "info",
         utils::testdata::empty_file()?,
         Vec::<&str>::new(),
-        predicate::str::diff("error: empty GRIB2 data\n")
+        predicate::str::diff("error: empty GRIB2 data\n"),
     ),
     (
         inspect_with_empty_file,
         "inspect",
         utils::testdata::empty_file()?,
         Vec::<&str>::new(),
-        predicate::str::diff("error: empty GRIB2 data\n")
+        predicate::str::diff("error: empty GRIB2 data\n"),
     ),
     (
         list_with_empty_file,
         "list",
         utils::testdata::empty_file()?,
         Vec::<&str>::new(),
-        predicate::str::diff("error: empty GRIB2 data\n")
+        predicate::str::diff("error: empty GRIB2 data\n"),
     ),
     (
         decode_with_too_small_file,
         "decode",
         utils::testdata::too_small_file()?,
         vec!["1.1"],
-        predicate::str::diff("error: empty GRIB2 data\n")
+        predicate::str::diff("error: empty GRIB2 data\n"),
     ),
     (
         dump_with_too_small_file,
         "dump",
         utils::testdata::too_small_file()?,
         vec!["1.1"],
-        predicate::str::diff("error: empty GRIB2 data\n")
+        predicate::str::diff("error: empty GRIB2 data\n"),
     ),
     (
         info_with_too_small_file,
         "info",
         utils::testdata::too_small_file()?,
         Vec::<&str>::new(),
-        predicate::str::diff("error: empty GRIB2 data\n")
+        predicate::str::diff("error: empty GRIB2 data\n"),
     ),
     (
         inspect_with_too_small_file,
         "inspect",
         utils::testdata::too_small_file()?,
         Vec::<&str>::new(),
-        predicate::str::diff("error: empty GRIB2 data\n")
+        predicate::str::diff("error: empty GRIB2 data\n"),
     ),
     (
         list_with_too_small_file,
         "list",
         utils::testdata::too_small_file()?,
         Vec::<&str>::new(),
-        predicate::str::diff("error: empty GRIB2 data\n")
+        predicate::str::diff("error: empty GRIB2 data\n"),
     ),
 }

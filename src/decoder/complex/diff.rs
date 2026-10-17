@@ -202,7 +202,7 @@ mod tests {
     };
 
     macro_rules! test_spdiff_minimum_value {
-        ($(($name:ident, $num_octets:expr, $expected:expr),)*) => ($(
+        ($(($name:ident, $num_octets:expr, $expected:expr $(,)?)),* $(,)?) => ($(
             #[test]
             fn $name() {
                 let order = 2;
@@ -227,7 +227,7 @@ mod tests {
     }
 
     macro_rules! test_spdiff_first_values {
-        ($(($name:ident, $num_octets:expr, $expected:expr),)*) => ($(
+        ($(($name:ident, $num_octets:expr, $expected:expr $(,)?)),* $(,)?) => ($(
             #[test]
             fn $name() {
                 let order = 2;
@@ -252,7 +252,7 @@ mod tests {
     }
 
     macro_rules! test_first_order_spatial_differencing_decoding {
-        ($(($name:ident, $input:expr, $expected:expr),)*) => ($(
+        ($(($name:ident, $input:expr, $expected:expr $(,)?)),* $(,)?) => ($(
             #[test]
             fn $name() {
                 let input = $input
@@ -282,7 +282,7 @@ mod tests {
                 Normal(96),
                 Normal(104),
                 Normal(95),
-            ]
+            ],
         ),
         (
             first_order_spatial_differencing_decoding_with_missing_values_in_first_values,
@@ -309,7 +309,7 @@ mod tests {
                 Normal(103),
                 Normal(96),
                 Normal(104),
-            ]
+            ],
         ),
         (
             first_order_spatial_differencing_decoding_with_missing_values_in_non_first_values,
@@ -336,12 +336,12 @@ mod tests {
                 Normal(97),
                 Normal(103),
                 Normal(96),
-            ]
+            ],
         ),
     }
 
     macro_rules! test_second_order_spatial_differencing_decoding {
-        ($(($name:ident, $input:expr, $expected:expr),)*) => ($(
+        ($(($name:ident, $input:expr, $expected:expr $(,)?)),* $(,)?) => ($(
             #[test]
             fn $name() {
                 let input = $input
@@ -371,7 +371,7 @@ mod tests {
                 Normal(96),
                 Normal(100),
                 Normal(95),
-            ]
+            ],
         ),
         (
             second_order_spatial_differencing_decoding_with_missing_values_in_first_values,
@@ -398,7 +398,7 @@ mod tests {
                 Normal(97),
                 Normal(100),
                 Normal(96),
-            ]
+            ],
         ),
         (
             second_order_spatial_differencing_decoding_with_missing_values_in_non_first_values,
@@ -425,7 +425,7 @@ mod tests {
                 Normal(97),
                 Normal(100),
                 Normal(96),
-            ]
+            ],
         ),
     }
 }

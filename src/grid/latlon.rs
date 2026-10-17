@@ -123,8 +123,8 @@ mod tests {
             $grid:expr,
             $scanning_mode:expr,
             $expected_head:expr,
-            $expected_tail:expr
-        ),)*) => ($(
+            $expected_tail:expr $(,)?
+        )),* $(,)?) => ($(
             #[test]
             fn $name() {
                 let grid = param_set::LatLonGrid {
@@ -171,7 +171,7 @@ mod tests {
             },
             param_set::ScanningMode(0b01000000),
             vec![(35.000001, 139.000001), (35.000001, 139.000002), (35.000001, 139.000003)],
-            vec![(35.000002, 139.000001), (35.000002, 139.000002), (35.000002, 139.000003)]
+            vec![(35.000002, 139.000001), (35.000002, 139.000002), (35.000002, 139.000003)],
         ),
         (
             lat_lon_calculation_for_increasing_longitudes_and_positive_direction_scan,
@@ -188,7 +188,7 @@ mod tests {
             },
             param_set::ScanningMode(0b01000000),
             vec![(-90.0, 0.0), (-90.0, 0.24), (-90.0, 0.48)],
-            vec![(90.0, -0.72), (90.0, -0.48), (90.0, -0.24)]
+            vec![(90.0, -0.72), (90.0, -0.48), (90.0, -0.24)],
         ),
         (
             // grid point definition extracted from
@@ -207,7 +207,7 @@ mod tests {
             },
             param_set::ScanningMode(0b01000000),
             vec![(-90.0, -180.0), (-90.0, -179.76), (-90.0, -179.52)],
-            vec![(90.0, 179.28), (90.0, 179.52), (90.0, 179.76)]
+            vec![(90.0, 179.28), (90.0, 179.52), (90.0, 179.76)],
         ),
         (
             lat_lon_calculation_for_decreasing_longitudes_and_negative_direction_scan,
@@ -224,7 +224,7 @@ mod tests {
             },
             param_set::ScanningMode(0b11000000),
             vec![(-90.0, -0.24), (-90.0, -0.48), (-90.0, -0.72)],
-            vec![(90.0, 0.48), (90.0, 0.24), (90.0, 0.0)]
+            vec![(90.0, 0.48), (90.0, 0.24), (90.0, 0.0)],
         ),
         (
             lat_lon_calculation_for_increasing_longitudes_and_negative_direction_scan,
@@ -241,7 +241,7 @@ mod tests {
             },
             param_set::ScanningMode(0b11000000),
             vec![(-90.0, 179.76), (-90.0, 179.52), (-90.0, 179.28)],
-            vec![(90.0, -179.52), (90.0, -179.76), (90.0, -180.0)]
+            vec![(90.0, -179.52), (90.0, -179.76), (90.0, -180.0)],
         ),
     }
 
@@ -253,8 +253,8 @@ mod tests {
             $last_point_lat:expr,
             $last_point_lon:expr,
             $scanning_mode:expr,
-            $expected_for_j:expr
-        ),)*) => ($(
+            $expected_for_j:expr $(,)?
+        )),* $(,)?) => ($(
             #[test]
             fn $name() {
                 let grid = param_set::LatLonGrid {
@@ -287,7 +287,7 @@ mod tests {
             36_000_000,
             141_000_000,
             0b00000000,
-            true
+            true,
         ),
         (
             consistency_between_lat_decrease_and_scanning_mode_0b01000000,
@@ -296,7 +296,7 @@ mod tests {
             36_000_000,
             141_000_000,
             0b01000000,
-            false
+            false,
         ),
         (
             consistency_between_lat_increase_and_scanning_mode_0b00000000,
@@ -305,7 +305,7 @@ mod tests {
             37_000_000,
             141_000_000,
             0b00000000,
-            false
+            false,
         ),
         (
             consistency_between_lat_increase_and_scanning_mode_0b01000000,
@@ -314,7 +314,7 @@ mod tests {
             37_000_000,
             141_000_000,
             0b01000000,
-            true
+            true,
         ),
     }
 }

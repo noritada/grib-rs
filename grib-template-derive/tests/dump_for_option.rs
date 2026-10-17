@@ -46,8 +46,8 @@ pub struct EnumVar2 {
 macro_rules! test {
     ($((
         $input:expr,
-        $expected:expr,
-    ),)*) => ($(
+        $expected:expr $(,)?
+    )),* $(,)?) => ($(
         let mut buf = std::io::Cursor::new(Vec::with_capacity(1024));
         let mut pos = 1;
         $input.dump(None, DocOverrides::empty(), &mut pos, &mut buf).unwrap();

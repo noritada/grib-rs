@@ -510,8 +510,8 @@ mod tests {
         ($((
             $name:ident,
             $input:expr,
-            $expected:expr,
-        ),)*) => ($(
+            $expected:expr $(,)?
+        )),* $(,)?) => ($(
             #[test]
             fn $name() {
                 let lengths = $input;
@@ -546,7 +546,7 @@ mod tests {
     }
 
     macro_rules! grib2_coded_values_roundtrip_tests {
-        ($(($name:ident, $input:expr),)*) => ($(
+        ($(($name:ident, $input:expr $(,)?)),* $(,)?) => ($(
             #[test]
             fn $name() -> Result<(), Box<dyn std::error::Error>> {
                 let values = $input;
@@ -581,26 +581,26 @@ mod tests {
     grib2_coded_values_roundtrip_tests! {
         (
             grib2_coded_values_roundtrip_test_with_nonunique_values,
-            (2..11).map(|val| val as f64).collect::<Vec<_>>()
+            (2..11).map(|val| val as f64).collect::<Vec<_>>(),
         ),
         (
             grib2_coded_values_roundtrip_test_with_nonunique_values_and_group_len_inc_being_0,
-            (2..5).map(|val| val as f64).collect::<Vec<_>>()
+            (2..5).map(|val| val as f64).collect::<Vec<_>>(),
         ),
         (
             grib2_coded_values_roundtrip_test_with_large_finite_range,
-            vec![0.0, 1.0e20]
+            vec![0.0, 1.0e20],
         ),
         (
             grib2_coded_values_roundtrip_test_with_unique_values,
-            vec![10.0_f64; 256]
+            vec![10.0_f64; 256],
         ),
         (
             grib2_coded_values_roundtrip_test_with_zero_only_groups,
             vec![0, 0, 0, 100, 10, 2, 2, 1]
                 .into_iter()
                 .flat_map(|val| [val as f64; 8])
-                .collect::<Vec<_>>()
+                .collect::<Vec<_>>(),
         ),
         (
             grib2_coded_values_roundtrip_test_with_body_data_affected_by_offsets,
@@ -611,7 +611,7 @@ mod tests {
                 .chain([114., 104., 92., 225.].into_iter())
                 .chain([0.; 32].into_iter())
                 .chain([114., 104., 92., 225.].into_iter())
-                .collect::<Vec<_>>()
+                .collect::<Vec<_>>(),
         ),
     }
 }

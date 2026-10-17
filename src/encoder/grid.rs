@@ -128,7 +128,7 @@ mod tests {
     use super::*;
 
     macro_rules! test_lat_lon_grid_definition {
-        ($(($name:ident, $input:expr, $expected:expr),)*) => ($(
+        ($(($name:ident, $input:expr, $expected:expr $(,)?)),* $(,)?) => ($(
             #[test]
             fn $name() {
                 let input = $input;
@@ -160,7 +160,7 @@ mod tests {
                 (30000000, 140000000),
                 (50000, 100000),
                 param_set::ScanningMode(0b00000000),
-            )
+            ),
         ),
         (
             lat_lon_grid_definition_for_neg_lat_inc_and_neg_lon_inc,
@@ -176,7 +176,7 @@ mod tests {
                 (30000000, 130000000),
                 (50000, 100000),
                 param_set::ScanningMode(0b10000000),
-            )
+            ),
         ),
         (
             lat_lon_grid_definition_for_pos_lat_inc_and_pos_lon_inc,
@@ -192,7 +192,7 @@ mod tests {
                 (40000000, 140000000),
                 (50000, 100000),
                 param_set::ScanningMode(0b01000000),
-            )
+            ),
         ),
         (
             lat_lon_grid_definition_for_pos_lat_inc_and_neg_lon_inc,
@@ -208,7 +208,7 @@ mod tests {
                 (40000000, 130000000),
                 (50000, 100000),
                 param_set::ScanningMode(0b11000000),
-            )
+            ),
         ),
         (
             lat_lon_grid_definition_for_eastward_from_0_deg,
@@ -224,7 +224,7 @@ mod tests {
                 (30000000, 355000000),
                 (355000000, 10000000),
                 param_set::ScanningMode(0b00000000),
-            )
+            ),
         ),
         (
             lat_lon_grid_definition_for_westward_from_0_deg,
@@ -240,7 +240,7 @@ mod tests {
                 (30000000, 355000000),
                 (5000000, 10000000),
                 param_set::ScanningMode(0b10000000),
-            )
+            ),
         ),
         (
             lat_lon_grid_definition_for_eastward_from_180_deg,
@@ -256,7 +256,7 @@ mod tests {
                 (30000000, 175000000),
                 (355000000, 10000000),
                 param_set::ScanningMode(0b00000000),
-            )
+            ),
         ),
         (
             lat_lon_grid_definition_for_westward_from_180_deg,
@@ -272,7 +272,7 @@ mod tests {
                 (30000000, 175000000),
                 (5000000, 10000000),
                 param_set::ScanningMode(0b10000000),
-            )
+            ),
         ),
     }
 

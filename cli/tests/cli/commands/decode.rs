@@ -7,7 +7,7 @@ use tempfile::TempDir;
 use crate::{CMD_NAME, utils};
 
 macro_rules! test_operation_with_no_options {
-    ($(($name:ident, $input:expr, $message_index:expr),)*) => ($(
+    ($(($name:ident, $input:expr, $message_index:expr $(,)?)),* $(,)?) => ($(
         #[test]
         fn $name() -> Result<(), Box<dyn std::error::Error>> {
             let input = $input;
@@ -28,27 +28,27 @@ test_operation_with_no_options! {
     (
         decoding_simple_packing,
         utils::testdata::grib2::jma_kousa()?,
-        "0.3"
+        "0.3",
     ),
     (
         decoding_complex_packing,
         utils::testdata::grib2::jma_meps()?,
-        "0.2"
+        "0.2",
     ),
     (
         decoding_run_length_encoding,
         utils::testdata::grib2::jma_tornado_nowcast()?,
-        "0.3"
+        "0.3",
     ),
     (
         decoding_multi_message_data,
         utils::testdata::grib2::noaa_gdas_0_10()?,
-        "2.0"
+        "2.0",
     ),
     (
         decoding_data_whose_grid_points_cannot_be_exported_as_latlons,
         utils::testdata::grib2::multi_message_data(3)?,
-        "2.0"
+        "2.0",
     ),
 }
 
@@ -59,8 +59,8 @@ macro_rules! test_operation_with_data_without_nan_values_and_byte_order_options 
         $message_index:expr,
         $byte_order_flag:expr,
         $nan_replacement:expr,
-        $expected:expr
-    ),)*) => ($(
+        $expected:expr $(,)?
+    )),* $(,)?) => ($(
         #[test]
         fn $name() -> Result<(), Box<dyn std::error::Error>> {
             let input = $input;
@@ -99,7 +99,7 @@ test_operation_with_data_without_nan_values_and_byte_order_options! {
             [0x62, 0x58, 0xd1, 0x9a] => vec![0x7f, 0xc0, 0x00, 0x00],
             b => b.to_vec(),
         },
-        utils::testdata::flat_binary::jma_tornado_nowcast_be()?
+        utils::testdata::flat_binary::jma_tornado_nowcast_be()?,
     ),
     (
         decoding_data_with_nan_values_as_little_endian,
@@ -110,7 +110,7 @@ test_operation_with_data_without_nan_values_and_byte_order_options! {
             [0x9a, 0xd1, 0x58, 0x62] => vec![0x00, 0x00, 0xc0, 0x7f],
             b => b.to_vec(),
         },
-        utils::testdata::flat_binary::jma_tornado_nowcast_le()?
+        utils::testdata::flat_binary::jma_tornado_nowcast_le()?,
     ),
 }
 
@@ -137,7 +137,7 @@ fn test_input_from_stdin_and_output_to_stdout() -> Result<(), Box<dyn std::error
 }
 
 macro_rules! test_trial_to_decode_nonexisting_submessage {
-    ($(($name:ident, $input:expr, $message_index:expr),)*) => ($(
+    ($(($name:ident, $input:expr, $message_index:expr $(,)?)),* $(,)?) => ($(
         #[test]
         fn $name() -> Result<(), Box<dyn std::error::Error>> {
             let input = $input;
@@ -158,21 +158,21 @@ test_trial_to_decode_nonexisting_submessage! {
     (
         trial_to_decode_submessage_with_nonexisting_submessage_index,
         utils::testdata::grib2::jma_kousa()?,
-        "0.999"
+        "0.999",
     ),
     (
         trial_to_decode_submessage_with_nonexisting_message_index,
         utils::testdata::grib2::jma_kousa()?,
-        "1.0"
+        "1.0",
     ),
     (
         trial_to_decode_submessage_with_nonexisting_submessage_index_for_multi_message_data,
         utils::testdata::grib2::multi_message_data(3)?,
-        "0.1"
+        "0.1",
     ),
     (
         trial_to_decode_submessage_with_nonexisting_message_index_for_multi_message_data,
         utils::testdata::grib2::multi_message_data(3)?,
-        "999.0"
+        "999.0",
     ),
 }

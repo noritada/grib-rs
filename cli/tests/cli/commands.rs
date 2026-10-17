@@ -6,7 +6,7 @@ pub(crate) mod inspect;
 pub(crate) mod list;
 
 macro_rules! test_simple_display {
-    ($(($name:ident, $command:expr, $input:expr, $options:expr, $expected_stdout:expr),)*) => ($(
+    ($(($name:ident, $command:expr, $input:expr, $options:expr, $expected_stdout:expr $(,)?)),* $(,)?) => ($(
         #[test]
         fn $name() -> Result<(), Box<dyn std::error::Error>> {
             let input = $input;

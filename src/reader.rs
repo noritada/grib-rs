@@ -213,7 +213,7 @@ impl<S: Seek> Seek for SeekableGrib2Reader<S> {
 }
 
 macro_rules! check_size {
-    ($size:expr, $expected_size:expr) => {{
+    ($size:expr, $expected_size:expr $(,)?) => {{
         if $size == 0 {
             return Ok(None);
         }
@@ -567,7 +567,7 @@ mod tests {
     }
 
     macro_rules! test_reading_message_starting_from_non_zero_position {
-        ($(($name:ident, $header:expr, $base_offset:expr),)*) => ($(
+        ($(($name:ident, $header:expr, $base_offset:expr $(,)?)),* $(,)?) => ($(
             #[test]
             fn $name() -> Result<(), Box<dyn std::error::Error>> {
             let header_bytes_skipped = $header;

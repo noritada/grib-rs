@@ -3,7 +3,7 @@ pub(crate) trait AsGribSigned<I> {
 }
 
 macro_rules! add_impl_for_integer_types {
-    ($(($ty_src:ty, $ty_dst:ty),)*) => ($(
+    ($(($ty_src:ty, $ty_dst:ty $(,)?)),* $(,)?) => ($(
         impl AsGribSigned<$ty_dst> for $ty_src {
             fn as_grib_signed(&self) -> $ty_dst {
                 if self.leading_zeros() == 0 {
