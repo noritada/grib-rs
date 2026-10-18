@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.20.0] - 2026-10-18
+
+### Breaking changes
+
+- The `percentile` field of `def::grib2::template::Template4_8`, which was added in v0.19.1, has been renamed to `time_interval`.
+  (PR #255)
+
+### New supports
+
+- Reading, accessing, dumping, and writing section/template parameters:
+  - Template 4.9, 4.10, 4.11, 4.12
+    (#140, PR #256)
+
+### Enhancements to helper crates
+
+- The `Dump` trait provided by grib-template-helpers is now implemented by `Vec<T>`.
+  (PR #251)
+
+### Versions
+
+```
+grib 0.20.0
+grib-cli 0.20.0
+```
+
 ## [0.19.1] - 2026-10-10
 
 ### New supports
@@ -1300,7 +1325,8 @@ grib-build 0.1.0
 grib 0.1.0
 ```
 
-[unreleased]: https://github.com/noritada/grib-rs/compare/v0.19.1...HEAD
+[unreleased]: https://github.com/noritada/grib-rs/compare/v0.20.0...HEAD
+[0.20.0]: https://github.com/noritada/grib-rs/compare/v0.19.1...v0.20.0
 [0.19.1]: https://github.com/noritada/grib-rs/compare/v0.19.0...v0.19.1
 [0.19.0]: https://github.com/noritada/grib-rs/compare/v0.18.6...v0.19.0
 [0.18.6]: https://github.com/noritada/grib-rs/compare/v0.18.5...v0.18.6
