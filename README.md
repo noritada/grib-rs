@@ -331,12 +331,7 @@ Note that binaries exported from `gribber decode --big-endian` use `0x7fc00000` 
 
 ## Building
 
-This repository uses the submodules functionality of Git. So, before running `cargo build`, please add submodules in one of following ways:
-
-* Cloning with submodules:
-  adding `--recursive` to `git clone` will automatically clone submodules in addition to this repository
-* Adding submodules after cloning:
-  running `git submodule update --init --recursive` after cloning will update the repository to have submodules
+If you are building libraries or the CLI from this repository, please check out the Git submodules beforehand. If you are unsure how to do this, please refer to the "Setting up the development environment" section in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 Then you can build it in the usual way in the Rust world.
 

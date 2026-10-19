@@ -8,6 +8,34 @@ Since this project is still in the early stage, there are so many things to do t
 
 When this project can grow to have a good community and continuous contributors, major themes will be settled and more descriptions will be written down.
 
+## Setting up the development environment
+
+There are two key points to note when setting up the development environment for this project:
+
+- Be sure to check out the repositories included in this repository as Git submodules.
+- Use the versions of the [`rustfmt`][rustfmt] formatter and [`rust-clippy`][rust-clippy] linter included in the nightly toolchain.
+
+If you understand what to do based on the instructions above, you do not need to read the details below.
+
+### Details
+
+First, this repository uses the submodules functionality of Git. So, before running `cargo build`, please add submodules in one of following ways:
+
+* Cloning the main repository with submodules:
+  adding `--recursive` to `git clone` will automatically clone submodules in addition to this repository
+* Checking out submodules after cloning the main repository:
+  running `git submodule update --init --recursive` after cloning will update the repository to have submodules
+
+For the Rust development environment, a standard environment set up using [`rustup`][rustup] or a similar tool should suffice. For `rustfmt` and `rust-clippy`, we use the nightly versions (some settings in `rustfmt.toml` require the nightly version). For example, if you are using `rustup`, you can install them as follows:
+
+```
+rustup toolchain install nightly --component rustfmt clippy
+```
+
+[rustup]: https://rustup.rs/
+[rustfmt]: https://github.com/rust-lang/rustfmt
+[rust-clippy]: https://github.com/rust-lang/rust-clippy
+
 ## Specifying dependencies
 
 When using other crates, we have a policy that we do not designate dependency versions too strictly.
@@ -22,17 +50,7 @@ See the [Cargo documentation](https://doc.rust-lang.org/cargo/reference/specifyi
 
 ### Formatting and linting
 
-Rust has a formal coding style as described in [Rust Style Guide](https://github.com/rust-dev-tools/fmt-rfcs/blob/master/guide/guide.md). We are using the nightly version of [`rustfmt`](https://github.com/rust-lang/rustfmt) for formatting code in that style.
-
-Also, Rust has an official linting tool [`rust-clippy`](https://github.com/rust-lang/rust-clippy). We are using the nightly version of `rust-clippy`.
-
-To install those tools [using `rustup`](https://rust-lang.github.io/rustup/concepts/components.html), you can simply run as follows:
-
-```
-rustup toolchain install nightly --component rustfmt clippy
-```
-
-To reformat and lint the code, you just need to run these simple commands:
+When running formatters or linters, be sure to use the nightly version and target your workspace, as shown below.
 
 ```
 cargo +nightly fmt --all
