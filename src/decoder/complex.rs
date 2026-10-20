@@ -72,7 +72,7 @@ pub(crate) struct ComplexSpatial<'d>(
 impl<'d> Grib2GpvUnpack for ComplexSpatial<'d> {
     type Iter<'a>
         = SimplePackingDecoder<
-        SpatialDifferencingDecodeIterator<ComplexPackingDecoded<'d>, std::vec::IntoIter<i32>>,
+        SpatialDifferencingDecodeIterator<ComplexPackingDecoded<'d>, std::vec::IntoIter<i64>>,
     >
     where
         Self: 'a;
