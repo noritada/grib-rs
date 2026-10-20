@@ -20,11 +20,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Template 4.9, 4.10, 4.11, 4.12
     (#140, PR #256)
 
-### Enhancements to helper crates
-
-- The `Dump` trait provided by grib-template-helpers is now implemented by `Vec<T>`.
-  (PR #251)
-
 ### Versions
 
 ```
