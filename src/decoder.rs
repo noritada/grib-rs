@@ -311,7 +311,7 @@ enum Grib2ValueIterator<'d> {
     SigSC(SimplePackingDecoder<ComplexPackingDecoded<'d>>),
     SigSSCI(
         SimplePackingDecoder<
-            complex::SpatialDifferencingDecodeIterator<ComplexPackingDecoded<'d>, IntoIter<i32>>,
+            complex::SpatialDifferencingDecodeIterator<ComplexPackingDecoded<'d>, IntoIter<i64>>,
         >,
     ),
     #[allow(dead_code)]
