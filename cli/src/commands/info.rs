@@ -54,7 +54,7 @@ struct InfoView<'i>(
     grib::def::grib2::template::param_set::DateTime,
 );
 
-impl<'i> Display for InfoView<'i> {
+impl Display for InfoView<'_> {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         let Self(index, indicator, identification, ref_time) = self;
         write!(

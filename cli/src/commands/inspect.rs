@@ -90,7 +90,7 @@ impl<'i, R> InspectView<'i, R> {
     }
 }
 
-impl<'i, R> cli::PredictableNumLines for InspectView<'i, R> {
+impl<R> cli::PredictableNumLines for InspectView<'_, R> {
     fn num_lines(&self) -> usize {
         let mut count = 0;
         for item in self.items.iter() {
@@ -104,7 +104,7 @@ impl<'i, R> cli::PredictableNumLines for InspectView<'i, R> {
     }
 }
 
-impl<'i, R> Display for InspectView<'i, R> {
+impl<R> Display for InspectView<'_, R> {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         let with_header = self.with_headers();
         let mut items = self.items.iter().peekable();
@@ -141,7 +141,7 @@ enum InspectItem<'i, R> {
     Templates(InspectTemplatesItem),
 }
 
-impl<'i, R> InspectItem<'i, R> {
+impl<R> InspectItem<'_, R> {
     fn title(&self) -> &'static str {
         match self {
             InspectItem::Sections(_) => "Sections",
@@ -173,7 +173,7 @@ impl<'i> InspectSectionsItem<'i> {
     }
 }
 
-impl<'i> Display for InspectSectionsItem<'i> {
+impl Display for InspectSectionsItem<'_> {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         for (i, sect) in self.data.clone().enumerate() {
             writeln!(
@@ -204,7 +204,7 @@ impl<'i, R> InspectSubMessagesItem<'i, R> {
     }
 }
 
-impl<'i, R> Display for InspectSubMessagesItem<'i, R> {
+impl<R> Display for InspectSubMessagesItem<'_, R> {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         fn format_section_index(s: &SubMessageSection) -> String {
             format!("{:>5}", s.index.to_string())

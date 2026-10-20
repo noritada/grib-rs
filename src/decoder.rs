@@ -289,7 +289,7 @@ pub(crate) fn orig_field_type_is_supported(orig_field_type: u8) -> Result<(), De
 
 pub struct Grib2DecodedValues<'b, I>(BitmapDecodeIterator<std::slice::Iter<'b, u8>, I>);
 
-impl<'a, I> Iterator for Grib2DecodedValues<'a, I>
+impl<I> Iterator for Grib2DecodedValues<'_, I>
 where
     I: Iterator<Item = f32>,
 {
