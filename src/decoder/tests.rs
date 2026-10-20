@@ -291,6 +291,15 @@ test_operation_with_data_without_nan_values_compared_using_simple_packing! {
         test_utils::data::flat_binary::NOAA_GDAS_0_LE,
     ),
     (
+        decoding_second_order_spatial_differencing_with_unsigned_first_values,
+        test_utils::data::grib2::NOAA_GFS_UGRD_70,
+        (0, 0),
+        f32::from_be_bytes([0xc3, 0x81, 0xab, 0x6f]),
+        0,
+        1,
+        test_utils::data::flat_binary::NOAA_GFS_UGRD_70_LE,
+    ),
+    (
         decoding_complex_packing_with_zero_width_groups,
         test_utils::data::grib2::NOAA_GDAS_0_10,
         (2, 0),

@@ -73,6 +73,15 @@ The disclaimer is [available online](https://www.weather.gov/disclaimer).
   (Only the first 1 message of 54 messages in a data file downloaded from
   https://nomads.ncep.noaa.gov/pub/data/nccf/com/gfs/prod/gdas.20240120/00/atmos/gdas.t00z.sfluxgrbf000.grib2 )
 
+The following NOAA GFS field was taken from [NSF NCAR GDEX dataset
+d084001](https://gdex.ucar.edu/datasets/d084001/). It is the `UGRD:70 mb`
+message from the [2018-02-10 00Z analysis
+file](https://tds.gdex.ucar.edu/thredds/fileServer/files/g/d084001/2018/20180210/gfs.0p25.2018021000.f000.grib2).
+The field is unchanged from the source file. Its second original scaled value
+in data template 7.3 is the one-octet value `0x80`.
+
+- `gfs.0p25.2018021000.f000.UGRD70.xz`
+
 Following data files are downloaded from [MRMS (multi-radar multi-sensor) products page](https://mrms.ncep.noaa.gov/data/).
 
 - `MRMS_MergedRhoHV_19.00_20260219-042039.grib2.gz`
@@ -144,6 +153,8 @@ $ wgrib2 -d 3 -order raw -no_header -bin gdas-2-wgrib2-le.bin gdas.t12z.pgrb2.0p
 $ wgrib2 -d 1 -order raw -no_header -bin gdas-12-wgrib2-le.bin gdas.t12z.pgrb2.0p25.f000.12
 
 $ wgrib2 -d 1 -order raw -no_header -bin gdas-46-wgrib2-le.bin gdas.t12z.pgrb2.0p25.f000.46
+
+$ wgrib2 -d 1 -order raw -no_header -bin gfs-2018021000-ugrd70-wgrib2-le.bin gfs.0p25.2018021000.f000.UGRD70
 
 $ wgrib2 -d 1 -order raw -no_header -bin mrms-merged-rho-hv-wgrib2-le.bin MRMS_MergedRhoHV_19.00_20260219-042039.grib2
 

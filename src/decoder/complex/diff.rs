@@ -1,5 +1,11 @@
-use super::missing::DecodedValue::{self, Normal};
+use super::missing::DecodedValue::{self, Missing1, Missing2, Normal};
 use crate::{decoder::DecodeError, helpers::grib_int_from_bytes};
+
+fn unsigned_int_from_bytes(bytes: &[u8]) -> i64 {
+    bytes
+        .iter()
+        .fold(0_i64, |value, &byte| (value << 8) | i64::from(byte))
+}
 
 pub(crate) struct SpatialDifferencingExtraDescriptors<'a> {
     slice: &'a [u8],
@@ -61,7 +67,7 @@ impl<'s, 'a> FirstValues<'s, 'a> {
 }
 
 impl Iterator for FirstValues<'_, '_> {
-    type Item = i32;
+    type Item = i64;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.pos >= self.spdiff_info.first_value_end_pos() {
@@ -70,7 +76,9 @@ impl Iterator for FirstValues<'_, '_> {
 
         let num_octets = self.spdiff_info.num_octets;
         let slice = &self.spdiff_info.slice[self.pos..self.pos + num_octets];
-        let val = grib_int_from_bytes(slice);
+        // The original scaled values are unsigned. Only the following overall
+        // minimum of the differences uses the GRIB signed representation.
+        let val = unsigned_int_from_bytes(slice);
         self.pos += num_octets;
         Some(val)
     }
@@ -84,9 +92,9 @@ pub(crate) enum SpatialDifferencingDecodeIterator<I, J> {
 impl<I, J> Iterator for SpatialDifferencingDecodeIterator<I, J>
 where
     I: Iterator<Item = DecodedValue<i32>>,
-    J: Iterator<Item = i32>,
+    J: Iterator<Item = i64>,
 {
-    type Item = DecodedValue<i32>;
+    type Item = DecodedValue<i64>;
 
     fn next(&mut self) -> Option<Self::Item> {
         match self {
@@ -100,7 +108,7 @@ pub(crate) struct FirstOrderSpatialDifferencingDecodeIterator<I, J> {
     iter: I,
     first_values: J,
     count: u32,
-    prev: i32,
+    prev: i64,
 }
 
 impl<I, J> FirstOrderSpatialDifferencingDecodeIterator<I, J> {
@@ -117,9 +125,9 @@ impl<I, J> FirstOrderSpatialDifferencingDecodeIterator<I, J> {
 impl<I, J> Iterator for FirstOrderSpatialDifferencingDecodeIterator<I, J>
 where
     I: Iterator<Item = DecodedValue<i32>>,
-    J: Iterator<Item = i32>,
+    J: Iterator<Item = i64>,
 {
-    type Item = DecodedValue<i32>;
+    type Item = DecodedValue<i64>;
 
     fn next(&mut self) -> Option<Self::Item> {
         match self.iter.next() {
@@ -131,12 +139,13 @@ where
                     Some(Normal(self.prev))
                 }
                 _ => {
-                    let v = v + self.prev;
+                    let v = i64::from(v) + self.prev;
                     self.prev = v;
                     Some(Normal(v))
                 }
             },
-            Some(missing) => Some(missing),
+            Some(Missing1) => Some(Missing1),
+            Some(Missing2) => Some(Missing2),
         }
     }
 }
@@ -145,8 +154,8 @@ pub(crate) struct SecondOrderSpatialDifferencingDecodeIterator<I, J> {
     iter: I,
     first_values: J,
     count: u32,
-    prev1: i32,
-    prev2: i32,
+    prev1: i64,
+    prev2: i64,
 }
 
 impl<I, J> SecondOrderSpatialDifferencingDecodeIterator<I, J> {
@@ -164,9 +173,9 @@ impl<I, J> SecondOrderSpatialDifferencingDecodeIterator<I, J> {
 impl<I, J> Iterator for SecondOrderSpatialDifferencingDecodeIterator<I, J>
 where
     I: Iterator<Item = DecodedValue<i32>>,
-    J: Iterator<Item = i32>,
+    J: Iterator<Item = i64>,
 {
-    type Item = DecodedValue<i32>;
+    type Item = DecodedValue<i64>;
 
     fn next(&mut self) -> Option<Self::Item> {
         match self.iter.next() {
@@ -183,13 +192,14 @@ where
                     Some(Normal(self.prev1))
                 }
                 _ => {
-                    let v = v + 2 * self.prev1 - self.prev2;
+                    let v = i64::from(v) + 2 * self.prev1 - self.prev2;
                     self.prev2 = self.prev1;
                     self.prev1 = v;
                     Some(Normal(v))
                 }
             },
-            Some(missing) => Some(missing),
+            Some(Missing1) => Some(Missing1),
+            Some(Missing2) => Some(Missing2),
         }
     }
 }
@@ -249,6 +259,34 @@ mod tests {
         (spdiff_first_values_when_num_octets_is_2, 2, vec![0x00_01, 0x02_03]),
         (spdiff_first_values_when_num_octets_is_3, 3, vec![0x00_01_02, 0x03_04_05]),
         (spdiff_first_values_when_num_octets_is_4, 4, vec![0x00_01_02_03, 0x04_05_06_07]),
+    }
+
+    #[test]
+    fn spdiff_first_values_with_high_bits_are_unsigned() -> Result<(), DecodeError> {
+        let cases: [(u8, &[u8], &[i64], i32); 4] = [
+            (1, &[0x7f, 0x80, 0x9d], &[127, 128], -29),
+            (2, &[0x00, 0x7f, 0x80, 0x00, 0x80, 0x01], &[127, 32_768], -1),
+            (
+                3,
+                &[0x00, 0x00, 0x7f, 0x80, 0x00, 0x00, 0x80, 0x00, 0x01],
+                &[127, 8_388_608],
+                -1,
+            ),
+            (
+                4,
+                &[
+                    0x00, 0x00, 0x00, 0x7f, 0x80, 0x00, 0x00, 0x00, 0x80, 0x00, 0x00, 0x01,
+                ],
+                &[127, 2_147_483_648],
+                -1,
+            ),
+        ];
+        for (num_octets, bytes, expected, minimum) in cases {
+            let descriptors = SpatialDifferencingExtraDescriptors::new(2, num_octets, bytes)?;
+            assert_eq!(descriptors.first_values().collect::<Vec<_>>(), expected);
+            assert_eq!(descriptors.minimum(), minimum);
+        }
+        Ok(())
     }
 
     macro_rules! test_first_order_spatial_differencing_decoding {
