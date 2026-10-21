@@ -8,7 +8,7 @@ pub(crate) fn impl_for_struct(
     let (impl_generics, type_generics, where_clause) = input.generics.split_for_impl();
     let Some((kind, fields)) = super::helpers::extract_struct_info(data) else {
         unimplemented!(
-            "`WriteToBuffer` can only be derived for structs with named fields or with a single unnamed `u8` field"
+            "`WriteToBuffer` can only be derived for structs with named fields or with a single unnamed `u8` or `u16` field"
         )
     };
 

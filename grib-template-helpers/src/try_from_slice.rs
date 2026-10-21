@@ -131,6 +131,12 @@ macro_rules! add_try_from_array_impl_for_unsigned_integer_types {
 
 add_try_from_array_impl_for_unsigned_integer_types![u8, u16, u32, u64];
 
+/// Reads an enum variant selected by a discriminant convertible to `u64`.
+///
+/// A single-field tuple struct can be used as a discriminant by implementing
+/// `From<Wrapper> for u64`. When referenced by `#[grib_template(variant =
+/// "field")]`, the wrapper must also implement `Copy`, since the field is
+/// retained in the containing struct after being passed by value.
 pub trait TryEnumFromSlice {
     fn try_enum_from_slice(
         discriminant: impl Into<u64>,

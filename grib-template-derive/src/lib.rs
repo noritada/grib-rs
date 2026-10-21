@@ -30,9 +30,9 @@ pub fn derive_write_to_buffer(input: TokenStream) -> TokenStream {
 
 /// Derive macro generating an impl of the trait `grib_template_helpers::Dump`.
 ///
-/// Single-field `u8` tuple structs display their value as a decimal number.
-/// Use `#[dump(flag)]` on the struct to display it as an eight-bit binary
-/// number with a `0b` prefix instead.
+/// Single-field `u8` and `u16` tuple structs display their value as a decimal
+/// number. Use `#[dump(flag)]` on a single-field `u8` tuple struct to display
+/// it as an eight-bit binary number with a `0b` prefix instead.
 #[proc_macro_derive(Dump, attributes(grib_template, dump))]
 pub fn derive_dump(input: TokenStream) -> TokenStream {
     let input = syn::parse_macro_input!(input as syn::DeriveInput);

@@ -12,7 +12,7 @@ pub(crate) fn impl_for_struct(
     let (impl_generics, type_generics, where_clause) = input.generics.split_for_impl();
     let Some((kind, fields)) = super::helpers::extract_struct_info(data) else {
         unimplemented!(
-            "`Dump` can only be derived for structs with named fields or with a single unnamed `u8` field"
+            "`Dump` can only be derived for structs with named fields or with a single unnamed `u8` or `u16` field"
         )
     };
 
@@ -37,7 +37,7 @@ pub(crate) fn impl_for_struct(
                     pos: &mut usize,
                     output: &mut W,
                 ) -> Result<(), std::io::Error> {
-                    let size = 1;
+                    let size = std::mem::size_of_val(&self.0);
                     grib_template_helpers::write_position_column(output, pos, size)?;
                     if let Some(parent) = parent {
                         write!(output, "{}", parent)?;
@@ -191,7 +191,8 @@ fn flag_option(input: &syn::DeriveInput) -> syn::Result<bool> {
             &input.data,
             syn::Data::Struct(data)
                 if matches!(super::helpers::extract_struct_info(data),
-                    Some((super::helpers::StructKind::TupleStruct, _)))
+                    Some((super::helpers::StructKind::TupleStruct, fields))
+                        if super::helpers::is_type_u8(&fields[0].ty))
         );
         if !supported {
             return Err(syn::Error::new_spanned(
