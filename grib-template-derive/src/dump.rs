@@ -4,6 +4,10 @@ pub(crate) fn impl_for_struct(
     input: &syn::DeriveInput,
     data: &syn::DataStruct,
 ) -> proc_macro2::TokenStream {
+    let flag = match flag_option(input) {
+        Ok(flag) => flag,
+        Err(error) => return error.to_compile_error(),
+    };
     let name = &input.ident;
     let (impl_generics, type_generics, where_clause) = input.generics.split_for_impl();
     let Some((kind, fields)) = super::helpers::extract_struct_info(data) else {
@@ -16,6 +20,8 @@ pub(crate) fn impl_for_struct(
         let doc = get_doc(&fields[0].attrs)
             .map(|s| format!("  // {}", s.trim()))
             .unwrap_or_default();
+
+        let format = if flag { " = {:#010b}{}" } else { " = {}{}" };
 
         return quote! {
             impl #impl_generics grib_template_helpers::Dump for #name #type_generics #where_clause {
@@ -31,7 +37,7 @@ pub(crate) fn impl_for_struct(
                     if let Some(parent) = parent {
                         write!(output, "{}", parent)?;
                     }
-                    writeln!(output, " = {:#010b}{}",
+                    writeln!(output, #format,
                         self.0,
                         #doc,
                     )
@@ -108,6 +114,9 @@ pub(crate) fn impl_for_enum(
     input: &syn::DeriveInput,
     data: &syn::DataEnum,
 ) -> proc_macro2::TokenStream {
+    if let Err(error) = flag_option(input) {
+        return error.to_compile_error();
+    }
     let name = &input.ident;
     let (impl_generics, type_generics, where_clause) = input.generics.split_for_impl();
 
@@ -149,6 +158,41 @@ pub(crate) fn impl_for_enum(
             }
         }
     }
+}
+
+fn flag_option(input: &syn::DeriveInput) -> syn::Result<bool> {
+    let mut flag = false;
+    for attr in input
+        .attrs
+        .iter()
+        .filter(|attr| attr.path().is_ident("dump"))
+    {
+        attr.parse_nested_meta(|meta| {
+            if !meta.path.is_ident("flag") {
+                return Err(meta.error("expected `flag`"));
+            }
+            if flag {
+                return Err(meta.error("duplicate `flag` option"));
+            }
+            flag = true;
+            Ok(())
+        })?;
+    }
+    if flag {
+        let supported = matches!(
+            &input.data,
+            syn::Data::Struct(data)
+                if matches!(super::helpers::extract_struct_info(data),
+                    Some((super::helpers::StructKind::TupleStruct, _)))
+        );
+        if !supported {
+            return Err(syn::Error::new_spanned(
+                &input.ident,
+                "`#[dump(flag)]` requires a single-field `u8` tuple struct",
+            ));
+        }
+    }
+    Ok(flag)
 }
 
 pub(crate) fn get_doc(attrs: &[syn::Attribute]) -> Option<String> {
@@ -276,6 +320,33 @@ fn parse_tree(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn parsing_flag_option() -> syn::Result<()> {
+        let input = syn::parse_quote! {
+            #[dump(flag,)]
+            struct Flags(u8);
+        };
+        assert!(flag_option(&input)?);
+        let input = syn::parse_quote! { struct Value(u8); };
+        assert!(!flag_option(&input)?);
+        Ok(())
+    }
+
+    #[test]
+    fn invalid_flag_options() {
+        let inputs: [syn::DeriveInput; 6] = [
+            syn::parse_quote! { #[dump(flag)] struct Named { value: u8 } },
+            syn::parse_quote! { #[dump(flag)] struct Wide(u16); },
+            syn::parse_quote! { #[dump(flag)] enum Value { Byte(u8) } },
+            syn::parse_quote! { #[dump(flag, flag)] struct Flags(u8); },
+            syn::parse_quote! { #[dump(flag = true)] struct Flags(u8); },
+            syn::parse_quote! { #[dump(flga)] struct Flags(u8); },
+        ];
+        for input in inputs {
+            assert!(flag_option(&input).is_err());
+        }
+    }
 
     #[test]
     fn parsing_doc_attr() -> Result<(), Box<dyn std::error::Error>> {
