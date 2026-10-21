@@ -27,30 +27,36 @@ pub struct ReusableComponent {
 #[derive(grib_template_derive::Dump)]
 pub struct ReusableType {
     /// Id
-    element_id: u8,
+    element_id: ElementId,
     /// Scale factor
     factor: u8,
     /// Scaled value
     value: u32,
 }
 
+#[derive(grib_template_derive::Dump)]
+pub struct ElementId(
+    /// Default id
+    u8,
+);
+
 fn main() {
     let params = Params {
         field1: ReusableType {
-            element_id: 1,
+            element_id: ElementId(1),
             factor: 1,
             value: 1,
         },
         field2: ReusableComponent {
             field1: 2,
             field2: ReusableType {
-                element_id: 2,
+                element_id: ElementId(2),
                 factor: 2,
                 value: 2,
             },
         },
         field3: ReusableType {
-            element_id: 3,
+            element_id: ElementId(3),
             factor: 3,
             value: 3,
         },

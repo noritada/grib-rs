@@ -221,7 +221,7 @@ impl<T: Dump> DumpField for T {
         &self,
         name: &str,
         parent: Option<&Cow<str>>,
-        _doc: Option<&str>,
+        doc: Option<&str>,
         doc_overrides: DocOverrides<'d>,
         pos: &mut usize,
         output: &mut W,
@@ -229,6 +229,10 @@ impl<T: Dump> DumpField for T {
         let parent = parent
             .map(|s| Cow::Owned(format!("{}.{}", s, name)))
             .unwrap_or(Cow::Borrowed(name));
+        let mut doc_overrides = doc_overrides;
+        if let Some(doc) = doc {
+            doc_overrides.merge(&DocOverrides::new(vec![("", doc)]));
+        }
         self.dump(Some(&parent), doc_overrides, pos, output)
     }
 }

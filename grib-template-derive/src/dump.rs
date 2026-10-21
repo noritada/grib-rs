@@ -17,9 +17,14 @@ pub(crate) fn impl_for_struct(
     };
 
     if kind == super::helpers::StructKind::TupleStruct {
-        let doc = get_doc(&fields[0].attrs)
-            .map(|s| format!("  // {}", s.trim()))
-            .unwrap_or_default();
+        let doc = get_doc(&fields[0].attrs);
+        let doc = match doc {
+            Some(doc) => {
+                let doc = doc.trim();
+                quote! { Some(#doc) }
+            }
+            None => quote! { None },
+        };
 
         let format = if flag { " = {:#010b}{}" } else { " = {}{}" };
 
@@ -37,9 +42,12 @@ pub(crate) fn impl_for_struct(
                     if let Some(parent) = parent {
                         write!(output, "{}", parent)?;
                     }
+                    let doc = doc_overrides.get("").or(#doc)
+                        .map(|s| format!("  // {}", s))
+                        .unwrap_or_default();
                     writeln!(output, #format,
                         self.0,
-                        #doc,
+                        doc,
                     )
                 }
             }
