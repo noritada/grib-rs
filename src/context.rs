@@ -587,7 +587,7 @@ Data Representation:                    {}
     ///             num_points: 86016,
     ///             num_point_list_octets: 0,
     ///             point_list_interpretation: 0,
-    ///             template_num: 0,
+    ///             template_num: grib::def::grib2::table::GridDefinitionTemplateNum(0),
     ///             template: grib::def::grib2::GridDefinitionTemplate::_3_0(grib::def::grib2::template::Template3_0 {
     ///                 earth: grib::def::grib2::template::param_set::EarthShape {
     ///                     shape: 4,
@@ -663,7 +663,7 @@ Data Representation:                    {}
     ///         },
     ///         payload: grib::def::grib2::Section4Payload {
     ///             num_coord_values: 0,
-    ///             template_num: 0,
+    ///             template_num: grib::def::grib2::table::ProductDefinitionTemplateNum(0),
     ///             template: grib::def::grib2::ProductDefinitionTemplate::_4_0(
     ///                 grib::def::grib2::template::Template4_0 {
     ///                     param: grib::def::grib2::template::param_set::ProductParam {
@@ -744,7 +744,7 @@ Data Representation:                    {}
     ///         },
     ///         payload: grib::def::grib2::Section5Payload {
     ///             num_encoded_points: 86016,
-    ///             template_num: 200,
+    ///             template_num: grib::def::grib2::table::DataRepresentationTemplateNum(200),
     ///             template: grib::def::grib2::DataRepresentationTemplate::_5_200(
     ///                 grib::def::grib2::template::Template5_200 {
     ///                     num_bits: 8,

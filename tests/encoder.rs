@@ -51,7 +51,7 @@ impl LatLngGridDef {
             num_points: self.num_points() as u32,
             num_point_list_octets: 0,
             point_list_interpretation: 0,
-            template_num: 0,
+            template_num: grib2::table::GridDefinitionTemplateNum(0),
             template: grib2::GridDefinitionTemplate::_3_0(grib2::template::Template3_0 {
                 earth: grib2::template::param_set::EarthShape {
                     shape: 6,

@@ -7,6 +7,7 @@ pub mod cookbook;
 mod datatypes;
 mod decoder;
 pub mod def;
+mod def_impls;
 pub mod encoder;
 mod error;
 mod grid;

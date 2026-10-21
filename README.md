@@ -171,7 +171,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         },
         payload: grib::def::grib2::Section5Payload {
             num_encoded_points: 86016,
-            template_num: 200,
+            template_num: grib::def::grib2::table::DataRepresentationTemplateNum(200),
             template: grib::def::grib2::DataRepresentationTemplate::_5_200(
                 grib::def::grib2::template::Template5_200 {
                     num_bits: 8,

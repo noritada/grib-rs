@@ -27,6 +27,12 @@ pub struct ProcessedDataType(
 );
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, TryFromSlice, WriteToBuffer, Dump)]
+pub struct IdentificationTemplateNum(
+    /// Identification template number (optional, see Code table 1.5).
+    pub u16,
+);
+
+#[derive(Debug, PartialEq, Eq, Clone, Copy, TryFromSlice, WriteToBuffer, Dump)]
 pub struct CalendarType(
     /// Type of calendar (see Code table 1.6).
     pub u8,

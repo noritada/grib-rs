@@ -1,6 +1,12 @@
 use grib_template_derive::{Dump, TryFromSlice, WriteToBuffer};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, TryFromSlice, WriteToBuffer, Dump)]
+pub struct ProductDefinitionTemplateNum(
+    /// Product definition template number (see Code table 4.0).
+    pub u16,
+);
+
+#[derive(Debug, PartialEq, Eq, Clone, Copy, TryFromSlice, WriteToBuffer, Dump)]
 pub struct ParamCategory(
     /// Parameter category (see Code Table 4.1).
     pub u8,

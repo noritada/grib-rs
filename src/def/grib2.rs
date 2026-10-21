@@ -69,8 +69,7 @@ pub struct Section1Payload {
 
 #[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump)]
 pub struct Section1PayloadOptional {
-    /// Identification template number (optional, see Code table 1.5).
-    pub template_num: u16,
+    pub template_num: table1::IdentificationTemplateNum,
     /// Identification template (optional, see template 1.X, where X is the
     /// identification template number given in octets 22-23).
     #[grib_template(variant = "template_num")]
@@ -99,8 +98,7 @@ pub struct Section3Payload {
     pub num_point_list_octets: u8,
     /// Interpretation of list of numbers (see Code table 3.11).
     pub point_list_interpretation: u8,
-    /// Grid definition template number (= N) (see Code table 3.1).
-    pub template_num: u16,
+    pub template_num: table3::GridDefinitionTemplateNum,
     /// Grid Definition Template (see Template 3.N, where N is the Grid
     /// Definition Template Number given in octets 13-14).
     #[grib_template(variant = "template_num")]
@@ -133,8 +131,7 @@ pub struct Section4Payload {
     /// Number of coordinate values after template or number of information
     /// according to 3D vertical coordinate GRIB2 message (see Notes 1 and 5).
     pub num_coord_values: u16,
-    /// Product definition template number (see Code table 4.0).
-    pub template_num: u16,
+    pub template_num: table4::ProductDefinitionTemplateNum,
     /// Product Definition Template (see Template 4.X, where X is the Product
     /// Definition Template Number given in octets 8-9).
     #[grib_template(variant = "template_num")]
@@ -166,8 +163,7 @@ pub struct Section5Payload {
     /// 7 when a bit map is present, total number of data points when a bit map
     /// is absent.
     pub num_encoded_points: u32,
-    /// Data representation template number (see Code table 5.0).
-    pub template_num: u16,
+    pub template_num: table5::DataRepresentationTemplateNum,
     /// Data representation template (see template 5.X, where X is the data
     /// representation template number given in octets 10-11).
     #[grib_template(variant = "template_num")]
