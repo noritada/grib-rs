@@ -68,6 +68,7 @@ pub struct ParamsWithGenerics<T: grib_template_helpers::DumpField> {
 pub type TypeWithGenerics = ParamsWithGenerics<i16>;
 
 #[derive(Debug, PartialEq, Eq, grib_template_derive::Dump)]
+#[dump(flag)]
 pub struct TupleStruct(
     /// Tuple struct
     u8,

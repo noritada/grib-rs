@@ -11,4 +11,5 @@ fn tests() {
     t.pass("tests/try_from_slice_for_enum.rs");
     t.pass("tests/try_from_slice_for_option.rs");
     t.pass("tests/write_to_buffer.rs");
+    t.pass("tests/tuple_struct_u16.rs");
 }

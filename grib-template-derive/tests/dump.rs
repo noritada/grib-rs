@@ -26,6 +26,7 @@ pub struct Params {
     /// Field 12
     #[grib_template(num_octets = 3)]
     field12: u32,
+    field13: DecimalValue,
 }
 
 #[derive(grib_template_derive::Dump)]
@@ -68,8 +69,15 @@ pub struct ParamsWithGenerics<T: grib_template_helpers::DumpField> {
 pub type TypeWithGenerics = ParamsWithGenerics<i16>;
 
 #[derive(Debug, PartialEq, Eq, grib_template_derive::Dump)]
+#[dump(flag)]
 pub struct TupleStruct(
     /// Tuple struct
+    u8,
+);
+
+#[derive(grib_template_derive::Dump)]
+pub struct DecimalValue(
+    /// Decimal value
     u8,
 );
 
@@ -91,6 +99,7 @@ fn main() {
         field10: TupleStruct(0x08),
         field11: [1, 2, 3, 4, 5],
         field12: 0x012345,
+        field13: DecimalValue(128),
     };
 
     let mut buf = std::io::Cursor::new(Vec::with_capacity(1024));
@@ -115,6 +124,7 @@ fn main() {
 27        field10 = 0b00001000  // Tuple struct
 28-32     field11 = [1, 2, 3, 4, 5]  // Field 11
 33-35     field12 = 74565  // Field 12
+36        field13 = 128  // Decimal value
 "
     )
 }

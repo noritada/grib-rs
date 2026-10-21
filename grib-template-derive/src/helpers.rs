@@ -66,7 +66,7 @@ pub(crate) fn extract_struct_info(
         syn::Fields::Named(fields) => Some((StructKind::NamedStruct, &fields.named)),
         syn::Fields::Unnamed(fields) => {
             let fields = &fields.unnamed;
-            if fields.len() == 1 && is_type_u8(&fields.first().unwrap().ty) {
+            if fields.len() == 1 && (is_type_u8(&fields[0].ty) || is_type_u16(&fields[0].ty)) {
                 Some((StructKind::TupleStruct, fields))
             } else {
                 None
@@ -81,6 +81,15 @@ pub(crate) fn is_type_u8(ty: &syn::Type) -> bool {
         && let Some(segment) = path.segments.last()
     {
         return segment.ident == "u8";
+    }
+    false
+}
+
+pub(crate) fn is_type_u16(ty: &syn::Type) -> bool {
+    if let syn::Type::Path(syn::TypePath { path, .. }) = ty
+        && let Some(segment) = path.segments.last()
+    {
+        return segment.ident == "u16";
     }
     false
 }
