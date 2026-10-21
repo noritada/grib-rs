@@ -2,7 +2,7 @@
 use crate::projection::OsgeoProj;
 use crate::{
     GridPointIndex, LatLons,
-    def::grib2::template::{Template3_20, param_set},
+    def::grib2::{table, template::Template3_20},
     error::GribError,
     grid::AngleUnit,
     projection,
@@ -19,7 +19,7 @@ impl GridPointIndex for Template3_20 {
         (self.ni as usize, self.nj as usize)
     }
 
-    fn scanning_mode(&self) -> &param_set::ScanningMode {
+    fn scanning_mode(&self) -> &table::ScanningMode {
         &self.scanning_mode
     }
 }
@@ -42,7 +42,7 @@ impl LatLons for Template3_20 {
         })?;
 
         if self.projection_centre.has_unsupported_flags() {
-            let param_set::ProjectionCentreFlag(flag) = self.projection_centre;
+            let table::ProjectionCentreFlag(flag) = self.projection_centre;
             return Err(GribError::NotSupported(format!("projection centre {flag}")));
         }
         let lat_origin = if self
@@ -112,6 +112,7 @@ impl AngleUnit for Template3_20 {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::def::grib2::template::param_set;
 
     #[test]
     fn polar_stereographic_grid_latlon_computation() -> Result<(), Box<dyn std::error::Error>> {
@@ -139,13 +140,13 @@ mod tests {
             nj: 824,
             first_point_lat: 18145030,
             first_point_lon: 217107456,
-            resolution_and_component_flags: param_set::ResolutionAndComponentFlags(0b00001000),
+            resolution_and_component_flags: table::ResolutionAndComponentFlags(0b00001000),
             lad: 60000000,
             lov: 249000000,
             dx: 10000000,
             dy: 10000000,
-            projection_centre: param_set::ProjectionCentreFlag(0b00000000),
-            scanning_mode: param_set::ScanningMode(0b01000000),
+            projection_centre: table::ProjectionCentreFlag(0b00000000),
+            scanning_mode: table::ScanningMode(0b01000000),
         };
         let latlons = grid_def.latlons()?.collect::<Vec<_>>();
 

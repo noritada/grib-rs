@@ -1,5 +1,7 @@
 use grib_template_derive::{Dump, TryFromSlice, WriteToBuffer};
 
+use super::table5;
+
 /// Data representation template 5.0 - Grid point data - simple packing.
 #[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump)]
 pub struct Template5_0 {
@@ -211,7 +213,10 @@ pub struct Template5_200 {
 ///
 /// use grib::{
 ///     TryFromSlice,
-///     def::grib2::template::{Template5_50002, Template5_50002Optional, param_set},
+///     def::grib2::{
+///         table,
+///         template::{Template5_50002, Template5_50002Optional, param_set},
+///     },
 /// };
 ///
 /// fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -235,7 +240,7 @@ pub struct Template5_200 {
 ///         second_order_packed_values_width: 264145,
 ///         widths_width: 5,
 ///         widths_len: 14,
-///         ordering_flags: param_set::OrderingFlags(0b00000000),
+///         ordering_flags: table::OrderingFlags(0b00000000),
 ///         spd_order: 2,
 ///         optional: Some(Template5_50002Optional {
 ///             num_spd_width_bits: 24,
@@ -259,7 +264,7 @@ pub struct Template5_50002 {
     pub widths_width: u8,
     /// Width of lengths.
     pub widths_len: u8,
-    pub ordering_flags: param_set::OrderingFlags,
+    pub ordering_flags: table5::OrderingFlags,
     /// Order of spatial differencing.
     pub spd_order: u8,
     pub optional: Option<Template5_50002Optional>,
@@ -322,11 +327,4 @@ pub(crate) mod param_set {
         /// the length increment given in octet 42).
         pub num_group_len_bits: u8,
     }
-
-    #[derive(Debug, PartialEq, Eq, Clone, Copy, TryFromSlice, WriteToBuffer, Dump)]
-    #[dump(flag)]
-    pub struct OrderingFlags(
-        /// Ordering flags (Flag table 5.50002).
-        pub u8,
-    );
 }

@@ -4,7 +4,7 @@ use crate::projection::OsgeoProj;
 use crate::projection::Project;
 use crate::{
     GridPointIndex, LatLons,
-    def::grib2::template::{Template3_10, param_set},
+    def::grib2::{table, template::Template3_10},
     error::GribError,
     grid::AngleUnit,
     projection,
@@ -21,7 +21,7 @@ impl GridPointIndex for Template3_10 {
         (self.ni as usize, self.nj as usize)
     }
 
-    fn scanning_mode(&self) -> &param_set::ScanningMode {
+    fn scanning_mode(&self) -> &table::ScanningMode {
         &self.scanning_mode
     }
 }
@@ -136,7 +136,9 @@ impl Template3_10 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::grid::helpers::test_helpers::assert_coord_almost_eq;
+    use crate::{
+        def::grib2::template::param_set, grid::helpers::test_helpers::assert_coord_almost_eq,
+    };
 
     fn grid_definition() -> Template3_10 {
         // grid point definition extracted from testdata/ds.wwa.bin.xz
@@ -160,11 +162,11 @@ mod tests {
             nj: 1793,
             first_point_lat: -30419200,
             first_point_lon: 129906005,
-            resolution_and_component_flags: param_set::ResolutionAndComponentFlags(0b00000000),
+            resolution_and_component_flags: table::ResolutionAndComponentFlags(0b00000000),
             lad: 20000000,
             last_point_lat: 80010000,
             last_point_lon: 10710000,
-            scanning_mode: param_set::ScanningMode(0b01010000),
+            scanning_mode: table::ScanningMode(0b01010000),
             orientation: 0,
             di: 10000000,
             dj: 10000000,

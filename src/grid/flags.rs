@@ -1,6 +1,6 @@
-use crate::def::grib2::template::param_set;
+use crate::def::grib2::table;
 
-impl param_set::ScanningMode {
+impl table::ScanningMode {
     /// Returns `true` if points of the first row or column scan in the `+i`
     /// (`+x`) direction.
     ///
@@ -8,7 +8,7 @@ impl param_set::ScanningMode {
     ///
     /// ```
     /// assert_eq!(
-    ///     grib::def::grib2::template::param_set::ScanningMode(0b00000000).scans_positively_for_i(),
+    ///     grib::def::grib2::table::ScanningMode(0b00000000).scans_positively_for_i(),
     ///     true
     /// );
     /// ```
@@ -23,7 +23,7 @@ impl param_set::ScanningMode {
     ///
     /// ```
     /// assert_eq!(
-    ///     grib::def::grib2::template::param_set::ScanningMode(0b00000000).scans_positively_for_j(),
+    ///     grib::def::grib2::table::ScanningMode(0b00000000).scans_positively_for_j(),
     ///     false
     /// );
     /// ```
@@ -38,7 +38,7 @@ impl param_set::ScanningMode {
     ///
     /// ```
     /// assert_eq!(
-    ///     grib::def::grib2::template::param_set::ScanningMode(0b00000000).is_consecutive_for_i(),
+    ///     grib::def::grib2::table::ScanningMode(0b00000000).is_consecutive_for_i(),
     ///     true
     /// );
     /// ```
@@ -52,7 +52,7 @@ impl param_set::ScanningMode {
     ///
     /// ```
     /// assert_eq!(
-    ///     grib::def::grib2::template::param_set::ScanningMode(0b00000000).scans_alternating_rows(),
+    ///     grib::def::grib2::table::ScanningMode(0b00000000).scans_alternating_rows(),
     ///     false
     /// );
     /// ```
@@ -65,7 +65,7 @@ impl param_set::ScanningMode {
     }
 }
 
-impl param_set::ProjectionCentreFlag {
+impl table::ProjectionCentreFlag {
     /// Returns `true` if North Pole is on the projection plane. Otherwise (i.e.
     /// if South Pole is on), returns `false`.
     ///
@@ -73,7 +73,7 @@ impl param_set::ProjectionCentreFlag {
     ///
     /// ```
     /// assert_eq!(
-    ///     grib::def::grib2::template::param_set::ProjectionCentreFlag(0b00000000)
+    ///     grib::def::grib2::table::ProjectionCentreFlag(0b00000000)
     ///         .contains_north_pole_on_projection_plane(),
     ///     true
     /// );
@@ -89,7 +89,7 @@ impl param_set::ProjectionCentreFlag {
     ///
     /// ```
     /// assert_eq!(
-    ///     grib::def::grib2::template::param_set::ProjectionCentreFlag(0b00000000).is_bipolar(),
+    ///     grib::def::grib2::table::ProjectionCentreFlag(0b00000000).is_bipolar(),
     ///     false
     /// );
     /// ```

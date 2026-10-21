@@ -210,6 +210,10 @@ pub struct Section6Payload {
     pub bitmap_indicator: u8,
 }
 
+pub mod table {
+    pub use super::{table3::*, table5::*};
+}
+
 pub mod template {
     //! GRIB2 template definitions.
 
@@ -268,6 +272,8 @@ pub mod template {
     }
 }
 
+mod table3;
+mod table5;
 mod template1;
 mod template3;
 mod template4;

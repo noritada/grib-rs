@@ -612,13 +612,13 @@ Data Representation:                    {}
     ///                         basic_angle_subdivisions: 0xffffffff,
     ///                         first_point_lat: 47958333,
     ///                         first_point_lon: 118062500,
-    ///                         resolution_and_component_flags: grib::def::grib2::template::param_set::ResolutionAndComponentFlags(0b00110000),
+    ///                         resolution_and_component_flags: grib::def::grib2::table::ResolutionAndComponentFlags(0b00110000),
     ///                         last_point_lat: 20041667,
     ///                         last_point_lon: 149937500,
     ///                     },
     ///                     i_direction_inc: 125000,
     ///                     j_direction_inc: 83333,
-    ///                     scanning_mode: grib::def::grib2::template::param_set::ScanningMode(0b00000000),
+    ///                     scanning_mode: grib::def::grib2::table::ScanningMode(0b00000000),
     ///                 },
     ///             }),
     ///         },
@@ -1131,7 +1131,7 @@ Data Representation:                    {}
     ///
     /// The order of items is the same as the order of the grid point values,
     /// defined by the scanning mode
-    /// ([`ScanningMode`](`crate::def::grib2::template::param_set::ScanningMode`))
+    /// ([`ScanningMode`](`crate::def::grib2::table::ScanningMode`))
     /// in the data.
     ///
     /// This iterator allows users to perform their own coordinate calculations
