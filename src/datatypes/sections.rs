@@ -23,7 +23,7 @@ impl Indicator {
         }
 
         Ok(Self {
-            discipline: sect.discipline,
+            discipline: sect.discipline.0,
             total_length: sect.total_len,
         })
     }

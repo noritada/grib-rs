@@ -77,7 +77,10 @@ pub struct Template4_6 {
 /// ```
 /// use grib::{
 ///     TryFromSlice,
-///     def::grib2::template::{Template4_8, param_set},
+///     def::grib2::{
+///         table,
+///         template::{Template4_8, param_set},
+///     },
 /// };
 ///
 /// fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -90,29 +93,32 @@ pub struct Template4_6 {
 ///     let actual = Template4_8::try_from_slice(&buf, &mut pos)?;
 ///     let expected = Template4_8 {
 ///         param: param_set::ProductParam {
-///             category: 1,
-///             num: 52,
+///             category: table::ParamCategory(1),
+///             num: table::ParamNum(52),
 ///         },
 ///         generating_process: param_set::GeneratingProcess {
-///             process_type: 2,
+///             process_type: table::GeneratingProcessType(2),
 ///             background_process: 0,
 ///             process_id: 1,
 ///         },
 ///         forecast_time: param_set::ForecastTime {
 ///             cutoff_hours: 0,
 ///             cutoff_minutes: 0,
-///             time: param_set::TimeRange { unit: 0, len: 0 },
+///             time: param_set::TimeRange {
+///                 unit: table::TimeRangeUnit(0),
+///                 len: 0,
+///             },
 ///         },
 ///         horizontal: param_set::Horizontal {
 ///             first_surface: param_set::FixedSurface {
-///                 surface_type: 1,
+///                 surface_type: table::FixedSurfaceType(1),
 ///                 value: param_set::ScaledValue {
 ///                     scale_factor: 0,
 ///                     scaled_value: 0,
 ///                 },
 ///             },
 ///             second_surface: param_set::FixedSurface {
-///                 surface_type: 255,
+///                 surface_type: table::FixedSurfaceType(255),
 ///                 value: param_set::ScaledValue {
 ///                     scale_factor: -127,
 ///                     scaled_value: -2147483647,
@@ -131,10 +137,16 @@ pub struct Template4_6 {
 ///             num_time_ranges: 1,
 ///             num_missing: 0,
 ///             time_ranges: vec![param_set::StatisticalProcess {
-///                 statistical_process_type: 1,
-///                 time_increment_type: 2,
-///                 time_range: param_set::TimeRange { unit: 0, len: 0 },
-///                 time_increment: param_set::TimeRange { unit: 255, len: 0 },
+///                 statistical_process_type: table::StatisticalProcessType(1),
+///                 time_increment_type: table::TimeIncrementType(2),
+///                 time_range: param_set::TimeRange {
+///                     unit: table::TimeRangeUnit(0),
+///                     len: 0,
+///                 },
+///                 time_increment: param_set::TimeRange {
+///                     unit: table::TimeRangeUnit(255),
+///                     len: 0,
+///                 },
 ///             }],
 ///         },
 ///     };
@@ -220,20 +232,20 @@ pub struct Template4_12 {
 pub(crate) mod param_set {
     use grib_template_derive::{Dump, TryFromSlice, WriteToBuffer};
 
-    use super::super::template::param_set::{DateTime, ScaledValue, TimeRange};
+    use super::super::{
+        table4,
+        template::param_set::{DateTime, ScaledValue, TimeRange},
+    };
 
     #[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump)]
     pub struct ProductParam {
-        /// Parameter category (see Code Table 4.1).
-        pub category: u8,
-        /// Parameter number (see Code Table 4.2).
-        pub num: u8,
+        pub category: table4::ParamCategory,
+        pub num: table4::ParamNum,
     }
 
     #[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump)]
     pub struct GeneratingProcess {
-        /// Type of generating process (see Code Table 4.3).
-        pub process_type: u8,
+        pub process_type: table4::GeneratingProcessType,
         /// Background generating process identifier (defined by originating
         /// centre).
         pub background_process: u8,
@@ -278,16 +290,14 @@ pub(crate) mod param_set {
 
     #[derive(Debug, PartialEq, Eq, Clone, TryFromSlice, WriteToBuffer, Dump)]
     pub struct FixedSurface {
-        /// Type of fixed surface (see Code Table 4.5).
-        pub surface_type: u8,
+        pub surface_type: table4::FixedSurfaceType,
         /// Scaled value of fixed surface.
         pub value: ScaledValue<i8, i32>,
     }
 
     #[derive(Debug, PartialEq, Eq, Clone, TryFromSlice, WriteToBuffer, Dump)]
     pub struct EnsembleForecast {
-        /// Type of ensemble forecast (see Code Table 4.6).
-        pub ensemble_forecast_type: u8,
+        pub ensemble_forecast_type: table4::EnsembleForecastType,
         ///  Perturbation number.
         pub perturbation_num: u8,
         /// Number of forecasts in ensemble.
@@ -296,8 +306,7 @@ pub(crate) mod param_set {
 
     #[derive(Debug, PartialEq, Eq, Clone, TryFromSlice, WriteToBuffer, Dump)]
     pub struct DerivedForecast {
-        /// Derived forecast (see Code Table 4.7).
-        pub derived_forecast_type: u8,
+        pub derived_forecast_type: table4::DerivedForecastType,
         /// Number of forecasts in ensemble.
         pub num_forecasts: u8,
     }
@@ -308,8 +317,7 @@ pub(crate) mod param_set {
         pub forecast_probability_num: u8,
         /// Total number of forecast probabilities.
         pub total_num_forecast_probabilities: u8,
-        /// Probability type (see Code Table 4.9).
-        pub probability_type: u8,
+        pub probability_type: table4::ProbabilityForecastType,
         /// Lower limit.
         #[dump(doc(
             scale_factor = "Scale factor of lower limit.",
@@ -345,13 +353,8 @@ pub(crate) mod param_set {
 
     #[derive(Debug, PartialEq, Eq, Clone, TryFromSlice, WriteToBuffer, Dump)]
     pub struct StatisticalProcess {
-        /// Statistical process used to calculate the processed field from the
-        /// field at each time increment during the time range (see Code Table
-        /// 4.10).
-        pub statistical_process_type: u8,
-        /// Type of time increment between successive fields used in the
-        /// statistical processing (see Code Table 4.11).
-        pub time_increment_type: u8,
+        pub statistical_process_type: table4::StatisticalProcessType,
+        pub time_increment_type: table4::TimeIncrementType,
         /// Time range over which statistical processing is done.
         #[dump(doc(
             unit = "Indicator of unit of time for time range over which statistical processing is done (see Code Table 4.4).",

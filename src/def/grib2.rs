@@ -30,8 +30,7 @@ pub struct Section0 {
     pub identifier: [u8; 4],
     /// Reserved.
     pub reserved: [u8; 2],
-    /// Discipline - GRIB Master Table Number (see Code Table 0.0).
-    pub discipline: u8,
+    pub discipline: table0::Discipline,
     /// GRIB Edition Number (currently 2).
     pub edition_num: u8,
     /// Total length of GRIB message in octets (including Section 0).
@@ -51,11 +50,8 @@ pub struct Section1Payload {
     pub subcentre_id: u16,
     /// GRIB master table version number (see Common Code table C-0 and Note 1).
     pub master_table_version: u8,
-    /// Version number of GRIB Local tables used to augment Master tables (see
-    /// Code table 1.1 and Note 2).
-    pub local_table_version: u8,
-    /// Significance of reference time (see Code table 1.2).
-    pub ref_time_significance: u8,
+    pub local_table_version: table1::LocalTableVer,
+    pub ref_time_significance: table1::RefTimeSignificance,
     /// Reference time of data.
     #[dump(doc(
         year = "Year (4 digits) - Reference time of data.",
@@ -66,11 +62,8 @@ pub struct Section1Payload {
         second = "Second - Reference time of data.",
     ))]
     pub ref_time: template::param_set::DateTime,
-    /// Production status of processed data in this GRIB message (see Code table
-    /// 1.3).
-    pub prod_status: u8,
-    /// Type of processed data in this GRIB message (see Code table 1.4).
-    pub data_type: u8,
+    pub prod_status: table1::ProductionStatus,
+    pub data_type: table1::ProcessedDataType,
     pub optional: Option<Section1PayloadOptional>,
 }
 
@@ -211,7 +204,7 @@ pub struct Section6Payload {
 }
 
 pub mod table {
-    pub use super::{table3::*, table5::*};
+    pub use super::{table0::*, table1::*, table3::*, table4::*, table5::*};
 }
 
 pub mod template {
@@ -224,6 +217,7 @@ pub mod template {
 
         use grib_template_derive::{Dump, TryFromSlice, WriteToBuffer};
 
+        use super::super::table4;
         pub use super::super::{
             template3::param_set::*, template4::param_set::*, template5::param_set::*,
         };
@@ -264,15 +258,17 @@ pub mod template {
         where
             L: crate::TryFromSlice + crate::WriteToBuffer + grib_template_helpers::DumpField,
         {
-            /// Unit of time range (see Code Table 4.4).
-            pub unit: u8,
+            pub unit: table4::TimeRangeUnit,
             /// Length of the time range in units defined by `unit`.
             pub len: L,
         }
     }
 }
 
+mod table0;
+mod table1;
 mod table3;
+mod table4;
 mod table5;
 mod template1;
 mod template3;

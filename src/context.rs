@@ -529,8 +529,8 @@ Data Representation:                    {}
     ///             centre_id: 34,
     ///             subcentre_id: 0,
     ///             master_table_version: 5,
-    ///             local_table_version: 1,
-    ///             ref_time_significance: 0,
+    ///             local_table_version: grib::def::grib2::table::LocalTableVer(1),
+    ///             ref_time_significance: grib::def::grib2::table::RefTimeSignificance(0),
     ///             ref_time: grib::def::grib2::template::param_set::DateTime {
     ///                 year: 2016,
     ///                 month: 8,
@@ -539,8 +539,8 @@ Data Representation:                    {}
     ///                 minute: 0,
     ///                 second: 0,
     ///             },
-    ///             prod_status: 0,
-    ///             data_type: 2,
+    ///             prod_status: grib::def::grib2::table::ProductionStatus(0),
+    ///             data_type: grib::def::grib2::table::ProcessedDataType(2),
     ///             optional: None,
     ///         },
     ///     });
@@ -667,12 +667,12 @@ Data Representation:                    {}
     ///             template: grib::def::grib2::ProductDefinitionTemplate::_4_0(
     ///                 grib::def::grib2::template::Template4_0 {
     ///                     param: grib::def::grib2::template::param_set::ProductParam {
-    ///                         category: 193,
-    ///                         num: 0,
+    ///                         category: grib::def::grib2::table::ParamCategory(193),
+    ///                         num: grib::def::grib2::table::ParamNum(0),
     ///                     },
     ///                     generating_process:
     ///                         grib::def::grib2::template::param_set::GeneratingProcess {
-    ///                             process_type: 0,
+    ///                             process_type: grib::def::grib2::table::GeneratingProcessType(0),
     ///                             background_process: 153,
     ///                             process_id: 255,
     ///                         },
@@ -680,20 +680,20 @@ Data Representation:                    {}
     ///                         cutoff_hours: 0,
     ///                         cutoff_minutes: 0,
     ///                         time: grib::def::grib2::template::param_set::TimeRange {
-    ///                             unit: 0,
+    ///                             unit: grib::def::grib2::table::TimeRangeUnit(0),
     ///                             len: 0,
     ///                         },
     ///                     },
     ///                     horizontal: grib::def::grib2::template::param_set::Horizontal {
     ///                         first_surface: grib::def::grib2::template::param_set::FixedSurface {
-    ///                             surface_type: 1,
+    ///                             surface_type: grib::def::grib2::table::FixedSurfaceType(1),
     ///                             value: grib::def::grib2::template::param_set::ScaledValue {
     ///                                 scale_factor: -127,
     ///                                 scaled_value: -2147483647,
     ///                             },
     ///                         },
     ///                         second_surface: grib::def::grib2::template::param_set::FixedSurface {
-    ///                             surface_type: 255,
+    ///                             surface_type: grib::def::grib2::table::FixedSurfaceType(255),
     ///                             value: grib::def::grib2::template::param_set::ScaledValue {
     ///                                 scale_factor: -127,
     ///                                 scaled_value: -2147483647,
