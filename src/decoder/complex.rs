@@ -463,6 +463,73 @@ mod tests {
             params(), Err(DecodeError::LengthMismatch)),
     }
 
+    macro_rules! reference_width_tests {
+        (
+            $(
+                ($name:ident, $data:expr, $bits:expr, $groups:expr, $last_length:expr, $expected:expr $(,)?)
+            ),*
+            $(,)?
+        ) => ($(
+            #[test]
+            fn $name() {
+                // Constant groups need no packed values. Descriptor widths of
+                // zero isolate reference-width and group-count validation.
+                let params = param_set::ComplexPacking {
+                    num_groups: $groups,
+                    num_group_width_bits: 0,
+                    group_len_ref: 1,
+                    group_len_last: $last_length,
+                    num_group_len_bits: 0,
+                    ..params()
+                };
+                let actual = decode_complex_packing(&params, &$data, 0, $bits, 0)
+                    .map(|values| values.collect::<Vec<_>>());
+                assert_eq!(actual, $expected);
+            }
+        )*);
+    }
+
+    reference_width_tests! {
+        (
+            complex_packing_accepts_zero_reference_width,
+            [],
+            0,
+            1,
+            1,
+            Ok(vec![Normal(0)]),
+        ),
+        (
+            complex_packing_accepts_31_bit_reference_width,
+            // The 31-bit reference is i32::MAX, followed by one padding bit.
+            // With missing-value management disabled it is a normal value.
+            [0xff, 0xff, 0xff, 0xfe],
+            31,
+            1,
+            1,
+            Ok(vec![Normal(i32::MAX)]),
+        ),
+        (
+            complex_packing_reads_multiple_group_references,
+            // One-bit references 0 and 1, followed by six padding bits.
+            // The first group has length 1; the last uses its explicit length 2.
+            [0x40],
+            1,
+            2,
+            2,
+            Ok(vec![Normal(0), Normal(1), Normal(1)]),
+        ),
+        (
+            complex_packing_rejects_maximum_reference_width,
+            // Enough bytes for the declared reference: rejection must not
+            // depend on truncated metadata.
+            [0; 32],
+            u8::MAX,
+            1,
+            1,
+            Err(DecodeError::LengthMismatch),
+        ),
+    }
+
     #[test]
     fn dispatch_rejects_truncated_complex_metadata() -> Result<(), Box<dyn std::error::Error>> {
         // Section 5: template 5.2, one point and one group. Each descriptor
