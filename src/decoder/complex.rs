@@ -386,11 +386,104 @@ mod tests {
         }
     }
 
+    macro_rules! metadata_range_tests {
+        (
+            $(
+                ($name:ident, $data:expr, $offset:expr, $bits:expr, $params:expr, $expected:expr $(,)?)
+            ),*
+            $(,)?
+        ) => ($(
+            #[test]
+            fn $name() {
+                let params = $params;
+                let actual = decode_complex_packing(&params, &$data, $offset, $bits, 0);
+                assert_eq!(actual.map(|_| ()), $expected);
+            }
+        )*);
+    }
+
+    metadata_range_tests! {
+        (
+            complex_packing_rejects_truncated_group_metadata,
+            [0, 0],
+            0,
+            1,
+            params(),
+            Err(DecodeError::LengthMismatch),
+        ),
+        (metadata_exact_fit, [0; 3], 0, 1, params(), Ok(())),
+        (metadata_offset_exact_fit, [0; 5], 2, 1, params(), Ok(())),
+        (metadata_offset_truncated, [0; 4], 2, 1, params(), Err(DecodeError::LengthMismatch)),
+        // Each of the three descriptor arrays occupies ceil(3 * 3 / 8) = 2 bytes.
+        (metadata_rounds_each_array_to_octets, [0; 6], 0, 3,
+            param_set::ComplexPacking {
+                num_groups: 3,
+                num_group_width_bits: 3,
+                num_group_len_bits: 3,
+                ..params()
+            }, Ok(())),
+        (metadata_rounded_arrays_truncated, [0; 5], 0, 3,
+            param_set::ComplexPacking {
+                num_groups: 3,
+                num_group_width_bits: 3,
+                num_group_len_bits: 3,
+                ..params()
+            }, Err(DecodeError::LengthMismatch)),
+        // This product exceeds u32::MAX and used to wrap to zero without overflow checks.
+        // On 32-bit targets the checked multiplication must instead return an error.
+        (metadata_reference_bit_count_exceeds_u32, [0; 0], 0, 2,
+            param_set::ComplexPacking {
+                num_groups: 1 << 31,
+                num_group_width_bits: 0,
+                num_group_len_bits: 0,
+                ..params()
+            }, Err(DecodeError::LengthMismatch)),
+        (metadata_width_bit_count_exceeds_u32, [0; 0], 0, 0,
+            param_set::ComplexPacking {
+                num_groups: 1 << 31,
+                num_group_width_bits: 2,
+                num_group_len_bits: 0,
+                ..params()
+            }, Err(DecodeError::LengthMismatch)),
+        (metadata_length_bit_count_exceeds_u32, [0; 0], 0, 0,
+            param_set::ComplexPacking {
+                num_groups: 1 << 31,
+                num_group_width_bits: 0,
+                num_group_len_bits: 2,
+                ..params()
+            }, Err(DecodeError::LengthMismatch)),
+        (metadata_reference_end_overflows, [0; 0], usize::MAX, 1,
+            params(), Err(DecodeError::LengthMismatch)),
+        (metadata_width_end_overflows, [0; 0], usize::MAX - 1, 1,
+            params(), Err(DecodeError::LengthMismatch)),
+        (metadata_length_end_overflows, [0; 0], usize::MAX - 2, 1,
+            params(), Err(DecodeError::LengthMismatch)),
+    }
+
     #[test]
-    fn complex_packing_rejects_truncated_group_metadata() {
+    fn dispatch_rejects_truncated_complex_metadata() -> Result<(), Box<dyn std::error::Error>> {
+        // Section 5: template 5.2, one point and one group. Each descriptor
+        // array needs one byte (one entry encoded with one bit).
+        let mut sect5 = vec![0; 47];
+        sect5[..4].copy_from_slice(&47u32.to_be_bytes());
+        sect5[4] = 5;
+        sect5[5..9].copy_from_slice(&1u32.to_be_bytes());
+        sect5[9..11].copy_from_slice(&2u16.to_be_bytes());
+        sect5[19] = 1; // Bits per group reference.
+        sect5[21] = 1; // General group splitting.
+        sect5[31..35].copy_from_slice(&1u32.to_be_bytes());
+        sect5[36] = 1; // Bits per group width.
+        sect5[41] = 1; // Group length increment.
+        sect5[42..46].copy_from_slice(&1u32.to_be_bytes());
+        sect5[46] = 1; // Bits per scaled group length.
+        let sect6 = vec![0, 0, 0, 6, 6, 255]; // No bitmap.
+        let sect7 = vec![0, 0, 0, 7, 7, 0, 0]; // Only two descriptor bytes.
+        let decoder = Grib2SubmessageDecoder::new(1, sect5, sect6, sect7)?;
+
         assert!(matches!(
-            decode_complex_packing(&params(), &[0, 0], 0, 1, 0),
-            Err(DecodeError::LengthMismatch)
+            decoder.dispatch(),
+            Err(crate::GribError::DecodeError(DecodeError::LengthMismatch))
         ));
+        Ok(())
     }
 }
