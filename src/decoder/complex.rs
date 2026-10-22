@@ -609,6 +609,69 @@ mod tests {
         );
     }
 
+    macro_rules! complex_packing_rejection_tests {
+        (
+            $(
+                ($name:ident, $params:expr, $data:expr, $bits:expr $(,)?)
+            ),*
+            $(,)?
+        ) => ($(
+            #[test]
+            fn $name() {
+                let params = $params;
+                let data = $data;
+                let actual = decode_complex_packing(&params, &data, 0, $bits, 0);
+                assert!(matches!(
+                    actual,
+                    Err(DecodeError::LengthMismatch)
+                ));
+            }
+        )*);
+    }
+
+    complex_packing_rejection_tests! {
+        (complex_packing_rejects_zero_groups,
+            param_set::ComplexPacking {
+                num_groups: 0,
+                ..params()
+            }, [], 1),
+        (complex_packing_rejects_truncated_group_values,
+            param_set::ComplexPacking {
+                num_groups: 2,
+                group_width_ref: 1,
+                num_group_width_bits: 0,
+                group_len_ref: 4,
+                group_len_last: 4,
+                num_group_len_bits: 0,
+                ..params()
+            }, [0], 1),
+        (complex_packing_rejects_group_widths_that_overflow_value_markers,
+            param_set::ComplexPacking {
+                num_group_width_bits: 8,
+                num_group_len_bits: 0,
+                ..params()
+            }, [32, 0, 0, 0, 0], 0),
+        (complex_packing_rejects_reference_widths_that_overflow_value_markers,
+            param_set::ComplexPacking {
+                num_group_width_bits: 0,
+                ..params()
+            }, [0, 0, 0, 0, 0], 32),
+        (complex_packing_rejects_overflowing_group_length,
+            param_set::ComplexPacking {
+                num_groups: 2,
+                num_group_width_bits: 0,
+                group_len_ref: u32::MAX,
+                ..params()
+            }, [0x80], 0),
+        (complex_packing_rejects_overflowing_group_width,
+            param_set::ComplexPacking {
+                num_group_width_bits: 32,
+                group_width_ref: 1,
+                num_group_len_bits: 0,
+                ..params()
+            }, [0xff, 0xff, 0xff, 0xff], 0),
+    }
+
     #[test]
     fn dispatch_rejects_truncated_complex_metadata() -> Result<(), Box<dyn std::error::Error>> {
         // Section 5: template 5.2, one point and one group. Each descriptor
@@ -634,81 +697,5 @@ mod tests {
             Err(crate::GribError::DecodeError(DecodeError::LengthMismatch))
         ));
         Ok(())
-    }
-
-    #[test]
-    fn complex_packing_rejects_zero_groups() {
-        let mut params = params();
-        params.num_groups = 0;
-
-        assert!(matches!(
-            decode_complex_packing(&params, &[], 0, 1, 0),
-            Err(DecodeError::LengthMismatch)
-        ));
-    }
-
-    #[test]
-    fn complex_packing_rejects_truncated_group_values() {
-        let mut params = params();
-        params.num_groups = 2;
-        params.group_width_ref = 1;
-        params.num_group_width_bits = 0;
-        params.group_len_ref = 4;
-        params.group_len_last = 4;
-        params.num_group_len_bits = 0;
-
-        assert!(matches!(
-            decode_complex_packing(&params, &[0], 0, 1, 0),
-            Err(DecodeError::LengthMismatch)
-        ));
-    }
-
-    #[test]
-    fn complex_packing_rejects_group_widths_that_overflow_value_markers() {
-        let mut params = params();
-        params.num_group_width_bits = 8;
-        params.num_group_len_bits = 0;
-
-        assert!(matches!(
-            decode_complex_packing(&params, &[32, 0, 0, 0, 0], 0, 0, 0),
-            Err(DecodeError::LengthMismatch)
-        ));
-    }
-
-    #[test]
-    fn complex_packing_rejects_reference_widths_that_overflow_value_markers() {
-        let mut params = params();
-        params.num_group_width_bits = 0;
-
-        assert!(matches!(
-            decode_complex_packing(&params, &[0, 0, 0, 0, 0], 0, 32, 0),
-            Err(DecodeError::LengthMismatch)
-        ));
-    }
-
-    #[test]
-    fn complex_packing_rejects_overflowing_group_length() {
-        let mut params = params();
-        params.num_groups = 2;
-        params.num_group_width_bits = 0;
-        params.group_len_ref = u32::MAX;
-
-        assert!(matches!(
-            decode_complex_packing(&params, &[0x80], 0, 0, 0),
-            Err(DecodeError::LengthMismatch)
-        ));
-    }
-
-    #[test]
-    fn complex_packing_rejects_overflowing_group_width() {
-        let mut params = params();
-        params.num_group_width_bits = 32;
-        params.group_width_ref = 1;
-        params.num_group_len_bits = 0;
-
-        assert!(matches!(
-            decode_complex_packing(&params, &[0xff, 0xff, 0xff, 0xff], 0, 0, 0),
-            Err(DecodeError::LengthMismatch)
-        ));
     }
 }
