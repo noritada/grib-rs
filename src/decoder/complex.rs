@@ -698,4 +698,36 @@ mod tests {
         ));
         Ok(())
     }
+
+    #[test]
+    fn dispatch_rejects_truncated_spatial_differencing_descriptors()
+    -> Result<(), Box<dyn std::error::Error>> {
+        // Section 5: template 5.3, first-order spatial differencing with
+        // two-octet descriptors. The three-byte Section 7 payload is one byte
+        // short of the four bytes required for two initial values and the
+        // overall minimum difference.
+        let mut sect5 = vec![0; 49];
+        sect5[..4].copy_from_slice(&49u32.to_be_bytes());
+        sect5[4] = 5;
+        sect5[5..9].copy_from_slice(&1u32.to_be_bytes());
+        sect5[9..11].copy_from_slice(&3u16.to_be_bytes());
+        sect5[19] = 1; // Bits per group reference.
+        sect5[21] = 1; // General group splitting.
+        sect5[31..35].copy_from_slice(&1u32.to_be_bytes());
+        sect5[36] = 1; // Bits per group width.
+        sect5[41] = 1; // Group length increment.
+        sect5[42..46].copy_from_slice(&1u32.to_be_bytes());
+        sect5[46] = 1; // Bits per scaled group length.
+        sect5[47] = 1; // First-order spatial differencing.
+        sect5[48] = 2; // Two octets per extra descriptor.
+        let sect6 = vec![0, 0, 0, 6, 6, 255]; // No bitmap.
+        let sect7 = vec![0, 0, 0, 8, 7, 0, 0, 0]; // Three descriptor bytes.
+        let decoder = Grib2SubmessageDecoder::new(1, sect5, sect6, sect7)?;
+
+        assert!(matches!(
+            decoder.dispatch(),
+            Err(crate::GribError::DecodeError(DecodeError::LengthMismatch))
+        ));
+        Ok(())
+    }
 }
