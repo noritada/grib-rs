@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.20.2] - 2026-10-22
+
+### Security fixes
+
+This version fixes panic cases.
+
+A panic does not necessarily cause denial of service. Depending on the application's panic handling and configured panic strategy (unwind or abort), a panic may interrupt a processing thread or terminate the process. This can become a denial-of-service vulnerability when an attacker can supply input to the affected operation and the resulting failure disrupts service for legitimate users. A failure confined to the attacker's request does not by itself establish service-wide denial of service; the impact depends on how the application isolates failures and maintains processing capacity.
+
+The fixed panic mentioned above is as follows:
+
+- A panic during decoding malformed GRIB2 data packed using complex packing.
+  This panic does not occur with valid GRIB2 data.
+  ([GHSA-57g2-8cj3-3v8g] (thanks @amoutiers))
+
+[GHSA-57g2-8cj3-3v8g]: https://github.com/noritada/grib-rs/security/advisories/GHSA-57g2-8cj3-3v8g.md
+
+### Versions
+
+```
+grib 0.20.2
+grib-cli 0.20.2
+```
+
 ## [0.20.1] - 2026-10-20
 
 ### Fixes
@@ -1334,7 +1357,8 @@ grib-build 0.1.0
 grib 0.1.0
 ```
 
-[unreleased]: https://github.com/noritada/grib-rs/compare/v0.20.1...HEAD
+[unreleased]: https://github.com/noritada/grib-rs/compare/v0.20.2...HEAD
+[0.20.2]: https://github.com/noritada/grib-rs/compare/v0.20.1...v0.20.2
 [0.20.1]: https://github.com/noritada/grib-rs/compare/v0.20.0...v0.20.1
 [0.20.0]: https://github.com/noritada/grib-rs/compare/v0.19.1...v0.20.0
 [0.19.1]: https://github.com/noritada/grib-rs/compare/v0.19.0...v0.19.1
