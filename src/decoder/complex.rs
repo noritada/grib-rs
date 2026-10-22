@@ -57,7 +57,7 @@ impl<'d> Grib2GpvUnpack for Complex<'d> {
             0,
             template.simple.num_bits,
             0,
-        );
+        )?;
         let decoder = NonZeroSimplePackingDecoder::new(unpacked_data, &template.simple);
         let decoder = SimplePackingDecoder::NonZeroLength(decoder);
         Ok(decoder)
@@ -115,7 +115,7 @@ impl<'d> Grib2GpvUnpack for ComplexSpatial<'d> {
             sect7_params.len(),
             template.simple.num_bits,
             sect7_params.minimum(),
-        );
+        )?;
         let first_values = sect7_params.first_values();
         let first_values = first_values.collect::<Vec<_>>().into_iter();
         let spdiff_unpacked = match spdiff_order {
@@ -151,50 +151,122 @@ fn decode_complex_packing<'a>(
     sect7_offset: usize,
     num_bits: u8,
     z_min: i32,
-) -> ComplexPackingDecoded<'a> {
-    fn get_octet_length(num_bits: u8, num_groups: u32) -> usize {
-        super::helpers::num_octets((num_groups * u32::from(num_bits)) as usize)
+) -> Result<ComplexPackingDecoded<'a>, DecodeError> {
+    fn get_octet_length(num_bits: u8, num_groups: usize) -> Result<usize, DecodeError> {
+        // The helper function `num_octets` uses `usize::div_ceil(8)` to perform
+        // addition with boundary checks.
+        num_groups
+            .checked_mul(usize::from(num_bits))
+            .map(super::helpers::num_octets)
+            .ok_or(DecodeError::LengthMismatch)
     }
 
+    let num_groups = complex_param.num_groups as usize;
+    if num_groups == 0
+        || num_bits > 31
+        || complex_param.num_group_width_bits > 32
+        || complex_param.num_group_len_bits > 32
+    {
+        return Err(DecodeError::LengthMismatch);
+    }
     let params_end_octet = sect7_offset;
-    let group_refs_end_octet =
-        params_end_octet + get_octet_length(num_bits, complex_param.num_groups);
+    let group_refs_end_octet = params_end_octet
+        .checked_add(get_octet_length(num_bits, num_groups)?)
+        .ok_or(DecodeError::LengthMismatch)?;
     let group_widths_end_octet = group_refs_end_octet
-        + get_octet_length(complex_param.num_group_width_bits, complex_param.num_groups);
+        .checked_add(get_octet_length(
+            complex_param.num_group_width_bits,
+            num_groups,
+        )?)
+        .ok_or(DecodeError::LengthMismatch)?;
     let group_lens_end_octet = group_widths_end_octet
-        + get_octet_length(complex_param.num_group_len_bits, complex_param.num_groups);
+        .checked_add(get_octet_length(
+            complex_param.num_group_len_bits,
+            num_groups,
+        )?)
+        .ok_or(DecodeError::LengthMismatch)?;
+    if group_lens_end_octet > sect7_data.len() {
+        return Err(DecodeError::LengthMismatch);
+    }
+
+    // The decoder below is lazy and reads each group's values only when the
+    // iterator is consumed. Calculate the required data size eagerly so that
+    // truncated Section 7 data is rejected here instead of causing an
+    // out-of-bounds access during decoding.
+    let required_data_bits = BitStream::new(
+        &sect7_data[group_refs_end_octet..group_widths_end_octet],
+        usize::from(complex_param.num_group_width_bits),
+        num_groups,
+    )
+    .map(|width| {
+        width
+            .checked_add(u32::from(complex_param.group_width_ref))
+            .ok_or(DecodeError::LengthMismatch)
+    })
+    .take(num_groups)
+    .zip(
+        BitStream::new(
+            &sect7_data[group_widths_end_octet..group_lens_end_octet],
+            usize::from(complex_param.num_group_len_bits),
+            num_groups - 1,
+        )
+        .map(|length| {
+            length
+                .checked_mul(u32::from(complex_param.group_len_inc))
+                .and_then(|length| length.checked_add(complex_param.group_len_ref))
+                .ok_or(DecodeError::LengthMismatch)
+        })
+        .take(num_groups - 1)
+        .chain(iter::once(Ok(complex_param.group_len_last))),
+    )
+    .try_fold(0_usize, |total, (width, length)| {
+        let width = width?;
+        let length = length?;
+        if width >= 32 {
+            return Err(DecodeError::LengthMismatch);
+        }
+        let group_bits = (width as usize)
+            .checked_mul(length as usize)
+            .ok_or(DecodeError::LengthMismatch)?;
+        total
+            .checked_add(group_bits)
+            .ok_or(DecodeError::LengthMismatch)
+    })?;
+    if get_octet_length(1, required_data_bits)? > sect7_data[group_lens_end_octet..].len() {
+        return Err(DecodeError::LengthMismatch);
+    }
 
     let group_refs_iter = BitStream::new(
         &sect7_data[params_end_octet..group_refs_end_octet],
         usize::from(num_bits),
-        complex_param.num_groups as usize,
+        num_groups,
     );
-    let group_refs_iter = group_refs_iter.take(complex_param.num_groups as usize);
+    let group_refs_iter = group_refs_iter.take(num_groups);
 
     let group_widths_iter = WithOffset::new(
         BitStream::new(
             &sect7_data[group_refs_end_octet..group_widths_end_octet],
             usize::from(complex_param.num_group_width_bits),
-            complex_param.num_groups as usize,
+            num_groups,
         ),
         u32::from(complex_param.group_width_ref),
         1,
     )
-    .take(complex_param.num_groups as usize);
+    .take(num_groups);
 
     let group_lens_iter = WithOffset::new(
         BitStream::new(
             &sect7_data[group_widths_end_octet..group_lens_end_octet],
             usize::from(complex_param.num_group_len_bits),
-            (complex_param.num_groups - 1) as usize,
+            num_groups - 1,
         ),
         complex_param.group_len_ref,
         u32::from(complex_param.group_len_inc),
     )
-    .take((complex_param.num_groups - 1) as usize)
+    .take(num_groups - 1)
     .chain(iter::once(complex_param.group_len_last));
 
-    ComplexPackingValueDecodeIterator::new(
+    Ok(ComplexPackingValueDecodeIterator::new(
         group_refs_iter,
         group_widths_iter,
         group_lens_iter,
@@ -203,7 +275,7 @@ fn decode_complex_packing<'a>(
         z_min,
         sect7_data[group_lens_end_octet..].to_vec(),
     )
-    .flatten()
+    .flatten())
 }
 
 // Types of closures with captures cannot be denoted.
@@ -348,3 +420,314 @@ where
 
 mod diff;
 mod missing;
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn params() -> param_set::ComplexPacking {
+        param_set::ComplexPacking {
+            group_splitting_method: 1,
+            missing_value_management: 0,
+            primary_missing_value: 0,
+            secondary_missing_value: 0,
+            num_groups: 1,
+            group_width_ref: 0,
+            num_group_width_bits: 1,
+            group_len_ref: 0,
+            group_len_inc: 1,
+            group_len_last: 1,
+            num_group_len_bits: 1,
+        }
+    }
+
+    macro_rules! metadata_range_tests {
+        (
+            $(
+                ($name:ident, $data:expr, $offset:expr, $bits:expr, $params:expr, $expected:expr $(,)?)
+            ),*
+            $(,)?
+        ) => ($(
+            #[test]
+            fn $name() {
+                let params = $params;
+                let actual = decode_complex_packing(&params, &$data, $offset, $bits, 0);
+                assert_eq!(actual.map(|_| ()), $expected);
+            }
+        )*);
+    }
+
+    metadata_range_tests! {
+        (
+            complex_packing_rejects_truncated_group_metadata,
+            [0, 0],
+            0,
+            1,
+            params(),
+            Err(DecodeError::LengthMismatch),
+        ),
+        (metadata_exact_fit, [0; 3], 0, 1, params(), Ok(())),
+        (metadata_offset_exact_fit, [0; 5], 2, 1, params(), Ok(())),
+        (metadata_offset_truncated, [0; 4], 2, 1, params(), Err(DecodeError::LengthMismatch)),
+        // Each of the three descriptor arrays occupies ceil(3 * 3 / 8) = 2 bytes.
+        (metadata_rounds_each_array_to_octets, [0; 6], 0, 3,
+            param_set::ComplexPacking {
+                num_groups: 3,
+                num_group_width_bits: 3,
+                num_group_len_bits: 3,
+                ..params()
+            }, Ok(())),
+        (metadata_rounded_arrays_truncated, [0; 5], 0, 3,
+            param_set::ComplexPacking {
+                num_groups: 3,
+                num_group_width_bits: 3,
+                num_group_len_bits: 3,
+                ..params()
+            }, Err(DecodeError::LengthMismatch)),
+        // This product exceeds u32::MAX and used to wrap to zero without overflow checks.
+        // On 32-bit targets the checked multiplication must instead return an error.
+        (metadata_reference_bit_count_exceeds_u32, [0; 0], 0, 2,
+            param_set::ComplexPacking {
+                num_groups: 1 << 31,
+                num_group_width_bits: 0,
+                num_group_len_bits: 0,
+                ..params()
+            }, Err(DecodeError::LengthMismatch)),
+        (metadata_width_bit_count_exceeds_u32, [0; 0], 0, 0,
+            param_set::ComplexPacking {
+                num_groups: 1 << 31,
+                num_group_width_bits: 2,
+                num_group_len_bits: 0,
+                ..params()
+            }, Err(DecodeError::LengthMismatch)),
+        (metadata_length_bit_count_exceeds_u32, [0; 0], 0, 0,
+            param_set::ComplexPacking {
+                num_groups: 1 << 31,
+                num_group_width_bits: 0,
+                num_group_len_bits: 2,
+                ..params()
+            }, Err(DecodeError::LengthMismatch)),
+        (metadata_reference_end_overflows, [0; 0], usize::MAX, 1,
+            params(), Err(DecodeError::LengthMismatch)),
+        (metadata_width_end_overflows, [0; 0], usize::MAX - 1, 1,
+            params(), Err(DecodeError::LengthMismatch)),
+        (metadata_length_end_overflows, [0; 0], usize::MAX - 2, 1,
+            params(), Err(DecodeError::LengthMismatch)),
+    }
+
+    macro_rules! reference_width_tests {
+        (
+            $(
+                ($name:ident, $data:expr, $bits:expr, $groups:expr, $last_length:expr, $expected:expr $(,)?)
+            ),*
+            $(,)?
+        ) => ($(
+            #[test]
+            fn $name() {
+                // Constant groups need no packed values. Descriptor widths of
+                // zero isolate reference-width and group-count validation.
+                let params = param_set::ComplexPacking {
+                    num_groups: $groups,
+                    num_group_width_bits: 0,
+                    group_len_ref: 1,
+                    group_len_last: $last_length,
+                    num_group_len_bits: 0,
+                    ..params()
+                };
+                let actual = decode_complex_packing(&params, &$data, 0, $bits, 0)
+                    .map(|values| values.collect::<Vec<_>>());
+                assert_eq!(actual, $expected);
+            }
+        )*);
+    }
+
+    reference_width_tests! {
+        (
+            complex_packing_accepts_zero_reference_width,
+            [],
+            0,
+            1,
+            1,
+            Ok(vec![Normal(0)]),
+        ),
+        (
+            complex_packing_accepts_31_bit_reference_width,
+            // The 31-bit reference is i32::MAX, followed by one padding bit.
+            // With missing-value management disabled it is a normal value.
+            [0xff, 0xff, 0xff, 0xfe],
+            31,
+            1,
+            1,
+            Ok(vec![Normal(i32::MAX)]),
+        ),
+        (
+            complex_packing_reads_multiple_group_references,
+            // One-bit references 0 and 1, followed by six padding bits.
+            // The first group has length 1; the last uses its explicit length 2.
+            [0x40],
+            1,
+            2,
+            2,
+            Ok(vec![Normal(0), Normal(1), Normal(1)]),
+        ),
+        (
+            complex_packing_rejects_maximum_reference_width,
+            // Enough bytes for the declared reference: rejection must not
+            // depend on truncated metadata.
+            [0; 32],
+            u8::MAX,
+            1,
+            1,
+            Err(DecodeError::LengthMismatch),
+        ),
+    }
+
+    // This normal-path test covers multiple groups, different widths per
+    // group, reference/increment-based lengths, an explicit final-group
+    // length, and packed values spanning the group boundary.
+    #[test]
+    fn complex_packing_decodes_nonzero_group_widths_and_lengths() {
+        let params = param_set::ComplexPacking {
+            num_groups: 2,
+            group_width_ref: 0,
+            num_group_width_bits: 2,
+            group_len_ref: 1,
+            group_len_inc: 1,
+            group_len_last: 3,
+            num_group_len_bits: 2,
+            ..params()
+        };
+
+        // References: [1, 2], widths: [1, 2], first length descriptor: 1
+        // (giving a length of 2), and packed values: [0, 1] and [2, 0, 3].
+        let actual = decode_complex_packing(&params, &[0x60, 0x60, 0x40, 0x63], 0, 2, 0)
+            .map(|values| values.collect::<Vec<_>>());
+
+        assert_eq!(
+            actual,
+            Ok(vec![Normal(1), Normal(2), Normal(4), Normal(2), Normal(5)])
+        );
+    }
+
+    macro_rules! complex_packing_rejection_tests {
+        (
+            $(
+                ($name:ident, $params:expr, $data:expr, $bits:expr $(,)?)
+            ),*
+            $(,)?
+        ) => ($(
+            #[test]
+            fn $name() {
+                let params = $params;
+                let data = $data;
+                let actual = decode_complex_packing(&params, &data, 0, $bits, 0);
+                assert!(matches!(
+                    actual,
+                    Err(DecodeError::LengthMismatch)
+                ));
+            }
+        )*);
+    }
+
+    complex_packing_rejection_tests! {
+        (complex_packing_rejects_zero_groups,
+            param_set::ComplexPacking {
+                num_groups: 0,
+                ..params()
+            }, [], 1),
+        (complex_packing_rejects_truncated_group_values,
+            param_set::ComplexPacking {
+                num_groups: 2,
+                group_width_ref: 1,
+                num_group_width_bits: 0,
+                group_len_ref: 4,
+                group_len_last: 4,
+                num_group_len_bits: 0,
+                ..params()
+            }, [0], 1),
+        (complex_packing_rejects_group_widths_that_overflow_value_markers,
+            param_set::ComplexPacking {
+                num_group_width_bits: 8,
+                num_group_len_bits: 0,
+                ..params()
+            }, [32, 0, 0, 0, 0], 0),
+        (complex_packing_rejects_reference_widths_that_overflow_value_markers,
+            param_set::ComplexPacking {
+                num_group_width_bits: 0,
+                ..params()
+            }, [0, 0, 0, 0, 0], 32),
+        (complex_packing_rejects_overflowing_group_length,
+            param_set::ComplexPacking {
+                num_groups: 2,
+                num_group_width_bits: 0,
+                group_len_ref: u32::MAX,
+                ..params()
+            }, [0x80], 0),
+        (complex_packing_rejects_overflowing_group_width,
+            param_set::ComplexPacking {
+                num_group_width_bits: 32,
+                group_width_ref: 1,
+                num_group_len_bits: 0,
+                ..params()
+            }, [0xff, 0xff, 0xff, 0xff], 0),
+    }
+
+    #[test]
+    fn dispatch_rejects_truncated_complex_metadata() -> Result<(), Box<dyn std::error::Error>> {
+        // Section 5: template 5.2, one point and one group. Each descriptor
+        // array needs one byte (one entry encoded with one bit).
+        let mut sect5 = vec![0; 47];
+        sect5[..4].copy_from_slice(&47u32.to_be_bytes());
+        sect5[4] = 5;
+        sect5[5..9].copy_from_slice(&1u32.to_be_bytes());
+        sect5[9..11].copy_from_slice(&2u16.to_be_bytes());
+        sect5[19] = 1; // Bits per group reference.
+        sect5[21] = 1; // General group splitting.
+        sect5[31..35].copy_from_slice(&1u32.to_be_bytes());
+        sect5[36] = 1; // Bits per group width.
+        sect5[41] = 1; // Group length increment.
+        sect5[42..46].copy_from_slice(&1u32.to_be_bytes());
+        sect5[46] = 1; // Bits per scaled group length.
+        let sect6 = vec![0, 0, 0, 6, 6, 255]; // No bitmap.
+        let sect7 = vec![0, 0, 0, 7, 7, 0, 0]; // Only two descriptor bytes.
+        let decoder = Grib2SubmessageDecoder::new(1, sect5, sect6, sect7)?;
+
+        assert!(matches!(
+            decoder.dispatch(),
+            Err(crate::GribError::DecodeError(DecodeError::LengthMismatch))
+        ));
+        Ok(())
+    }
+
+    #[test]
+    fn dispatch_rejects_truncated_spatial_differencing_descriptors()
+    -> Result<(), Box<dyn std::error::Error>> {
+        // Section 5: template 5.3, first-order spatial differencing with
+        // two-octet descriptors. The three-byte Section 7 payload is one byte
+        // short of the four bytes required for two initial values and the
+        // overall minimum difference.
+        let mut sect5 = vec![0; 49];
+        sect5[..4].copy_from_slice(&49u32.to_be_bytes());
+        sect5[4] = 5;
+        sect5[5..9].copy_from_slice(&1u32.to_be_bytes());
+        sect5[9..11].copy_from_slice(&3u16.to_be_bytes());
+        sect5[19] = 1; // Bits per group reference.
+        sect5[21] = 1; // General group splitting.
+        sect5[31..35].copy_from_slice(&1u32.to_be_bytes());
+        sect5[36] = 1; // Bits per group width.
+        sect5[41] = 1; // Group length increment.
+        sect5[42..46].copy_from_slice(&1u32.to_be_bytes());
+        sect5[46] = 1; // Bits per scaled group length.
+        sect5[47] = 1; // First-order spatial differencing.
+        sect5[48] = 2; // Two octets per extra descriptor.
+        let sect6 = vec![0, 0, 0, 6, 6, 255]; // No bitmap.
+        let sect7 = vec![0, 0, 0, 8, 7, 0, 0, 0]; // Three descriptor bytes.
+        let decoder = Grib2SubmessageDecoder::new(1, sect5, sect6, sect7)?;
+
+        assert!(matches!(
+            decoder.dispatch(),
+            Err(crate::GribError::DecodeError(DecodeError::LengthMismatch))
+        ));
+        Ok(())
+    }
+}
