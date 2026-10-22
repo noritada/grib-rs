@@ -155,7 +155,8 @@ fn decode_complex_packing<'a>(
     fn get_octet_length(num_bits: u8, num_groups: usize) -> Result<usize, DecodeError> {
         num_groups
             .checked_mul(usize::from(num_bits))
-            .map(super::helpers::num_octets)
+            .and_then(|num_bits| num_bits.checked_add(7))
+            .map(|num_bits| num_bits / 8)
             .ok_or(DecodeError::LengthMismatch)
     }
 
@@ -179,8 +180,45 @@ fn decode_complex_packing<'a>(
             num_groups,
         )?)
         .ok_or(DecodeError::LengthMismatch)?;
-
     if group_lens_end_octet > sect7_data.len() {
+        return Err(DecodeError::LengthMismatch);
+    }
+
+    let required_data_bits = WithOffset::new(
+        BitStream::new(
+            &sect7_data[group_refs_end_octet..group_widths_end_octet],
+            usize::from(complex_param.num_group_width_bits),
+            num_groups,
+        ),
+        u32::from(complex_param.group_width_ref),
+        1,
+    )
+    .take(num_groups)
+    .zip(
+        WithOffset::new(
+            BitStream::new(
+                &sect7_data[group_widths_end_octet..group_lens_end_octet],
+                usize::from(complex_param.num_group_len_bits),
+                num_groups - 1,
+            ),
+            complex_param.group_len_ref,
+            u32::from(complex_param.group_len_inc),
+        )
+        .take(num_groups - 1)
+        .chain(iter::once(complex_param.group_len_last)),
+    )
+    .try_fold(0_usize, |total, (width, length)| {
+        if width >= 32 {
+            return Err(DecodeError::LengthMismatch);
+        }
+        let group_bits = (width as usize)
+            .checked_mul(length as usize)
+            .ok_or(DecodeError::LengthMismatch)?;
+        total
+            .checked_add(group_bits)
+            .ok_or(DecodeError::LengthMismatch)
+    })?;
+    if get_octet_length(1, required_data_bits)? > sect7_data[group_lens_end_octet..].len() {
         return Err(DecodeError::LengthMismatch);
     }
 
@@ -564,6 +602,34 @@ mod tests {
 
         assert!(matches!(
             decode_complex_packing(&params, &[], 0, 1, 0),
+            Err(DecodeError::LengthMismatch)
+        ));
+    }
+
+    #[test]
+    fn complex_packing_rejects_truncated_group_values() {
+        let mut params = params();
+        params.num_groups = 2;
+        params.group_width_ref = 1;
+        params.num_group_width_bits = 0;
+        params.group_len_ref = 4;
+        params.group_len_last = 4;
+        params.num_group_len_bits = 0;
+
+        assert!(matches!(
+            decode_complex_packing(&params, &[0], 0, 1, 0),
+            Err(DecodeError::LengthMismatch)
+        ));
+    }
+
+    #[test]
+    fn complex_packing_rejects_group_widths_that_overflow_value_markers() {
+        let mut params = params();
+        params.num_group_width_bits = 8;
+        params.num_group_len_bits = 0;
+
+        assert!(matches!(
+            decode_complex_packing(&params, &[32, 0, 0, 0, 0], 0, 0, 0),
             Err(DecodeError::LengthMismatch)
         ));
     }
