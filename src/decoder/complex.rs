@@ -153,10 +153,11 @@ fn decode_complex_packing<'a>(
     z_min: i32,
 ) -> Result<ComplexPackingDecoded<'a>, DecodeError> {
     fn get_octet_length(num_bits: u8, num_groups: usize) -> Result<usize, DecodeError> {
+        // The helper function `num_octets` uses `usize::div_ceil(8)` to perform
+        // addition with boundary checks.
         num_groups
             .checked_mul(usize::from(num_bits))
-            .and_then(|num_bits| num_bits.checked_add(7))
-            .map(|num_bits| num_bits / 8)
+            .map(super::helpers::num_octets)
             .ok_or(DecodeError::LengthMismatch)
     }
 
@@ -188,6 +189,10 @@ fn decode_complex_packing<'a>(
         return Err(DecodeError::LengthMismatch);
     }
 
+    // The decoder below is lazy and reads each group's values only when the
+    // iterator is consumed. Calculate the required data size eagerly so that
+    // truncated Section 7 data is rejected here instead of causing an
+    // out-of-bounds access during decoding.
     let required_data_bits = BitStream::new(
         &sect7_data[group_refs_end_octet..group_widths_end_octet],
         usize::from(complex_param.num_group_width_bits),
@@ -575,6 +580,33 @@ mod tests {
             1,
             Err(DecodeError::LengthMismatch),
         ),
+    }
+
+    // This normal-path test covers multiple groups, different widths per
+    // group, reference/increment-based lengths, an explicit final-group
+    // length, and packed values spanning the group boundary.
+    #[test]
+    fn complex_packing_decodes_nonzero_group_widths_and_lengths() {
+        let params = param_set::ComplexPacking {
+            num_groups: 2,
+            group_width_ref: 0,
+            num_group_width_bits: 2,
+            group_len_ref: 1,
+            group_len_inc: 1,
+            group_len_last: 3,
+            num_group_len_bits: 2,
+            ..params()
+        };
+
+        // References: [1, 2], widths: [1, 2], first length descriptor: 1
+        // (giving a length of 2), and packed values: [0, 1] and [2, 0, 3].
+        let actual = decode_complex_packing(&params, &[0x60, 0x60, 0x40, 0x63], 0, 2, 0)
+            .map(|values| values.collect::<Vec<_>>());
+
+        assert_eq!(
+            actual,
+            Ok(vec![Normal(1), Normal(2), Normal(4), Normal(2), Normal(5)])
+        );
     }
 
     #[test]
