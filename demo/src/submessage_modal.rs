@@ -7,6 +7,7 @@ const SUBMESSAGE_MODAL_ID: &str = "submessage-modal";
 #[derive(Properties, PartialEq)]
 pub struct SubmessageModalProps {
     pub image_data: Option<ImageData>,
+    pub rendering_error: Option<String>,
     pub on_click: Callback<MouseEvent>,
     pub on_drag_over: Callback<DragEvent>,
 }
@@ -15,6 +16,7 @@ pub struct SubmessageModalProps {
 pub(crate) fn submessage_modal(
     SubmessageModalProps {
         image_data,
+        rendering_error,
         on_click,
         on_drag_over,
     }: &SubmessageModalProps,
@@ -39,7 +41,10 @@ pub(crate) fn submessage_modal(
     html! {
         <div id={SUBMESSAGE_MODAL_ID} class="invisible" onclick={on_click} ondragover={on_drag_over}>
             <div id="submessage-details">
-                <canvas id="grid-canvas"></canvas>
+                if let Some(error) = rendering_error {
+                    <p role="alert">{error}</p>
+                }
+                <canvas id="grid-canvas" class={if rendering_error.is_some() { "invisible" } else { "" }}></canvas>
             </div>
         </div>
     }
