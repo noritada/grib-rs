@@ -1,6 +1,9 @@
 use crate::{
     WriteToBuffer,
-    def::grib2::template::param_set::{ComplexPacking, SimplePacking},
+    def::grib2::{
+        table::{ComplexPackingMissingValueManagement, GroupSplittingMethod},
+        template::param_set::{ComplexPacking, SimplePacking},
+    },
     encoder::{
         Encode, SimplePackingStrategy, WriteGrib2DataSections, bitmap::Bitmap,
         helpers::BitsRequired, writer,
@@ -86,8 +89,8 @@ impl ComplexPacking {
     fn for_unique_values(len: usize) -> Self {
         let len = len as u32;
         Self {
-            group_splitting_method: 1,
-            missing_value_management: 0,
+            group_splitting_method: GroupSplittingMethod(1),
+            missing_value_management: ComplexPackingMissingValueManagement(0),
             primary_missing_value: 0xffffffff,
             secondary_missing_value: 0xffffffff,
             num_groups: 1,
@@ -375,8 +378,8 @@ impl From<&Groups> for ComplexPacking {
                 (0, 0, 0)
             };
         Self {
-            group_splitting_method: 1,
-            missing_value_management: 0,
+            group_splitting_method: GroupSplittingMethod(1),
+            missing_value_management: ComplexPackingMissingValueManagement(0),
             primary_missing_value: 0xffffffff,
             secondary_missing_value: 0xffffffff,
             num_groups: inner.len() as u32,

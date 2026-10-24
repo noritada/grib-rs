@@ -20,7 +20,7 @@ impl<'d> Grib2GpvUnpack for Ccsds<'d> {
 
     fn iter<'a>(&'a self) -> Result<Self::Iter<'a>, DecodeError> {
         let Self(target, template) = self;
-        super::orig_field_type_is_supported(template.orig_field_type)?;
+        super::orig_field_type_is_supported(template.orig_field_type.0)?;
 
         let decoder = if template.simple.num_bits == 0 {
             SimplePackingDecoder::ZeroLength(FixedValueIterator::new(

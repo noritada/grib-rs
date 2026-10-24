@@ -33,19 +33,19 @@ impl<'d> Grib2GpvUnpack for Complex<'d> {
 
     fn iter<'a>(&'a self) -> Result<Self::Iter<'d>, DecodeError> {
         let Self(target, template) = self;
-        super::orig_field_type_is_supported(template.orig_field_type)?;
+        super::orig_field_type_is_supported(template.orig_field_type.0)?;
 
-        if template.complex.group_splitting_method != 1 {
+        if template.complex.group_splitting_method.0 != 1 {
             return Err(DecodeError::NotSupported(
                 "GRIB2 code table 5.4 (group splitting method)",
-                template.complex.group_splitting_method.into(),
+                template.complex.group_splitting_method.0.into(),
             ));
         }
 
-        if template.complex.missing_value_management > 2 {
+        if template.complex.missing_value_management.0 > 2 {
             return Err(DecodeError::NotSupported(
                 "GRIB2 code table 5.5 (missing value management for complex packing)",
-                template.complex.missing_value_management.into(),
+                template.complex.missing_value_management.0.into(),
             ));
         }
 
@@ -79,32 +79,32 @@ impl<'d> Grib2GpvUnpack for ComplexSpatial<'d> {
 
     fn iter<'a>(&'a self) -> Result<Self::Iter<'d>, DecodeError> {
         let Self(target, template) = self;
-        super::orig_field_type_is_supported(template.orig_field_type)?;
+        super::orig_field_type_is_supported(template.orig_field_type.0)?;
 
-        let spdiff_order = Table5_6::try_from(template.spatial_diff_order).map_err(|e| {
+        let spdiff_order = Table5_6::try_from(template.spatial_diff_order.0).map_err(|e| {
             DecodeError::NotSupported(
                 "GRIB2 code table 5.6 (order of spatial differencing)",
                 e.number.into(),
             )
         })?;
 
-        if template.complex.group_splitting_method != 1 {
+        if template.complex.group_splitting_method.0 != 1 {
             return Err(DecodeError::NotSupported(
                 "GRIB2 code table 5.4 (group splitting method)",
-                template.complex.group_splitting_method.into(),
+                template.complex.group_splitting_method.0.into(),
             ));
         }
 
-        if template.complex.missing_value_management > 2 {
+        if template.complex.missing_value_management.0 > 2 {
             return Err(DecodeError::NotSupported(
                 "GRIB2 code table 5.5 (missing value management for complex packing)",
-                template.complex.missing_value_management.into(),
+                template.complex.missing_value_management.0.into(),
             ));
         }
 
         let sect7_data = target.sect7_payload();
         let sect7_params = diff::SpatialDifferencingExtraDescriptors::new(
-            template.spatial_diff_order,
+            template.spatial_diff_order.0,
             template.num_extra_desc_octets,
             sect7_data,
         )?;
@@ -270,7 +270,7 @@ fn decode_complex_packing<'a>(
         group_refs_iter,
         group_widths_iter,
         group_lens_iter,
-        complex_param.missing_value_management,
+        complex_param.missing_value_management.0,
         num_bits,
         z_min,
         sect7_data[group_lens_end_octet..].to_vec(),
