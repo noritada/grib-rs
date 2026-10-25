@@ -45,6 +45,25 @@ pub fn derive_dump(input: TokenStream) -> TokenStream {
     .into()
 }
 
+/// Derive macro generating an impl of `grib_template_helpers::CodeTable`.
+///
+/// Requires a single-field `u8` or `u16` tuple struct with
+/// `#[code_table(file = "...", format = ...)]`. The UTF-8 file is read relative
+/// to `CARGO_MANIFEST_DIR` and included in the expansion to track file changes.
+///
+/// The `format` value is an identifier with optional parenthesized options,
+/// such as `csv` or `csv(delimiter = ";")`.
+/// Currently, the format and its options are not interpreted, and table
+/// contents are not parsed. Both trait methods provisionally return `None`.
+#[proc_macro_derive(CodeTable, attributes(code_table))]
+pub fn derive_code_table(input: TokenStream) -> TokenStream {
+    let input = syn::parse_macro_input!(input as syn::DeriveInput);
+    code_table::expand(&input)
+        .unwrap_or_else(syn::Error::into_compile_error)
+        .into()
+}
+
+mod code_table;
 mod dump;
 mod helpers;
 mod try_from_slice;

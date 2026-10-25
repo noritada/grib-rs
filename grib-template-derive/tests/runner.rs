@@ -1,3 +1,5 @@
+mod code_table;
+
 #[test]
 fn tests() {
     let t = trybuild::TestCases::new();
