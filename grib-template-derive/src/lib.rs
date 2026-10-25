@@ -33,6 +33,9 @@ pub fn derive_write_to_buffer(input: TokenStream) -> TokenStream {
 /// Single-field `u8` and `u16` tuple structs display their value as a decimal
 /// number. Use `#[dump(flag)]` on a single-field `u8` tuple struct to display
 /// it as an eight-bit binary number with a `0b` prefix instead.
+/// Use `#[dump(code_table)]` on a single-field `u8` or `u16` tuple struct
+/// implementing `grib_template_helpers::CodeTable` to append its description
+/// in brackets when present. This can be combined with `#[dump(flag)]`.
 #[proc_macro_derive(Dump, attributes(grib_template, dump))]
 pub fn derive_dump(input: TokenStream) -> TokenStream {
     let input = syn::parse_macro_input!(input as syn::DeriveInput);

@@ -4,8 +4,8 @@ pub(crate) fn impl_for_struct(
     input: &syn::DeriveInput,
     data: &syn::DataStruct,
 ) -> proc_macro2::TokenStream {
-    let flag = match flag_option(input) {
-        Ok(flag) => flag,
+    let options = match dump_options(input) {
+        Ok(options) => options,
         Err(error) => return error.to_compile_error(),
     };
     let name = &input.ident;
@@ -26,7 +26,16 @@ pub(crate) fn impl_for_struct(
             None => quote! { None },
         };
 
-        let format = if flag { " = {:#010b}{}" } else { " = {}{}" };
+        let format = if options.flag { " = {:#010b}" } else { " = {}" };
+        let description = if options.code_table {
+            quote! {
+                if let Some(description) = <Self as ::grib_template_helpers::CodeTable>::code_description(self) {
+                    write!(output, " [{}]", description)?;
+                }
+            }
+        } else {
+            quote! {}
+        };
 
         return quote! {
             impl #impl_generics grib_template_helpers::Dump for #name #type_generics #where_clause {
@@ -45,10 +54,9 @@ pub(crate) fn impl_for_struct(
                     let doc = doc_overrides.get("").or(#doc)
                         .map(|s| format!("  // {}", s))
                         .unwrap_or_default();
-                    writeln!(output, #format,
-                        self.0,
-                        doc,
-                    )
+                    write!(output, #format, self.0)?;
+                    #description
+                    writeln!(output, "{}", doc)
                 }
             }
         };
@@ -122,7 +130,7 @@ pub(crate) fn impl_for_enum(
     input: &syn::DeriveInput,
     data: &syn::DataEnum,
 ) -> proc_macro2::TokenStream {
-    if let Err(error) = flag_option(input) {
+    if let Err(error) = dump_options(input) {
         return error.to_compile_error();
     }
     let name = &input.ident;
@@ -168,25 +176,35 @@ pub(crate) fn impl_for_enum(
     }
 }
 
-fn flag_option(input: &syn::DeriveInput) -> syn::Result<bool> {
-    let mut flag = false;
+#[derive(Default)]
+struct DumpOptions {
+    flag: bool,
+    code_table: bool,
+}
+
+fn dump_options(input: &syn::DeriveInput) -> syn::Result<DumpOptions> {
+    let mut options = DumpOptions::default();
     for attr in input
         .attrs
         .iter()
         .filter(|attr| attr.path().is_ident("dump"))
     {
         attr.parse_nested_meta(|meta| {
-            if !meta.path.is_ident("flag") {
-                return Err(meta.error("expected `flag`"));
+            let (value, name) = if meta.path.is_ident("flag") {
+                (&mut options.flag, "flag")
+            } else if meta.path.is_ident("code_table") {
+                (&mut options.code_table, "code_table")
+            } else {
+                return Err(meta.error("expected `flag` or `code_table`"));
+            };
+            if *value {
+                return Err(meta.error(format!("duplicate `{name}` option")));
             }
-            if flag {
-                return Err(meta.error("duplicate `flag` option"));
-            }
-            flag = true;
+            *value = true;
             Ok(())
         })?;
     }
-    if flag {
+    if options.flag {
         let supported = matches!(
             &input.data,
             syn::Data::Struct(data)
@@ -201,7 +219,21 @@ fn flag_option(input: &syn::DeriveInput) -> syn::Result<bool> {
             ));
         }
     }
-    Ok(flag)
+    if options.code_table {
+        let supported = matches!(
+            &input.data,
+            syn::Data::Struct(data)
+                if matches!(super::helpers::extract_struct_info(data),
+                    Some((super::helpers::StructKind::TupleStruct, _)))
+        );
+        if !supported {
+            return Err(syn::Error::new_spanned(
+                &input.ident,
+                "`#[dump(code_table)]` requires a single-field `u8` or `u16` tuple struct",
+            ));
+        }
+    }
+    Ok(options)
 }
 
 pub(crate) fn get_doc(attrs: &[syn::Attribute]) -> Option<String> {
@@ -336,9 +368,9 @@ mod tests {
             #[dump(flag,)]
             struct Flags(u8);
         };
-        assert!(flag_option(&input)?);
+        assert!(dump_options(&input)?.flag);
         let input = syn::parse_quote! { struct Value(u8); };
-        assert!(!flag_option(&input)?);
+        assert!(!dump_options(&input)?.flag);
         Ok(())
     }
 
@@ -353,8 +385,29 @@ mod tests {
             syn::parse_quote! { #[dump(flga)] struct Flags(u8); },
         ];
         for input in inputs {
-            assert!(flag_option(&input).is_err());
+            assert!(dump_options(&input).is_err());
         }
+    }
+
+    macro_rules! test_invalid_code_table_option {
+        ($($name:ident: $input:expr),* $(,)?) => {
+            $(
+                #[test]
+                fn $name() -> syn::Result<()> {
+                    let input = syn::parse_str($input)?;
+                    assert!(dump_options(&input).is_err());
+                    Ok(())
+                }
+            )*
+        };
+    }
+
+    test_invalid_code_table_option! {
+        code_table_named: "#[dump(code_table)] struct T { value: u8 }",
+        code_table_wide: "#[dump(code_table)] struct T(u32);",
+        code_table_enum: "#[dump(code_table)] enum T { Value(u8) }",
+        code_table_duplicate: "#[dump(code_table, code_table)] struct T(u8);",
+        code_table_value: "#[dump(code_table = true)] struct T(u8);",
     }
 
     #[test]
