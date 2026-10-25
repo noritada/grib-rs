@@ -1,0 +1,4 @@
+Title_en,SubTitle_en,CodeFlag,Value,MeaningParameterDescription_en,Note_en,noteIDs,UnitComments_en,Status
+Example,,0-255,,Reserved,,,,Operational
+Example,,256-65534,,Wide range,,,,Operational
+Example,,65535,,Upper bound,,,,Operational

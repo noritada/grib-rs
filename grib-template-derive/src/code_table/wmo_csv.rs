@@ -12,8 +12,6 @@ const HEADER: [&str; 9] = [
     "Status",
 ];
 
-// These fields will be used when generating the trait methods.
-#[allow(dead_code)]
 #[derive(Debug, PartialEq, Eq)]
 pub(super) struct Entry {
     pub codes: RangeInclusive<u16>,

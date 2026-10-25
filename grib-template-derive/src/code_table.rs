@@ -19,8 +19,10 @@ pub(crate) fn expand(input: &syn::DeriveInput) -> syn::Result<TokenStream> {
         ));
     }
     let (path, contents) = read_table(&options.file)?;
-    let _entries = wmo_csv::parse(&contents, max_code)
+    let entries = wmo_csv::parse(&contents, max_code)
         .map_err(|error| syn::Error::new_spanned(&options.file, error))?;
+    let description = lookup_body(&entries, |entry| entry.description.as_deref());
+    let unit = lookup_body(&entries, |entry| entry.unit.as_deref());
     let name = &input.ident;
     let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
     Ok(quote! {
@@ -28,14 +30,40 @@ pub(crate) fn expand(input: &syn::DeriveInput) -> syn::Result<TokenStream> {
 
         impl #impl_generics ::grib_template_helpers::CodeTable for #name #ty_generics #where_clause {
             fn code_description(&self) -> Option<&'static str> {
-                None
+                #description
             }
 
             fn code_unit(&self) -> Option<&'static str> {
-                None
+                #unit
             }
         }
     })
+}
+
+fn lookup_body(
+    entries: &[wmo_csv::Entry],
+    value: impl Fn(&wmo_csv::Entry) -> Option<&str>,
+) -> TokenStream {
+    if entries.iter().all(|entry| value(entry).is_none()) {
+        return quote!(::core::option::Option::None);
+    }
+    let arms = entries.iter().map(|entry| {
+        let start = proc_macro2::Literal::u16_unsuffixed(*entry.codes.start());
+        let end = proc_macro2::Literal::u16_unsuffixed(*entry.codes.end());
+        let result = match value(entry) {
+            Some(text) => quote!(::core::option::Option::Some(#text)),
+            None => quote!(::core::option::Option::None),
+        };
+        quote!(#start..=#end => #result,)
+    });
+    quote! {
+        // The fallback also supports tables that do not cover every code.
+        #[allow(unreachable_patterns)]
+        match self.0 {
+            #(#arms)*
+            _ => ::core::option::Option::None,
+        }
+    }
 }
 
 struct Options {
@@ -171,6 +199,20 @@ mod tests {
                 )
                 .to_string()
             )
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn unitless_table_has_no_runtime_lookup() -> Result<(), Box<dyn std::error::Error>> {
+        let entries = wmo_csv::parse(
+            include_str!("../tests/tables/code_table_unitless.csv"),
+            u16::MAX,
+        )?;
+        let body = lookup_body(&entries, |entry| entry.unit.as_deref());
+        assert_eq!(
+            body.to_string(),
+            quote!(::core::option::Option::None).to_string()
         );
         Ok(())
     }

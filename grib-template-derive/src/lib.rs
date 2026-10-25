@@ -53,7 +53,8 @@ pub fn derive_dump(input: TokenStream) -> TokenStream {
 ///
 /// The `format` value is an identifier with optional parenthesized options,
 /// currently supporting only `wmo_csv` without options. WMO CSV records are
-/// parsed, but both trait methods provisionally return `None`.
+/// used to generate description and unit lookups. If no units are defined,
+/// `code_unit` returns `None` without a runtime lookup.
 #[proc_macro_derive(CodeTable, attributes(code_table))]
 pub fn derive_code_table(input: TokenStream) -> TokenStream {
     let input = syn::parse_macro_input!(input as syn::DeriveInput);
