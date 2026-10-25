@@ -1,15 +1,26 @@
+mod wmo_csv;
+
 use proc_macro2::TokenStream;
 use quote::quote;
 
 pub(crate) fn expand(input: &syn::DeriveInput) -> syn::Result<TokenStream> {
-    validate_input(input)?;
+    let max_code = validate_input(input)?;
     let options = Options::parse(input)?;
-    let (path, _contents) = read_table(&options.file)?;
-    // Interpretation of the format and table contents will be added separately.
-    let Format {
-        name: _name,
-        options: _options,
-    } = options.format;
+    if options.format.name != "wmo_csv" {
+        return Err(syn::Error::new_spanned(
+            &options.format.name,
+            "unsupported format; expected wmo_csv",
+        ));
+    }
+    if !options.format.options.is_empty() {
+        return Err(syn::Error::new_spanned(
+            &options.format.options,
+            "wmo_csv does not support options",
+        ));
+    }
+    let (path, contents) = read_table(&options.file)?;
+    let _entries = wmo_csv::parse(&contents, max_code)
+        .map_err(|error| syn::Error::new_spanned(&options.file, error))?;
     let name = &input.ident;
     let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
     Ok(quote! {
@@ -94,7 +105,7 @@ impl Options {
     }
 }
 
-fn validate_input(input: &syn::DeriveInput) -> syn::Result<()> {
+fn validate_input(input: &syn::DeriveInput) -> syn::Result<u16> {
     if let syn::Data::Struct(data) = &input.data
         && let syn::Fields::Unnamed(fields) = &data.fields
         && fields.unnamed.len() == 1
@@ -102,7 +113,11 @@ fn validate_input(input: &syn::DeriveInput) -> syn::Result<()> {
         && ty.qself.is_none()
         && (ty.path.is_ident("u8") || ty.path.is_ident("u16"))
     {
-        return Ok(());
+        return Ok(if ty.path.is_ident("u8") {
+            u8::MAX.into()
+        } else {
+            u16::MAX
+        });
     }
     Err(syn::Error::new_spanned(
         input,
@@ -130,7 +145,7 @@ mod tests {
     #[test]
     fn missing_table() -> Result<(), Box<dyn std::error::Error>> {
         let input = syn::parse_str(
-            r#"#[code_table(file = "tests/tables/nonexistent.csv", format = csv)] struct Table(u8);"#,
+            r#"#[code_table(file = "tests/tables/nonexistent.csv", format = wmo_csv)] struct Table(u8);"#,
         )?;
         let error = expand(&input).expect_err("missing table should fail");
         assert!(error.to_string().contains("failed to read"));
@@ -140,7 +155,7 @@ mod tests {
     #[test]
     fn tracks_manifest_relative_file() -> Result<(), Box<dyn std::error::Error>> {
         let input = syn::parse_str(
-            r#"#[code_table(file = "tests/tables/code_table.csv", format = csv)] struct Table(u8);"#,
+            r#"#[code_table(file = "tests/tables/code_table.csv", format = wmo_csv)] struct Table(u8);"#,
         )?;
         let output = expand(&input)?.to_string();
         let path =
@@ -158,6 +173,28 @@ mod tests {
             )
         );
         Ok(())
+    }
+
+    macro_rules! test_invalid_table {
+        ($($name:ident: $format:expr => $message:expr),* $(,)?) => {
+            $(
+                #[test]
+                fn $name() -> Result<(), Box<dyn std::error::Error>> {
+                    let input = syn::parse_str(&format!(
+                        "#[code_table(file = \"tests/tables/code_table.csv\", format = {})] struct Table(u8);",
+                        $format,
+                    ))?;
+                    let error = expand(&input).expect_err("unsupported format should fail");
+                    assert!(error.to_string().contains($message));
+                    Ok(())
+                }
+            )*
+        };
+    }
+
+    test_invalid_table! {
+        unsupported_format: "csv" => "unsupported format",
+        unsupported_wmo_option: r#"wmo_csv(delimiter = ";")"# => "does not support options",
     }
 
     macro_rules! test_format {

@@ -1,11 +1,11 @@
 use grib_template_helpers::CodeTable;
 
 #[derive(grib_template_derive::CodeTable)]
-#[code_table(file = "tests/tables/code_table.csv", format = csv)]
+#[code_table(file = "tests/tables/code_table.csv", format = wmo_csv)]
 struct ByteTable(u8);
 
 #[derive(grib_template_derive::CodeTable)]
-#[code_table(format = csv(delimiter = ";"), file = "tests/tables/code_table.csv")]
+#[code_table(format = wmo_csv(), file = "tests/tables/code_table.csv")]
 struct WordTable(u16);
 
 #[test]
