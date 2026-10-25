@@ -39,7 +39,7 @@ pub struct Template3_0 {
 ///     let actual = Template3_1::try_from_slice(&buf, &mut pos)?;
 ///     let expected = Template3_1 {
 ///         earth: param_set::EarthShape {
-///             shape: 6,
+///             shape: table::EarthShapeType(6),
 ///             spherical_earth_radius: param_set::ScaledValue {
 ///                 scale_factor: 0xff,
 ///                 scaled_value: 0xffffffff,
@@ -133,7 +133,7 @@ pub struct Template3_3 {
 ///     let actual = Template3_10::try_from_slice(&buf, &mut pos)?;
 ///     let expected = Template3_10 {
 ///         earth_shape: param_set::EarthShape {
-///             shape: 1,
+///             shape: table::EarthShapeType(1),
 ///             spherical_earth_radius: param_set::ScaledValue {
 ///                 scale_factor: 0,
 ///                 scaled_value: 6371200,
@@ -223,7 +223,7 @@ pub struct Template3_10 {
 ///     let actual = Template3_20::try_from_slice(&buf, &mut pos)?;
 ///     let expected = Template3_20 {
 ///         earth_shape: param_set::EarthShape {
-///             shape: 6,
+///             shape: table::EarthShapeType(6),
 ///             spherical_earth_radius: param_set::ScaledValue {
 ///                 scale_factor: 0xff,
 ///                 scaled_value: 0xffffffff,
@@ -305,7 +305,7 @@ pub struct Template3_20 {
 ///     let actual = Template3_30::try_from_slice(&buf, &mut pos)?;
 ///     let expected = Template3_30 {
 ///         earth_shape: param_set::EarthShape {
-///             shape: 1,
+///             shape: table::EarthShapeType(1),
 ///             spherical_earth_radius: param_set::ScaledValue {
 ///                 scale_factor: 0,
 ///                 scaled_value: 6371200,
@@ -411,8 +411,7 @@ pub struct Template3_43 {
 /// Grid definition template 3.101 - general unstructured grid.
 #[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump)]
 pub struct Template3_101 {
-    /// Shape of the Earth (see Code table 3.2).
-    pub earth_shape: u8,
+    pub earth_shape: table3::EarthShapeType,
     /// Number of grid used (defined by originating centre).
     #[grib_template(num_octets = 3)]
     pub grid_num: u32,
@@ -427,14 +426,13 @@ pub(crate) mod param_set {
     use grib_template_derive::{Dump, TryFromSlice, WriteToBuffer};
 
     use super::super::{
-        table3::{ResolutionAndComponentFlags, ScanningMode},
+        table3::{EarthShapeType, ResolutionAndComponentFlags, ScanningMode},
         template::param_set::ScaledValue,
     };
 
     #[derive(Debug, PartialEq, Eq, Clone, TryFromSlice, WriteToBuffer, Dump)]
     pub struct EarthShape {
-        /// Shape of the Earth (see Code table 3.2).
-        pub shape: u8,
+        pub shape: EarthShapeType,
         /// Radius of spherical Earth.
         #[dump(doc(
             scale_factor = "Scale factor of radius of spherical Earth.",

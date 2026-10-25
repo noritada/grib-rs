@@ -586,11 +586,11 @@ Data Representation:                    {}
     ///             grid_def_source: 0,
     ///             num_points: 86016,
     ///             num_point_list_octets: 0,
-    ///             point_list_interpretation: 0,
+    ///             point_list_interpretation: grib::def::grib2::table::PointListInterpretation(0),
     ///             template_num: grib::def::grib2::table::GridDefinitionTemplateNum(0),
     ///             template: grib::def::grib2::GridDefinitionTemplate::_3_0(grib::def::grib2::template::Template3_0 {
     ///                 earth: grib::def::grib2::template::param_set::EarthShape {
-    ///                     shape: 4,
+    ///                     shape: grib::def::grib2::table::EarthShapeType(4),
     ///                     spherical_earth_radius: grib::def::grib2::template::param_set::ScaledValue {
     ///                         scale_factor: 0xff,
     ///                         scaled_value: 0xffffffff,

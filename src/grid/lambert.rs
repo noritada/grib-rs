@@ -39,7 +39,7 @@ impl LatLons for Template3_30 {
         let (a, b) = self.earth_shape.radii().ok_or_else(|| {
             GribError::NotSupported(format!(
                 "unknown value of Code Table 3.2 (shape of the Earth): {}",
-                self.earth_shape.shape
+                self.earth_shape.shape.0
             ))
         })?;
         let params = projection::LccParams {
@@ -108,7 +108,7 @@ mod tests {
         // grid point definition extracted from testdata/ds.critfireo.bin.xz
         let grid_def = Template3_30 {
             earth_shape: param_set::EarthShape {
-                shape: 1,
+                shape: table::EarthShapeType(1),
                 spherical_earth_radius: param_set::ScaledValue {
                     scale_factor: 0,
                     scaled_value: 6371200,

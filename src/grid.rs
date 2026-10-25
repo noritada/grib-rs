@@ -438,7 +438,10 @@ impl AngleUnit for Grid {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::def::grib2::template::param_set::{EarthShape, ScaledValue};
+    use crate::def::grib2::{
+        table::EarthShapeType,
+        template::param_set::{EarthShape, ScaledValue},
+    };
 
     #[test]
     fn grid_definition_template_0() -> Result<(), Box<dyn std::error::Error>> {
@@ -451,7 +454,7 @@ mod tests {
         let actual = GridDefinitionTemplateValues::try_from(&data).unwrap();
         let expected = GridDefinitionTemplateValues::Template0(Template3_0 {
             earth: EarthShape {
-                shape: 4,
+                shape: EarthShapeType(4),
                 spherical_earth_radius: ScaledValue {
                     scale_factor: 0xff,
                     scaled_value: 0xffffffff,

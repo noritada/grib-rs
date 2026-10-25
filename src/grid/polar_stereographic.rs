@@ -37,7 +37,7 @@ impl LatLons for Template3_20 {
         let (a, b) = self.earth_shape.radii().ok_or_else(|| {
             GribError::NotSupported(format!(
                 "unknown value of Code Table 3.2 (shape of the Earth): {}",
-                self.earth_shape.shape
+                self.earth_shape.shape.0
             ))
         })?;
 
@@ -122,7 +122,7 @@ mod tests {
         // grib2.xz
         let grid_def = Template3_20 {
             earth_shape: param_set::EarthShape {
-                shape: 6,
+                shape: table::EarthShapeType(6),
                 spherical_earth_radius: param_set::ScaledValue {
                     scale_factor: 0xff,
                     scaled_value: 0xffffffff,

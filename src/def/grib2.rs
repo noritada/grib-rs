@@ -96,8 +96,7 @@ pub struct Section3Payload {
     pub num_points: u32,
     /// Number of octets for optional list of numbers (see Note 2).
     pub num_point_list_octets: u8,
-    /// Interpretation of list of numbers (see Code table 3.11).
-    pub point_list_interpretation: u8,
+    pub point_list_interpretation: table3::PointListInterpretation,
     pub template_num: table3::GridDefinitionTemplateNum,
     /// Grid Definition Template (see Template 3.N, where N is the Grid
     /// Definition Template Number given in octets 13-14).
