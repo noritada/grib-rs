@@ -1,3 +1,13 @@
+// This `use` is for the dependencies in `Cargo.toml`, not for the Rust code; it
+// is intended to explicitly mark and consume unused dependencies defined in
+// `Cargo.toml` and does not affect the rest of the code in this module.
+#[cfg(all(
+    feature = "jpeg2000-unpack-with-hayro",
+    feature = "jpeg2000-unpack-with-openjpeg",
+    not(test)
+))]
+use openjpeg_sys as _;
+
 use crate::{
     Grib2GpvUnpack,
     decoder::{DecodeError, Grib2SubmessageDecoder, simple::*, stream::FixedValueIterator},
