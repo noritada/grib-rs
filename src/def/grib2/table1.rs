@@ -41,6 +41,23 @@ pub struct RefTimeSignificance(
     pub u8,
 );
 
+crate::helpers::code_labels! {
+    impl RefTimeSignificance {
+        /// Analysis.
+        Analysis = 0,
+        /// Start of forecast.
+        StartOfForecast = 1,
+        /// Verifying time of forecast.
+        VerifyingTimeOfForecast = 2,
+        /// Observation time.
+        ObservationTime = 3,
+        /// Local time.
+        LocalTime = 4,
+        /// Simulation start.
+        SimulationStart = 5,
+    }
+}
+
 #[derive(Debug, PartialEq, Eq, Clone, Copy, TryFromSlice, WriteToBuffer, Dump, CodeTable)]
 #[code_table(file = "def/GRIB2/GRIB2_CodeFlag_1_3_CodeTable_en.csv", format = wmo_grib2_tables)]
 #[dump(code_table)]

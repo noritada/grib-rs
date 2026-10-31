@@ -3,19 +3,6 @@ use num_enum::{IntoPrimitive, TryFromPrimitive};
 #[derive(Debug, Eq, PartialEq, TryFromPrimitive, IntoPrimitive)]
 #[non_exhaustive]
 #[repr(u8)]
-pub enum Table1_2 {
-    Analysis = 0,
-    StartOfForecast,
-    VerifyingTimeOfForecast,
-    ObservationTime,
-    LocalTime,
-    SimulationStart,
-    Missing = 255,
-}
-
-#[derive(Debug, Eq, PartialEq, TryFromPrimitive, IntoPrimitive)]
-#[non_exhaustive]
-#[repr(u8)]
 pub enum Table4_4 {
     Minute = 0,
     Hour,

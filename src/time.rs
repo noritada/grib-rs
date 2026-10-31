@@ -4,34 +4,18 @@ use std::fmt;
 use chrono::{DateTime, LocalResult, TimeDelta, TimeZone, Utc};
 
 #[cfg(feature = "time-calculation")]
-use crate::codetables::grib2::Table4_4;
-use crate::{Code, ForecastTime, codetables::grib2::Table1_2};
+use crate::{Code, codetables::grib2::Table4_4};
+use crate::{ForecastTime, def::grib2::table::RefTimeSignificance};
 
 #[derive(Debug, PartialEq, Eq)]
 /// Time-related raw information.
 pub struct TemporalRawInfo {
-    /// "Significance of reference time" set in Section 1 of the submessage. See
-    /// [Code Table 1.2](crate::codetables::grib2::Table1_2).
-    pub ref_time_significance: Code<Table1_2, u8>,
+    /// "Significance of reference time" set in Section 1 of the submessage.
+    pub ref_time_significance: RefTimeSignificance,
     /// "Reference time" set in Section 1 of the submessage.
     pub ref_time_unchecked: crate::def::grib2::template::param_set::DateTime,
     /// "Forecast time" set in Section 3 of the submessage.
     pub forecast_time_diff: Option<ForecastTime>,
-}
-
-impl TemporalRawInfo {
-    pub(crate) fn new(
-        ref_time_significance: u8,
-        ref_time_unchecked: crate::def::grib2::template::param_set::DateTime,
-        forecast_time_diff: Option<ForecastTime>,
-    ) -> Self {
-        let ref_time_significance = Table1_2::try_from(ref_time_significance).into();
-        Self {
-            ref_time_significance,
-            ref_time_unchecked,
-            forecast_time_diff,
-        }
-    }
 }
 
 #[cfg(feature = "time-calculation")]

@@ -914,8 +914,8 @@ impl<'a, R> SubMessage<'a, R> {
     ///
     /// use grib::{
     ///     Code, ForecastTime, TemporalRawInfo,
-    ///     codetables::grib2::{Table1_2, Table4_4},
-    ///     def::grib2::template::param_set::DateTime,
+    ///     codetables::grib2::Table4_4,
+    ///     def::grib2::{table::RefTimeSignificance, template::param_set::DateTime},
     /// };
     ///
     /// fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -931,7 +931,7 @@ impl<'a, R> SubMessage<'a, R> {
     ///         let (_, message) = iter.next().ok_or_else(|| "first message is not found")?;
     ///         let actual = message.temporal_raw_info();
     ///         let expected = TemporalRawInfo {
-    ///             ref_time_significance: Code::Name(Table1_2::Analysis),
+    ///             ref_time_significance: RefTimeSignificance::Analysis,
     ///             ref_time_unchecked: DateTime::new(2016, 8, 22, 2, 0, 0),
     ///             forecast_time_diff: Some(ForecastTime {
     ///                 unit: Code::Name(Table4_4::Minute),
@@ -945,7 +945,7 @@ impl<'a, R> SubMessage<'a, R> {
     ///         let (_, message) = iter.next().ok_or_else(|| "second message is not found")?;
     ///         let actual = message.temporal_raw_info();
     ///         let expected = TemporalRawInfo {
-    ///             ref_time_significance: Code::Name(Table1_2::Analysis),
+    ///             ref_time_significance: RefTimeSignificance::Analysis,
     ///             ref_time_unchecked: DateTime::new(2016, 8, 22, 2, 0, 0),
     ///             forecast_time_diff: Some(ForecastTime {
     ///                 unit: Code::Name(Table4_4::Minute),
@@ -961,8 +961,14 @@ impl<'a, R> SubMessage<'a, R> {
     pub fn temporal_raw_info(&self) -> TemporalRawInfo {
         let ref_time_significance = self.identification().ref_time_significance();
         let ref_time_unchecked = self.identification().ref_time_unchecked();
-        let forecast_time = self.prod_def().forecast_time();
-        TemporalRawInfo::new(ref_time_significance, ref_time_unchecked, forecast_time)
+        let forecast_time_diff = self.prod_def().forecast_time();
+        TemporalRawInfo {
+            ref_time_significance: crate::def::grib2::table::RefTimeSignificance(
+                ref_time_significance,
+            ),
+            ref_time_unchecked,
+            forecast_time_diff,
+        }
     }
 
     #[cfg(feature = "time-calculation")]
@@ -979,10 +985,7 @@ impl<'a, R> SubMessage<'a, R> {
     /// };
     ///
     /// use chrono::{TimeZone, Utc};
-    /// use grib::{
-    ///     Code, ForecastTime, TemporalInfo,
-    ///     codetables::grib2::{Table1_2, Table4_4},
-    /// };
+    /// use grib::{Code, ForecastTime, TemporalInfo, codetables::grib2::Table4_4};
     ///
     /// fn main() -> Result<(), Box<dyn std::error::Error>> {
     ///     let f = File::open(
