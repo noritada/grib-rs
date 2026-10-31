@@ -56,6 +56,15 @@ pub struct SpatialDifferencingOrder(
     pub u8,
 );
 
+crate::helpers::code_labels! {
+    impl SpatialDifferencingOrder {
+        /// First-order spatial differencing.
+        FirstOrder = 1,
+        /// Second-order spatial differencing.
+        SecondOrder = 2,
+    }
+}
+
 #[derive(Debug, PartialEq, Eq, Clone, Copy, TryFromSlice, WriteToBuffer, Dump, CodeTable)]
 #[code_table(file = "def/GRIB2/GRIB2_CodeFlag_5_7_CodeTable_en.csv", format = wmo_grib2_tables)]
 #[dump(code_table)]

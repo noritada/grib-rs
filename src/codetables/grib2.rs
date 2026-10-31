@@ -52,15 +52,6 @@ impl Table4_4 {
     }
 }
 
-#[derive(Debug, Clone, Eq, PartialEq, TryFromPrimitive, IntoPrimitive)]
-#[non_exhaustive]
-#[repr(u8)]
-pub enum Table5_6 {
-    FirstOrderSpatialDifferencing = 1,
-    SecondOrderSpatialDifferencing,
-    Missing = 255,
-}
-
 #[cfg(test)]
 mod tests {
     use num_enum::TryFromPrimitiveError;

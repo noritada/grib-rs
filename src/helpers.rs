@@ -1,5 +1,25 @@
 use crate::TryFromSlice as _;
 
+macro_rules! code_labels {
+    (
+        impl $name:ty {
+            $(
+                $(#[$attr:meta])*
+                $variant:ident = $value:expr
+            ),* $(,)?
+        }
+    ) => {
+        #[allow(non_upper_case_globals)]
+        impl $name {
+            $(
+                $(#[$attr])*
+                pub const $variant: Self = Self($value);
+            )*
+        }
+    };
+}
+pub(crate) use code_labels;
+
 macro_rules! read_as {
     ($ty:ty, $buf:ident, $start:expr $(,)?) => {{
         let end = $start + std::mem::size_of::<$ty>();

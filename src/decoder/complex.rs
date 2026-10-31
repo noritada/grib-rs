@@ -11,13 +11,12 @@ use self::{
 };
 use crate::{
     Grib2GpvUnpack,
-    codetables::grib2::Table5_6,
     decoder::{
         DecodeError, Grib2SubmessageDecoder,
         simple::*,
         stream::{BitStream, NBitwiseIterator},
     },
-    def::grib2::template::param_set,
+    def::grib2::{table::SpatialDifferencingOrder, template::param_set},
 };
 
 pub(crate) struct Complex<'d>(
@@ -81,12 +80,14 @@ impl<'d> Grib2GpvUnpack for ComplexSpatial<'d> {
         let Self(target, template) = self;
         super::orig_field_type_is_supported(template.orig_field_type.0)?;
 
-        let spdiff_order = Table5_6::try_from(template.spatial_diff_order.0).map_err(|e| {
-            DecodeError::NotSupported(
+        if template.spatial_diff_order != SpatialDifferencingOrder::FirstOrder
+            && template.spatial_diff_order != SpatialDifferencingOrder::SecondOrder
+        {
+            return Err(DecodeError::NotSupported(
                 "GRIB2 code table 5.6 (order of spatial differencing)",
-                e.number.into(),
-            )
-        })?;
+                template.spatial_diff_order.0.into(),
+            ));
+        }
 
         if template.complex.group_splitting_method.0 != 1 {
             return Err(DecodeError::NotSupported(
@@ -118,18 +119,16 @@ impl<'d> Grib2GpvUnpack for ComplexSpatial<'d> {
         )?;
         let first_values = sect7_params.first_values();
         let first_values = first_values.collect::<Vec<_>>().into_iter();
-        let spdiff_unpacked = match spdiff_order {
-            Table5_6::FirstOrderSpatialDifferencing => {
-                SpatialDifferencingDecodeIterator::FirstOrder(
-                    FirstOrderSpatialDifferencingDecodeIterator::new(unpacked_data, first_values),
-                )
-            }
-            Table5_6::SecondOrderSpatialDifferencing => {
+        let spdiff_unpacked = match template.spatial_diff_order {
+            SpatialDifferencingOrder::FirstOrder => SpatialDifferencingDecodeIterator::FirstOrder(
+                FirstOrderSpatialDifferencingDecodeIterator::new(unpacked_data, first_values),
+            ),
+            SpatialDifferencingOrder::SecondOrder => {
                 SpatialDifferencingDecodeIterator::SecondOrder(
                     SecondOrderSpatialDifferencingDecodeIterator::new(unpacked_data, first_values),
                 )
             }
-            Table5_6::Missing => unreachable!(),
+            _ => unreachable!(),
         };
         let decoder = NonZeroSimplePackingDecoder::new(spdiff_unpacked, &template.simple);
         let decoder = SimplePackingDecoder::NonZeroLength(decoder);
