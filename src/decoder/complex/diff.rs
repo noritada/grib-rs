@@ -25,6 +25,9 @@ impl<'a> SpatialDifferencingExtraDescriptors<'a> {
         }
         let num_octets = usize::from(num_extra_desc_octets);
         let byte_length = usize::from(order + 1) * num_octets;
+        if parent_slice.len() < byte_length {
+            return Err(DecodeError::LengthMismatch);
+        }
 
         Ok(Self {
             slice: &parent_slice[..byte_length],
@@ -210,6 +213,14 @@ mod tests {
         super::missing::DecodedValue::{Missing1, Missing2},
         *,
     };
+
+    #[test]
+    fn spdiff_rejects_truncated_extra_descriptors() {
+        assert!(matches!(
+            SpatialDifferencingExtraDescriptors::new(1, 2, &[0, 1, 2]),
+            Err(DecodeError::LengthMismatch)
+        ));
+    }
 
     macro_rules! test_spdiff_minimum_value {
         ($(($name:ident, $num_octets:expr, $expected:expr $(,)?)),* $(,)?) => ($(
