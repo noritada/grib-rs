@@ -424,11 +424,12 @@ mod missing;
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::def::grib2::table::{ComplexPackingMissingValueManagement, GroupSplittingMethod};
 
     fn params() -> param_set::ComplexPacking {
         param_set::ComplexPacking {
-            group_splitting_method: 1,
-            missing_value_management: 0,
+            group_splitting_method: GroupSplittingMethod(1),
+            missing_value_management: ComplexPackingMissingValueManagement(0),
             primary_missing_value: 0,
             secondary_missing_value: 0,
             num_groups: 1,
