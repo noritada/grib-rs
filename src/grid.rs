@@ -5,10 +5,12 @@ use helpers::RegularGridIterator;
 pub use self::{gaussian::compute_gaussian_latitudes, rotation::Unrotate};
 use crate::{
     GribError, GridDefinition, TryFromSlice,
-    def::grib2::template::{
-        Template3_0, Template3_1, Template3_10, Template3_20, Template3_30, Template3_40,
-        Template3_41,
-        param_set::{Grid, ScanningMode},
+    def::grib2::{
+        table::ScanningMode,
+        template::{
+            Template3_0, Template3_1, Template3_10, Template3_20, Template3_30, Template3_40,
+            Template3_41, param_set::Grid,
+        },
     },
 };
 
@@ -183,7 +185,8 @@ pub trait LatLons {
     ///
     /// The order of lat/lon data of grid points is the same as the order of the
     /// grid point values, defined by the scanning mode
-    /// ([`ScanningMode`](`crate::def::grib2::template::param_set::ScanningMode`)) in the data.
+    /// ([`ScanningMode`](`crate::def::grib2::table::ScanningMode`)) in the
+    /// data.
     #[allow(clippy::type_complexity)]
     fn latlons<'a>(
         &'a self,
@@ -280,7 +283,7 @@ enum LatLonsWrapper {
 /// # Examples
 ///
 /// ```
-/// use grib::{GridPointIndex, def::grib2::template::param_set::ScanningMode};
+/// use grib::{GridPointIndex, def::grib2::table::ScanningMode};
 ///
 /// struct Grid {
 ///     ni: u32,
@@ -435,7 +438,10 @@ impl AngleUnit for Grid {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::def::grib2::template::param_set::{EarthShape, ScaledValue};
+    use crate::def::grib2::{
+        table::EarthShapeType,
+        template::param_set::{EarthShape, ScaledValue},
+    };
 
     #[test]
     fn grid_definition_template_0() -> Result<(), Box<dyn std::error::Error>> {
@@ -448,7 +454,7 @@ mod tests {
         let actual = GridDefinitionTemplateValues::try_from(&data).unwrap();
         let expected = GridDefinitionTemplateValues::Template0(Template3_0 {
             earth: EarthShape {
-                shape: 4,
+                shape: EarthShapeType(4),
                 spherical_earth_radius: ScaledValue {
                     scale_factor: 0xff,
                     scaled_value: 0xffffffff,
@@ -471,15 +477,13 @@ mod tests {
                     first_point_lat: 47958333,
                     first_point_lon: 118062500,
                     resolution_and_component_flags:
-                        crate::def::grib2::template::param_set::ResolutionAndComponentFlags(
-                            0b00110000,
-                        ),
+                        crate::def::grib2::table::ResolutionAndComponentFlags(0b00110000),
                     last_point_lat: 20041667,
                     last_point_lon: 149937500,
                 },
                 i_direction_inc: 125000,
                 j_direction_inc: 83333,
-                scanning_mode: crate::def::grib2::template::param_set::ScanningMode(0b00000000),
+                scanning_mode: crate::def::grib2::table::ScanningMode(0b00000000),
             },
         });
         assert_eq!(actual, expected);

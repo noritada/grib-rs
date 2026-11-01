@@ -4,7 +4,10 @@ use super::{
 };
 use crate::{
     GridPointIndex, LatLons,
-    def::grib2::template::{Template3_1, param_set},
+    def::grib2::{
+        table,
+        template::{Template3_1, param_set},
+    },
     error::GribError,
     grid::AngleUnit,
 };
@@ -20,7 +23,7 @@ impl GridPointIndex for param_set::LatLonGrid {
         (self.grid.ni as usize, self.grid.nj as usize)
     }
 
-    fn scanning_mode(&self) -> &param_set::ScanningMode {
+    fn scanning_mode(&self) -> &table::ScanningMode {
         &self.scanning_mode
     }
 }
@@ -81,7 +84,7 @@ impl GridPointIndex for Template3_1 {
         self.lat_lon.grid_shape()
     }
 
-    fn scanning_mode(&self) -> &crate::def::grib2::template::param_set::ScanningMode {
+    fn scanning_mode(&self) -> &crate::def::grib2::table::ScanningMode {
         self.lat_lon.scanning_mode()
     }
 
@@ -165,11 +168,11 @@ mod tests {
                 basic_angle_subdivisions: 0xffffffff,
                 first_point_lat: 35000001,
                 first_point_lon: 139000001,
-                resolution_and_component_flags: param_set::ResolutionAndComponentFlags(0b00110000),
+                resolution_and_component_flags: table::ResolutionAndComponentFlags(0b00110000),
                 last_point_lat: 35000002,
                 last_point_lon: 139000003,
             },
-            param_set::ScanningMode(0b01000000),
+            table::ScanningMode(0b01000000),
             vec![(35.000001, 139.000001), (35.000001, 139.000002), (35.000001, 139.000003)],
             vec![(35.000002, 139.000001), (35.000002, 139.000002), (35.000002, 139.000003)],
         ),
@@ -182,11 +185,11 @@ mod tests {
                 basic_angle_subdivisions: 0xffffffff,
                 first_point_lat: -90000000,
                 first_point_lon: 0,
-                resolution_and_component_flags: param_set::ResolutionAndComponentFlags(0b00110000),
+                resolution_and_component_flags: table::ResolutionAndComponentFlags(0b00110000),
                 last_point_lat: 90000000,
                 last_point_lon: 359760000,
             },
-            param_set::ScanningMode(0b01000000),
+            table::ScanningMode(0b01000000),
             vec![(-90.0, 0.0), (-90.0, 0.24), (-90.0, 0.48)],
             vec![(90.0, -0.72), (90.0, -0.48), (90.0, -0.24)],
         ),
@@ -201,11 +204,11 @@ mod tests {
                 basic_angle_subdivisions: 0xffffffff,
                 first_point_lat: -90000000,
                 first_point_lon: 180000000,
-                resolution_and_component_flags: param_set::ResolutionAndComponentFlags(0b00110000),
+                resolution_and_component_flags: table::ResolutionAndComponentFlags(0b00110000),
                 last_point_lat: 90000000,
                 last_point_lon: 179760000,
             },
-            param_set::ScanningMode(0b01000000),
+            table::ScanningMode(0b01000000),
             vec![(-90.0, -180.0), (-90.0, -179.76), (-90.0, -179.52)],
             vec![(90.0, 179.28), (90.0, 179.52), (90.0, 179.76)],
         ),
@@ -218,11 +221,11 @@ mod tests {
                 basic_angle_subdivisions: 0xffffffff,
                 first_point_lat: -90000000,
                 first_point_lon: 359760000,
-                resolution_and_component_flags: param_set::ResolutionAndComponentFlags(0b00110000),
+                resolution_and_component_flags: table::ResolutionAndComponentFlags(0b00110000),
                 last_point_lat: 90000000,
                 last_point_lon: 0,
             },
-            param_set::ScanningMode(0b11000000),
+            table::ScanningMode(0b11000000),
             vec![(-90.0, -0.24), (-90.0, -0.48), (-90.0, -0.72)],
             vec![(90.0, 0.48), (90.0, 0.24), (90.0, 0.0)],
         ),
@@ -235,11 +238,11 @@ mod tests {
                 basic_angle_subdivisions: 0xffffffff,
                 first_point_lat: -90000000,
                 first_point_lon: 179760000,
-                resolution_and_component_flags: param_set::ResolutionAndComponentFlags(0b00110000),
+                resolution_and_component_flags: table::ResolutionAndComponentFlags(0b00110000),
                 last_point_lat: 90000000,
                 last_point_lon: 180000000,
             },
-            param_set::ScanningMode(0b11000000),
+            table::ScanningMode(0b11000000),
             vec![(-90.0, 179.76), (-90.0, 179.52), (-90.0, 179.28)],
             vec![(90.0, -179.52), (90.0, -179.76), (90.0, -180.0)],
         ),
@@ -266,13 +269,13 @@ mod tests {
                         first_point_lat: $first_point_lat,
                         first_point_lon: $first_point_lon,
                         resolution_and_component_flags:
-                            param_set::ResolutionAndComponentFlags(0b00110000),
+                            table::ResolutionAndComponentFlags(0b00110000),
                         last_point_lat: $last_point_lat,
                         last_point_lon: $last_point_lon,
                     },
                     i_direction_inc: 0xffffffff,
                     j_direction_inc: 0xffffffff,
-                    scanning_mode: param_set::ScanningMode($scanning_mode),
+                    scanning_mode: table::ScanningMode($scanning_mode),
                 };
                 assert_eq!(grid.is_consistent_for_j(), $expected_for_j);
             }

@@ -2,7 +2,7 @@ use crate::def::grib2::template::param_set::EarthShape;
 
 impl EarthShape {
     pub fn radii(&self) -> Option<(f64, f64)> {
-        let radii = match self.shape {
+        let radii = match self.shape.0 {
             0 => (6367470.0, 6367470.0),
             1 => {
                 let radius = f64::from(self.spherical_earth_radius.scaled_value)
@@ -37,7 +37,9 @@ impl EarthShape {
 mod tests {
     use super::*;
     use crate::{
-        TryFromSlice, def::grib2::template::param_set::ScaledValue, test_utils::decompress_to_vec,
+        TryFromSlice,
+        def::grib2::{table::EarthShapeType, template::param_set::ScaledValue},
+        test_utils::decompress_to_vec,
     };
 
     #[test]
@@ -46,7 +48,7 @@ mod tests {
         let mut pos = 0x83;
         let earth_actual = EarthShape::try_from_slice(&buf, &mut pos)?;
         let earth_expected = EarthShape {
-            shape: 1,
+            shape: EarthShapeType(1),
             spherical_earth_radius: ScaledValue {
                 scale_factor: 0,
                 scaled_value: 6371200,
@@ -72,7 +74,7 @@ mod tests {
         let mut pos = 0x33;
         let earth_actual = EarthShape::try_from_slice(&buf, &mut pos)?;
         let earth_expected = EarthShape {
-            shape: 2,
+            shape: EarthShapeType(2),
             spherical_earth_radius: ScaledValue {
                 scale_factor: 1,
                 scaled_value: 6367470,
@@ -98,7 +100,7 @@ mod tests {
         let mut pos = 0x33;
         let earth_actual = EarthShape::try_from_slice(&buf, &mut pos)?;
         let earth_expected = EarthShape {
-            shape: 4,
+            shape: EarthShapeType(4),
             spherical_earth_radius: ScaledValue {
                 scale_factor: 0xff,
                 scaled_value: 0xffffffff,
@@ -124,7 +126,7 @@ mod tests {
         let mut pos = 0x33;
         let earth_actual = EarthShape::try_from_slice(&buf, &mut pos)?;
         let earth_expected = EarthShape {
-            shape: 6,
+            shape: EarthShapeType(6),
             spherical_earth_radius: ScaledValue {
                 scale_factor: 0,
                 scaled_value: 0,

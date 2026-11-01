@@ -1,11 +1,12 @@
 use grib_template_derive::{Dump, TryFromSlice, WriteToBuffer};
 
+use super::table5;
+
 /// Data representation template 5.0 - Grid point data - simple packing.
 #[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump)]
 pub struct Template5_0 {
     pub simple: param_set::SimplePacking,
-    /// Type of original field values (see Code table 5.1).
-    pub orig_field_type: u8,
+    pub orig_field_type: table5::OriginalFieldValueType,
 }
 
 /// Data representation template 5.1 - Matrix value at grid point - simple
@@ -13,8 +14,7 @@ pub struct Template5_0 {
 #[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump)]
 pub struct Template5_1 {
     pub simple: param_set::SimplePacking,
-    /// Type of original field values (see Code table 5.1).
-    pub orig_field_type: u8,
+    pub orig_field_type: table5::OriginalFieldValueType,
     /// 0, no matrix bit maps present; 1-matrix bit maps present.
     pub matrix_bitmap_present: u8,
     /// Number of data values encoded in Section 7.
@@ -24,19 +24,19 @@ pub struct Template5_1 {
     /// NC - second dimension (columns) of each matrix.
     pub num_dim_2: u16,
     /// First dimension coordinate value definition (Code table 5.2).
-    pub dim_1_coord_def: u8,
+    pub dim_1_coord_def: table5::MatrixCoordinateValueFuncDefinition,
     /// NC1 - number of coefficients or values used to specify first dimension
     /// coordinate function.
     pub num_dim_1_coeffs: u8,
     /// Second dimension coordinate value definition (Code table 5.2).
-    pub dim_2_coord_def: u8,
+    pub dim_2_coord_def: table5::MatrixCoordinateValueFuncDefinition,
     /// NC2 - number of coefficients or values used to specify second dimension
     /// coordinate function.
     pub num_dim_2_coeffs: u8,
     /// First dimension physical significance (Code table 5.3).
-    pub dim_1_significance: u8,
+    pub dim_1_significance: table5::MatrixCoordinateParam,
     /// Second dimension physical significance (Code table 5.3).
-    pub dim_2_significance: u8,
+    pub dim_2_significance: table5::MatrixCoordinateParam,
     /// Coefficients to define first dimension coordinate values in functional
     /// form, or the explicit coordinate values (IEEE 32-bit floating-point
     /// value).
@@ -53,8 +53,7 @@ pub struct Template5_1 {
 #[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump)]
 pub struct Template5_2 {
     pub simple: param_set::SimplePacking,
-    /// Type of original field values (see Code table 5.1).
-    pub orig_field_type: u8,
+    pub orig_field_type: table5::OriginalFieldValueType,
     pub complex: param_set::ComplexPacking,
 }
 
@@ -63,11 +62,9 @@ pub struct Template5_2 {
 #[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump)]
 pub struct Template5_3 {
     pub simple: param_set::SimplePacking,
-    /// Type of original field values (see Code table 5.1).
-    pub orig_field_type: u8,
+    pub orig_field_type: table5::OriginalFieldValueType,
     pub complex: param_set::ComplexPacking,
-    /// Order of spatial differencing (see Code table 5.6).
-    pub spatial_diff_order: u8,
+    pub spatial_diff_order: table5::SpatialDifferencingOrder,
     /// Number of octets required in the data section to specify extra
     /// descriptors needed for spatial differencing (octets 6-ww in data
     /// template 7.3).
@@ -78,8 +75,7 @@ pub struct Template5_3 {
 /// data.
 #[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump)]
 pub struct Template5_4 {
-    /// Precision (see Code table 5.7).
-    pub precision: u8,
+    pub precision: table5::FloatPrecision,
 }
 
 /// Data representation template 5.40 - Grid point data - JPEG 2000 code stream
@@ -87,10 +83,8 @@ pub struct Template5_4 {
 #[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump)]
 pub struct Template5_40 {
     pub simple: param_set::SimplePacking,
-    /// Type of original field values (see Code table 5.1).
-    pub orig_field_type: u8,
-    /// Type of compression used (see Code table 5.40).
-    pub compression_type: u8,
+    pub orig_field_type: table5::OriginalFieldValueType,
+    pub compression_type: table5::CompressionType,
     /// Target compression ratio, M:1 (with respect to the bit-depth specified
     /// in octet 20), when octet 22 indicates lossy compression. Otherwise, set
     /// to missing (see Note 3).
@@ -102,8 +96,7 @@ pub struct Template5_40 {
 #[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump)]
 pub struct Template5_41 {
     pub simple: param_set::SimplePacking,
-    /// Type of original field values (see Code table 5.1).
-    pub orig_field_type: u8,
+    pub orig_field_type: table5::OriginalFieldValueType,
 }
 
 /// Data representation template 5.42 - Grid point data - CCSDS recommended
@@ -111,8 +104,7 @@ pub struct Template5_41 {
 #[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump)]
 pub struct Template5_42 {
     pub simple: param_set::SimplePacking,
-    /// Type of original field values (see Code table 5.1).
-    pub orig_field_type: u8,
+    pub orig_field_type: table5::OriginalFieldValueType,
     /// CCSDS compression options mask (see Note 3).
     pub mask: u8,
     /// Block size.
@@ -148,7 +140,7 @@ pub struct Template5_51 {
     /// TS - total number of values in the unpacked subset (see Note 1).
     pub ts: u32,
     /// Precision of the unpacked subset (see Code table 5.7).
-    pub precision: u8,
+    pub precision: table5::FloatPrecision,
 }
 
 /// Data representation template 5.53 - Spectral data for limited area models -
@@ -156,10 +148,8 @@ pub struct Template5_51 {
 #[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump)]
 pub struct Template5_53 {
     pub simple: param_set::SimplePacking,
-    /// Bi-Fourier sub-truncation type (see Code table 5.25).
-    pub bi_fourier_subtrunc_type: u8,
-    /// Packing mode for axes (see Code table 5.26).
-    pub bi_fourier_pack_mode: u8,
+    pub bi_fourier_subtrunc_type: table5::BiFourierSubtruncationType,
+    pub bi_fourier_pack_mode: table5::BiFourierPackMode,
     /// P - Laplacian scaling factor (expressed in 10-6 units).
     pub p: i32,
     /// NS - bi-Fourier resolution parameter of the unpacked subset (see Note
@@ -171,7 +161,7 @@ pub struct Template5_53 {
     /// TS - total number of values in the unpacked subset (see Note 1).
     pub ts: u32,
     /// Precision of the unpacked subset (see Code table 5.7).
-    pub precision: u8,
+    pub precision: table5::FloatPrecision,
 }
 
 /// Data representation template 5.61 - Grid point data - simple packing with
@@ -211,7 +201,10 @@ pub struct Template5_200 {
 ///
 /// use grib::{
 ///     TryFromSlice,
-///     def::grib2::template::{Template5_50002, Template5_50002Optional, param_set},
+///     def::grib2::{
+///         table,
+///         template::{Template5_50002, Template5_50002Optional, param_set},
+///     },
 /// };
 ///
 /// fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -235,7 +228,7 @@ pub struct Template5_200 {
 ///         second_order_packed_values_width: 264145,
 ///         widths_width: 5,
 ///         widths_len: 14,
-///         ordering_flags: param_set::OrderingFlags(0b00000000),
+///         ordering_flags: table::OrderingFlags(0b00000000),
 ///         spd_order: 2,
 ///         optional: Some(Template5_50002Optional {
 ///             num_spd_width_bits: 24,
@@ -259,7 +252,7 @@ pub struct Template5_50002 {
     pub widths_width: u8,
     /// Width of lengths.
     pub widths_len: u8,
-    pub ordering_flags: param_set::OrderingFlags,
+    pub ordering_flags: table5::OrderingFlags,
     /// Order of spatial differencing.
     pub spd_order: u8,
     pub optional: Option<Template5_50002Optional>,
@@ -273,6 +266,8 @@ pub struct Template5_50002Optional {
 
 pub(crate) mod param_set {
     use grib_template_derive::{Dump, TryFromSlice, WriteToBuffer};
+
+    use super::super::table5;
 
     #[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump)]
     pub struct SimplePacking {
@@ -296,10 +291,8 @@ pub(crate) mod param_set {
 
     #[derive(Debug, PartialEq, Eq, Clone, TryFromSlice, WriteToBuffer, Dump)]
     pub struct ComplexPacking {
-        /// Group splitting method used (see Code table 5.4).
-        pub group_splitting_method: u8,
-        /// Missing value management used (see Code table 5.5).
-        pub missing_value_management: u8,
+        pub group_splitting_method: table5::GroupSplittingMethod,
+        pub missing_value_management: table5::ComplexPackingMissingValueManagement,
         /// Primary missing value substitute.
         pub primary_missing_value: u32,
         /// Secondary missing value substitute.
@@ -322,11 +315,4 @@ pub(crate) mod param_set {
         /// the length increment given in octet 42).
         pub num_group_len_bits: u8,
     }
-
-    #[derive(Debug, PartialEq, Eq, Clone, Copy, TryFromSlice, WriteToBuffer, Dump)]
-    #[dump(flag)]
-    pub struct OrderingFlags(
-        /// Ordering flags (Flag table 5.50002).
-        pub u8,
-    );
 }

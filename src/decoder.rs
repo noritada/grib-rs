@@ -208,7 +208,7 @@ impl Grib2SubmessageDecoder {
             _ => {
                 return Err(GribError::DecodeError(DecodeError::NotSupported(
                     "GRIB2 code table 5.0 (data representation template number)",
-                    self.sect5_param.payload.template_num,
+                    self.sect5_param.payload.template_num.0,
                 )));
             }
         };
@@ -255,7 +255,7 @@ impl Grib2SubmessageDecoder {
     ///         },
     ///         payload: grib::def::grib2::Section5Payload {
     ///             num_encoded_points: 86016,
-    ///             template_num: 200,
+    ///             template_num: grib::def::grib2::table::DataRepresentationTemplateNum(200),
     ///             template: grib::def::grib2::DataRepresentationTemplate::_5_200(
     ///                 grib::def::grib2::template::Template5_200 {
     ///                     num_bits: 8,

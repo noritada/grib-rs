@@ -30,8 +30,7 @@ pub struct Section0 {
     pub identifier: [u8; 4],
     /// Reserved.
     pub reserved: [u8; 2],
-    /// Discipline - GRIB Master Table Number (see Code Table 0.0).
-    pub discipline: u8,
+    pub discipline: table0::Discipline,
     /// GRIB Edition Number (currently 2).
     pub edition_num: u8,
     /// Total length of GRIB message in octets (including Section 0).
@@ -51,11 +50,8 @@ pub struct Section1Payload {
     pub subcentre_id: u16,
     /// GRIB master table version number (see Common Code table C-0 and Note 1).
     pub master_table_version: u8,
-    /// Version number of GRIB Local tables used to augment Master tables (see
-    /// Code table 1.1 and Note 2).
-    pub local_table_version: u8,
-    /// Significance of reference time (see Code table 1.2).
-    pub ref_time_significance: u8,
+    pub local_table_version: table1::LocalTableVer,
+    pub ref_time_significance: table1::RefTimeSignificance,
     /// Reference time of data.
     #[dump(doc(
         year = "Year (4 digits) - Reference time of data.",
@@ -66,18 +62,14 @@ pub struct Section1Payload {
         second = "Second - Reference time of data.",
     ))]
     pub ref_time: template::param_set::DateTime,
-    /// Production status of processed data in this GRIB message (see Code table
-    /// 1.3).
-    pub prod_status: u8,
-    /// Type of processed data in this GRIB message (see Code table 1.4).
-    pub data_type: u8,
+    pub prod_status: table1::ProductionStatus,
+    pub data_type: table1::ProcessedDataType,
     pub optional: Option<Section1PayloadOptional>,
 }
 
 #[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump)]
 pub struct Section1PayloadOptional {
-    /// Identification template number (optional, see Code table 1.5).
-    pub template_num: u16,
+    pub template_num: table1::IdentificationTemplateNum,
     /// Identification template (optional, see template 1.X, where X is the
     /// identification template number given in octets 22-23).
     #[grib_template(variant = "template_num")]
@@ -104,10 +96,8 @@ pub struct Section3Payload {
     pub num_points: u32,
     /// Number of octets for optional list of numbers (see Note 2).
     pub num_point_list_octets: u8,
-    /// Interpretation of list of numbers (see Code table 3.11).
-    pub point_list_interpretation: u8,
-    /// Grid definition template number (= N) (see Code table 3.1).
-    pub template_num: u16,
+    pub point_list_interpretation: table3::PointListInterpretation,
+    pub template_num: table3::GridDefinitionTemplateNum,
     /// Grid Definition Template (see Template 3.N, where N is the Grid
     /// Definition Template Number given in octets 13-14).
     #[grib_template(variant = "template_num")]
@@ -140,8 +130,7 @@ pub struct Section4Payload {
     /// Number of coordinate values after template or number of information
     /// according to 3D vertical coordinate GRIB2 message (see Notes 1 and 5).
     pub num_coord_values: u16,
-    /// Product definition template number (see Code table 4.0).
-    pub template_num: u16,
+    pub template_num: table4::ProductDefinitionTemplateNum,
     /// Product Definition Template (see Template 4.X, where X is the Product
     /// Definition Template Number given in octets 8-9).
     #[grib_template(variant = "template_num")]
@@ -173,8 +162,7 @@ pub struct Section5Payload {
     /// 7 when a bit map is present, total number of data points when a bit map
     /// is absent.
     pub num_encoded_points: u32,
-    /// Data representation template number (see Code table 5.0).
-    pub template_num: u16,
+    pub template_num: table5::DataRepresentationTemplateNum,
     /// Data representation template (see template 5.X, where X is the data
     /// representation template number given in octets 10-11).
     #[grib_template(variant = "template_num")]
@@ -210,6 +198,10 @@ pub struct Section6Payload {
     pub bitmap_indicator: u8,
 }
 
+pub mod table {
+    pub use super::{table0::*, table1::*, table3::*, table4::*, table5::*};
+}
+
 pub mod template {
     //! GRIB2 template definitions.
 
@@ -220,6 +212,7 @@ pub mod template {
 
         use grib_template_derive::{Dump, TryFromSlice, WriteToBuffer};
 
+        use super::super::table4;
         pub use super::super::{
             template3::param_set::*, template4::param_set::*, template5::param_set::*,
         };
@@ -260,14 +253,18 @@ pub mod template {
         where
             L: crate::TryFromSlice + crate::WriteToBuffer + grib_template_helpers::DumpField,
         {
-            /// Unit of time range (see Code Table 4.4).
-            pub unit: u8,
+            pub unit: table4::TimeRangeUnit,
             /// Length of the time range in units defined by `unit`.
             pub len: L,
         }
     }
 }
 
+mod table0;
+mod table1;
+mod table3;
+mod table4;
+mod table5;
 mod template1;
 mod template3;
 mod template4;

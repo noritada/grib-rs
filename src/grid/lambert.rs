@@ -2,7 +2,7 @@
 use crate::projection::OsgeoProj;
 use crate::{
     GridPointIndex, LatLons,
-    def::grib2::template::{Template3_30, param_set},
+    def::grib2::{table, template::Template3_30},
     error::GribError,
     grid::AngleUnit,
     projection,
@@ -19,7 +19,7 @@ impl GridPointIndex for Template3_30 {
         (self.ni as usize, self.nj as usize)
     }
 
-    fn scanning_mode(&self) -> &param_set::ScanningMode {
+    fn scanning_mode(&self) -> &table::ScanningMode {
         &self.scanning_mode
     }
 }
@@ -39,7 +39,7 @@ impl LatLons for Template3_30 {
         let (a, b) = self.earth_shape.radii().ok_or_else(|| {
             GribError::NotSupported(format!(
                 "unknown value of Code Table 3.2 (shape of the Earth): {}",
-                self.earth_shape.shape
+                self.earth_shape.shape.0
             ))
         })?;
         let params = projection::LccParams {
@@ -100,6 +100,7 @@ impl AngleUnit for Template3_30 {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::def::grib2::template::param_set;
 
     #[test]
     fn lambert_grid_latlon_computation() -> Result<(), Box<dyn std::error::Error>> {
@@ -107,7 +108,7 @@ mod tests {
         // grid point definition extracted from testdata/ds.critfireo.bin.xz
         let grid_def = Template3_30 {
             earth_shape: param_set::EarthShape {
-                shape: 1,
+                shape: table::EarthShapeType(1),
                 spherical_earth_radius: param_set::ScaledValue {
                     scale_factor: 0,
                     scaled_value: 6371200,
@@ -125,13 +126,13 @@ mod tests {
             nj: 1377,
             first_point_lat: 20190000,
             first_point_lon: 238449996,
-            resolution_and_component_flags: param_set::ResolutionAndComponentFlags(0b00000000),
+            resolution_and_component_flags: table::ResolutionAndComponentFlags(0b00000000),
             lad: 25000000,
             lov: 265000000,
             dx: 2539703,
             dy: 2539703,
-            projection_centre: param_set::ProjectionCentreFlag(0b00000000),
-            scanning_mode: param_set::ScanningMode(0b01010000),
+            projection_centre: table::ProjectionCentreFlag(0b00000000),
+            scanning_mode: table::ScanningMode(0b01010000),
             latin1: 25000000,
             latin2: 25000000,
             south_pole_lat: -90000000,

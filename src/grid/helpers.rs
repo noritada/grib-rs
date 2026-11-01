@@ -5,7 +5,7 @@ use proj::Proj;
 use crate::GribError;
 #[cfg(not(feature = "gridpoints-proj"))]
 use crate::projection::Project;
-use crate::{GridPointIndexIterator, def::grib2::template::param_set::ScanningMode};
+use crate::{GridPointIndexIterator, def::grib2::table::ScanningMode};
 
 pub(crate) fn evenly_spaced_longitudes(
     start_microdegree: u32,

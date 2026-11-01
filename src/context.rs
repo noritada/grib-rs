@@ -599,8 +599,8 @@ Data Representation:                    {}
     ///             centre_id: 34,
     ///             subcentre_id: 0,
     ///             master_table_version: 5,
-    ///             local_table_version: 1,
-    ///             ref_time_significance: 0,
+    ///             local_table_version: grib::def::grib2::table::LocalTableVer(1),
+    ///             ref_time_significance: grib::def::grib2::table::RefTimeSignificance(0),
     ///             ref_time: grib::def::grib2::template::param_set::DateTime {
     ///                 year: 2016,
     ///                 month: 8,
@@ -609,8 +609,8 @@ Data Representation:                    {}
     ///                 minute: 0,
     ///                 second: 0,
     ///             },
-    ///             prod_status: 0,
-    ///             data_type: 2,
+    ///             prod_status: grib::def::grib2::table::ProductionStatus(0),
+    ///             data_type: grib::def::grib2::table::ProcessedDataType(2),
     ///             optional: None,
     ///         },
     ///     });
@@ -656,11 +656,11 @@ Data Representation:                    {}
     ///             grid_def_source: 0,
     ///             num_points: 86016,
     ///             num_point_list_octets: 0,
-    ///             point_list_interpretation: 0,
-    ///             template_num: 0,
+    ///             point_list_interpretation: grib::def::grib2::table::PointListInterpretation(0),
+    ///             template_num: grib::def::grib2::table::GridDefinitionTemplateNum(0),
     ///             template: grib::def::grib2::GridDefinitionTemplate::_3_0(grib::def::grib2::template::Template3_0 {
     ///                 earth: grib::def::grib2::template::param_set::EarthShape {
-    ///                     shape: 4,
+    ///                     shape: grib::def::grib2::table::EarthShapeType(4),
     ///                     spherical_earth_radius: grib::def::grib2::template::param_set::ScaledValue {
     ///                         scale_factor: 0xff,
     ///                         scaled_value: 0xffffffff,
@@ -682,13 +682,13 @@ Data Representation:                    {}
     ///                         basic_angle_subdivisions: 0xffffffff,
     ///                         first_point_lat: 47958333,
     ///                         first_point_lon: 118062500,
-    ///                         resolution_and_component_flags: grib::def::grib2::template::param_set::ResolutionAndComponentFlags(0b00110000),
+    ///                         resolution_and_component_flags: grib::def::grib2::table::ResolutionAndComponentFlags(0b00110000),
     ///                         last_point_lat: 20041667,
     ///                         last_point_lon: 149937500,
     ///                     },
     ///                     i_direction_inc: 125000,
     ///                     j_direction_inc: 83333,
-    ///                     scanning_mode: grib::def::grib2::template::param_set::ScanningMode(0b00000000),
+    ///                     scanning_mode: grib::def::grib2::table::ScanningMode(0b00000000),
     ///                 },
     ///             }),
     ///         },
@@ -733,16 +733,16 @@ Data Representation:                    {}
     ///         },
     ///         payload: grib::def::grib2::Section4Payload {
     ///             num_coord_values: 0,
-    ///             template_num: 0,
+    ///             template_num: grib::def::grib2::table::ProductDefinitionTemplateNum(0),
     ///             template: grib::def::grib2::ProductDefinitionTemplate::_4_0(
     ///                 grib::def::grib2::template::Template4_0 {
     ///                     param: grib::def::grib2::template::param_set::ProductParam {
-    ///                         category: 193,
-    ///                         num: 0,
+    ///                         category: grib::def::grib2::table::ParamCategory(193),
+    ///                         num: grib::def::grib2::table::ParamNum(0),
     ///                     },
     ///                     generating_process:
     ///                         grib::def::grib2::template::param_set::GeneratingProcess {
-    ///                             process_type: 0,
+    ///                             process_type: grib::def::grib2::table::GeneratingProcessType(0),
     ///                             background_process: 153,
     ///                             process_id: 255,
     ///                         },
@@ -750,20 +750,20 @@ Data Representation:                    {}
     ///                         cutoff_hours: 0,
     ///                         cutoff_minutes: 0,
     ///                         time: grib::def::grib2::template::param_set::TimeRange {
-    ///                             unit: 0,
+    ///                             unit: grib::def::grib2::table::TimeRangeUnit(0),
     ///                             len: 0,
     ///                         },
     ///                     },
     ///                     horizontal: grib::def::grib2::template::param_set::Horizontal {
     ///                         first_surface: grib::def::grib2::template::param_set::FixedSurface {
-    ///                             surface_type: 1,
+    ///                             surface_type: grib::def::grib2::table::FixedSurfaceType(1),
     ///                             value: grib::def::grib2::template::param_set::ScaledValue {
     ///                                 scale_factor: -127,
     ///                                 scaled_value: -2147483647,
     ///                             },
     ///                         },
     ///                         second_surface: grib::def::grib2::template::param_set::FixedSurface {
-    ///                             surface_type: 255,
+    ///                             surface_type: grib::def::grib2::table::FixedSurfaceType(255),
     ///                             value: grib::def::grib2::template::param_set::ScaledValue {
     ///                                 scale_factor: -127,
     ///                                 scaled_value: -2147483647,
@@ -814,7 +814,7 @@ Data Representation:                    {}
     ///         },
     ///         payload: grib::def::grib2::Section5Payload {
     ///             num_encoded_points: 86016,
-    ///             template_num: 200,
+    ///             template_num: grib::def::grib2::table::DataRepresentationTemplateNum(200),
     ///             template: grib::def::grib2::DataRepresentationTemplate::_5_200(
     ///                 grib::def::grib2::template::Template5_200 {
     ///                     num_bits: 8,
@@ -1201,7 +1201,7 @@ Data Representation:                    {}
     ///
     /// The order of items is the same as the order of the grid point values,
     /// defined by the scanning mode
-    /// ([`ScanningMode`](`crate::def::grib2::template::param_set::ScanningMode`))
+    /// ([`ScanningMode`](`crate::def::grib2::table::ScanningMode`))
     /// in the data.
     ///
     /// This iterator allows users to perform their own coordinate calculations

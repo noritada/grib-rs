@@ -23,7 +23,7 @@ impl<'d> Grib2GpvUnpack for Png<'d> {
 
     fn iter<'a>(&'a self) -> Result<Self::Iter<'a>, DecodeError> {
         let Self(target, template) = self;
-        super::orig_field_type_is_supported(template.orig_field_type)?;
+        super::orig_field_type_is_supported(template.orig_field_type.0)?;
 
         if template.simple.num_bits == 0 {
             PNG_NUM_BITS_ZERO_WARNING_ONCE.call_once(|| {

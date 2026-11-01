@@ -178,8 +178,8 @@ pub trait WriteGrib2MessageIterL3 {
 ///             centre_id: 0xffff,
 ///             subcentre_id: 0,
 ///             master_table_version: 29,
-///             local_table_version: 0,
-///             ref_time_significance: 0,
+///             local_table_version: grib::def::grib2::table::LocalTableVer(0),
+///             ref_time_significance: grib::def::grib2::table::RefTimeSignificance(0),
 ///             ref_time: grib2::template::param_set::DateTime {
 ///                 year: 2026,
 ///                 month: 1,
@@ -188,8 +188,8 @@ pub trait WriteGrib2MessageIterL3 {
 ///                 minute: 4,
 ///                 second: 5,
 ///             },
-///             prod_status: 0,
-///             data_type: 0,
+///             prod_status: grib::def::grib2::table::ProductionStatus(0),
+///             data_type: grib::def::grib2::table::ProcessedDataType(0),
 ///             optional: None,
 ///         },
 ///     };
@@ -229,8 +229,8 @@ pub trait WriteGrib2MessageIterL3 {
 ///             centre_id: 0xffff,
 ///             subcentre_id: 0,
 ///             master_table_version: 29,
-///             local_table_version: 0,
-///             ref_time_significance: 0,
+///             local_table_version: grib::def::grib2::table::LocalTableVer(0),
+///             ref_time_significance: grib::def::grib2::table::RefTimeSignificance(0),
 ///             ref_time: grib2::template::param_set::DateTime {
 ///                 year: 2026,
 ///                 month: 1,
@@ -239,8 +239,8 @@ pub trait WriteGrib2MessageIterL3 {
 ///                 minute: 4,
 ///                 second: 5,
 ///             },
-///             prod_status: 0,
-///             data_type: 0,
+///             prod_status: grib::def::grib2::table::ProductionStatus(0),
+///             data_type: grib::def::grib2::table::ProcessedDataType(0),
 ///             optional: None,
 ///         },
 ///     });
@@ -348,7 +348,7 @@ fn write_section0(
     let sect = crate::def::grib2::Section0 {
         identifier: [0x47, 0x52, 0x49, 0x42],
         reserved,
-        discipline,
+        discipline: crate::def::grib2::table::Discipline(discipline),
         edition_num: 2,
         total_len: len as u64,
     };

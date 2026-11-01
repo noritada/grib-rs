@@ -1,5 +1,7 @@
 use grib_template_derive::{Dump, TryFromSlice, WriteToBuffer};
 
+use super::table3;
+
 /// Grid definition template 3.0 - latitude/longitude (or equidistant
 /// cylindrical, or Plate Carrée).
 #[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump)]
@@ -18,7 +20,10 @@ pub struct Template3_0 {
 ///
 /// use grib::{
 ///     TryFromSlice,
-///     def::grib2::template::{Template3_1, param_set},
+///     def::grib2::{
+///         table,
+///         template::{Template3_1, param_set},
+///     },
 /// };
 ///
 /// fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -34,7 +39,7 @@ pub struct Template3_0 {
 ///     let actual = Template3_1::try_from_slice(&buf, &mut pos)?;
 ///     let expected = Template3_1 {
 ///         earth: param_set::EarthShape {
-///             shape: 6,
+///             shape: table::EarthShapeType(6),
 ///             spherical_earth_radius: param_set::ScaledValue {
 ///                 scale_factor: 0xff,
 ///                 scaled_value: 0xffffffff,
@@ -56,13 +61,11 @@ pub struct Template3_0 {
 ///                 basic_angle_subdivisions: 0xffffffff,
 ///                 first_point_lat: -12302501,
 ///                 first_point_lon: 345178780,
-///                 resolution_and_component_flags: param_set::ResolutionAndComponentFlags(
-///                     0b00111000,
-///                 ),
+///                 resolution_and_component_flags: table::ResolutionAndComponentFlags(0b00111000),
 ///                 last_point_lat: 16700001,
 ///                 last_point_lon: 42306283,
 ///             },
-///             scanning_mode: param_set::ScanningMode(0b01000000),
+///             scanning_mode: table::ScanningMode(0b01000000),
 ///             i_direction_inc: 22500,
 ///             j_direction_inc: 22500,
 ///         },
@@ -112,7 +115,10 @@ pub struct Template3_3 {
 ///
 /// use grib::{
 ///     TryFromSlice,
-///     def::grib2::template::{Template3_10, param_set},
+///     def::grib2::{
+///         table,
+///         template::{Template3_10, param_set},
+///     },
 /// };
 ///
 /// fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -127,7 +133,7 @@ pub struct Template3_3 {
 ///     let actual = Template3_10::try_from_slice(&buf, &mut pos)?;
 ///     let expected = Template3_10 {
 ///         earth_shape: param_set::EarthShape {
-///             shape: 1,
+///             shape: table::EarthShapeType(1),
 ///             spherical_earth_radius: param_set::ScaledValue {
 ///                 scale_factor: 0,
 ///                 scaled_value: 6371200,
@@ -145,11 +151,11 @@ pub struct Template3_3 {
 ///         nj: 1793,
 ///         first_point_lat: -30419200,
 ///         first_point_lon: 129906005,
-///         resolution_and_component_flags: param_set::ResolutionAndComponentFlags(0b00000000),
+///         resolution_and_component_flags: table::ResolutionAndComponentFlags(0b00000000),
 ///         lad: 20000000,
 ///         last_point_lat: 80010000,
 ///         last_point_lon: 10710000,
-///         scanning_mode: param_set::ScanningMode(0b01010000),
+///         scanning_mode: table::ScanningMode(0b01010000),
 ///         orientation: 0,
 ///         di: 10000000,
 ///         dj: 10000000,
@@ -170,7 +176,7 @@ pub struct Template3_10 {
     pub first_point_lat: i32,
     /// Lo1 - longitude of first grid point.
     pub first_point_lon: u32,
-    pub resolution_and_component_flags: param_set::ResolutionAndComponentFlags,
+    pub resolution_and_component_flags: table3::ResolutionAndComponentFlags,
     /// LaD - Latitude(s) at which the Mercator projection intersects the Earth
     /// (Latitude(s) where Di and Dj are specified).
     pub lad: i32,
@@ -178,7 +184,7 @@ pub struct Template3_10 {
     pub last_point_lat: i32,
     /// Lo2 - longitude of last grid point.
     pub last_point_lon: u32,
-    pub scanning_mode: param_set::ScanningMode,
+    pub scanning_mode: table3::ScanningMode,
     /// Orientation of the grid, angle between i direction on the map and the
     /// equator (see Note 1).
     pub orientation: u32,
@@ -197,7 +203,10 @@ pub struct Template3_10 {
 ///
 /// use grib::{
 ///     TryFromSlice,
-///     def::grib2::template::{Template3_20, param_set},
+///     def::grib2::{
+///         table,
+///         template::{Template3_20, param_set},
+///     },
 /// };
 ///
 /// fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -214,7 +223,7 @@ pub struct Template3_10 {
 ///     let actual = Template3_20::try_from_slice(&buf, &mut pos)?;
 ///     let expected = Template3_20 {
 ///         earth_shape: param_set::EarthShape {
-///             shape: 6,
+///             shape: table::EarthShapeType(6),
 ///             spherical_earth_radius: param_set::ScaledValue {
 ///                 scale_factor: 0xff,
 ///                 scaled_value: 0xffffffff,
@@ -232,13 +241,13 @@ pub struct Template3_10 {
 ///         nj: 824,
 ///         first_point_lat: 18145030,
 ///         first_point_lon: 217107456,
-///         resolution_and_component_flags: param_set::ResolutionAndComponentFlags(0b00001000),
+///         resolution_and_component_flags: table::ResolutionAndComponentFlags(0b00001000),
 ///         lad: 60000000,
 ///         lov: 249000000,
 ///         dx: 10000000,
 ///         dy: 10000000,
-///         projection_centre: param_set::ProjectionCentreFlag(0b00000000),
-///         scanning_mode: param_set::ScanningMode(0b01000000),
+///         projection_centre: table::ProjectionCentreFlag(0b00000000),
+///         scanning_mode: table::ScanningMode(0b01000000),
 ///     };
 ///     assert_eq!(actual, expected);
 ///
@@ -256,7 +265,7 @@ pub struct Template3_20 {
     pub first_point_lat: i32,
     /// Lo1 - longitude of first grid point.
     pub first_point_lon: u32,
-    pub resolution_and_component_flags: param_set::ResolutionAndComponentFlags,
+    pub resolution_and_component_flags: table3::ResolutionAndComponentFlags,
     /// LaD - latitude where Dx and Dy are specified.
     pub lad: i32,
     /// LoV - orientation of the grid (see Note 2).
@@ -265,8 +274,8 @@ pub struct Template3_20 {
     pub dx: u32,
     /// Dy - y-direction grid length (see Note 3).
     pub dy: u32,
-    pub projection_centre: param_set::ProjectionCentreFlag,
-    pub scanning_mode: param_set::ScanningMode,
+    pub projection_centre: table3::ProjectionCentreFlag,
+    pub scanning_mode: table3::ScanningMode,
 }
 
 /// Grid definition template 3.30 - Lambert conformal.
@@ -278,7 +287,10 @@ pub struct Template3_20 {
 ///
 /// use grib::{
 ///     TryFromSlice,
-///     def::grib2::template::{Template3_30, param_set},
+///     def::grib2::{
+///         table,
+///         template::{Template3_30, param_set},
+///     },
 /// };
 ///
 /// fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -293,7 +305,7 @@ pub struct Template3_20 {
 ///     let actual = Template3_30::try_from_slice(&buf, &mut pos)?;
 ///     let expected = Template3_30 {
 ///         earth_shape: param_set::EarthShape {
-///             shape: 1,
+///             shape: table::EarthShapeType(1),
 ///             spherical_earth_radius: param_set::ScaledValue {
 ///                 scale_factor: 0,
 ///                 scaled_value: 6371200,
@@ -311,13 +323,13 @@ pub struct Template3_20 {
 ///         nj: 1377,
 ///         first_point_lat: 20190000,
 ///         first_point_lon: 238449996,
-///         resolution_and_component_flags: param_set::ResolutionAndComponentFlags(0b00000000),
+///         resolution_and_component_flags: table::ResolutionAndComponentFlags(0b00000000),
 ///         lad: 25000000,
 ///         lov: 265000000,
 ///         dx: 2539703,
 ///         dy: 2539703,
-///         projection_centre: param_set::ProjectionCentreFlag(0b00000000),
-///         scanning_mode: param_set::ScanningMode(0b01010000),
+///         projection_centre: table::ProjectionCentreFlag(0b00000000),
+///         scanning_mode: table::ScanningMode(0b01010000),
 ///         latin1: 25000000,
 ///         latin2: 25000000,
 ///         south_pole_lat: -90000000,
@@ -339,7 +351,7 @@ pub struct Template3_30 {
     pub first_point_lat: i32,
     /// Lo1 - longitude of first grid point.
     pub first_point_lon: u32,
-    pub resolution_and_component_flags: param_set::ResolutionAndComponentFlags,
+    pub resolution_and_component_flags: table3::ResolutionAndComponentFlags,
     /// LaD - latitude where Dx and Dy are specified.
     pub lad: i32,
     /// LoV - longitude of meridian parallel to y-axis along which latitude
@@ -349,8 +361,8 @@ pub struct Template3_30 {
     pub dx: u32,
     /// Dy - y-direction grid length (see Note 1).
     pub dy: u32,
-    pub projection_centre: param_set::ProjectionCentreFlag,
-    pub scanning_mode: param_set::ScanningMode,
+    pub projection_centre: table3::ProjectionCentreFlag,
+    pub scanning_mode: table3::ScanningMode,
     /// Latin 1 - first latitude from the pole at which the secant cone cuts the
     /// sphere.
     pub latin1: i32,
@@ -399,8 +411,7 @@ pub struct Template3_43 {
 /// Grid definition template 3.101 - general unstructured grid.
 #[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump)]
 pub struct Template3_101 {
-    /// Shape of the Earth (see Code table 3.2).
-    pub earth_shape: u8,
+    pub earth_shape: table3::EarthShapeType,
     /// Number of grid used (defined by originating centre).
     #[grib_template(num_octets = 3)]
     pub grid_num: u32,
@@ -414,12 +425,14 @@ pub struct Template3_101 {
 pub(crate) mod param_set {
     use grib_template_derive::{Dump, TryFromSlice, WriteToBuffer};
 
-    use super::super::template::param_set::ScaledValue;
+    use super::super::{
+        table3::{EarthShapeType, ResolutionAndComponentFlags, ScanningMode},
+        template::param_set::ScaledValue,
+    };
 
     #[derive(Debug, PartialEq, Eq, Clone, TryFromSlice, WriteToBuffer, Dump)]
     pub struct EarthShape {
-        /// Shape of the Earth (see Code table 3.2).
-        pub shape: u8,
+        pub shape: EarthShapeType,
         /// Radius of spherical Earth.
         #[dump(doc(
             scale_factor = "Scale factor of radius of spherical Earth.",
@@ -482,20 +495,6 @@ pub(crate) mod param_set {
         pub last_point_lon: u32,
     }
 
-    #[derive(Debug, PartialEq, Eq, Clone, Copy, TryFromSlice, WriteToBuffer, Dump)]
-    #[dump(flag)]
-    pub struct ProjectionCentreFlag(
-        /// Projection centre flag (see Flag table 3.5).
-        pub u8,
-    );
-
-    #[derive(Debug, PartialEq, Eq, Clone, Copy, TryFromSlice, WriteToBuffer, Dump)]
-    #[dump(flag)]
-    pub struct ResolutionAndComponentFlags(
-        /// Resolution and component flags (see Flag table 3.3).
-        pub u8,
-    );
-
     #[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump)]
     pub struct Rotation {
         /// Latitude of the southern pole of projection.
@@ -515,11 +514,4 @@ pub(crate) mod param_set {
         /// Stretching factor.
         pub factor: u32,
     }
-
-    #[derive(Debug, PartialEq, Eq, Clone, Copy, TryFromSlice, WriteToBuffer, Dump)]
-    #[dump(flag)]
-    pub struct ScanningMode(
-        /// Scanning mode (flags - see Flag table 3.4).
-        pub u8,
-    );
 }

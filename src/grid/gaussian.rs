@@ -80,7 +80,7 @@ impl GridPointIndex for Template3_41 {
         self.gaussian.grid_shape()
     }
 
-    fn scanning_mode(&self) -> &crate::def::grib2::template::param_set::ScanningMode {
+    fn scanning_mode(&self) -> &crate::def::grib2::table::ScanningMode {
         self.gaussian.scanning_mode()
     }
 

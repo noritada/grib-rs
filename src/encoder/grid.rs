@@ -1,7 +1,7 @@
-use crate::def::grib2::template::param_set;
+use crate::def::grib2::{table, template::param_set};
 
 /// An auxiliary struct for creating the definition of a latitude/longitude grid
-/// ([`def::grib2::template::param_set::LatLonGrid`](`crate::def::grib2::template::param_set::LatLonGrid`))
+/// ([`def::grib2::template::table::LatLonGrid`](`crate::def::grib2::template::table::LatLonGrid`))
 /// in a more intuitive way.
 ///
 /// You can specify any value within the range of -360 degrees to 360 degrees
@@ -21,7 +21,7 @@ use crate::def::grib2::template::param_set;
 ///   point’s longitude as 180.0 and the last point’s longitude as 175.0.
 ///
 /// Longitude values are automatically normalized during conversion to
-/// [`def::grib2::template::param_set::LatLonGrid`](`crate::def::grib2::template::param_set::LatLonGrid`)
+/// [`def::grib2::template::table::LatLonGrid`](`crate::def::grib2::template::table::LatLonGrid`)
 /// to comply with GRIB2 specification.
 pub struct LatLonGrid {
     /// Shape of the grid, in the form `(ni, nj)`.
@@ -45,7 +45,7 @@ impl LatLonGrid {
     }
 
     /// Returns the scanning mode of the grid.
-    pub fn scanning_mode(&self) -> param_set::ScanningMode {
+    pub fn scanning_mode(&self) -> table::ScanningMode {
         let mut scan_mode: u8 = 0b00000000;
         if self.first_point.1 > self.last_point.1 {
             scan_mode |= 0b10000000;
@@ -56,7 +56,7 @@ impl LatLonGrid {
         if !self.i_consecutive {
             scan_mode |= 0b00100000;
         }
-        param_set::ScanningMode(scan_mode)
+        table::ScanningMode(scan_mode)
     }
 }
 
@@ -87,7 +87,7 @@ impl From<&LatLonGrid> for param_set::LatLonGrid {
                 basic_angle_subdivisions: 0xffffffff,
                 first_point_lat,
                 first_point_lon,
-                resolution_and_component_flags: param_set::ResolutionAndComponentFlags(0b00110000),
+                resolution_and_component_flags: table::ResolutionAndComponentFlags(0b00110000),
                 last_point_lat,
                 last_point_lon,
             },
@@ -159,7 +159,7 @@ mod tests {
                 (40000000, 130000000),
                 (30000000, 140000000),
                 (50000, 100000),
-                param_set::ScanningMode(0b00000000),
+                table::ScanningMode(0b00000000),
             ),
         ),
         (
@@ -175,7 +175,7 @@ mod tests {
                 (40000000, 140000000),
                 (30000000, 130000000),
                 (50000, 100000),
-                param_set::ScanningMode(0b10000000),
+                table::ScanningMode(0b10000000),
             ),
         ),
         (
@@ -191,7 +191,7 @@ mod tests {
                 (30000000, 130000000),
                 (40000000, 140000000),
                 (50000, 100000),
-                param_set::ScanningMode(0b01000000),
+                table::ScanningMode(0b01000000),
             ),
         ),
         (
@@ -207,7 +207,7 @@ mod tests {
                 (30000000, 140000000),
                 (40000000, 130000000),
                 (50000, 100000),
-                param_set::ScanningMode(0b11000000),
+                table::ScanningMode(0b11000000),
             ),
         ),
         (
@@ -223,7 +223,7 @@ mod tests {
                 (40000000, 0),
                 (30000000, 355000000),
                 (355000000, 10000000),
-                param_set::ScanningMode(0b00000000),
+                table::ScanningMode(0b00000000),
             ),
         ),
         (
@@ -239,7 +239,7 @@ mod tests {
                 (40000000, 0),
                 (30000000, 355000000),
                 (5000000, 10000000),
-                param_set::ScanningMode(0b10000000),
+                table::ScanningMode(0b10000000),
             ),
         ),
         (
@@ -255,7 +255,7 @@ mod tests {
                 (40000000, 180000000),
                 (30000000, 175000000),
                 (355000000, 10000000),
-                param_set::ScanningMode(0b00000000),
+                table::ScanningMode(0b00000000),
             ),
         ),
         (
@@ -271,7 +271,7 @@ mod tests {
                 (40000000, 180000000),
                 (30000000, 175000000),
                 (5000000, 10000000),
-                param_set::ScanningMode(0b10000000),
+                table::ScanningMode(0b10000000),
             ),
         ),
     }
