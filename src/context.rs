@@ -916,25 +916,25 @@ Data Representation:                    {}
     /// 6-7       payload.centre_id = 34  // Identification of originating/generating centre (see Common Code table C-11).
     /// 8-9       payload.subcentre_id = 0  // Identification of originating/generating subcentre (allocated by originating/generating centre).
     /// 10        payload.master_table_version = 5  // GRIB master table version number (see Common Code table C-0 and Note 1).
-    /// 11        payload.local_table_version = 1  // Version number of GRIB Local tables used to augment Master tables (see Code table 1.1 and Note 2).
-    /// 12        payload.ref_time_significance = 0  // Significance of reference time (see Code table 1.2).
+    /// 11        payload.local_table_version = 1 [Number of local tables version used]  // Version number of GRIB Local tables used to augment Master tables (see Code table 1.1 and Note 2).
+    /// 12        payload.ref_time_significance = 0 [Analysis]  // Significance of reference time (see Code table 1.2).
     /// 13-14     payload.ref_time.year = 2016  // Year (4 digits) - Reference time of data.
     /// 15        payload.ref_time.month = 8  // Month - Reference time of data.
     /// 16        payload.ref_time.day = 22  // Day - Reference time of data.
     /// 17        payload.ref_time.hour = 2  // Hour - Reference time of data.
     /// 18        payload.ref_time.minute = 0  // Minute - Reference time of data.
     /// 19        payload.ref_time.second = 0  // Second - Reference time of data.
-    /// 20        payload.prod_status = 0  // Production status of processed data in this GRIB message (see Code table 1.3).
-    /// 21        payload.data_type = 2  // Type of processed data in this GRIB message (see Code table 1.4).
+    /// 20        payload.prod_status = 0 [Operational products]  // Production status of processed data in this GRIB message (see Code table 1.3).
+    /// 21        payload.data_type = 2 [Analysis and forecast products]  // Type of processed data in this GRIB message (see Code table 1.4).
     /// ###  SECTION 3: GRID DEFINITION SECTION (length = 72)
     /// 1-4       header.len = 72  // Length of section in octets (nn).
     /// 5         header.sect_num = 3  // Number of section.
     /// 6         payload.grid_def_source = 0  // Source of grid definition (see Code table 3.0 and Note 1).
     /// 7-10      payload.num_points = 86016  // Number of data points.
     /// 11        payload.num_point_list_octets = 0  // Number of octets for optional list of numbers (see Note 2).
-    /// 12        payload.point_list_interpretation = 0  // Interpretation of list of numbers (see Code table 3.11).
-    /// 13-14     payload.template_num = 0  // Grid definition template number (= N) (see Code table 3.1).
-    /// 15        payload.template.earth.shape = 4  // Shape of the Earth (see Code table 3.2).
+    /// 12        payload.point_list_interpretation = 0 [There is no appended list]  // Interpretation of list of numbers (see Code table 3.11).
+    /// 13-14     payload.template_num = 0 [Latitude/longitude]  // Grid definition template number (= N) (see Code table 3.1).
+    /// 15        payload.template.earth.shape = 4 [Earth assumed oblate spheroid as defined in IAG-GRS80 model (major axis = 6 378 137.0 m, minor axis = 6 356 752.314 m, f = 1/298.257 222 101)]  // Shape of the Earth (see Code table 3.2).
     /// 16        payload.template.earth.spherical_earth_radius.scale_factor = 255  // Scale factor of radius of spherical Earth.
     /// 17-20     payload.template.earth.spherical_earth_radius.scaled_value = 4294967295  // Scaled value of radius of spherical Earth.
     /// 21        payload.template.earth.major_axis.scale_factor = 1  // Scale factor of major axis of oblate spheroid Earth.
@@ -957,17 +957,17 @@ Data Representation:                    {}
     /// 1-4       header.len = 34  // Length of section in octets (nn).
     /// 5         header.sect_num = 4  // Number of section.
     /// 6-7       payload.num_coord_values = 0  // Number of coordinate values after template or number of information according to 3D vertical coordinate GRIB2 message (see Notes 1 and 5).
-    /// 8-9       payload.template_num = 0  // Product definition template number (see Code table 4.0).
+    /// 8-9       payload.template_num = 0 [Analysis or forecast at a horizontal level or in a horizontal layer at a point in time]  // Product definition template number (see Code table 4.0).
     /// 10        payload.template.param.category = 193  // Parameter category (see Code Table 4.1).
     /// 11        payload.template.param.num = 0  // Parameter number (see Code Table 4.2).
-    /// 12        payload.template.generating_process.process_type = 0  // Type of generating process (see Code Table 4.3).
+    /// 12        payload.template.generating_process.process_type = 0 [Analysis]  // Type of generating process (see Code Table 4.3).
     /// 13        payload.template.generating_process.background_process = 153  // Background generating process identifier (defined by originating centre).
     /// 14        payload.template.generating_process.process_id = 255  // Analysis or forecast generating processes identifier (defined by originating centre).
     /// 15-16     payload.template.forecast_time.cutoff_hours = 0  // Hours of observational data cutoff after reference time (see Note 1)
     /// 17        payload.template.forecast_time.cutoff_minutes = 0  // Minutes of observational data cutoff after reference time
-    /// 18        payload.template.forecast_time.time.unit = 0  // Indicator of unit of time range (see Code Table 4.4).
+    /// 18        payload.template.forecast_time.time.unit = 0 [Minute]  // Indicator of unit of time range (see Code Table 4.4).
     /// 19-22     payload.template.forecast_time.time.len = 0  // Forecast time in units defined by octet 18.
-    /// 23        payload.template.horizontal.first_surface.surface_type = 1  // Type of first fixed surface (see Code Table 4.5).
+    /// 23        payload.template.horizontal.first_surface.surface_type = 1 [Ground or water surface]  // Type of first fixed surface (see Code Table 4.5).
     /// 24        payload.template.horizontal.first_surface.value.scale_factor = -127  // Scale factor of first fixed surface.
     /// 25-28     payload.template.horizontal.first_surface.value.scaled_value = -2147483647  // Scaled value of first fixed surface.
     /// 29        payload.template.horizontal.second_surface.surface_type = 255  // Type of second fixed surface (see Code Table 4.5).
@@ -977,7 +977,7 @@ Data Representation:                    {}
     /// 1-4       header.len = 23  // Length of section in octets (nn).
     /// 5         header.sect_num = 5  // Number of section.
     /// 6-9       payload.num_encoded_points = 86016  // Number of data points where one or more values are specified in Section 7 when a bit map is present, total number of data points when a bit map is absent.
-    /// 10-11     payload.template_num = 200  // Data representation template number (see Code table 5.0).
+    /// 10-11     payload.template_num = 200 [Run length packing with level values]  // Data representation template number (see Code table 5.0).
     /// 12        payload.template.num_bits = 8  // Number of bits used for each packed value in the run length packing with level value.
     /// 13-14     payload.template.max_val = 3  // MV - maximum value within the levels that are used in the packing.
     /// 15-16     payload.template.max_level = 3  // MVL - maximum value of level (predefined).

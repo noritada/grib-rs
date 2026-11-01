@@ -62,11 +62,12 @@ fn colorize(line: &str) -> String {
         format!("{}\n", red.apply_to(line))
     } else if let Some(cap) = parse_line(line) {
         format!(
-            "{}{}{}{}{}\n",
+            "{}{}{}{}{}{}\n",
             Style::new().green().apply_to(&cap["pos"]),
             Style::new().bold().apply_to(&cap["param"]),
             Style::new().cyan().apply_to(&cap["equal"]),
             Style::new().magenta().bold().apply_to(&cap["val"]),
+            Style::new().blue().bold().apply_to(&cap["code"]),
             Style::new().dim().apply_to(&cap["comment"]),
         )
     } else {
@@ -83,6 +84,7 @@ fn parse_line(line: &str) -> Option<regex::Captures<'_>> {
         (?<param>\s+\S+\s+)       # parameter
         (?<equal>=)
         (?<val>\s+.+?)  　　　       # value
+        (?<code>(\s+\[.+\])?)    # code description
         (?<comment>(\s+//.+)?)    # description
         $",
         )
@@ -97,19 +99,34 @@ mod tests {
 
     #[test]
     fn test_line_parser() {
-        fn parse(line: &str) -> Option<[String; 5]> {
+        fn parse(line: &str) -> Option<[String; 6]> {
             parse_line(line).map(|cap| {
                 [
                     &cap["pos"],
                     &cap["param"],
                     &cap["equal"],
                     &cap["val"],
+                    &cap["code"],
                     &cap["comment"],
                 ]
                 .map(|s| s.to_owned())
             })
         }
 
+        assert_eq!(
+            parse("12-34     foo.bar_bar.baz = 0 [Code Zero]  // Parameter descriptions."),
+            Some(
+                [
+                    "12-34",
+                    "     foo.bar_bar.baz ",
+                    "=",
+                    " 0",
+                    " [Code Zero]",
+                    "  // Parameter descriptions."
+                ]
+                .map(|s| s.to_owned())
+            ),
+        );
         assert_eq!(
             parse("12-34     foo.bar_bar.baz = [1, 2, 3]  // Parameter descriptions."),
             Some(
@@ -118,6 +135,7 @@ mod tests {
                     "     foo.bar_bar.baz ",
                     "=",
                     " [1, 2, 3]",
+                    "",
                     "  // Parameter descriptions."
                 ]
                 .map(|s| s.to_owned())
@@ -125,7 +143,9 @@ mod tests {
         );
         assert_eq!(
             parse("12-34     foo.bar_bar.baz = [1, 2, 3]"),
-            Some(["12-34", "     foo.bar_bar.baz ", "=", " [1, 2, 3]", ""].map(|s| s.to_owned())),
+            Some(
+                ["12-34", "     foo.bar_bar.baz ", "=", " [1, 2, 3]", "", ""].map(|s| s.to_owned())
+            ),
         );
     }
 }
