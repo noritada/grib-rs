@@ -42,10 +42,16 @@ pub(crate) fn impl_for_struct(
             None => quote! { None },
         };
 
+        if options.code_table {
+            generics
+                .make_where_clause()
+                .predicates
+                .push(syn::parse_quote!(Self: ::grib_template_helpers::CodeTable<#context>));
+        }
         let format = if options.flag { " = {:#010b}" } else { " = {}" };
         let description = if options.code_table {
             quote! {
-                if let Some(description) = <Self as ::grib_template_helpers::CodeTable>::code_description(self) {
+                if let Some(description) = <Self as ::grib_template_helpers::CodeTable<#context>>::code_description(self, context) {
                     write!(output, " [{}]", description)?;
                 }
             }
@@ -59,7 +65,7 @@ pub(crate) fn impl_for_struct(
             impl #impl_generics grib_template_helpers::Dump<#context> for #name #type_generics #where_clause {
                 fn dump<'d, W: std::io::Write>(
                     &self,
-                    _context: &#context,
+                    context: &#context,
                     parent: Option<&std::borrow::Cow<str>>,
                     doc_overrides: grib_template_helpers::DocOverrides<'d>,
                     pos: &mut usize,
@@ -467,7 +473,7 @@ fn parse_tree(
 }
 
 // Avoid collisions with type and const parameters supplied by the caller.
-fn context_ident(generics: &syn::Generics) -> syn::Ident {
+pub(crate) fn context_ident(generics: &syn::Generics) -> syn::Ident {
     let mut name = String::from("__DumpContext");
     while generics.params.iter().any(|param| match param {
         syn::GenericParam::Type(param) => param.ident == name,

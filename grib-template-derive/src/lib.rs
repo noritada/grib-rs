@@ -78,6 +78,13 @@ pub fn derive_dump(input: TokenStream) -> TokenStream {
 
 /// Derive macro generating an impl of `grib_template_helpers::CodeTable`.
 ///
+/// Tables without external keys implement `CodeTable<C>` for any context.
+/// For WMO tables 4.1 and 4.2, specify `context = ContextType` and
+/// `key = (context.discipline,)` or
+/// `key = (context.discipline, context.category)`. These tuple keys are matched
+/// against the discipline and category in `SubTitle_en`, followed by the
+/// wrapped code number. Both options must be specified together.
+///
 /// Requires a single-field `u8` or `u16` tuple struct with
 /// `#[code_table(file = "...", format = ...)]`. The UTF-8 file is read relative
 /// to `CARGO_MANIFEST_DIR` and included in the expansion to track file changes.

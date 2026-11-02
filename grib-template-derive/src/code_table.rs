@@ -1,7 +1,7 @@
 mod wmo_csv;
 
 use proc_macro2::TokenStream;
-use quote::quote;
+use quote::{ToTokens, quote};
 
 pub(crate) fn expand(input: &syn::DeriveInput) -> syn::Result<TokenStream> {
     let max_code = validate_input(input)?;
@@ -21,19 +21,40 @@ pub(crate) fn expand(input: &syn::DeriveInput) -> syn::Result<TokenStream> {
     let (path, contents) = read_table(&options.file)?;
     let entries = wmo_csv::parse(&contents, max_code)
         .map_err(|error| syn::Error::new_spanned(&options.file, error))?;
-    let description = lookup_body(&entries, |entry| entry.description.as_deref());
-    let unit = lookup_body(&entries, |entry| entry.unit.as_deref());
+    let keys = if options.key.is_some() {
+        Some(
+            wmo_csv::parse_keys(&contents)
+                .map_err(|error| syn::Error::new_spanned(&options.file, error))?,
+        )
+    } else {
+        None
+    };
+    let description = lookup_body(&entries, keys.as_deref(), options.key.as_ref(), |entry| {
+        entry.description.as_deref()
+    });
+    let unit = lookup_body(&entries, keys.as_deref(), options.key.as_ref(), |entry| {
+        entry.unit.as_deref()
+    });
     let name = &input.ident;
-    let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
+    let mut generics = input.generics.clone();
+    let context = if let Some(context) = &options.context {
+        context.to_token_stream()
+    } else {
+        let context = crate::dump::context_ident(&input.generics);
+        generics.params.push(syn::parse_quote!(#context: ?Sized));
+        context.to_token_stream()
+    };
+    let (impl_generics, _, where_clause) = generics.split_for_impl();
+    let (_, ty_generics, _) = input.generics.split_for_impl();
     Ok(quote! {
         const _: &str = include_str!(#path);
 
-        impl #impl_generics ::grib_template_helpers::CodeTable for #name #ty_generics #where_clause {
-            fn code_description(&self) -> Option<&'static str> {
+        impl #impl_generics ::grib_template_helpers::CodeTable<#context> for #name #ty_generics #where_clause {
+            fn code_description(&self, context: &#context) -> Option<&'static str> {
                 #description
             }
 
-            fn code_unit(&self) -> Option<&'static str> {
+            fn code_unit(&self, context: &#context) -> Option<&'static str> {
                 #unit
             }
         }
@@ -42,24 +63,34 @@ pub(crate) fn expand(input: &syn::DeriveInput) -> syn::Result<TokenStream> {
 
 fn lookup_body(
     entries: &[wmo_csv::Entry],
+    keys: Option<&[Vec<u8>]>,
+    key: Option<&syn::Expr>,
     value: impl Fn(&wmo_csv::Entry) -> Option<&str>,
 ) -> TokenStream {
     if entries.iter().all(|entry| value(entry).is_none()) {
         return quote!(::core::option::Option::None);
     }
-    let arms = entries.iter().map(|entry| {
+    let arms = entries.iter().enumerate().map(|(index, entry)| {
         let start = proc_macro2::Literal::u16_unsuffixed(*entry.codes.start());
         let end = proc_macro2::Literal::u16_unsuffixed(*entry.codes.end());
         let result = match value(entry) {
             Some(text) => quote!(::core::option::Option::Some(#text)),
             None => quote!(::core::option::Option::None),
         };
-        quote!(#start..=#end => #result,)
+        if let Some(keys) = keys {
+            let keys = keys[index]
+                .iter()
+                .map(|key| proc_macro2::Literal::u8_unsuffixed(*key));
+            quote!(( (#(#keys,)*), #start..=#end) => #result,)
+        } else {
+            quote!(#start..=#end => #result,)
+        }
     });
+    let target = key.map_or_else(|| quote!(self.0), |key| quote!((#key, self.0)));
     quote! {
         // The fallback also supports tables that do not cover every code.
         #[allow(unreachable_patterns)]
-        match self.0 {
+        match #target {
             #(#arms)*
             _ => ::core::option::Option::None,
         }
@@ -69,6 +100,8 @@ fn lookup_body(
 struct Options {
     file: syn::LitStr,
     format: Format,
+    context: Option<syn::Type>,
+    key: Option<syn::Expr>,
 }
 
 struct Format {
@@ -110,6 +143,8 @@ impl Options {
         }
         let mut file = None;
         let mut format = None;
+        let mut context = None;
+        let mut key = None;
         attr.parse_nested_meta(|meta| {
             if meta.path.is_ident("file") {
                 if file.is_some() {
@@ -121,12 +156,30 @@ impl Options {
                     return Err(meta.error("duplicate format option"));
                 }
                 format = Some(meta.value()?.parse()?);
+            } else if meta.path.is_ident("context") {
+                if context.is_some() {
+                    return Err(meta.error("duplicate context option"));
+                }
+                context = Some(meta.value()?.parse()?);
+            } else if meta.path.is_ident("key") {
+                if key.is_some() {
+                    return Err(meta.error("duplicate key option"));
+                }
+                key = Some(meta.value()?.parse()?);
             } else {
-                return Err(meta.error("expected file or format"));
+                return Err(meta.error("expected file, format, context, or key"));
             }
             Ok(())
         })?;
+        if context.is_some() != key.is_some() {
+            return Err(syn::Error::new_spanned(
+                attr,
+                "context and key must be specified together",
+            ));
+        }
         Ok(Self {
+            context,
+            key,
             file: file.ok_or_else(|| syn::Error::new_spanned(attr, "missing file option"))?,
             format: format.ok_or_else(|| syn::Error::new_spanned(attr, "missing format option"))?,
         })
@@ -171,6 +224,22 @@ mod tests {
     use super::*;
 
     #[test]
+    fn invalid_context_options() -> syn::Result<()> {
+        for options in [
+            "context = Context",
+            "key = (context.discipline,)",
+            "context = Context, context = Context, key = (0,)",
+            "context = Context, key = (0,), key = (1,)",
+        ] {
+            let input = syn::parse_str(&format!(
+                "#[code_table(file = \"unused.csv\", format = wmo_csv, {options})] struct Table(u8);"
+            ))?;
+            assert!(Options::parse(&input).is_err());
+        }
+        Ok(())
+    }
+
+    #[test]
     fn missing_table() -> Result<(), Box<dyn std::error::Error>> {
         let input = syn::parse_str(
             r#"#[code_table(file = "tests/tables/nonexistent.csv", format = wmo_csv)] struct Table(u8);"#,
@@ -209,7 +278,7 @@ mod tests {
             include_str!("../tests/tables/code_table_unitless.csv"),
             u16::MAX,
         )?;
-        let body = lookup_body(&entries, |entry| entry.unit.as_deref());
+        let body = lookup_body(&entries, None, None, |entry| entry.unit.as_deref());
         assert_eq!(
             body.to_string(),
             quote!(::core::option::Option::None).to_string()
