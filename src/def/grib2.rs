@@ -9,7 +9,7 @@ use grib_template_derive::{Dump, TryFromSlice, WriteToBuffer};
 #[derive(Debug, PartialEq, Clone, TryFromSlice, Dump)]
 pub struct Section<T>
 where
-    T: PartialEq + crate::TryFromSlice + crate::Dump,
+    T: PartialEq + crate::TryFromSlice,
 {
     pub header: SectionHeader,
     pub payload: T,

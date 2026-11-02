@@ -8,13 +8,27 @@ pub struct ProductDefinitionTemplateNum(
     pub u16,
 );
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy, TryFromSlice, WriteToBuffer, Dump)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, TryFromSlice, WriteToBuffer, Dump, CodeTable)]
+#[code_table(
+    file = "def/GRIB2/GRIB2_CodeFlag_4_1_CodeTable_en.csv",
+    format = wmo_csv,
+    context = crate::Grib2Context,
+    key = (context.discipline,),
+)]
+#[dump(code_table, context = crate::Grib2Context)]
 pub struct ParamCategory(
     /// Parameter category (see Code Table 4.1).
     pub u8,
 );
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy, TryFromSlice, WriteToBuffer, Dump)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, TryFromSlice, WriteToBuffer, Dump, CodeTable)]
+#[code_table(
+    file = "def/GRIB2/GRIB2_CodeFlag_4_2_CodeTable_en.csv",
+    format = wmo_csv,
+    context = crate::ParameterContext,
+    key = (context.discipline, context.category),
+)]
+#[dump(code_table, context = crate::ParameterContext)]
 pub struct ParamNum(
     /// Parameter number (see Code Table 4.2).
     pub u8,

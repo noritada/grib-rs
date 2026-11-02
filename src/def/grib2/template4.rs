@@ -238,8 +238,10 @@ pub(crate) mod param_set {
     };
 
     #[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump)]
+    #[dump(context = crate::Grib2Context)]
     pub struct ProductParam {
         pub category: table4::ParamCategory,
+        #[dump(context = context.with_parameter_category(self.category))]
         pub num: table4::ParamNum,
     }
 

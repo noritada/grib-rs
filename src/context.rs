@@ -933,12 +933,15 @@ Data Representation:                    {}
                 writeln!(writer, "##  SECTION {num}: {sect_name} (length = {size})")
             };
 
+        let context = Grib2Context {
+            discipline: self.indicator().discipline,
+        };
         macro_rules! write_section {
             ($sect:expr $(,)?) => {{
                 let mut pos = 1;
                 match $sect {
                     Ok(s) => s.dump(
-                        &(),
+                        &context,
                         None,
                         grib_template_helpers::DocOverrides::empty(),
                         &mut pos,
@@ -1251,6 +1254,34 @@ impl<'a> SubMessageSection<'a> {
 
     pub fn describe(&self) -> Option<String> {
         self.template_code().and_then(|code| code.describe())
+    }
+}
+
+/// External information used to interpret GRIB2 code tables.
+///
+/// Lookups currently use the bundled WMO definitions, without version
+/// selection.
+#[derive(Debug, Clone, Copy)]
+pub struct Grib2Context {
+    pub discipline: u8,
+}
+
+/// Context for interpreting parameter numbers within a parameter category.
+#[derive(Debug, Clone, Copy)]
+pub struct ParameterContext {
+    pub discipline: u8,
+    pub category: u8,
+}
+
+impl Grib2Context {
+    pub fn with_parameter_category(
+        &self,
+        category: crate::def::grib2::table::ParamCategory,
+    ) -> ParameterContext {
+        ParameterContext {
+            discipline: self.discipline,
+            category: category.0,
+        }
     }
 }
 
