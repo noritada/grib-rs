@@ -30,6 +30,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut output = Vec::new();
     let mut pos = 1;
     params.dump(
+        &(),
         Some(&"root".into()),
         DocOverrides::new(vec![("items.flag", "Element flag")]),
         &mut pos,
@@ -54,7 +55,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut pos = 1;
     params
         .items
-        .dump(None, DocOverrides::empty(), &mut pos, &mut output)?;
+        .dump(&(), None, DocOverrides::empty(), &mut pos, &mut output)?;
     assert_eq!(
         String::from_utf8(output)?,
         "\

@@ -42,7 +42,7 @@ macro_rules! test_dump {
             fn $name() -> Result<(), Box<dyn std::error::Error>> {
                 let mut output = Vec::new();
                 let mut pos = 0;
-                $value.dump(Some(&"foo".into()), $overrides, &mut pos, &mut output)?;
+                $value.dump(&(), Some(&"foo".into()), $overrides, &mut pos, &mut output)?;
                 assert_eq!(String::from_utf8(output)?, $expected);
                 assert_eq!(pos, $pos);
                 Ok(())

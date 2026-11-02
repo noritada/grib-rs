@@ -9,7 +9,15 @@ pub(crate) fn impl_for_struct(
         Err(error) => return error.to_compile_error(),
     };
     let name = &input.ident;
-    let (impl_generics, type_generics, where_clause) = input.generics.split_for_impl();
+    let (marker_generics, marker_type_generics, marker_where_clause) =
+        input.generics.split_for_impl();
+    let marker_impl = quote! {
+        impl #marker_generics grib_template_helpers::Dumpable for #name #marker_type_generics #marker_where_clause {}
+    };
+    let context = context_ident(&input.generics);
+    let mut generics = input.generics.clone();
+    generics.params.push(syn::parse_quote!(#context: ?Sized));
+    let (_, type_generics, _) = input.generics.split_for_impl();
     let Some((kind, fields)) = super::helpers::extract_struct_info(data) else {
         unimplemented!(
             "`Dump` can only be derived for structs with named fields or with a single unnamed `u8` or `u16` field"
@@ -37,10 +45,13 @@ pub(crate) fn impl_for_struct(
             quote! {}
         };
 
+        let (impl_generics, _, where_clause) = generics.split_for_impl();
         return quote! {
-            impl #impl_generics grib_template_helpers::Dump for #name #type_generics #where_clause {
+            #marker_impl
+            impl #impl_generics grib_template_helpers::Dump<#context> for #name #type_generics #where_clause {
                 fn dump<'d, W: std::io::Write>(
                     &self,
+                    _context: &#context,
                     parent: Option<&std::borrow::Cow<str>>,
                     doc_overrides: grib_template_helpers::DocOverrides<'d>,
                     pos: &mut usize,
@@ -94,12 +105,17 @@ pub(crate) fn impl_for_struct(
             (ty.to_token_stream(), quote! { &self.#ident })
         };
 
+        generics
+            .make_where_clause()
+            .predicates
+            .push(syn::parse_quote!(#ty: grib_template_helpers::DumpField<#context>));
         dumps.push(quote! {
             let mut child_doc_overrides = doc_overrides.get_child_overrides(name);
             child_doc_overrides.merge(&#doc_overrides);
 
-            <#ty as grib_template_helpers::DumpField>::dump_field(
+            <#ty as grib_template_helpers::DumpField<#context>>::dump_field(
                 #self_ident,
+                context,
                 name,
                 parent,
                 doc,
@@ -110,10 +126,13 @@ pub(crate) fn impl_for_struct(
         });
     }
 
+    let (impl_generics, _, where_clause) = generics.split_for_impl();
     quote! {
-        impl #impl_generics grib_template_helpers::Dump for #name #type_generics #where_clause {
+        #marker_impl
+        impl #impl_generics grib_template_helpers::Dump<#context> for #name #type_generics #where_clause {
             fn dump<'d, W: std::io::Write>(
                 &self,
+                context: &#context,
                 parent: Option<&std::borrow::Cow<str>>,
                 doc_overrides: grib_template_helpers::DocOverrides<'d>,
                 pos: &mut usize,
@@ -134,7 +153,15 @@ pub(crate) fn impl_for_enum(
         return error.to_compile_error();
     }
     let name = &input.ident;
-    let (impl_generics, type_generics, where_clause) = input.generics.split_for_impl();
+    let (marker_generics, marker_type_generics, marker_where_clause) =
+        input.generics.split_for_impl();
+    let marker_impl = quote! {
+        impl #marker_generics grib_template_helpers::Dumpable for #name #marker_type_generics #marker_where_clause {}
+    };
+    let context = context_ident(&input.generics);
+    let mut generics = input.generics.clone();
+    generics.params.push(syn::parse_quote!(#context: ?Sized));
+    let (_, type_generics, _) = input.generics.split_for_impl();
 
     let mut arms = Vec::new();
 
@@ -145,9 +172,14 @@ pub(crate) fn impl_for_enum(
             && fields.unnamed.len() == 1
         {
             let inner_ty = &fields.unnamed.first().unwrap().ty;
+            generics
+                .make_where_clause()
+                .predicates
+                .push(syn::parse_quote!(#inner_ty: grib_template_helpers::Dump<#context>));
             arms.push(quote! {
-                #name::#variant_ident(inner) => <#inner_ty as grib_template_helpers::Dump>::dump(
+                #name::#variant_ident(inner) => <#inner_ty as grib_template_helpers::Dump<#context>>::dump(
                     inner,
+                    context,
                     parent,
                     grib_template_helpers::DocOverrides::empty(),
                     pos,
@@ -159,10 +191,13 @@ pub(crate) fn impl_for_enum(
         }
     }
 
+    let (impl_generics, _, where_clause) = generics.split_for_impl();
     quote! {
-        impl #impl_generics grib_template_helpers::Dump for #name #type_generics #where_clause {
+        #marker_impl
+        impl #impl_generics grib_template_helpers::Dump<#context> for #name #type_generics #where_clause {
             fn dump<'d, W: std::io::Write>(
                 &self,
+                context: &#context,
                 parent: Option<&std::borrow::Cow<str>>,
                 doc_overrides: grib_template_helpers::DocOverrides<'d>,
                 pos: &mut usize,
@@ -356,6 +391,19 @@ fn parse_tree(
         }
     }
     Ok(())
+}
+
+// Avoid collisions with type and const parameters supplied by the caller.
+fn context_ident(generics: &syn::Generics) -> syn::Ident {
+    let mut name = String::from("__DumpContext");
+    while generics.params.iter().any(|param| match param {
+        syn::GenericParam::Type(param) => param.ident == name,
+        syn::GenericParam::Const(param) => param.ident == name,
+        syn::GenericParam::Lifetime(_) => false,
+    }) {
+        name.push('_');
+    }
+    syn::Ident::new(&name, proc_macro2::Span::call_site())
 }
 
 #[cfg(test)]

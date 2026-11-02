@@ -938,6 +938,7 @@ Data Representation:                    {}
                 let mut pos = 1;
                 match $sect {
                     Ok(s) => s.dump(
+                        &(),
                         None,
                         grib_template_helpers::DocOverrides::empty(),
                         &mut pos,

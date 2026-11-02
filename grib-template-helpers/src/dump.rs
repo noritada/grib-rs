@@ -3,7 +3,21 @@ use std::{
     io::{Error, Write},
 };
 
+/// Marks structured values that support dumping.
+///
+/// This context-independent marker keeps structured dumping implementations
+/// disjoint from primitive field implementations. The `Dump` derive implements
+/// it automatically; handwritten `Dump<C>` implementations must also implement
+/// this marker for their type.
+pub trait Dumpable {}
+
+impl<T: Dumpable + ?Sized> Dumpable for &T {}
+impl<T: Dumpable> Dumpable for Vec<T> {}
+
 /// A functionality to dump the contents of a struct to the output destination.
+///
+/// The context is borrowed and forwarded to nested values. Use `&()` when no
+/// external information is needed.
 ///
 /// # Examples
 ///
@@ -15,9 +29,12 @@ use std::{
 ///     seq: Vec<u8>,
 /// }
 ///
+/// impl grib_template_helpers::Dumpable for VariableLength {}
+///
 /// impl Dump for VariableLength {
 ///     fn dump<'d, W: std::io::Write>(
 ///         &self,
+///         _context: &(),
 ///         parent: Option<&std::borrow::Cow<str>>,
 ///         doc_overrides: DocOverrides<'d>,
 ///         pos: &mut usize,
@@ -38,7 +55,7 @@ use std::{
 ///     };
 ///     let mut buf = std::io::Cursor::new(Vec::with_capacity(1024));
 ///     let mut pos = 0;
-///     var.dump(None, DocOverrides::empty(), &mut pos, &mut buf)?;
+///     var.dump(&(), None, DocOverrides::empty(), &mut pos, &mut buf)?;
 ///     assert_eq!(
 ///         String::from_utf8_lossy(buf.get_ref()),
 ///         "variable-length array (length = 3, content = [1, 2, 3])\n"
@@ -46,13 +63,14 @@ use std::{
 ///     Ok(())
 /// }
 /// ```
-pub trait Dump {
+pub trait Dump<C: ?Sized = ()>: Dumpable {
     /// Perform dumping to `output`.
     ///
     /// Users can use the `pos` argument to output the current byte offset, and
     /// `parent` to output information about nested structures.
     fn dump<'d, W: Write>(
         &self,
+        context: &C,
         parent: Option<&Cow<str>>,
         doc_overrides: DocOverrides<'d>,
         pos: &mut usize,
@@ -60,21 +78,23 @@ pub trait Dump {
     ) -> Result<(), Error>;
 }
 
-impl<T: Dump + ?Sized> Dump for &T {
+impl<C: ?Sized, T: Dump<C> + ?Sized> Dump<C> for &T {
     fn dump<'d, W: Write>(
         &self,
+        context: &C,
         parent: Option<&Cow<str>>,
         doc_overrides: DocOverrides<'d>,
         pos: &mut usize,
         output: &mut W,
     ) -> Result<(), Error> {
-        (*self).dump(parent, doc_overrides, pos, output)
+        (*self).dump(context, parent, doc_overrides, pos, output)
     }
 }
 
-impl<T: Dump> Dump for Vec<T> {
+impl<C: ?Sized, T: Dump<C>> Dump<C> for Vec<T> {
     fn dump<'d, W: Write>(
         &self,
+        context: &C,
         parent: Option<&Cow<str>>,
         doc_overrides: DocOverrides<'d>,
         pos: &mut usize,
@@ -85,15 +105,20 @@ impl<T: Dump> Dump for Vec<T> {
                 Some(parent) => format!("{parent}[{index}]"),
                 None => format!("[{index}]"),
             });
-            item.dump(Some(&parent), doc_overrides.clone(), pos, output)?;
+            item.dump(context, Some(&parent), doc_overrides.clone(), pos, output)?;
         }
         Ok(())
     }
 }
 
-pub trait DumpField: OctetSize {
+pub trait DumpField<C: ?Sized = ()> {
+    // Keep the context alongside the existing field formatting arguments for
+    // now. When refactoring output handling, group `output` and `pos` into a
+    // single type that manages writing and position updates.
+    #[allow(clippy::too_many_arguments)]
     fn dump_field<'d, W: Write>(
         &self,
+        context: &C,
         name: &str,
         parent: Option<&Cow<str>>,
         doc: Option<&str>,
@@ -105,9 +130,10 @@ pub trait DumpField: OctetSize {
 
 macro_rules! add_impl_of_dump_field_for_number_types {
     ($($ty:ty),* $(,)?) => ($(
-        impl DumpField for $ty {
+        impl<C: ?Sized> DumpField<C> for $ty {
             fn dump_field<'d, W: Write>(
                 &self,
+                _context: &C,
                 name: &str,
                 parent: Option<&Cow<str>>,
                 doc: Option<&str>,
@@ -156,9 +182,10 @@ add_impl_of_dump_field_for_number_types![
     Vec<f64>,
 ];
 
-impl<const N: usize> DumpField for [u8; N] {
+impl<C: ?Sized, const N: usize> DumpField<C> for [u8; N] {
     fn dump_field<'d, W: Write>(
         &self,
+        _context: &C,
         name: &str,
         parent: Option<&Cow<str>>,
         doc: Option<&str>,
@@ -176,12 +203,10 @@ impl<const N: usize> DumpField for [u8; N] {
     }
 }
 
-impl<T: OctetSize + DumpField> DumpField for Option<T>
-where
-    Self: OctetSize,
-{
+impl<C: ?Sized, T: DumpField<C>> DumpField<C> for Option<T> {
     fn dump_field<'d, W: Write>(
         &self,
+        context: &C,
         name: &str,
         parent: Option<&Cow<str>>,
         doc: Option<&str>,
@@ -190,15 +215,16 @@ where
         output: &mut W,
     ) -> Result<(), Error> {
         if let Some(val) = self {
-            val.dump_field(name, parent, doc, doc_overrides, pos, output)?;
+            val.dump_field(context, name, parent, doc, doc_overrides, pos, output)?;
         }
         Ok(())
     }
 }
 
-impl<T: std::fmt::Debug> DumpField for crate::NonStdLenUint<T> {
+impl<C: ?Sized, T: std::fmt::Debug> DumpField<C> for crate::NonStdLenUint<T> {
     fn dump_field<'d, W: Write>(
         &self,
+        _context: &C,
         name: &str,
         parent: Option<&Cow<str>>,
         doc: Option<&str>,
@@ -216,9 +242,10 @@ impl<T: std::fmt::Debug> DumpField for crate::NonStdLenUint<T> {
     }
 }
 
-impl<T: Dump> DumpField for T {
+impl<C: ?Sized, T: Dump<C>> DumpField<C> for T {
     fn dump_field<'d, W: Write>(
         &self,
+        context: &C,
         name: &str,
         parent: Option<&Cow<str>>,
         doc: Option<&str>,
@@ -233,7 +260,7 @@ impl<T: Dump> DumpField for T {
         if let Some(doc) = doc {
             doc_overrides.merge(&DocOverrides::new(vec![("", doc)]));
         }
-        self.dump(Some(&parent), doc_overrides, pos, output)
+        self.dump(context, Some(&parent), doc_overrides, pos, output)
     }
 }
 
@@ -258,22 +285,6 @@ macro_rules! add_impl_of_octet_size_for_number_types {
 }
 
 add_impl_of_octet_size_for_number_types![u8, u16, u32, u64, i8, i16, i32, i64, f32, f64];
-
-impl<T: Dump> OctetSize for T {
-    fn octet_size(&self) -> usize {
-        0
-    }
-}
-
-impl<T: OctetSize> OctetSize for Option<T> {
-    fn octet_size(&self) -> usize {
-        if let Some(inner) = self {
-            inner.octet_size()
-        } else {
-            0
-        }
-    }
-}
 
 impl<const N: usize> OctetSize for [u8; N] {
     fn octet_size(&self) -> usize {
@@ -369,9 +380,12 @@ mod tests {
         member2: u16,
     }
 
+    impl Dumpable for Foo {}
+
     impl Dump for Foo {
         fn dump<'d, W: Write>(
             &self,
+            _context: &(),
             _parent: Option<&Cow<str>>,
             _doc_overrides: DocOverrides<'d>,
             _pos: &mut usize,
@@ -390,7 +404,7 @@ mod tests {
         };
         let mut buf = std::io::Cursor::new(Vec::with_capacity(1024));
         let mut pos = 0;
-        foo.dump(None, DocOverrides::empty(), &mut pos, &mut buf)?;
+        foo.dump(&(), None, DocOverrides::empty(), &mut pos, &mut buf)?;
         assert_eq!(
             String::from_utf8_lossy(buf.get_ref()),
             "member1: 1\nmember2: 2\n"
