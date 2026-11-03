@@ -1,15 +1,15 @@
 use grib_template_helpers::CodeTable;
 
 #[derive(grib_template_derive::CodeTable)]
-#[code_table(file = "tests/tables/code_table.csv", format = wmo_csv)]
+#[code_table(file = "tests/tables/code_table.csv", format = wmo_grib2_tables)]
 struct ByteTable(u8);
 
 #[derive(grib_template_derive::CodeTable)]
-#[code_table(format = wmo_csv(), file = "tests/tables/code_table.csv")]
+#[code_table(format = wmo_grib2_tables(), file = "tests/tables/code_table.csv")]
 struct WordTable(u16);
 
 #[derive(grib_template_derive::CodeTable)]
-#[code_table(file = "tests/tables/code_table_unitless.csv", format = wmo_csv)]
+#[code_table(file = "tests/tables/code_table_unitless.csv", format = wmo_grib2_tables)]
 struct UnitlessTable(u16);
 
 macro_rules! test_lookup {

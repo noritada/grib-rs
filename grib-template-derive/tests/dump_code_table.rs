@@ -1,7 +1,7 @@
 use grib_template_helpers::{DocOverrides, Dump};
 
 #[derive(grib_template_derive::CodeTable, grib_template_derive::Dump)]
-#[code_table(file = "tests/tables/code_table.csv", format = wmo_csv)]
+#[code_table(file = "tests/tables/code_table.csv", format = wmo_grib2_tables)]
 #[dump(code_table)]
 struct ByteTable(
     /// Default.
@@ -9,7 +9,7 @@ struct ByteTable(
 );
 
 #[derive(grib_template_derive::Dump, grib_template_derive::CodeTable)]
-#[code_table(file = "tests/tables/code_table_unitless.csv", format = wmo_csv)]
+#[code_table(file = "tests/tables/code_table_unitless.csv", format = wmo_grib2_tables)]
 #[dump(code_table)]
 struct WordTable(u16);
 
