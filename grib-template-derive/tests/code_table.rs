@@ -44,3 +44,10 @@ test_lookup! {
     wide_range_end: UnitlessTable(65534) => (Some("Wide range"), None),
     u16_max: UnitlessTable(65535) => (Some("Upper bound"), None),
 }
+
+#[test]
+fn table_units_are_distinct_from_lookup_units() {
+    assert_eq!(<ByteTable as CodeTable<()>>::HAS_UNIT, true);
+    assert_eq!(ByteTable(255).code_unit(&()), None);
+    assert_eq!(<UnitlessTable as CodeTable<()>>::HAS_UNIT, false);
+}

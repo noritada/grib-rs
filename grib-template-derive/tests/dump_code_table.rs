@@ -18,6 +18,8 @@ struct WordTable(u16);
 struct ManualTable(u8);
 
 impl grib_template_helpers::CodeTable for ManualTable {
+    const HAS_UNIT: bool = false;
+
     fn code_description(&self, _context: &()) -> Option<&'static str> {
         Some("One")
     }
