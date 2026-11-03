@@ -18,11 +18,11 @@ struct WordTable(u16);
 struct ManualTable(u8);
 
 impl grib_template_helpers::CodeTable for ManualTable {
-    fn code_description(&self) -> Option<&'static str> {
+    fn code_description(&self, _context: &()) -> Option<&'static str> {
         Some("One")
     }
 
-    fn code_unit(&self) -> Option<&'static str> {
+    fn code_unit(&self, _context: &()) -> Option<&'static str> {
         None
     }
 }
@@ -42,7 +42,7 @@ macro_rules! test_dump {
             fn $name() -> Result<(), Box<dyn std::error::Error>> {
                 let mut output = Vec::new();
                 let mut pos = 0;
-                $value.dump(Some(&"foo".into()), $overrides, &mut pos, &mut output)?;
+                $value.dump(&(), Some(&"foo".into()), $overrides, &mut pos, &mut output)?;
                 assert_eq!(String::from_utf8(output)?, $expected);
                 assert_eq!(pos, $pos);
                 Ok(())

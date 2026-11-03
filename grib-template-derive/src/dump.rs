@@ -9,7 +9,20 @@ pub(crate) fn impl_for_struct(
         Err(error) => return error.to_compile_error(),
     };
     let name = &input.ident;
-    let (impl_generics, type_generics, where_clause) = input.generics.split_for_impl();
+    let (marker_generics, marker_type_generics, marker_where_clause) =
+        input.generics.split_for_impl();
+    let marker_impl = quote! {
+        impl #marker_generics grib_template_helpers::Dumpable for #name #marker_type_generics #marker_where_clause {}
+    };
+    let mut generics = input.generics.clone();
+    let context = if let Some(context) = &options.context {
+        context.to_token_stream()
+    } else {
+        let context = context_ident(&input.generics);
+        generics.params.push(syn::parse_quote!(#context: ?Sized));
+        context.to_token_stream()
+    };
+    let (_, type_generics, _) = input.generics.split_for_impl();
     let Some((kind, fields)) = super::helpers::extract_struct_info(data) else {
         unimplemented!(
             "`Dump` can only be derived for structs with named fields or with a single unnamed `u8` or `u16` field"
@@ -17,6 +30,9 @@ pub(crate) fn impl_for_struct(
     };
 
     if kind == super::helpers::StructKind::TupleStruct {
+        if let Err(error) = reject_field_context(&fields[0]) {
+            return error.to_compile_error();
+        }
         let doc = get_doc(&fields[0].attrs);
         let doc = match doc {
             Some(doc) => {
@@ -26,10 +42,16 @@ pub(crate) fn impl_for_struct(
             None => quote! { None },
         };
 
+        if options.code_table {
+            generics
+                .make_where_clause()
+                .predicates
+                .push(syn::parse_quote!(Self: ::grib_template_helpers::CodeTable<#context>));
+        }
         let format = if options.flag { " = {:#010b}" } else { " = {}" };
         let description = if options.code_table {
             quote! {
-                if let Some(description) = <Self as ::grib_template_helpers::CodeTable>::code_description(self) {
+                if let Some(description) = <Self as ::grib_template_helpers::CodeTable<#context>>::code_description(self, context) {
                     write!(output, " [{}]", description)?;
                 }
             }
@@ -37,10 +59,13 @@ pub(crate) fn impl_for_struct(
             quote! {}
         };
 
+        let (impl_generics, _, where_clause) = generics.split_for_impl();
         return quote! {
-            impl #impl_generics grib_template_helpers::Dump for #name #type_generics #where_clause {
+            #marker_impl
+            impl #impl_generics grib_template_helpers::Dump<#context> for #name #type_generics #where_clause {
                 fn dump<'d, W: std::io::Write>(
                     &self,
+                    context: &#context,
                     parent: Option<&std::borrow::Cow<str>>,
                     doc_overrides: grib_template_helpers::DocOverrides<'d>,
                     pos: &mut usize,
@@ -80,7 +105,10 @@ pub(crate) fn impl_for_struct(
             let doc = doc_overrides.get(name).or(#doc);
         });
 
-        let doc_overrides = DocOverrides::try_from(field).unwrap_or(DocOverrides(Vec::new()));
+        let (doc_overrides, child_context) = match field_options(field) {
+            Ok(options) => options,
+            Err(error) => return error.to_compile_error(),
+        };
         let doc_overrides = quote! { grib_template_helpers::DocOverrides::new(#doc_overrides) };
 
         let (ty, self_ident) = if let Ok(num_octets) = super::helpers::NumOctets::try_from(field) {
@@ -94,12 +122,22 @@ pub(crate) fn impl_for_struct(
             (ty.to_token_stream(), quote! { &self.#ident })
         };
 
+        let (field_context_type, field_context) = if let Some(expr) = child_context {
+            (quote!(_), quote!(&(#expr)))
+        } else {
+            generics
+                .make_where_clause()
+                .predicates
+                .push(syn::parse_quote!(#ty: grib_template_helpers::DumpField<#context>));
+            (context.clone(), quote!(context))
+        };
         dumps.push(quote! {
             let mut child_doc_overrides = doc_overrides.get_child_overrides(name);
             child_doc_overrides.merge(&#doc_overrides);
 
-            <#ty as grib_template_helpers::DumpField>::dump_field(
+            <#ty as grib_template_helpers::DumpField<#field_context_type>>::dump_field(
                 #self_ident,
+                #field_context,
                 name,
                 parent,
                 doc,
@@ -110,10 +148,13 @@ pub(crate) fn impl_for_struct(
         });
     }
 
+    let (impl_generics, _, where_clause) = generics.split_for_impl();
     quote! {
-        impl #impl_generics grib_template_helpers::Dump for #name #type_generics #where_clause {
+        #marker_impl
+        impl #impl_generics grib_template_helpers::Dump<#context> for #name #type_generics #where_clause {
             fn dump<'d, W: std::io::Write>(
                 &self,
+                context: &#context,
                 parent: Option<&std::borrow::Cow<str>>,
                 doc_overrides: grib_template_helpers::DocOverrides<'d>,
                 pos: &mut usize,
@@ -130,11 +171,25 @@ pub(crate) fn impl_for_enum(
     input: &syn::DeriveInput,
     data: &syn::DataEnum,
 ) -> proc_macro2::TokenStream {
-    if let Err(error) = dump_options(input) {
-        return error.to_compile_error();
-    }
+    let options = match dump_options(input) {
+        Ok(options) => options,
+        Err(error) => return error.to_compile_error(),
+    };
     let name = &input.ident;
-    let (impl_generics, type_generics, where_clause) = input.generics.split_for_impl();
+    let (marker_generics, marker_type_generics, marker_where_clause) =
+        input.generics.split_for_impl();
+    let marker_impl = quote! {
+        impl #marker_generics grib_template_helpers::Dumpable for #name #marker_type_generics #marker_where_clause {}
+    };
+    let mut generics = input.generics.clone();
+    let context = if let Some(context) = &options.context {
+        context.to_token_stream()
+    } else {
+        let context = context_ident(&input.generics);
+        generics.params.push(syn::parse_quote!(#context: ?Sized));
+        context.to_token_stream()
+    };
+    let (_, type_generics, _) = input.generics.split_for_impl();
 
     let mut arms = Vec::new();
 
@@ -144,10 +199,19 @@ pub(crate) fn impl_for_enum(
         if let syn::Fields::Unnamed(fields) = &variant.fields
             && fields.unnamed.len() == 1
         {
-            let inner_ty = &fields.unnamed.first().unwrap().ty;
+            let field = fields.unnamed.first().unwrap();
+            if let Err(error) = reject_field_context(field) {
+                return error.to_compile_error();
+            }
+            let inner_ty = &field.ty;
+            generics
+                .make_where_clause()
+                .predicates
+                .push(syn::parse_quote!(#inner_ty: grib_template_helpers::Dump<#context>));
             arms.push(quote! {
-                #name::#variant_ident(inner) => <#inner_ty as grib_template_helpers::Dump>::dump(
+                #name::#variant_ident(inner) => <#inner_ty as grib_template_helpers::Dump<#context>>::dump(
                     inner,
+                    context,
                     parent,
                     grib_template_helpers::DocOverrides::empty(),
                     pos,
@@ -159,10 +223,13 @@ pub(crate) fn impl_for_enum(
         }
     }
 
+    let (impl_generics, _, where_clause) = generics.split_for_impl();
     quote! {
-        impl #impl_generics grib_template_helpers::Dump for #name #type_generics #where_clause {
+        #marker_impl
+        impl #impl_generics grib_template_helpers::Dump<#context> for #name #type_generics #where_clause {
             fn dump<'d, W: std::io::Write>(
                 &self,
+                context: &#context,
                 parent: Option<&std::borrow::Cow<str>>,
                 doc_overrides: grib_template_helpers::DocOverrides<'d>,
                 pos: &mut usize,
@@ -180,6 +247,7 @@ pub(crate) fn impl_for_enum(
 struct DumpOptions {
     flag: bool,
     code_table: bool,
+    context: Option<syn::Type>,
 }
 
 fn dump_options(input: &syn::DeriveInput) -> syn::Result<DumpOptions> {
@@ -190,12 +258,19 @@ fn dump_options(input: &syn::DeriveInput) -> syn::Result<DumpOptions> {
         .filter(|attr| attr.path().is_ident("dump"))
     {
         attr.parse_nested_meta(|meta| {
+            if meta.path.is_ident("context") {
+                if options.context.is_some() {
+                    return Err(meta.error("duplicate `context` option"));
+                }
+                options.context = Some(meta.value()?.parse()?);
+                return Ok(());
+            }
             let (value, name) = if meta.path.is_ident("flag") {
                 (&mut options.flag, "flag")
             } else if meta.path.is_ident("code_table") {
                 (&mut options.code_table, "code_table")
             } else {
-                return Err(meta.error("expected `flag` or `code_table`"));
+                return Err(meta.error("expected `flag`, `code_table`, or `context`"));
             };
             if *value {
                 return Err(meta.error(format!("duplicate `{name}` option")));
@@ -234,6 +309,45 @@ fn dump_options(input: &syn::DeriveInput) -> syn::Result<DumpOptions> {
         }
     }
     Ok(options)
+}
+
+fn field_options(field: &syn::Field) -> syn::Result<(DocOverrides, Option<syn::Expr>)> {
+    let mut docs = Vec::new();
+    let mut context = None;
+    for attr in field
+        .attrs
+        .iter()
+        .filter(|attr| attr.path().is_ident("dump"))
+    {
+        attr.parse_nested_meta(|meta| {
+            if meta.path.is_ident("context") {
+                if context.is_some() {
+                    return Err(meta.error("duplicate `context` option"));
+                }
+                context = Some(meta.value()?.parse()?);
+            } else if meta.path.is_ident("doc") {
+                let content;
+                syn::parenthesized!(content in meta.input);
+                let tokens: proc_macro2::TokenStream = content.parse()?;
+                let list = syn::parse_quote!(doc(#tokens));
+                parse_tree(list, &[], &mut docs).map_err(|_| meta.error("invalid `doc` option"))?;
+            } else {
+                return Err(meta.error("expected `doc` or `context`"));
+            }
+            Ok(())
+        })?;
+    }
+    Ok((DocOverrides(docs), context))
+}
+
+fn reject_field_context(field: &syn::Field) -> syn::Result<()> {
+    if let Some(expr) = field_options(field)?.1 {
+        return Err(syn::Error::new_spanned(
+            expr,
+            "field context expressions are only supported on named struct fields",
+        ));
+    }
+    Ok(())
 }
 
 pub(crate) fn get_doc(attrs: &[syn::Attribute]) -> Option<String> {
@@ -358,6 +472,19 @@ fn parse_tree(
     Ok(())
 }
 
+// Avoid collisions with type and const parameters supplied by the caller.
+pub(crate) fn context_ident(generics: &syn::Generics) -> syn::Ident {
+    let mut name = String::from("__DumpContext");
+    while generics.params.iter().any(|param| match param {
+        syn::GenericParam::Type(param) => param.ident == name,
+        syn::GenericParam::Const(param) => param.ident == name,
+        syn::GenericParam::Lifetime(_) => false,
+    }) {
+        name.push('_');
+    }
+    syn::Ident::new(&name, proc_macro2::Span::call_site())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -408,6 +535,29 @@ mod tests {
         code_table_enum: "#[dump(code_table)] enum T { Value(u8) }",
         code_table_duplicate: "#[dump(code_table, code_table)] struct T(u8);",
         code_table_value: "#[dump(code_table = true)] struct T(u8);",
+    }
+
+    test_invalid_code_table_option! {
+        context_duplicate: "#[dump(context = A, context = B)] struct T { value: u8 }",
+        context_missing_type: "#[dump(context)] struct T { value: u8 }",
+        context_expression_as_type: "#[dump(context = context.child())] struct T { value: u8 }",
+    }
+
+    #[test]
+    fn invalid_field_context_options() -> syn::Result<()> {
+        for source in [
+            "#[dump(context)] value: u8",
+            "#[dump(context = a, context = b)] value: u8",
+            "#[dump(context = a)] #[dump(context = b)] value: u8",
+            "#[dump(context = )] value: u8",
+        ] {
+            let input: syn::DeriveInput = syn::parse_str(&format!("struct T {{ {source} }}"))?;
+            let syn::Data::Struct(data) = input.data else {
+                unreachable!()
+            };
+            assert!(field_options(data.fields.iter().next().unwrap()).is_err());
+        }
+        Ok(())
     }
 
     #[test]

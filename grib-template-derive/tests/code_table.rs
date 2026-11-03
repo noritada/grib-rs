@@ -18,8 +18,8 @@ macro_rules! test_lookup {
             #[test]
             fn $name() {
                 let table = $table;
-                let description: Option<&'static str> = table.code_description();
-                let unit: Option<&'static str> = table.code_unit();
+                let description: Option<&'static str> = table.code_description(&());
+                let unit: Option<&'static str> = table.code_unit(&());
                 assert_eq!(description, $description);
                 assert_eq!(unit, $unit);
             }

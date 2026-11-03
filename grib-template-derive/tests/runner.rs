@@ -1,5 +1,6 @@
 mod code_table;
 mod dump_code_table;
+mod dump_context;
 
 #[test]
 fn tests() {

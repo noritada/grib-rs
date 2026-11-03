@@ -63,6 +63,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut pos = 1;
     // Dump the wrapper and then a named field to verify octet advancement.
     value.template_num.dump(
+        &(),
         Some(&"template_num".into()),
         DocOverrides::empty(),
         &mut pos,
@@ -70,6 +71,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     )?;
     grib_template_helpers::DumpField::dump_field(
         &value.trailing,
+        &(),
         "trailing",
         None,
         None,

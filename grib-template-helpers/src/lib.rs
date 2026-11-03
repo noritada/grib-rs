@@ -1,5 +1,5 @@
 pub use code_table::CodeTable;
-pub use dump::{DocOverrides, Dump, DumpField, write_position_column};
+pub use dump::{DocOverrides, Dump, DumpField, Dumpable, write_position_column};
 pub use try_from_slice::{TryEnumFromSlice, TryFromSlice, TryFromSliceResult};
 pub use types::NonStdLenUint;
 pub use write_to_buffer::WriteToBuffer;

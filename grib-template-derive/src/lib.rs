@@ -30,6 +30,34 @@ pub fn derive_write_to_buffer(input: TokenStream) -> TokenStream {
 
 /// Derive macro generating an impl of the trait `grib_template_helpers::Dump`.
 ///
+/// The generated implementation accepts a borrowed context of any type
+/// supported by all fields and forwards it unchanged to nested values.
+///
+/// Use `#[dump(context = ContextType)]` on a struct or enum to select its
+/// context type instead. On a named struct field, `#[dump(context =
+/// expression)]` evaluates the expression once and borrows its result for that
+/// child's dump. The expression can use `context` (the parent's borrowed
+/// context) and `self`. Other fields continue to receive the original context.
+/// The expression should produce the child's context value, rather than a
+/// reference to it. Generic fields with a context expression need explicit
+/// trait bounds when the compiler cannot prove their `DumpField`
+/// implementation.
+///
+/// For example, a template can supplement an external context with a sibling:
+///
+/// ```ignore
+/// #[derive(Dump)]
+/// #[dump(context = Grib2Context)]
+/// struct ProductTemplate {
+///     parameter_category: ParameterCategory,
+///     #[dump(context = context.with_parameter_category(&self.parameter_category))]
+///     parameter_number: ParameterNumber,
+/// }
+/// ```
+///
+/// Field context and documentation overrides can share an attribute:
+/// `#[dump(context = context.for_child(), doc(value = "Description"))]`.
+///
 /// Single-field `u8` and `u16` tuple structs display their value as a decimal
 /// number. Use `#[dump(flag)]` on a single-field `u8` tuple struct to display
 /// it as an eight-bit binary number with a `0b` prefix instead.
@@ -49,6 +77,13 @@ pub fn derive_dump(input: TokenStream) -> TokenStream {
 }
 
 /// Derive macro generating an impl of `grib_template_helpers::CodeTable`.
+///
+/// Tables without external keys implement `CodeTable<C>` for any context.
+/// For WMO tables 4.1 and 4.2, specify `context = ContextType` and
+/// `key = (context.discipline,)` or
+/// `key = (context.discipline, context.category)`. These tuple keys are matched
+/// against the discipline and category in `SubTitle_en`, followed by the
+/// wrapped code number. Both options must be specified together.
 ///
 /// Requires a single-field `u8` or `u16` tuple struct with
 /// `#[code_table(file = "...", format = ...)]`. The UTF-8 file is read relative

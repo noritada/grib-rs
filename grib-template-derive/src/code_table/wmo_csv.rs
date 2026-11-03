@@ -182,3 +182,102 @@ mod tests {
         assert!(error.contains("line 2, CodeFlag:"));
     }
 }
+
+// WMO tables 4.1 and 4.2 encode their additional keys in SubTitle_en.
+pub(super) fn parse_keys(contents: &str) -> Result<Vec<Vec<u8>>, String> {
+    let mut reader = csv::Reader::from_reader(contents.as_bytes());
+    let mut arity = None;
+    reader
+        .records()
+        .map(|record| {
+            let record = record.map_err(|error| error.to_string())?;
+            let subtitle = &record[1];
+            let parse = || -> Option<Vec<u8>> {
+                let rest = subtitle.strip_prefix("Product discipline ")?;
+                let (discipline, rest) = rest.split_once(" - ")?;
+                let mut keys = vec![discipline.parse().ok()?];
+                if let Some((_, category)) = rest.split_once(", parameter category ") {
+                    let (category, _) = category.split_once(':')?;
+                    keys.push(category.parse().ok()?);
+                }
+                Some(keys)
+            };
+            let keys = parse().ok_or_else(|| {
+                format!(
+                    "line {}, invalid SubTitle_en: {subtitle:?}",
+                    record.position().map_or(0, |position| position.line()),
+                )
+            })?;
+            if let Some(arity) = arity {
+                if arity != keys.len() {
+                    return Err("inconsistent subtitle key count".into());
+                }
+            } else {
+                arity = Some(keys.len());
+            }
+            Ok(keys)
+        })
+        .collect()
+}
+
+#[cfg(test)]
+mod key_tests {
+    use super::*;
+
+    fn table(subtitles: &[&str]) -> Result<String, Box<dyn std::error::Error>> {
+        let mut writer = csv::Writer::from_writer(Vec::new());
+        writer.write_record(HEADER)?;
+        for subtitle in subtitles {
+            writer.write_record([
+                "Parameters",
+                subtitle,
+                "0",
+                "",
+                "Value",
+                "",
+                "",
+                "",
+                "Operational",
+            ])?;
+        }
+        Ok(String::from_utf8(writer.into_inner()?)?)
+    }
+
+    #[test]
+    fn subtitle_keys() -> Result<(), Box<dyn std::error::Error>> {
+        assert_eq!(
+            parse_keys(&table(&["Product discipline 10 - Oceanographic products"])?)?,
+            vec![vec![10]],
+        );
+        assert_eq!(
+            parse_keys(&table(&[
+                "Product discipline 0 - Meteorological products, parameter category 1: moisture"
+            ])?)?,
+            vec![vec![0, 1]],
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn invalid_subtitle_keys() -> Result<(), Box<dyn std::error::Error>> {
+        for subtitle in [
+            "",
+            "Product discipline x - Invalid",
+            "Product discipline 256 - Invalid",
+            "Product discipline 0 - Products, parameter category x: invalid",
+            "Product discipline 0 - Products, parameter category 256: invalid",
+            "Product discipline 0 - Products, parameter category 0",
+        ] {
+            let error = parse_keys(&table(&[subtitle])?).expect_err("invalid subtitle");
+            assert!(error.contains("line 2"));
+        }
+        assert!(
+            parse_keys(&table(&[
+                "Product discipline 0 - Products",
+                "Product discipline 0 - Products, parameter category 0: temperature",
+            ])?)
+            .is_err()
+        );
+        Ok(())
+    }
+}
