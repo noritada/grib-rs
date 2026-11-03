@@ -89,10 +89,17 @@ pub fn derive_dump(input: TokenStream) -> TokenStream {
 /// `#[code_table(file = "...", format = ...)]`. The UTF-8 file is read relative
 /// to `CARGO_MANIFEST_DIR` and included in the expansion to track file changes.
 ///
+/// Common Code Tables C-0 and C-11 use `format = wmo_cct_c00` and
+/// `format = wmo_cct_c11`, respectively. C-0 uses the GRIB version number and
+/// effective date; C-11 uses GRIB2_BUFR4 and the centre name. Empty code rows
+/// and C-11's `Not applicable` rows are skipped. Invalid or overlapping code
+/// ranges are rejected, including ranges without descriptions. These formats
+/// have no units and do not accept `context` or `key` options.
+///
 /// The `format` value is an identifier with optional parenthesized options,
-/// currently supporting only `wmo_csv` without options. WMO CSV records are
-/// used to generate description and unit lookups. If no units are defined,
-/// `code_unit` returns `None` without a runtime lookup.
+/// supporting `wmo_csv`, `wmo_cct_c00`, and `wmo_cct_c11` without options. CSV
+/// records are used to generate description and unit lookups. If no units are
+/// defined, `code_unit` returns `None` without a runtime lookup.
 #[proc_macro_derive(CodeTable, attributes(code_table))]
 pub fn derive_code_table(input: TokenStream) -> TokenStream {
     let input = syn::parse_macro_input!(input as syn::DeriveInput);

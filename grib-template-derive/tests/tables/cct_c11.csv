@@ -1,0 +1,8 @@
+CREX2,GRIB2_BUFR4,OriginatingGeneratingCentre_en,Status
+00000,0,WMO Secretariat,Operational
+,,00001-00009: WMCs,Operational
+00001,1,"Example, with ""quotes""",Operational
+00002-00004,2-4,Example centres,Operational
+00005-65534,5-65534,Reserved for other centres,Operational
+65535,65535,Missing value,Operational
+65536-99999,Not applicable,Not used,Operational

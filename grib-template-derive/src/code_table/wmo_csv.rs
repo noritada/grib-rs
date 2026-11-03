@@ -53,7 +53,7 @@ pub(super) fn parse(contents: &str, max_code: u16) -> Result<Vec<Entry>, String>
         .collect()
 }
 
-fn parse_codes(value: &str, max_code: u16) -> Result<RangeInclusive<u16>, String> {
+pub(super) fn parse_codes(value: &str, max_code: u16) -> Result<RangeInclusive<u16>, String> {
     let parse_number = |number: &str| {
         if number.is_empty() || !number.bytes().all(|byte| byte.is_ascii_digit()) {
             return Err(format!("invalid code number {number:?}"));

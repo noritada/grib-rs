@@ -596,9 +596,9 @@ Data Representation:                    {}
     ///             sect_num: 1,
     ///         },
     ///         payload: grib::def::grib2::Section1Payload {
-    ///             centre_id: 34,
-    ///             subcentre_id: 0,
-    ///             master_table_version: 5,
+    ///             centre_id: grib::def::grib2::table::CentreId(34),
+    ///             subcentre_id: grib::def::grib2::table::SubcentreId(0),
+    ///             master_table_version: grib::def::grib2::table::MasterTableVer(5),
     ///             local_table_version: grib::def::grib2::table::LocalTableVer(1),
     ///             ref_time_significance: grib::def::grib2::table::RefTimeSignificance(0),
     ///             ref_time: grib::def::grib2::template::param_set::DateTime {
@@ -913,9 +913,9 @@ Data Representation:                    {}
     /// ###  SECTION 1: IDENTIFICATION SECTION (length = 21)
     /// 1-4       header.len = 21  // Length of section in octets (nn).
     /// 5         header.sect_num = 1  // Number of section.
-    /// 6-7       payload.centre_id = 34  // Identification of originating/generating centre (see Common Code table C-11).
+    /// 6-7       payload.centre_id = 34 [Tokyo (RSMC), Japan Meteorological Agency]  // Identification of originating/generating centre (see Common Code table C-11).
     /// 8-9       payload.subcentre_id = 0  // Identification of originating/generating subcentre (allocated by originating/generating centre).
-    /// 10        payload.master_table_version = 5  // GRIB master table version number (see Common Code table C-0 and Note 1).
+    /// 10        payload.master_table_version = 5 [4 November 2009]  // GRIB master table version number (see Common Code table C-0 and Note 1).
     /// 11        payload.local_table_version = 1 [Number of local tables version used]  // Version number of GRIB Local tables used to augment Master tables (see Code table 1.1 and Note 2).
     /// 12        payload.ref_time_significance = 0 [Analysis]  // Significance of reference time (see Code table 1.2).
     /// 13-14     payload.ref_time.year = 2016  // Year (4 digits) - Reference time of data.

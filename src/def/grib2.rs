@@ -42,14 +42,9 @@ pub type Section1 = Section<Section1Payload>;
 
 #[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump)]
 pub struct Section1Payload {
-    /// Identification of originating/generating centre (see Common Code table
-    /// C-11).
-    pub centre_id: u16,
-    /// Identification of originating/generating subcentre (allocated by
-    /// originating/generating centre).
-    pub subcentre_id: u16,
-    /// GRIB master table version number (see Common Code table C-0 and Note 1).
-    pub master_table_version: u8,
+    pub centre_id: table1::CentreId,
+    pub subcentre_id: table1::SubcentreId,
+    pub master_table_version: table1::MasterTableVer,
     pub local_table_version: table1::LocalTableVer,
     pub ref_time_significance: table1::RefTimeSignificance,
     /// Reference time of data.
