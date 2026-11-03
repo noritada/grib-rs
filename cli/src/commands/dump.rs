@@ -55,8 +55,13 @@ pub fn exec(args: &ArgMatches) -> Result<()> {
             .ok_or_else(|| {
                 anyhow::anyhow!("no such index: {}.{}", message_index.0, message_index.1)
             })?;
+        // Display using the pager without checking the number of lines. It is
+        // almost always assumed that the dump output will be longer than the
+        // number of lines in the terminal.
+        cli::start_pager();
         dump(submessage)?;
     } else {
+        cli::start_pager();
         for (_, submessage) in grib.iter() {
             dump(submessage)?;
         }
