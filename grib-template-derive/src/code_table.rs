@@ -1,3 +1,4 @@
+mod wmo_cct;
 mod wmo_csv;
 
 use proc_macro2::TokenStream;
@@ -6,21 +7,34 @@ use quote::{ToTokens, quote};
 pub(crate) fn expand(input: &syn::DeriveInput) -> syn::Result<TokenStream> {
     let max_code = validate_input(input)?;
     let options = Options::parse(input)?;
-    if options.format.name != "wmo_csv" {
+    if !matches!(
+        options.format.name.to_string().as_str(),
+        "wmo_csv" | "wmo_cct_c00" | "wmo_cct_c11"
+    ) {
         return Err(syn::Error::new_spanned(
             &options.format.name,
-            "unsupported format; expected wmo_csv",
+            "unsupported format; expected wmo_csv, wmo_cct_c00, or wmo_cct_c11",
         ));
     }
     if !options.format.options.is_empty() {
         return Err(syn::Error::new_spanned(
             &options.format.options,
-            "wmo_csv does not support options",
+            format!("{} does not support options", options.format.name),
+        ));
+    }
+    if options.format.name != "wmo_csv" && options.key.is_some() {
+        return Err(syn::Error::new_spanned(
+            &options.format.name,
+            "common code tables do not support context and key options",
         ));
     }
     let (path, contents) = read_table(&options.file)?;
-    let entries = wmo_csv::parse(&contents, max_code)
-        .map_err(|error| syn::Error::new_spanned(&options.file, error))?;
+    let entries = match options.format.name.to_string().as_str() {
+        "wmo_cct_c00" => wmo_cct::parse_c00(&contents, max_code),
+        "wmo_cct_c11" => wmo_cct::parse_c11(&contents, max_code),
+        _ => wmo_csv::parse(&contents, max_code),
+    }
+    .map_err(|error| syn::Error::new_spanned(&options.file, error))?;
     let keys = if options.key.is_some() {
         Some(
             wmo_csv::parse_keys(&contents)
@@ -240,6 +254,18 @@ mod tests {
     }
 
     #[test]
+    fn common_tables_reject_context_keys() -> syn::Result<()> {
+        for format in ["wmo_cct_c00", "wmo_cct_c11"] {
+            let input = syn::parse_str(&format!(
+                "#[code_table(file = \"unused.csv\", format = {format}, context = Context, key = (0,))] struct Table(u16);"
+            ))?;
+            let error = expand(&input).expect_err("common table cannot have external keys");
+            assert!(error.to_string().contains("do not support context and key"));
+        }
+        Ok(())
+    }
+
+    #[test]
     fn missing_table() -> Result<(), Box<dyn std::error::Error>> {
         let input = syn::parse_str(
             r#"#[code_table(file = "tests/tables/nonexistent.csv", format = wmo_csv)] struct Table(u8);"#,
@@ -305,6 +331,10 @@ mod tests {
 
     test_invalid_table! {
         unsupported_format: "csv" => "unsupported format",
+        unsupported_c00_option: "wmo_cct_c00(extra)" => "does not support options",
+        unsupported_c11_option: "wmo_cct_c11(extra)" => "does not support options",
+        c00_wrong_header: "wmo_cct_c00" => "expected WMO CCT CSV header",
+        c11_wrong_header: "wmo_cct_c11" => "expected WMO CCT CSV header",
         unsupported_wmo_option: r#"wmo_csv(delimiter = ";")"# => "does not support options",
     }
 
