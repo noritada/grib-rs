@@ -175,9 +175,9 @@ pub trait WriteGrib2MessageIterL3 {
 ///             sect_num: 1,
 ///         },
 ///         payload: grib2::Section1Payload {
-///             centre_id: 0xffff,
-///             subcentre_id: 0,
-///             master_table_version: 29,
+///             centre_id: grib::def::grib2::table::CentreId(0xffff),
+///             subcentre_id: grib::def::grib2::table::SubcentreId(0),
+///             master_table_version: grib::def::grib2::table::MasterTableVer(29),
 ///             local_table_version: grib::def::grib2::table::LocalTableVer(0),
 ///             ref_time_significance: grib::def::grib2::table::RefTimeSignificance(0),
 ///             ref_time: grib2::template::param_set::DateTime {
@@ -226,9 +226,9 @@ pub trait WriteGrib2MessageIterL3 {
 ///             sect_num: 1,
 ///         },
 ///         payload: grib2::Section1Payload {
-///             centre_id: 0xffff,
-///             subcentre_id: 0,
-///             master_table_version: 29,
+///             centre_id: grib::def::grib2::table::CentreId(0xffff),
+///             subcentre_id: grib::def::grib2::table::SubcentreId(0),
+///             master_table_version: grib::def::grib2::table::MasterTableVer(29),
 ///             local_table_version: grib::def::grib2::table::LocalTableVer(0),
 ///             ref_time_significance: grib::def::grib2::table::RefTimeSignificance(0),
 ///             ref_time: grib2::template::param_set::DateTime {

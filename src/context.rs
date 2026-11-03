@@ -526,9 +526,9 @@ Data Representation:                    {}
     ///             sect_num: 1,
     ///         },
     ///         payload: grib::def::grib2::Section1Payload {
-    ///             centre_id: 34,
-    ///             subcentre_id: 0,
-    ///             master_table_version: 5,
+    ///             centre_id: grib::def::grib2::table::CentreId(34),
+    ///             subcentre_id: grib::def::grib2::table::SubcentreId(0),
+    ///             master_table_version: grib::def::grib2::table::MasterTableVer(5),
     ///             local_table_version: grib::def::grib2::table::LocalTableVer(1),
     ///             ref_time_significance: grib::def::grib2::table::RefTimeSignificance(0),
     ///             ref_time: grib::def::grib2::template::param_set::DateTime {
