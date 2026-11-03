@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.20.3] - 2026-11-03
+
+### Enhancements to the CLI application `gribber`
+
+- The CLI's `dump` command now allows you to dump all submessages contained in the specified file.
+  (PR #264)
+- The output of the CLI's `dump` command is now automatically sent to a pager.
+  (PR #264)
+
+### Fixes
+
+- The warning ``warning: unused dependency `openjpeg-sys` ``, which used to appear depending on the build settings (which features were enabled), no longer appears.
+
+### Versions
+
+```
+grib 0.20.3
+grib-cli 0.20.3
+```
+
 ## [0.20.2] - 2026-10-22
 
 ### Security fixes
@@ -1357,7 +1377,8 @@ grib-build 0.1.0
 grib 0.1.0
 ```
 
-[unreleased]: https://github.com/noritada/grib-rs/compare/v0.20.2...HEAD
+[unreleased]: https://github.com/noritada/grib-rs/compare/v0.20.3...HEAD
+[0.20.3]: https://github.com/noritada/grib-rs/compare/v0.20.2...v0.20.3
 [0.20.2]: https://github.com/noritada/grib-rs/compare/v0.20.1...v0.20.2
 [0.20.1]: https://github.com/noritada/grib-rs/compare/v0.20.0...v0.20.1
 [0.20.0]: https://github.com/noritada/grib-rs/compare/v0.19.1...v0.20.0
