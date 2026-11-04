@@ -65,3 +65,18 @@ fn unit_availability_covers_all_parameter_contexts() {
         None,
     );
 }
+
+#[test]
+fn missing_code_depends_on_table_definition() {
+    use crate::def::grib2::table::{BitMapIndicator, FixedSurfaceType};
+    assert!(!BitMapIndicator(255).code_is_missing(&()));
+    assert!(FixedSurfaceType(255).code_is_missing(&()));
+    assert!(ParamNum(255).code_is_missing(&ParameterContext {
+        discipline: 0,
+        category: 0
+    }));
+    assert!(!ParamNum(255).code_is_missing(&ParameterContext {
+        discipline: 255,
+        category: 255
+    }));
+}

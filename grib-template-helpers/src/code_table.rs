@@ -9,6 +9,11 @@ pub trait CodeTable<C: ?Sized = ()> {
     /// `None` for an individual lookup. When false, it always returns `None`.
     const HAS_UNIT: bool;
 
+    /// Whether this code is explicitly defined as missing by the table.
+    fn code_is_missing(&self, _context: &C) -> bool {
+        false
+    }
+
     /// Returns the description for the code number.
     fn code_description(&self, context: &C) -> Option<&'static str>;
 

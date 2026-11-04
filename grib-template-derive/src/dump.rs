@@ -59,6 +59,22 @@ pub(crate) fn impl_for_struct(
             quote! {}
         };
 
+        let missing = if options.flag {
+            quote! {}
+        } else if options.code_table {
+            quote! {
+                if ::grib_template_helpers::MissingValue::is_missing(&self.0)
+                    && <Self as ::grib_template_helpers::CodeTable<#context>>::code_is_missing(self, context) {
+                    write!(output, " [Missing]")?;
+                }
+            }
+        } else {
+            quote! {
+                if ::grib_template_helpers::MissingValue::is_missing(&self.0) {
+                    write!(output, " [Missing]")?;
+                }
+            }
+        };
         let (impl_generics, _, where_clause) = generics.split_for_impl();
         return quote! {
             #marker_impl
@@ -81,6 +97,7 @@ pub(crate) fn impl_for_struct(
                         .unwrap_or_default();
                     write!(output, #format, self.0)?;
                     #description
+                    #missing
                     writeln!(output, "{}", doc)
                 }
             }

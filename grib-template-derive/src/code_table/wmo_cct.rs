@@ -72,6 +72,7 @@ fn parse(
             description => Some(description.to_owned()),
         };
         entries.push(Entry {
+            missing: matches!(&record[description_column], "Missing" | "Missing value"),
             codes,
             description,
             unit: None,

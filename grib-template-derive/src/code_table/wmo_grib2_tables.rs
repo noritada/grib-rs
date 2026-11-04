@@ -17,6 +17,7 @@ pub(super) struct Entry {
     pub codes: RangeInclusive<u16>,
     pub description: Option<String>,
     pub unit: Option<String>,
+    pub missing: bool,
 }
 
 pub(super) fn parse(contents: &str, max_code: u16) -> Result<Vec<Entry>, String> {
@@ -37,7 +38,7 @@ pub(super) fn parse(contents: &str, max_code: u16) -> Result<Vec<Entry>, String>
                 format!("line {line}, CodeFlag: {error}")
             })?;
             let description = match &record[4] {
-                "" | "Reserved" | "Reserved for local use" | "Missing" => None,
+                "" | "Reserved" | "Reserved for local use" | "Missing" | "Missing value" => None,
                 description => Some(description.to_owned()),
             };
             let unit = match &record[7] {
@@ -45,6 +46,7 @@ pub(super) fn parse(contents: &str, max_code: u16) -> Result<Vec<Entry>, String>
                 unit => Some(unit.to_owned()),
             };
             Ok(Entry {
+                missing: matches!(&record[4], "Missing" | "Missing value"),
                 codes,
                 description,
                 unit,
@@ -94,6 +96,7 @@ mod tests {
             (255..=255, None, None),
         ]
         .map(|(codes, description, unit)| Entry {
+            missing: *codes.start() == 255,
             codes,
             description: description.map(str::to_owned),
             unit: unit.map(str::to_owned),
