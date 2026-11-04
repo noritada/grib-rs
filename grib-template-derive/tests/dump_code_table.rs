@@ -57,7 +57,7 @@ test_dump! {
     description: ByteTable(1), DocOverrides::empty()
         => ("0         foo = 1 [Range description]  // Default.\n", 1),
     no_description: ByteTable(255), DocOverrides::empty()
-        => ("0         foo = 255  // Default.\n", 1),
+        => ("0         foo = 255 [Missing]  // Default.\n", 1),
     override_doc: ByteTable(1), DocOverrides::new(vec![("", "Override.")])
         => ("0         foo = 1 [Range description]  // Override.\n", 1),
     wide_value: WordTable(65535), DocOverrides::empty()

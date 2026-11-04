@@ -935,8 +935,8 @@ Data Representation:                    {}
     /// 12        payload.point_list_interpretation = 0 [There is no appended list]  // Interpretation of list of numbers (see Code table 3.11).
     /// 13-14     payload.template_num = 0 [Latitude/longitude]  // Grid definition template number (= N) (see Code table 3.1).
     /// 15        payload.template.earth.shape = 4 [Earth assumed oblate spheroid as defined in IAG-GRS80 model (major axis = 6 378 137.0 m, minor axis = 6 356 752.314 m, f = 1/298.257 222 101)]  // Shape of the Earth (see Code table 3.2).
-    /// 16        payload.template.earth.spherical_earth_radius.scale_factor = 255  // Scale factor of radius of spherical Earth.
-    /// 17-20     payload.template.earth.spherical_earth_radius.scaled_value = 4294967295  // Scaled value of radius of spherical Earth.
+    /// 16        payload.template.earth.spherical_earth_radius.scale_factor = 255 [Missing]  // Scale factor of radius of spherical Earth.
+    /// 17-20     payload.template.earth.spherical_earth_radius.scaled_value = 4294967295 [Missing]  // Scaled value of radius of spherical Earth.
     /// 21        payload.template.earth.major_axis.scale_factor = 1  // Scale factor of major axis of oblate spheroid Earth.
     /// 22-25     payload.template.earth.major_axis.scaled_value = 63781370  // Scaled value of major axis of oblate spheroid Earth.
     /// 26        payload.template.earth.minor_axis.scale_factor = 1  // Scale factor of minor axis of oblate spheroid Earth.
@@ -944,7 +944,7 @@ Data Representation:                    {}
     /// 31-34     payload.template.lat_lon.grid.ni = 256  // Ni - number of points along a parallel.
     /// 35-38     payload.template.lat_lon.grid.nj = 336  // Nj - number of points along a meridian.
     /// 39-42     payload.template.lat_lon.grid.initial_production_domain_basic_angle = 0  // Basic angle of the initial production domain (see Note 1).
-    /// 43-46     payload.template.lat_lon.grid.basic_angle_subdivisions = 4294967295  // Subdivisions of basic angle used to define extreme longitudes and latitudes, and direction increments (see Note 1).
+    /// 43-46     payload.template.lat_lon.grid.basic_angle_subdivisions = 4294967295 [Missing]  // Subdivisions of basic angle used to define extreme longitudes and latitudes, and direction increments (see Note 1).
     /// 47-50     payload.template.lat_lon.grid.first_point_lat = 47958333  // La1 - latitude of first grid point (see Note 1).
     /// 51-54     payload.template.lat_lon.grid.first_point_lon = 118062500  // Lo1 - longitude of first grid point (see Note 1).
     /// 55        payload.template.lat_lon.grid.resolution_and_component_flags = 0b00110000  // Resolution and component flags (see Flag table 3.3).
@@ -962,17 +962,17 @@ Data Representation:                    {}
     /// 11        payload.template.param.num = 0  // Parameter number (see Code Table 4.2).
     /// 12        payload.template.generating_process.process_type = 0 [Analysis]  // Type of generating process (see Code Table 4.3).
     /// 13        payload.template.generating_process.background_process = 153  // Background generating process identifier (defined by originating centre).
-    /// 14        payload.template.generating_process.process_id = 255  // Analysis or forecast generating processes identifier (defined by originating centre).
+    /// 14        payload.template.generating_process.process_id = 255 [Missing]  // Analysis or forecast generating processes identifier (defined by originating centre).
     /// 15-16     payload.template.forecast_time.cutoff_hours = 0  // Hours of observational data cutoff after reference time (see Note 1)
     /// 17        payload.template.forecast_time.cutoff_minutes = 0  // Minutes of observational data cutoff after reference time
     /// 18        payload.template.forecast_time.time.unit = 0 [Minute]  // Indicator of unit of time range (see Code Table 4.4).
     /// 19-22     payload.template.forecast_time.time.len = 0  // Forecast time in units defined by octet 18.
     /// 23        payload.template.horizontal.first_surface.surface_type = 1 [Ground or water surface]  // Type of first fixed surface (see Code Table 4.5).
-    /// 24        payload.template.horizontal.first_surface.value.scale_factor = -127  // Scale factor of first fixed surface.
-    /// 25-28     payload.template.horizontal.first_surface.value.scaled_value = -2147483647  // Scaled value of first fixed surface.
-    /// 29        payload.template.horizontal.second_surface.surface_type = 255  // Type of second fixed surface (see Code Table 4.5).
-    /// 30        payload.template.horizontal.second_surface.value.scale_factor = -127  // Scale factor of second fixed surface.
-    /// 31-34     payload.template.horizontal.second_surface.value.scaled_value = -2147483647  // Scaled value of second fixed surface.
+    /// 24        payload.template.horizontal.first_surface.value.scale_factor = -127 [Missing]  // Scale factor of first fixed surface.
+    /// 25-28     payload.template.horizontal.first_surface.value.scaled_value = -2147483647 [Missing]  // Scaled value of first fixed surface.
+    /// 29        payload.template.horizontal.second_surface.surface_type = 255 [Missing]  // Type of second fixed surface (see Code Table 4.5).
+    /// 30        payload.template.horizontal.second_surface.value.scale_factor = -127 [Missing]  // Scale factor of second fixed surface.
+    /// 31-34     payload.template.horizontal.second_surface.value.scaled_value = -2147483647 [Missing]  // Scaled value of second fixed surface.
     /// ###  SECTION 5: DATA REPRESENTATION SECTION (length = 23)
     /// 1-4       header.len = 23  // Length of section in octets (nn).
     /// 5         header.sect_num = 5  // Number of section.

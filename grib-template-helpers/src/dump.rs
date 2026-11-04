@@ -3,6 +3,8 @@ use std::{
     io::{Error, Write},
 };
 
+use crate::MissingValue;
+
 /// Marks structured values that support dumping.
 ///
 /// This context-independent marker keeps structured dumping implementations
@@ -129,7 +131,7 @@ pub trait DumpField<C: ?Sized = ()> {
 }
 
 macro_rules! add_impl_of_dump_field_for_number_types {
-    ($($ty:ty),* $(,)?) => ($(
+    ($missing:expr; $($ty:ty),* $(,)?) => ($(
         impl<C: ?Sized> DumpField<C> for $ty {
             fn dump_field<'d, W: Write>(
                 &self,
@@ -149,17 +151,15 @@ macro_rules! add_impl_of_dump_field_for_number_types {
                 let doc = doc
                     .map(|s| format!("  // {}", s))
                     .unwrap_or_default();
-                writeln!(output, "{} = {:?}{}",
-                    name,
-                    self,
-                    doc,
-                )
+                write!(output, "{} = {:?}", name, self)?;
+                if ($missing)(self) { write!(output, " [Missing]")?; }
+                writeln!(output, "{}", doc)
             }
         }
     )*);
 }
 
-add_impl_of_dump_field_for_number_types![
+add_impl_of_dump_field_for_number_types![MissingValue::is_missing;
     u8,
     u16,
     u32,
@@ -170,6 +170,9 @@ add_impl_of_dump_field_for_number_types![
     i64,
     f32,
     f64,
+];
+
+add_impl_of_dump_field_for_number_types![|_| false;
     Vec<u8>,
     Vec<u16>,
     Vec<u32>,
@@ -221,7 +224,10 @@ impl<C: ?Sized, T: DumpField<C>> DumpField<C> for Option<T> {
     }
 }
 
-impl<C: ?Sized, T: std::fmt::Debug> DumpField<C> for crate::NonStdLenUint<T> {
+impl<C: ?Sized, T: std::fmt::Debug> DumpField<C> for crate::NonStdLenUint<T>
+where
+    Self: MissingValue,
+{
     fn dump_field<'d, W: Write>(
         &self,
         _context: &C,
@@ -238,7 +244,11 @@ impl<C: ?Sized, T: std::fmt::Debug> DumpField<C> for crate::NonStdLenUint<T> {
             write!(output, "{}.", parent)?;
         }
         let doc = doc.map(|s| format!("  // {}", s)).unwrap_or_default();
-        writeln!(output, "{} = {:?}{}", name, self.val(), doc,)
+        write!(output, "{} = {:?}", name, self.val())?;
+        if self.is_missing() {
+            write!(output, " [Missing]")?;
+        }
+        writeln!(output, "{}", doc)
     }
 }
 

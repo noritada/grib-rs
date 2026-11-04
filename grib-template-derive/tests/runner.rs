@@ -2,6 +2,7 @@ mod code_table;
 mod code_table_cct;
 mod dump_code_table;
 mod dump_context;
+mod dump_missing;
 
 #[test]
 fn tests() {

@@ -56,7 +56,7 @@ fn placeholders_and_subcentre_dump_without_descriptions() -> Result<(), Box<dyn 
     )?;
     assert_eq!(
         String::from_utf8(output)?,
-        "1-2       centre = 65535  // Identification of originating/generating centre (see Common Code table C-11).\n3-4       subcentre = 0  // Identification of originating/generating subcentre (allocated by originating/generating centre).\n5         version = 255  // GRIB master table version number (see Common Code table C-0 and Note 1).\n",
+        "1-2       centre = 65535 [Missing]  // Identification of originating/generating centre (see Common Code table C-11).\n3-4       subcentre = 0  // Identification of originating/generating subcentre (allocated by originating/generating centre).\n5         version = 255 [Missing]  // GRIB master table version number (see Common Code table C-0 and Note 1).\n",
     );
     assert_eq!(pos, 6);
     Ok(())

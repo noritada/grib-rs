@@ -49,6 +49,9 @@ pub(crate) fn expand(input: &syn::DeriveInput) -> syn::Result<TokenStream> {
     let unit = lookup_body(&entries, keys.as_deref(), options.key.as_ref(), |entry| {
         entry.unit.as_deref()
     });
+    let missing = lookup_body(&entries, keys.as_deref(), options.key.as_ref(), |entry| {
+        entry.missing.then_some("Missing")
+    });
     let has_unit = entries.iter().any(|entry| entry.unit.is_some());
     let name = &input.ident;
     let mut generics = input.generics.clone();
@@ -69,6 +72,11 @@ pub(crate) fn expand(input: &syn::DeriveInput) -> syn::Result<TokenStream> {
 
         impl #impl_generics ::grib_template_helpers::CodeTable<#context> for #name #ty_generics #where_clause {
             const HAS_UNIT: bool = #has_unit;
+
+            fn code_is_missing(&self, context: &#context) -> bool {
+                let missing: Option<&str> = { #missing };
+                missing.is_some()
+            }
 
             fn code_description(&self, context: &#context) -> Option<&'static str> {
                 #description
