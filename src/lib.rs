@@ -18,9 +18,8 @@ mod reader;
 mod test_utils;
 mod time;
 pub mod utils;
-mod value;
 
-pub use grib_template_helpers::{Dump, TryFromSlice, WriteToBuffer};
+pub use grib_template_helpers::{Dump, MissingValue, TryFromSlice, WriteToBuffer};
 
 pub use crate::{
     codetables::Code::{self, Name, Num},
@@ -35,7 +34,6 @@ pub use crate::{
     parser::*,
     reader::*,
     time::*,
-    value::*,
 };
 
 #[doc = include_str!("../README.md")]

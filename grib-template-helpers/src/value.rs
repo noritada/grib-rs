@@ -8,7 +8,7 @@
 /// # Examples
 ///
 /// ```
-/// use grib::{MissingValue, TryFromSlice};
+/// use grib_template_helpers::{MissingValue, TryFromSlice};
 ///
 /// let missing = i32::missing();
 /// let read_from_slice =
