@@ -286,7 +286,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 ###  SECTION 6: BIT-MAP SECTION (length = 6)
 1-4       header.len = 6  // Length of section in octets (nn).
 5         header.sect_num = 6  // Number of section.
-6         payload.bitmap_indicator = 255  // Bit-map indicator (see Code table 6.0 and the Note).
+6         payload.bitmap_indicator = 255 [A bit map does not apply to this product]  // Bit-map indicator (see Code table 6.0 and the Note).
 ###  SECTION 7: DATA SECTION (length = 1391)
 ###  SECTION 8: END SECTION (length = 4)
 ";

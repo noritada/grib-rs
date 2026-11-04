@@ -795,7 +795,7 @@ Data Representation:                    {}
     ///             sect_num: 6,
     ///         },
     ///         payload: grib::def::grib2::Section6Payload {
-    ///             bitmap_indicator: 255,
+    ///             bitmap_indicator: grib::def::grib2::table::BitMapIndicator(255),
     ///         },
     ///     });
     ///     assert_eq!(actual, expected);
@@ -810,7 +810,7 @@ Data Representation:                    {}
             _ => panic!("something unexpected happened"),
         };
         let payload = crate::def::grib2::Section6Payload {
-            bitmap_indicator: *bitmap_indicator,
+            bitmap_indicator: crate::def::grib2::table::BitMapIndicator(*bitmap_indicator),
         };
 
         let SectionInfo { num, size, .. } = self.6.body;
@@ -916,7 +916,7 @@ Data Representation:                    {}
     /// ###  SECTION 6: BIT-MAP SECTION (length = 6)
     /// 1-4       header.len = 6  // Length of section in octets (nn).
     /// 5         header.sect_num = 6  // Number of section.
-    /// 6         payload.bitmap_indicator = 255  // Bit-map indicator (see Code table 6.0 and the Note).
+    /// 6         payload.bitmap_indicator = 255 [A bit map does not apply to this product]  // Bit-map indicator (see Code table 6.0 and the Note).
     /// ###  SECTION 7: DATA SECTION (length = 1391)
     /// ###  SECTION 8: END SECTION (length = 4)
     /// ";
