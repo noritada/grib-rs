@@ -61,6 +61,9 @@ pub(crate) fn expand(input: &syn::DeriveInput) -> syn::Result<TokenStream> {
     };
     let (impl_generics, _, where_clause) = generics.split_for_impl();
     let (_, ty_generics, _) = input.generics.split_for_impl();
+    // Emit `include_str!` so rustc records the CSV as a dependency and Cargo
+    // rebuilds when it changes. Reading the file in this procedural macro and
+    // emitting only the trait implementation would not track that dependency.
     Ok(quote! {
         const _: &str = include_str!(#path);
 
