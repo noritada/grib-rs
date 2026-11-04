@@ -10,9 +10,7 @@ use crate::TemporalInfo;
 use crate::{
     Dump as _, GridDefinitionTemplateValues, GridPointIndex, GridPointIndexIterator, LatLons,
     TemporalRawInfo, TryFromSlice as _,
-    codetables::{
-        CodeTable3_1, CodeTable4_0, CodeTable4_1, CodeTable4_2, CodeTable4_3, CodeTable5_0, Lookup,
-    },
+    codetables::{CodeTable3_1, CodeTable4_0, CodeTable5_0, Lookup},
     datatypes::*,
     def::grib2::{Section1, Section3, Section4, Section5, Section6, SectionHeader},
     error::*,
@@ -433,78 +431,6 @@ impl<'a, R> SubMessage<'a, R> {
             SectionBody::Section5(data) => data,
             _ => panic!("something unexpected happened"),
         }
-    }
-
-    pub fn describe(&self) -> String {
-        let category = self.prod_def().parameter_category();
-        let forecast_time = self
-            .prod_def()
-            .forecast_time()
-            .map(|ft| ft.describe())
-            .unwrap_or((String::new(), String::new()));
-        let fixed_surfaces_info = self
-            .prod_def()
-            .fixed_surfaces()
-            .map(|(first, second)| (first.describe(), second.describe()))
-            .map(|(first, second)| (first.0, first.1, first.2, second.0, second.1, second.2))
-            .unwrap_or((
-                String::new(),
-                String::new(),
-                String::new(),
-                String::new(),
-                String::new(),
-                String::new(),
-            ));
-
-        format!(
-            "\
-Grid:                                   {}
-  Number of points:                     {}
-Product:                                {}
-  Parameter Category:                   {}
-  Parameter:                            {}
-  Generating Proceess:                  {}
-  Forecast Time:                        {}
-  Forecast Time Unit:                   {}
-  1st Fixed Surface Type:               {}
-  1st Scale Factor:                     {}
-  1st Scaled Value:                     {}
-  2nd Fixed Surface Type:               {}
-  2nd Scale Factor:                     {}
-  2nd Scaled Value:                     {}
-Data Representation:                    {}
-  Number of represented values:         {}
-",
-            self.3.describe().unwrap_or_default(),
-            self.grid_def().num_points(),
-            self.4.describe().unwrap_or_default(),
-            category
-                .map(|v| CodeTable4_1::new(self.indicator().discipline)
-                    .lookup(usize::from(v))
-                    .to_string())
-                .unwrap_or_default(),
-            self.prod_def()
-                .parameter_number()
-                .zip(category)
-                .map(|(n, c)| CodeTable4_2::new(self.indicator().discipline, c)
-                    .lookup(usize::from(n))
-                    .to_string())
-                .unwrap_or_default(),
-            self.prod_def()
-                .generating_process()
-                .map(|v| CodeTable4_3.lookup(usize::from(v)).to_string())
-                .unwrap_or_default(),
-            forecast_time.1,
-            forecast_time.0,
-            fixed_surfaces_info.0,
-            fixed_surfaces_info.1,
-            fixed_surfaces_info.2,
-            fixed_surfaces_info.3,
-            fixed_surfaces_info.4,
-            fixed_surfaces_info.5,
-            self.5.describe().unwrap_or_default(),
-            self.repr_def().num_points(),
-        )
     }
 
     /// Provides access to the parameters in Section 1.

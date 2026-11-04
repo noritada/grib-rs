@@ -27,6 +27,7 @@ where
     // Read with the reader.
     let grib2 = grib::from_reader(f)?;
 
+    let mut stream = std::io::stdout();
     for (index, submessage) in grib2.iter() {
         let ft = submessage.prod_def().forecast_time();
         if matches!(
@@ -36,7 +37,9 @@ where
                 value: hours,
             }) if hours == forecast_time_hours
         ) {
-            println!("{}.{}\n{}", index.0, index.1, submessage.describe());
+            println!("SUBMESSAGE {}.{}", index.0, index.1);
+            submessage.dump(&mut stream)?;
+            println!("");
         }
     }
 
