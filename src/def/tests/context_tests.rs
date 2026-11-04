@@ -52,3 +52,16 @@ fn product_dump_supplements_context() -> Result<(), Box<dyn std::error::Error>> 
     assert!(output.contains("num = 0 [Specific humidity]"));
     Ok(())
 }
+
+#[test]
+fn unit_availability_covers_all_parameter_contexts() {
+    assert_eq!(<ParamCategory as CodeTable<Grib2Context>>::HAS_UNIT, false);
+    assert_eq!(<ParamNum as CodeTable<ParameterContext>>::HAS_UNIT, true);
+    assert_eq!(
+        ParamNum(0).code_unit(&ParameterContext {
+            discipline: 255,
+            category: 255,
+        }),
+        None,
+    );
+}

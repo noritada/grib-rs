@@ -25,7 +25,7 @@ pub struct MasterTableVer(
 );
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, TryFromSlice, WriteToBuffer, Dump, CodeTable)]
-#[code_table(file = "def/GRIB2/GRIB2_CodeFlag_1_1_CodeTable_en.csv", format = wmo_csv)]
+#[code_table(file = "def/GRIB2/GRIB2_CodeFlag_1_1_CodeTable_en.csv", format = wmo_grib2_tables)]
 #[dump(code_table)]
 pub struct LocalTableVer(
     /// Version number of GRIB Local tables used to augment Master tables (see
@@ -34,7 +34,7 @@ pub struct LocalTableVer(
 );
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, TryFromSlice, WriteToBuffer, Dump, CodeTable)]
-#[code_table(file = "def/GRIB2/GRIB2_CodeFlag_1_2_CodeTable_en.csv", format = wmo_csv)]
+#[code_table(file = "def/GRIB2/GRIB2_CodeFlag_1_2_CodeTable_en.csv", format = wmo_grib2_tables)]
 #[dump(code_table)]
 pub struct RefTimeSignificance(
     /// Significance of reference time (see Code table 1.2).
@@ -42,7 +42,7 @@ pub struct RefTimeSignificance(
 );
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, TryFromSlice, WriteToBuffer, Dump, CodeTable)]
-#[code_table(file = "def/GRIB2/GRIB2_CodeFlag_1_3_CodeTable_en.csv", format = wmo_csv)]
+#[code_table(file = "def/GRIB2/GRIB2_CodeFlag_1_3_CodeTable_en.csv", format = wmo_grib2_tables)]
 #[dump(code_table)]
 pub struct ProductionStatus(
     /// Production status of processed data in this GRIB message (see Code table
@@ -51,7 +51,7 @@ pub struct ProductionStatus(
 );
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, TryFromSlice, WriteToBuffer, Dump, CodeTable)]
-#[code_table(file = "def/GRIB2/GRIB2_CodeFlag_1_4_CodeTable_en.csv", format = wmo_csv)]
+#[code_table(file = "def/GRIB2/GRIB2_CodeFlag_1_4_CodeTable_en.csv", format = wmo_grib2_tables)]
 #[dump(code_table)]
 pub struct ProcessedDataType(
     /// Type of processed data in this GRIB message (see Code table 1.4).
@@ -59,7 +59,7 @@ pub struct ProcessedDataType(
 );
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, TryFromSlice, WriteToBuffer, Dump, CodeTable)]
-#[code_table(file = "def/GRIB2/GRIB2_CodeFlag_1_5_CodeTable_en.csv", format = wmo_csv)]
+#[code_table(file = "def/GRIB2/GRIB2_CodeFlag_1_5_CodeTable_en.csv", format = wmo_grib2_tables)]
 #[dump(code_table)]
 pub struct IdentificationTemplateNum(
     /// Identification template number (optional, see Code table 1.5).
@@ -67,7 +67,7 @@ pub struct IdentificationTemplateNum(
 );
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, TryFromSlice, WriteToBuffer, Dump, CodeTable)]
-#[code_table(file = "def/GRIB2/GRIB2_CodeFlag_1_6_CodeTable_en.csv", format = wmo_csv)]
+#[code_table(file = "def/GRIB2/GRIB2_CodeFlag_1_6_CodeTable_en.csv", format = wmo_grib2_tables)]
 #[dump(code_table)]
 pub struct CalendarType(
     /// Type of calendar (see Code table 1.6).

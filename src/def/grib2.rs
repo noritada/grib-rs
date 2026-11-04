@@ -189,12 +189,11 @@ pub type Section6 = Section<Section6Payload>;
 
 #[derive(Debug, PartialEq, Clone, TryFromSlice, Dump)]
 pub struct Section6Payload {
-    /// Bit-map indicator (see Code table 6.0 and the Note).
-    pub bitmap_indicator: u8,
+    pub bitmap_indicator: table6::BitMapIndicator,
 }
 
 pub mod table {
-    pub use super::{table0::*, table1::*, table3::*, table4::*, table5::*};
+    pub use super::{table0::*, table1::*, table3::*, table4::*, table5::*, table6::*};
 }
 
 pub mod template {
@@ -260,6 +259,7 @@ mod table1;
 mod table3;
 mod table4;
 mod table5;
+mod table6;
 mod template1;
 mod template3;
 mod template4;

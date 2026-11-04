@@ -1,7 +1,7 @@
 use grib_template_derive::{CodeTable, Dump, TryFromSlice, WriteToBuffer};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, TryFromSlice, WriteToBuffer, Dump, CodeTable)]
-#[code_table(file = "def/GRIB2/GRIB2_CodeFlag_3_1_CodeTable_en.csv", format = wmo_csv)]
+#[code_table(file = "def/GRIB2/GRIB2_CodeFlag_3_1_CodeTable_en.csv", format = wmo_grib2_tables)]
 #[dump(code_table)]
 pub struct GridDefinitionTemplateNum(
     /// Grid definition template number (= N) (see Code table 3.1).
@@ -9,7 +9,7 @@ pub struct GridDefinitionTemplateNum(
 );
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, TryFromSlice, WriteToBuffer, Dump, CodeTable)]
-#[code_table(file = "def/GRIB2/GRIB2_CodeFlag_3_2_CodeTable_en.csv", format = wmo_csv)]
+#[code_table(file = "def/GRIB2/GRIB2_CodeFlag_3_2_CodeTable_en.csv", format = wmo_grib2_tables)]
 #[dump(code_table)]
 pub struct EarthShapeType(
     /// Shape of the Earth (see Code table 3.2).
@@ -38,7 +38,7 @@ pub struct ProjectionCentreFlag(
 );
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, TryFromSlice, WriteToBuffer, Dump, CodeTable)]
-#[code_table(file = "def/GRIB2/GRIB2_CodeFlag_3_11_CodeTable_en.csv", format = wmo_csv)]
+#[code_table(file = "def/GRIB2/GRIB2_CodeFlag_3_11_CodeTable_en.csv", format = wmo_grib2_tables)]
 #[dump(code_table)]
 pub struct PointListInterpretation(
     /// Interpretation of list of numbers (see Code table 3.11).

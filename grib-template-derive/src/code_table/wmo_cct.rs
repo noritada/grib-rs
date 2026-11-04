@@ -1,4 +1,4 @@
-use super::wmo_csv::{Entry, parse_codes};
+use super::wmo_grib2_tables::{Entry, parse_codes};
 
 const C00_HEADER: [&str; 5] = [
     "GRIB version number",

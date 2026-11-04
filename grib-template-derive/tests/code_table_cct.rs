@@ -61,3 +61,9 @@ fn dumps_common_code_descriptions() -> Result<(), Box<dyn std::error::Error>> {
     assert_eq!(pos, 4);
     Ok(())
 }
+
+#[test]
+fn common_tables_have_no_units() {
+    assert_eq!(<Version as CodeTable<()>>::HAS_UNIT, false);
+    assert_eq!(<Centre as CodeTable<()>>::HAS_UNIT, false);
+}

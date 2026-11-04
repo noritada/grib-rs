@@ -97,9 +97,11 @@ pub fn derive_dump(input: TokenStream) -> TokenStream {
 /// have no units and do not accept `context` or `key` options.
 ///
 /// The `format` value is an identifier with optional parenthesized options,
-/// supporting `wmo_csv`, `wmo_cct_c00`, and `wmo_cct_c11` without options. CSV
-/// records are used to generate description and unit lookups. If no units are
-/// defined, `code_unit` returns `None` without a runtime lookup.
+/// supporting `wmo_grib2_tables`, `wmo_cct_c00`, and `wmo_cct_c11` without
+/// options. CSV records are used to generate description and unit lookups. If
+/// no units are defined, `code_unit` returns `None` without a runtime lookup.
+/// `HAS_UNIT` is true if any entry in the entire table defines a unit,
+/// including all disciplines and parameter categories.
 #[proc_macro_derive(CodeTable, attributes(code_table))]
 pub fn derive_code_table(input: TokenStream) -> TokenStream {
     let input = syn::parse_macro_input!(input as syn::DeriveInput);

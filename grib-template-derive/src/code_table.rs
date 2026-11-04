@@ -1,5 +1,5 @@
 mod wmo_cct;
-mod wmo_csv;
+mod wmo_grib2_tables;
 
 use proc_macro2::TokenStream;
 use quote::{ToTokens, quote};
@@ -9,11 +9,11 @@ pub(crate) fn expand(input: &syn::DeriveInput) -> syn::Result<TokenStream> {
     let options = Options::parse(input)?;
     if !matches!(
         options.format.name.to_string().as_str(),
-        "wmo_csv" | "wmo_cct_c00" | "wmo_cct_c11"
+        "wmo_grib2_tables" | "wmo_cct_c00" | "wmo_cct_c11"
     ) {
         return Err(syn::Error::new_spanned(
             &options.format.name,
-            "unsupported format; expected wmo_csv, wmo_cct_c00, or wmo_cct_c11",
+            "unsupported format; expected wmo_grib2_tables, wmo_cct_c00, or wmo_cct_c11",
         ));
     }
     if !options.format.options.is_empty() {
@@ -22,7 +22,7 @@ pub(crate) fn expand(input: &syn::DeriveInput) -> syn::Result<TokenStream> {
             format!("{} does not support options", options.format.name),
         ));
     }
-    if options.format.name != "wmo_csv" && options.key.is_some() {
+    if options.format.name != "wmo_grib2_tables" && options.key.is_some() {
         return Err(syn::Error::new_spanned(
             &options.format.name,
             "common code tables do not support context and key options",
@@ -32,12 +32,12 @@ pub(crate) fn expand(input: &syn::DeriveInput) -> syn::Result<TokenStream> {
     let entries = match options.format.name.to_string().as_str() {
         "wmo_cct_c00" => wmo_cct::parse_c00(&contents, max_code),
         "wmo_cct_c11" => wmo_cct::parse_c11(&contents, max_code),
-        _ => wmo_csv::parse(&contents, max_code),
+        _ => wmo_grib2_tables::parse(&contents, max_code),
     }
     .map_err(|error| syn::Error::new_spanned(&options.file, error))?;
     let keys = if options.key.is_some() {
         Some(
-            wmo_csv::parse_keys(&contents)
+            wmo_grib2_tables::parse_keys(&contents)
                 .map_err(|error| syn::Error::new_spanned(&options.file, error))?,
         )
     } else {
@@ -49,6 +49,7 @@ pub(crate) fn expand(input: &syn::DeriveInput) -> syn::Result<TokenStream> {
     let unit = lookup_body(&entries, keys.as_deref(), options.key.as_ref(), |entry| {
         entry.unit.as_deref()
     });
+    let has_unit = entries.iter().any(|entry| entry.unit.is_some());
     let name = &input.ident;
     let mut generics = input.generics.clone();
     let context = if let Some(context) = &options.context {
@@ -60,10 +61,15 @@ pub(crate) fn expand(input: &syn::DeriveInput) -> syn::Result<TokenStream> {
     };
     let (impl_generics, _, where_clause) = generics.split_for_impl();
     let (_, ty_generics, _) = input.generics.split_for_impl();
+    // Emit `include_str!` so rustc records the CSV as a dependency and Cargo
+    // rebuilds when it changes. Reading the file in this procedural macro and
+    // emitting only the trait implementation would not track that dependency.
     Ok(quote! {
         const _: &str = include_str!(#path);
 
         impl #impl_generics ::grib_template_helpers::CodeTable<#context> for #name #ty_generics #where_clause {
+            const HAS_UNIT: bool = #has_unit;
+
             fn code_description(&self, context: &#context) -> Option<&'static str> {
                 #description
             }
@@ -76,10 +82,10 @@ pub(crate) fn expand(input: &syn::DeriveInput) -> syn::Result<TokenStream> {
 }
 
 fn lookup_body(
-    entries: &[wmo_csv::Entry],
+    entries: &[wmo_grib2_tables::Entry],
     keys: Option<&[Vec<u8>]>,
     key: Option<&syn::Expr>,
-    value: impl Fn(&wmo_csv::Entry) -> Option<&str>,
+    value: impl Fn(&wmo_grib2_tables::Entry) -> Option<&str>,
 ) -> TokenStream {
     if entries.iter().all(|entry| value(entry).is_none()) {
         return quote!(::core::option::Option::None);
@@ -246,7 +252,7 @@ mod tests {
             "context = Context, key = (0,), key = (1,)",
         ] {
             let input = syn::parse_str(&format!(
-                "#[code_table(file = \"unused.csv\", format = wmo_csv, {options})] struct Table(u8);"
+                "#[code_table(file = \"unused.csv\", format = wmo_grib2_tables, {options})] struct Table(u8);"
             ))?;
             assert!(Options::parse(&input).is_err());
         }
@@ -268,7 +274,7 @@ mod tests {
     #[test]
     fn missing_table() -> Result<(), Box<dyn std::error::Error>> {
         let input = syn::parse_str(
-            r#"#[code_table(file = "tests/tables/nonexistent.csv", format = wmo_csv)] struct Table(u8);"#,
+            r#"#[code_table(file = "tests/tables/nonexistent.csv", format = wmo_grib2_tables)] struct Table(u8);"#,
         )?;
         let error = expand(&input).expect_err("missing table should fail");
         assert!(error.to_string().contains("failed to read"));
@@ -278,7 +284,7 @@ mod tests {
     #[test]
     fn tracks_manifest_relative_file() -> Result<(), Box<dyn std::error::Error>> {
         let input = syn::parse_str(
-            r#"#[code_table(file = "tests/tables/code_table.csv", format = wmo_csv)] struct Table(u8);"#,
+            r#"#[code_table(file = "tests/tables/code_table.csv", format = wmo_grib2_tables)] struct Table(u8);"#,
         )?;
         let output = expand(&input)?.to_string();
         let path =
@@ -300,7 +306,7 @@ mod tests {
 
     #[test]
     fn unitless_table_has_no_runtime_lookup() -> Result<(), Box<dyn std::error::Error>> {
-        let entries = wmo_csv::parse(
+        let entries = wmo_grib2_tables::parse(
             include_str!("../tests/tables/code_table_unitless.csv"),
             u16::MAX,
         )?;
@@ -335,7 +341,7 @@ mod tests {
         unsupported_c11_option: "wmo_cct_c11(extra)" => "does not support options",
         c00_wrong_header: "wmo_cct_c00" => "expected WMO CCT CSV header",
         c11_wrong_header: "wmo_cct_c11" => "expected WMO CCT CSV header",
-        unsupported_wmo_option: r#"wmo_csv(delimiter = ";")"# => "does not support options",
+        unsupported_wmo_option: r#"wmo_grib2_tables(delimiter = ";")"# => "does not support options",
     }
 
     macro_rules! test_format {
