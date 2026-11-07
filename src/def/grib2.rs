@@ -204,7 +204,7 @@ pub mod template {
     pub mod param_set {
         //! Definitions of parameter sets used in GRIB2 templates.
 
-        use grib_template_derive::{Dump, TryFromSlice, WriteToBuffer};
+        use grib_template_derive::{Dump, FixedSize, TryFromSlice, WriteToBuffer};
 
         use super::super::table4;
         pub use super::super::{
@@ -242,7 +242,7 @@ pub mod template {
         }
 
         /// Time range.
-        #[derive(Debug, PartialEq, Eq, Clone, TryFromSlice, WriteToBuffer, Dump)]
+        #[derive(Debug, PartialEq, Eq, Clone, TryFromSlice, WriteToBuffer, Dump, FixedSize)]
         pub struct TimeRange<L>
         where
             L: crate::TryFromSlice + crate::WriteToBuffer + grib_template_helpers::DumpField,
