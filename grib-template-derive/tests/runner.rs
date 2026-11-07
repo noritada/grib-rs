@@ -3,6 +3,7 @@ mod code_table_cct;
 mod dump_code_table;
 mod dump_context;
 mod dump_missing;
+mod field_offset;
 
 #[test]
 fn tests() {
