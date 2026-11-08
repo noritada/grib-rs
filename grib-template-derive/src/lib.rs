@@ -1,5 +1,78 @@
 use proc_macro::TokenStream;
 
+/// Derives the encoded size of a struct by summing its fields' `FixedSize`s.
+///
+/// `#[grib_template(num_octets = N)]` overrides a field's encoded size.
+/// Variable-length fields and discriminant-selected fields are not supported.
+/// This includes fixed-count `Vec` fields using `#[grib_template(len = N)]`.
+///
+/// ```compile_fail
+/// #[derive(grib_template_derive::FixedSize)]
+/// struct Variable {
+///     values: Vec<u8>,
+/// }
+/// ```
+#[proc_macro_derive(FixedSize, attributes(grib_template))]
+pub fn derive_fixed_size(input: TokenStream) -> TokenStream {
+    let input = syn::parse_macro_input!(input as syn::DeriveInput);
+    field_offset::fixed_size(&input)
+        .unwrap_or_else(syn::Error::into_compile_error)
+        .into()
+}
+
+/// Derives `FieldOffset<F>` for struct fields marked `#[field_offset(F)]`.
+///
+/// Offsets are relative to the beginning of the encoded struct. Each preceding
+/// field must implement `FixedSize` or specify `#[grib_template(num_octets =
+/// N)]`. Fields after the selected field may have variable lengths.
+/// `F` is the type used to read the bytes at the selected offset. Normally it
+/// is the field's type; field-specific deserialization attributes are not
+/// applied by `ReadFixedField`.
+///
+/// ```
+/// use grib_template_helpers::ReadFixedField;
+///
+/// #[derive(grib_template_derive::FieldOffset)]
+/// struct Template {
+///     prefix: u8,
+///     #[field_offset(u16)]
+///     value: u16,
+///     tail: Vec<u8>,
+/// }
+///
+/// assert_eq!(Template::read_fixed_field(&[0, 1, 2]), Ok(258));
+/// ```
+///
+/// A variable-length prefix cannot provide a fixed offset:
+///
+/// ```compile_fail
+/// #[derive(grib_template_derive::FieldOffset)]
+/// struct Template {
+///     prefix: Option<u8>,
+///     #[field_offset(u16)]
+///     value: u16,
+/// }
+/// ```
+///
+/// Only one field can be selected for each read type:
+///
+/// ```compile_fail
+/// #[derive(grib_template_derive::FieldOffset)]
+/// struct Template {
+///     #[field_offset(u8)]
+///     first: u8,
+///     #[field_offset(u8)]
+///     second: u8,
+/// }
+/// ```
+#[proc_macro_derive(FieldOffset, attributes(field_offset, grib_template))]
+pub fn derive_field_offset(input: TokenStream) -> TokenStream {
+    let input = syn::parse_macro_input!(input as syn::DeriveInput);
+    field_offset::field_offset(&input)
+        .unwrap_or_else(syn::Error::into_compile_error)
+        .into()
+}
+
 /// Derive macro generating an impl of the trait
 /// `grib_template_helpers::TryFromSlice`.
 #[proc_macro_derive(TryFromSlice, attributes(grib_template))]
@@ -115,6 +188,7 @@ pub fn derive_code_table(input: TokenStream) -> TokenStream {
 
 mod code_table;
 mod dump;
+mod field_offset;
 mod helpers;
 mod try_from_slice;
 mod write_to_buffer;

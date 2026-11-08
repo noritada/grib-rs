@@ -1,69 +1,84 @@
-use grib_template_derive::{Dump, TryFromSlice, WriteToBuffer};
+use grib_template_derive::{Dump, FieldOffset, TryFromSlice, WriteToBuffer};
 
 /// Product definition template 4.0 - Analysis or forecast at a horizontal level
 /// or in a horizontal layer at a point in time.
-#[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump)]
+#[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump, FieldOffset)]
 pub struct Template4_0 {
+    #[field_offset(param_set::ProductParam)]
     pub param: param_set::ProductParam,
     pub generating_process: param_set::GeneratingProcess,
     #[dump(doc(
         cutoff_hours = "Hours of observational data cutoff after reference time (see Note 1)",
         cutoff_minutes = "Minutes of observational data cutoff after reference time",
     ))]
+    #[field_offset(param_set::ForecastTime)]
     pub forecast_time: param_set::ForecastTime,
+    #[field_offset(param_set::Horizontal)]
     pub horizontal: param_set::Horizontal,
 }
 
 /// Product definition template 4.1 - Individual ensemble forecast, control and
 /// perturbed, at a horizontal level or in a horizontal layer at a point in
 /// time.
-#[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump)]
+#[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump, FieldOffset)]
 pub struct Template4_1 {
+    #[field_offset(param_set::ProductParam)]
     pub param: param_set::ProductParam,
     #[dump(doc(
         process_id = "Forecast generating process identifier (defined by originating centre).",
     ))]
     pub generating_process: param_set::GeneratingProcess,
+    #[field_offset(param_set::ForecastTime)]
     pub forecast_time: param_set::ForecastTime,
+    #[field_offset(param_set::Horizontal)]
     pub horizontal: param_set::Horizontal,
     pub emsemble_forecast: param_set::EnsembleForecast,
 }
 
 /// Product definition template 4.2 - Derived forecast based on all ensemble
 /// members at a horizontal level or in a horizontal layer at a point in time.
-#[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump)]
+#[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump, FieldOffset)]
 pub struct Template4_2 {
+    #[field_offset(param_set::ProductParam)]
     pub param: param_set::ProductParam,
     #[dump(doc(
         process_id = "Forecast generating process identifier (defined by originating centre).",
     ))]
     pub generating_process: param_set::GeneratingProcess,
+    #[field_offset(param_set::ForecastTime)]
     pub forecast_time: param_set::ForecastTime,
+    #[field_offset(param_set::Horizontal)]
     pub horizontal: param_set::Horizontal,
     pub derived_forecast: param_set::DerivedForecast,
 }
 
 /// Product definition template 4.5 - Probability forecasts at a horizontal
 /// level or in a horizontal layer at a point in time.
-#[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump)]
+#[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump, FieldOffset)]
 pub struct Template4_5 {
+    #[field_offset(param_set::ProductParam)]
     pub param: param_set::ProductParam,
     #[dump(doc(
         process_id = "Forecast generating process identifier (defined by originating centre).",
     ))]
     pub generating_process: param_set::GeneratingProcess,
+    #[field_offset(param_set::ForecastTime)]
     pub forecast_time: param_set::ForecastTime,
+    #[field_offset(param_set::Horizontal)]
     pub horizontal: param_set::Horizontal,
     pub probability_forecasts: param_set::ProbabilityForecasts,
 }
 
 /// Product definition template 4.6 - Percentile forecasts at a horizontal level
 /// or in a horizontal layer at a point in time.
-#[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump)]
+#[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump, FieldOffset)]
 pub struct Template4_6 {
+    #[field_offset(param_set::ProductParam)]
     pub param: param_set::ProductParam,
     pub generating_process: param_set::GeneratingProcess,
+    #[field_offset(param_set::ForecastTime)]
     pub forecast_time: param_set::ForecastTime,
+    #[field_offset(param_set::Horizontal)]
     pub horizontal: param_set::Horizontal,
     pub percentile_forecasts: param_set::PercentileForecasts,
 }
@@ -156,11 +171,14 @@ pub struct Template4_6 {
 ///     Ok(())
 /// }
 /// ```
-#[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump)]
+#[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump, FieldOffset)]
 pub struct Template4_8 {
+    #[field_offset(param_set::ProductParam)]
     pub param: param_set::ProductParam,
     pub generating_process: param_set::GeneratingProcess,
+    #[field_offset(param_set::ForecastTime)]
     pub forecast_time: param_set::ForecastTime,
+    #[field_offset(param_set::Horizontal)]
     pub horizontal: param_set::Horizontal,
     pub time_interval: param_set::Statistical,
 }
@@ -168,14 +186,17 @@ pub struct Template4_8 {
 /// Product definition template 4.9 - Probability forecasts at a horizontal
 /// level or in a horizontal layer in a continuous or non-continuous time
 /// interval.
-#[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump)]
+#[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump, FieldOffset)]
 pub struct Template4_9 {
+    #[field_offset(param_set::ProductParam)]
     pub param: param_set::ProductParam,
     #[dump(doc(
         process_id = "Forecast generating process identifier (defined by originating centre).",
     ))]
     pub generating_process: param_set::GeneratingProcess,
+    #[field_offset(param_set::ForecastTime)]
     pub forecast_time: param_set::ForecastTime,
+    #[field_offset(param_set::Horizontal)]
     pub horizontal: param_set::Horizontal,
     pub probability_forecasts: param_set::ProbabilityForecasts,
     pub time_interval: param_set::Statistical,
@@ -184,14 +205,17 @@ pub struct Template4_9 {
 /// Product definition template 4.10 - Percentile forecasts at a horizontal
 /// level or in a horizontal layer in a continuous or non-continuous time
 /// interval.
-#[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump)]
+#[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump, FieldOffset)]
 pub struct Template4_10 {
+    #[field_offset(param_set::ProductParam)]
     pub param: param_set::ProductParam,
     #[dump(doc(
         process_id = "Forecast generating process identifier (defined by originating centre).",
     ))]
     pub generating_process: param_set::GeneratingProcess,
+    #[field_offset(param_set::ForecastTime)]
     pub forecast_time: param_set::ForecastTime,
+    #[field_offset(param_set::Horizontal)]
     pub horizontal: param_set::Horizontal,
     pub percentile_forecasts: param_set::PercentileForecasts,
     pub time_interval: param_set::Statistical,
@@ -200,14 +224,17 @@ pub struct Template4_10 {
 /// Product definition template 4.11 - Individual ensemble forecast, control and
 /// perturbed, at a horizontal level or in a horizontal layer in a continuous or
 /// non-continuous time interval.
-#[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump)]
+#[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump, FieldOffset)]
 pub struct Template4_11 {
+    #[field_offset(param_set::ProductParam)]
     pub param: param_set::ProductParam,
     #[dump(doc(
         process_id = "Forecast generating process identifier (defined by originating centre).",
     ))]
     pub generating_process: param_set::GeneratingProcess,
+    #[field_offset(param_set::ForecastTime)]
     pub forecast_time: param_set::ForecastTime,
+    #[field_offset(param_set::Horizontal)]
     pub horizontal: param_set::Horizontal,
     pub emsemble_forecast: param_set::EnsembleForecast,
     pub time_interval: param_set::Statistical,
@@ -216,28 +243,31 @@ pub struct Template4_11 {
 /// Product definition template 4.12 - Derived forecasts based on all ensemble
 /// members at a horizontal level or in a horizontal layer in a continuous or
 /// non-continuous time interval.
-#[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump)]
+#[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump, FieldOffset)]
 pub struct Template4_12 {
+    #[field_offset(param_set::ProductParam)]
     pub param: param_set::ProductParam,
     #[dump(doc(
         process_id = "Forecast generating process identifier (defined by originating centre).",
     ))]
     pub generating_process: param_set::GeneratingProcess,
+    #[field_offset(param_set::ForecastTime)]
     pub forecast_time: param_set::ForecastTime,
+    #[field_offset(param_set::Horizontal)]
     pub horizontal: param_set::Horizontal,
     pub derived_forecast: param_set::DerivedForecast,
     pub time_interval: param_set::Statistical,
 }
 
 pub(crate) mod param_set {
-    use grib_template_derive::{Dump, TryFromSlice, WriteToBuffer};
+    use grib_template_derive::{Dump, FixedSize, TryFromSlice, WriteToBuffer};
 
     use super::super::{
         table4,
         template::param_set::{DateTime, ScaledValue, TimeRange},
     };
 
-    #[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump)]
+    #[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump, FixedSize)]
     #[dump(context = crate::Grib2Context)]
     pub struct ProductParam {
         pub category: table4::ParamCategory,
@@ -245,7 +275,7 @@ pub(crate) mod param_set {
         pub num: table4::ParamNum,
     }
 
-    #[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump)]
+    #[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump, FixedSize)]
     pub struct GeneratingProcess {
         pub process_type: table4::GeneratingProcessType,
         /// Background generating process identifier (defined by originating
@@ -256,7 +286,7 @@ pub(crate) mod param_set {
         pub process_id: u8,
     }
 
-    #[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump)]
+    #[derive(Debug, PartialEq, Clone, TryFromSlice, WriteToBuffer, Dump, FixedSize)]
     pub struct ForecastTime {
         /// Hours after reference time of data cutoff (see Note 1).
         pub cutoff_hours: u16,

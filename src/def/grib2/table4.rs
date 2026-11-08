@@ -1,4 +1,4 @@
-use grib_template_derive::{CodeTable, Dump, TryFromSlice, WriteToBuffer};
+use grib_template_derive::{CodeTable, Dump, FixedSize, TryFromSlice, WriteToBuffer};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, TryFromSlice, WriteToBuffer, Dump, CodeTable)]
 #[code_table(file = "def/GRIB2/GRIB2_CodeFlag_4_0_CodeTable_en.csv", format = wmo_grib2_tables)]
@@ -8,7 +8,9 @@ pub struct ProductDefinitionTemplateNum(
     pub u16,
 );
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy, TryFromSlice, WriteToBuffer, Dump, CodeTable)]
+#[derive(
+    Debug, PartialEq, Eq, Clone, Copy, TryFromSlice, WriteToBuffer, Dump, CodeTable, FixedSize,
+)]
 #[code_table(
     file = "def/GRIB2/GRIB2_CodeFlag_4_1_CodeTable_en.csv",
     format = wmo_grib2_tables,
@@ -21,7 +23,9 @@ pub struct ParamCategory(
     pub u8,
 );
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy, TryFromSlice, WriteToBuffer, Dump, CodeTable)]
+#[derive(
+    Debug, PartialEq, Eq, Clone, Copy, TryFromSlice, WriteToBuffer, Dump, CodeTable, FixedSize,
+)]
 #[code_table(
     file = "def/GRIB2/GRIB2_CodeFlag_4_2_CodeTable_en.csv",
     format = wmo_grib2_tables,
@@ -34,7 +38,9 @@ pub struct ParamNum(
     pub u8,
 );
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy, TryFromSlice, WriteToBuffer, Dump, CodeTable)]
+#[derive(
+    Debug, PartialEq, Eq, Clone, Copy, TryFromSlice, WriteToBuffer, Dump, CodeTable, FixedSize,
+)]
 #[code_table(file = "def/GRIB2/GRIB2_CodeFlag_4_3_CodeTable_en.csv", format = wmo_grib2_tables)]
 #[dump(code_table)]
 pub struct GeneratingProcessType(
@@ -42,7 +48,9 @@ pub struct GeneratingProcessType(
     pub u8,
 );
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy, TryFromSlice, WriteToBuffer, Dump, CodeTable)]
+#[derive(
+    Debug, PartialEq, Eq, Clone, Copy, TryFromSlice, WriteToBuffer, Dump, CodeTable, FixedSize,
+)]
 #[code_table(file = "def/GRIB2/GRIB2_CodeFlag_4_4_CodeTable_en.csv", format = wmo_grib2_tables)]
 #[dump(code_table)]
 pub struct TimeRangeUnit(
