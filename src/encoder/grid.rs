@@ -1,7 +1,7 @@
 use crate::def::grib2::{table, template::param_set};
 
 /// An auxiliary struct for creating the definition of a latitude/longitude grid
-/// ([`def::grib2::template::table::LatLonGrid`](`crate::def::grib2::template::table::LatLonGrid`))
+/// ([`def::grib2::template::param_set::LatLonGrid`](`crate::def::grib2::template::param_set::LatLonGrid`))
 /// in a more intuitive way.
 ///
 /// You can specify any value within the range of -360 degrees to 360 degrees
@@ -21,7 +21,7 @@ use crate::def::grib2::{table, template::param_set};
 ///   point’s longitude as 180.0 and the last point’s longitude as 175.0.
 ///
 /// Longitude values are automatically normalized during conversion to
-/// [`def::grib2::template::table::LatLonGrid`](`crate::def::grib2::template::table::LatLonGrid`)
+/// [`def::grib2::template::param_set::LatLonGrid`](`crate::def::grib2::template::param_set::LatLonGrid`)
 /// to comply with GRIB2 specification.
 pub struct LatLonGrid {
     /// Shape of the grid, in the form `(ni, nj)`.
