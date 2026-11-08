@@ -10,9 +10,7 @@ use crate::TemporalInfo;
 use crate::{
     Dump as _, GridDefinitionTemplateValues, GridPointIndex, GridPointIndexIterator, LatLons,
     TemporalRawInfo, TryFromSlice as _,
-    codetables::{
-        CodeTable3_1, CodeTable4_0, CodeTable4_1, CodeTable4_2, CodeTable4_3, CodeTable5_0, Lookup,
-    },
+    codetables::{CodeTable3_1, CodeTable4_0, CodeTable5_0, Lookup},
     datatypes::*,
     def::grib2::{Section1, Section3, Section4, Section5, Section6, SectionHeader},
     error::*,
@@ -505,78 +503,6 @@ impl<R> SubMessage<'_, R> {
         }
     }
 
-    pub fn describe(&self) -> String {
-        let category = self.prod_def().parameter_category();
-        let forecast_time = self
-            .prod_def()
-            .forecast_time()
-            .map(|ft| ft.describe())
-            .unwrap_or((String::new(), String::new()));
-        let fixed_surfaces_info = self
-            .prod_def()
-            .fixed_surfaces()
-            .map(|(first, second)| (first.describe(), second.describe()))
-            .map(|(first, second)| (first.0, first.1, first.2, second.0, second.1, second.2))
-            .unwrap_or((
-                String::new(),
-                String::new(),
-                String::new(),
-                String::new(),
-                String::new(),
-                String::new(),
-            ));
-
-        format!(
-            "\
-Grid:                                   {}
-  Number of points:                     {}
-Product:                                {}
-  Parameter Category:                   {}
-  Parameter:                            {}
-  Generating Proceess:                  {}
-  Forecast Time:                        {}
-  Forecast Time Unit:                   {}
-  1st Fixed Surface Type:               {}
-  1st Scale Factor:                     {}
-  1st Scaled Value:                     {}
-  2nd Fixed Surface Type:               {}
-  2nd Scale Factor:                     {}
-  2nd Scaled Value:                     {}
-Data Representation:                    {}
-  Number of represented values:         {}
-",
-            self.3.describe().unwrap_or_default(),
-            self.grid_def().num_points(),
-            self.4.describe().unwrap_or_default(),
-            category
-                .map(|v| CodeTable4_1::new(self.indicator().discipline)
-                    .lookup(usize::from(v))
-                    .to_string())
-                .unwrap_or_default(),
-            self.prod_def()
-                .parameter_number()
-                .zip(category)
-                .map(|(n, c)| CodeTable4_2::new(self.indicator().discipline, c)
-                    .lookup(usize::from(n))
-                    .to_string())
-                .unwrap_or_default(),
-            self.prod_def()
-                .generating_process()
-                .map(|v| CodeTable4_3.lookup(usize::from(v)).to_string())
-                .unwrap_or_default(),
-            forecast_time.1,
-            forecast_time.0,
-            fixed_surfaces_info.0,
-            fixed_surfaces_info.1,
-            fixed_surfaces_info.2,
-            fixed_surfaces_info.3,
-            fixed_surfaces_info.4,
-            fixed_surfaces_info.5,
-            self.5.describe().unwrap_or_default(),
-            self.repr_def().num_points(),
-        )
-    }
-
     /// Provides access to the parameters in Section 1.
     ///
     /// # Examples
@@ -1058,8 +984,8 @@ Data Representation:                    {}
     ///
     /// use grib::{
     ///     Code, ForecastTime, TemporalRawInfo,
-    ///     codetables::grib2::{Table1_2, Table4_4},
-    ///     def::grib2::template::param_set::DateTime,
+    ///     codetables::grib2::Table4_4,
+    ///     def::grib2::{table::RefTimeSignificance, template::param_set::DateTime},
     /// };
     ///
     /// fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -1075,7 +1001,7 @@ Data Representation:                    {}
     ///         let (_, message) = iter.next().ok_or_else(|| "first message is not found")?;
     ///         let actual = message.temporal_raw_info();
     ///         let expected = TemporalRawInfo {
-    ///             ref_time_significance: Code::Name(Table1_2::Analysis),
+    ///             ref_time_significance: RefTimeSignificance::Analysis,
     ///             ref_time_unchecked: DateTime::new(2016, 8, 22, 2, 0, 0),
     ///             forecast_time_diff: Some(ForecastTime {
     ///                 unit: Code::Name(Table4_4::Minute),
@@ -1089,7 +1015,7 @@ Data Representation:                    {}
     ///         let (_, message) = iter.next().ok_or_else(|| "second message is not found")?;
     ///         let actual = message.temporal_raw_info();
     ///         let expected = TemporalRawInfo {
-    ///             ref_time_significance: Code::Name(Table1_2::Analysis),
+    ///             ref_time_significance: RefTimeSignificance::Analysis,
     ///             ref_time_unchecked: DateTime::new(2016, 8, 22, 2, 0, 0),
     ///             forecast_time_diff: Some(ForecastTime {
     ///                 unit: Code::Name(Table4_4::Minute),
@@ -1105,8 +1031,14 @@ Data Representation:                    {}
     pub fn temporal_raw_info(&self) -> TemporalRawInfo {
         let ref_time_significance = self.identification().ref_time_significance();
         let ref_time_unchecked = self.identification().ref_time_unchecked();
-        let forecast_time = self.prod_def().forecast_time();
-        TemporalRawInfo::new(ref_time_significance, ref_time_unchecked, forecast_time)
+        let forecast_time_diff = self.prod_def().forecast_time();
+        TemporalRawInfo {
+            ref_time_significance: crate::def::grib2::table::RefTimeSignificance(
+                ref_time_significance,
+            ),
+            ref_time_unchecked,
+            forecast_time_diff,
+        }
     }
 
     #[cfg(feature = "time-calculation")]
@@ -1123,10 +1055,7 @@ Data Representation:                    {}
     /// };
     ///
     /// use chrono::{TimeZone, Utc};
-    /// use grib::{
-    ///     Code, ForecastTime, TemporalInfo,
-    ///     codetables::grib2::{Table1_2, Table4_4},
-    /// };
+    /// use grib::{Code, ForecastTime, TemporalInfo, codetables::grib2::Table4_4};
     ///
     /// fn main() -> Result<(), Box<dyn std::error::Error>> {
     ///     let f = File::open(
