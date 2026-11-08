@@ -70,10 +70,7 @@ mod tests {
     #[cfg(feature = "jpeg2000-unpack-with-hayro")]
     use std::{fs::File, io::BufReader};
 
-    #[cfg(all(
-        feature = "jpeg2000-unpack-with-hayro",
-        feature = "jpeg2000-unpack-with-openjpeg"
-    ))]
+    #[cfg(feature = "jpeg2000-unpack-with-hayro")]
     use super::*;
 
     #[test]
