@@ -16,6 +16,15 @@ exclude = ["/.github", "/testdata"]
 all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
+[lints.rustdoc]
+broken_intra_doc_links = "deny"
+private_intra_doc_links = "deny"
+invalid_codeblock_attributes = "deny"
+invalid_html_tags = "deny"
+invalid_rust_codeblocks = "deny"
+bare_urls = "deny"
+redundant_explicit_links = "deny"
+
 [workspace]
 members = ["grib-template-derive", "grib-template-helpers", "gen", "cli", "demo"]
 
