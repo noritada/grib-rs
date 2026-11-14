@@ -116,7 +116,7 @@ fn inc_in_microdegrees(first: f64, last: f64, n_spacing: usize) -> u32 {
 }
 
 fn microdegrees(val_in_degrees: f64) -> i32 {
-    (val_in_degrees * 1e6) as i32
+    (val_in_degrees * 1e6).round() as i32
 }
 
 fn normalized_longitude(val: f64) -> f64 {
@@ -274,6 +274,12 @@ mod tests {
                 table::ScanningMode(0b10000000),
             ),
         ),
+    }
+
+    #[test]
+    fn correctly_round_microdegrees() {
+        assert_eq!(microdegrees(7.2_f64), 7_200_000);
+        assert_eq!(microdegrees(f64::from(7.2_f32)), 7_200_000);
     }
 
     #[test]
