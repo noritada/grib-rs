@@ -548,6 +548,30 @@ mod tests {
         ),
     }
 
+    #[test]
+    fn constant_fields_ignore_requested_decimal_scale() -> Result<(), Box<dyn std::error::Error>> {
+        for dec in [-2, 2] {
+            let values = [1.25; 4];
+            let encoded = Encoder::new(
+                &values,
+                SimplePackingStrategy::Decimal(dec),
+                ComplexPackingStrategy::LookAhead(4),
+            )
+            .encode();
+            let mut sect5 = vec![0; encoded.section5_len()];
+            encoded.write_section5(&mut sect5)?;
+            assert_eq!(&sect5[11..15], &1.25_f32.to_be_bytes());
+            assert_eq!(&sect5[17..19], &[0, 0]);
+            let mut sect6 = vec![0; encoded.section6_len()];
+            encoded.write_section6(&mut sect6)?;
+            let mut sect7 = vec![0; encoded.section7_len()];
+            encoded.write_section7(&mut sect7)?;
+            let decoder = crate::Grib2SubmessageDecoder::new(values.len(), sect5, sect6, sect7)?;
+            assert_eq!(decoder.dispatch()?.collect::<Vec<_>>(), vec![1.25; 4]);
+        }
+        Ok(())
+    }
+
     macro_rules! grib2_coded_values_roundtrip_tests {
         ($(($name:ident, $input:expr $(,)?)),* $(,)?) => ($(
             #[test]

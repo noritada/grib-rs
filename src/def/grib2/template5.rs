@@ -285,6 +285,14 @@ pub(crate) mod param_set {
 
     impl SimplePacking {
         pub(crate) fn zero_bit_reference_value(&self) -> f32 {
+            // Apply decimal scaling as wgrib2's internal decoder does with
+            // `-g2clib 0` (see unpk_grib's `nbits == 0` branch):
+            // https://github.com/NOAA-EMC/wgrib2/blob/develop/src/unpk.c
+            // ecCodes instead returns the reference value directly when
+            // `bits_per_value == 0` (see `DataSimplePacking::unpack`):
+            // https://github.com/ecmwf/eccodes/blob/develop/src/eccodes/accessor/DataSimplePacking.cc
+            // The distinction from g2clib emulation is documented here:
+            // https://www.cpc.ncep.noaa.gov/products/wesley/wgrib2/g2clib.html
             self.ref_val * 10_f32.powi(-i32::from(self.dec))
         }
     }
