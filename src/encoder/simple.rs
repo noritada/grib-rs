@@ -313,10 +313,10 @@ mod tests {
                 let actual = decoder.dispatch()?.collect::<Vec<_>>();
                 let expected = values.iter().map(|val| *val as f32).collect::<Vec<_>>();
                 assert_eq!(actual.len(), expected.len());
-                actual
+                assert!(actual
                     .iter()
                     .zip(expected.iter())
-                    .all(|(a, b)| (a.is_nan() && b.is_nan()) || (a == b));
+                    .all(|(a, b)| (a.is_nan() && b.is_nan()) || (a == b)));
                 Ok(())
             }
         )*);
