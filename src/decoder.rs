@@ -383,7 +383,28 @@ impl<'d> Iterator for Grib2ValueIterator<'d> {
 #[derive(Clone, Debug, Default)]
 #[non_exhaustive]
 pub struct DecodeLimits {
-    // TODO: implement!
+    /// Maximum number of grid points to be decoded per submessage. `None` means
+    /// no additional limit.
+    ///
+    /// According to the GRIB2 specification, a single submessage can contain up
+    /// to `u32::MAX` grid points (although the developers of this library have
+    /// never encountered a submessage containing that many grid points).
+    /// Depending on the decoding method, it may be necessary to allocate a
+    /// large buffer to store the values of all grid points. If `u32::MAX` grid
+    /// points are stored as an `f32` array, a 16 GiB buffer is required.
+    ///
+    /// This configuration option is intended to prevent such massive
+    /// allocations. It is currently effective in the Template 5.40/7.40 (JPEG
+    /// 2000 code stream format) decoder when `jpeg2000-unpack-with-hayro` is
+    /// enabled.
+    pub max_grid_points_decoded: Option<u32>,
+    /// Maximum number of JPEG 2000 code stream tiles to be decoded per
+    /// submessage. `None` means no additional limit.
+    ///
+    /// This configuration is currently effective in the Template 5.40/7.40
+    /// (JPEG 2000 code stream format) decoder when `jpeg2000-unpack-with-hayro`
+    /// is enabled.
+    pub max_tiles_decoded: Option<u32>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
