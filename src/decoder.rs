@@ -88,6 +88,7 @@ pub struct Grib2SubmessageDecoder {
     sect5_param: Section5,
     sect6_bytes: Vec<u8>,
     sect7_bytes: Vec<u8>,
+    limits: Option<DecodeLimits>,
 }
 
 impl Grib2SubmessageDecoder {
@@ -146,6 +147,7 @@ impl Grib2SubmessageDecoder {
             sect5_param,
             sect6_bytes,
             sect7_bytes,
+            limits: None,
         })
     }
 
@@ -167,6 +169,13 @@ impl Grib2SubmessageDecoder {
             reader.read_sect_as_slice(sect6)?,
             reader.read_sect_as_slice(sect7)?,
         )
+    }
+
+    pub fn with_limits(self, limits: DecodeLimits) -> Self {
+        Self {
+            limits: Some(limits),
+            ..self
+        }
     }
 
     /// Dispatches a decoding process and gets an iterator of decoded values.
@@ -360,6 +369,21 @@ impl<'d> Iterator for Grib2ValueIterator<'d> {
             Self::SigI(inner) => inner.size_hint(),
         }
     }
+}
+
+/// User-configurable limits for decoding. Use this struct if your application
+/// requires resource guards.
+///
+/// For example, resource guarding is likely unnecessary for applications
+/// running on a personal computing environment with ample memory. It is also
+/// unnecessary when you know that the input data contains only a small number
+/// of grid points. On the other hand, resource guarding is recommended for
+/// applications running on shared computing environments or when processing
+/// input data containing a large number of grid points from an unknown source.
+#[derive(Clone, Debug, Default)]
+#[non_exhaustive]
+pub struct DecodeLimits {
+    // TODO: implement!
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
