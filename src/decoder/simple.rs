@@ -10,9 +10,8 @@ use crate::{
 };
 
 pub(crate) enum SimplePackingDecoder<I> {
-    // Based on the implementation of wgrib2, if nbits equals 0, return a
-    // constant field where the data value at each grid point is the reference
-    // value.
+    // If `num_bits` equals 0, return a constant field with decimal scaling
+    // applied to the reference value.
     ZeroLength(FixedValueIterator<f32>),
     NonZeroLength(NonZeroSimplePackingDecoder<I>),
 }

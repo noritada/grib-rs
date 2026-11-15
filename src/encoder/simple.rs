@@ -16,7 +16,8 @@ pub enum SimplePackingStrategy {
     /// A strategy specifying how many decimal places to consider valid for the
     /// numbers. This strategy is effective for various types of data, such as
     /// observation data obtained from specific observation instruments, where
-    /// precision is clearly defined.
+    /// precision is clearly defined. Constant fields are stored with a decimal
+    /// scale factor of zero.
     Decimal(i16),
 }
 
@@ -158,6 +159,18 @@ pub(crate) fn determine_simple_packing_params(
     values: &[f64],
     dec: i16,
 ) -> (SimplePacking, Vec<f64>, Bitmap) {
+    // Store constant fields without decimal scaling for compatibility with
+    // decoders that return the reference value directly for zero-bit fields.
+    // wgrib2 documents the same encoding policy for compatibility with both
+    // WMO-compliant decoding and g2clib/g2lib:
+    // https://www.cpc.ncep.noaa.gov/products/wesley/wgrib2/g2clib.html
+    // For the decoding implementations, see
+    // SimplePacking::zero_bit_reference_value.
+    let mut present = values.iter().copied().filter(|value| !value.is_nan());
+    let dec = match present.next() {
+        Some(first) if present.all(|value| value == first) => 0,
+        _ => dec,
+    };
     let mut min = f64::MAX;
     let mut max = f64::MIN;
     let mut bitmap = Bitmap::for_values(values);
@@ -279,6 +292,24 @@ mod tests {
     }
 
     #[test]
+    fn constant_fields_ignore_requested_decimal_scale() {
+        for dec in [-32768, -2, 0, 2, 32767] {
+            let values = [f64::NAN, 1.25, 1.25, f64::NAN];
+            let encoded = Encoder::new(&values, SimplePackingStrategy::Decimal(dec)).encode();
+            assert_eq!(
+                encoded.params(),
+                &SimplePacking {
+                    ref_val: 1.25,
+                    exp: 0,
+                    dec: 0,
+                    num_bits: 0,
+                }
+            );
+            assert_eq!(encoded.coded.num_values(), 2);
+        }
+    }
+
+    #[test]
     fn simple_packing_scales_large_finite_ranges_to_u32() -> Result<(), &'static str> {
         let values = [0.0, 1.0e20];
         let encoder = Encoder::new(&values, SimplePackingStrategy::Decimal(0));
@@ -323,6 +354,9 @@ mod tests {
     }
 
     grib2_coded_values_roundtrip_tests! {
+        (constant_positive_decimal, vec![1.25; 4], 2),
+        (constant_negative_decimal, vec![1.25; 4], -2),
+        (constant_with_bitmap, vec![f64::NAN, 1.25, 1.25], 2),
         (
             grib2_coded_values_roundtrip_test_with_decimal_0_and_nonunique_values,
             (2..11).map(|val| val as f64).collect::<Vec<_>>(),
