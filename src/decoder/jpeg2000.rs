@@ -38,7 +38,18 @@ impl<'d> Grib2GpvUnpack for Jpeg2000<'d> {
             return Ok(decoder);
         };
 
-        let unpacked = decode_j2k(target.sect7_payload())?;
+        let unpacked = decode_j2k(
+            target.sect7_payload(),
+            target.num_encoded_points(),
+            target
+                .limits
+                .as_ref()
+                .and_then(|limits| limits.max_grid_points_decoded),
+            target
+                .limits
+                .as_ref()
+                .and_then(|limits| limits.max_tiles_decoded),
+        )?;
         let decoder = NonZeroSimplePackingDecoder::new(unpacked, &template.simple);
         Ok(SimplePackingDecoder::NonZeroLength(decoder))
     }
@@ -53,30 +64,34 @@ pub(crate) type ImageIntoIter = std::vec::IntoIter<i32>;
 pub(crate) type ImageIntoIter = openjpeg::ImageIntoIter;
 
 #[cfg(feature = "jpeg2000-unpack-with-hayro")]
-fn decode_j2k(bytes: &[u8]) -> Result<ImageIntoIter, DecodeError> {
-    hayro::decode_j2k(bytes)
+fn decode_j2k(
+    bytes: &[u8],
+    expected_samples: usize,
+    max_samples: Option<u32>,
+    max_tiles: Option<u32>,
+) -> Result<ImageIntoIter, DecodeError> {
+    hayro::decode_j2k(bytes, expected_samples, max_samples, max_tiles)
 }
 
 #[cfg(all(
     not(feature = "jpeg2000-unpack-with-hayro"),
     feature = "jpeg2000-unpack-with-openjpeg"
 ))]
-fn decode_j2k(bytes: &[u8]) -> Result<ImageIntoIter, DecodeError> {
+fn decode_j2k(
+    bytes: &[u8],
+    _expected_samples: usize,
+    _max_samples: Option<u32>,
+    _max_tiles: Option<u32>,
+) -> Result<ImageIntoIter, DecodeError> {
     openjpeg::decode_j2k(bytes)
 }
 
 #[cfg(test)]
 mod tests {
-    #[cfg(all(
-        feature = "jpeg2000-unpack-with-hayro",
-        feature = "jpeg2000-unpack-with-openjpeg"
-    ))]
+    #[cfg(feature = "jpeg2000-unpack-with-hayro")]
     use std::{fs::File, io::BufReader};
 
-    #[cfg(all(
-        feature = "jpeg2000-unpack-with-hayro",
-        feature = "jpeg2000-unpack-with-openjpeg"
-    ))]
+    #[cfg(feature = "jpeg2000-unpack-with-hayro")]
     use super::*;
 
     #[test]
@@ -90,18 +105,121 @@ mod tests {
         let (_index, submessage) = grib2.iter().next().ok_or("GRIB file has no submessages")?;
         let decoder = crate::Grib2SubmessageDecoder::from(submessage)?;
         let payload = decoder.sect7_payload();
+        let expected_samples = decoder.num_encoded_points();
 
         let openjpeg = openjpeg::decode_j2k(payload)
             .map_err(|err| format!("{err:?}"))?
             .collect::<Vec<_>>();
-        let hayro = hayro::decode_j2k(payload)
+        let hayro = hayro::decode_j2k(payload, expected_samples, None, None)
             .map_err(|err| format!("{err:?}"))?
             .collect::<Vec<_>>();
         let selected: hayro::ImageIntoIter =
-            decode_j2k(payload).map_err(|err| format!("{err:?}"))?;
+            decode_j2k(payload, expected_samples, None, None).map_err(|err| format!("{err:?}"))?;
 
         assert_eq!(hayro, openjpeg);
         assert_eq!(selected.collect::<Vec<_>>(), hayro);
+        Ok(())
+    }
+
+    #[test]
+    #[cfg(all(
+        feature = "jpeg2000-unpack-with-hayro",
+        feature = "jpeg2000-unpack-with-openjpeg"
+    ))]
+    fn hayro_decodes_gfs_wave_wide_codestream_like_openjpeg()
+    -> Result<(), Box<dyn std::error::Error>> {
+        let file = File::open(crate::test_utils::data::grib2::NOAA_GFS_WAVE_HTSGW)?;
+        let grib2 = crate::from_reader(BufReader::new(file))?;
+        let (_, submessage) = grib2.iter().next().ok_or("GRIB file has no submessages")?;
+        let decoder = crate::Grib2SubmessageDecoder::from(submessage)?;
+        let payload = decoder.sect7_payload();
+
+        let openjpeg = openjpeg::decode_j2k(payload)
+            .map_err(|error| format!("{error:?}"))?
+            .collect::<Vec<_>>();
+        let hayro = hayro::decode_j2k(payload, decoder.num_encoded_points(), None, None)
+            .map_err(|error| format!("{error:?}"))?
+            .collect::<Vec<_>>();
+
+        assert_eq!(hayro.len(), 546_583);
+        assert_eq!(hayro, openjpeg);
+        assert_eq!(decoder.dispatch()?.count(), 876_960);
+        Ok(())
+    }
+
+    #[test]
+    #[cfg(feature = "jpeg2000-unpack-with-hayro")]
+    fn hayro_uses_decoder_sample_limit() -> Result<(), Box<dyn std::error::Error>> {
+        let file = File::open(crate::test_utils::data::grib2::NOAA_GFS_WAVE_HTSGW)?;
+        let grib2 = crate::from_reader(BufReader::new(file))?;
+        let (_, submessage) = grib2.iter().next().ok_or("GRIB file has no submessages")?;
+        let decoder = crate::Grib2SubmessageDecoder::from(submessage)?;
+        let samples = u32::try_from(decoder.num_encoded_points())?;
+        let decoder = decoder.with_limits(crate::decoder::DecodeLimits {
+            max_grid_points_decoded: Some(samples - 1),
+            ..Default::default()
+        });
+        let error = match decoder.dispatch() {
+            Err(error) => error,
+            Ok(_) => panic!("decoding exceeded the configured sample limit"),
+        };
+        assert!(
+            error
+                .to_string()
+                .contains(&format!("maximum is {}", samples - 1))
+        );
+
+        let decoder = decoder.with_limits(crate::decoder::DecodeLimits {
+            max_grid_points_decoded: Some(samples),
+            ..Default::default()
+        });
+        assert_eq!(decoder.dispatch()?.count(), 876_960);
+        Ok(())
+    }
+
+    #[test]
+    #[cfg(feature = "jpeg2000-unpack-with-hayro")]
+    fn hayro_uses_decoder_tile_limit() -> Result<(), Box<dyn std::error::Error>> {
+        let file = File::open(crate::test_utils::data::grib2::NOAA_GFS_WAVE_HTSGW)?;
+        let grib2 = crate::from_reader(BufReader::new(file))?;
+        let (_, submessage) = grib2.iter().next().ok_or("GRIB file has no submessages")?;
+        let decoder = crate::Grib2SubmessageDecoder::from(submessage)?;
+        let decoder = decoder.with_limits(crate::decoder::DecodeLimits {
+            max_tiles_decoded: Some(0),
+            ..Default::default()
+        });
+        let error = match decoder.dispatch() {
+            Err(error) => error,
+            Ok(_) => panic!("decoding exceeded the configured tile limit"),
+        };
+        assert!(error.to_string().contains("tiles, maximum is 0"));
+
+        let decoder = decoder.with_limits(crate::decoder::DecodeLimits {
+            max_tiles_decoded: Some(1),
+            ..Default::default()
+        });
+        assert_eq!(decoder.dispatch()?.count(), 876_960);
+        Ok(())
+    }
+
+    #[test]
+    #[cfg(feature = "jpeg2000-unpack-with-hayro")]
+    fn hayro_rejects_gfs_wave_with_mismatched_encoded_point_count()
+    -> Result<(), Box<dyn std::error::Error>> {
+        let file = File::open(crate::test_utils::data::grib2::NOAA_GFS_WAVE_HTSGW)?;
+        let grib2 = crate::from_reader(BufReader::new(file))?;
+        let (_, submessage) = grib2.iter().next().ok_or("GRIB file has no submessages")?;
+        let decoder = crate::Grib2SubmessageDecoder::from(submessage)?;
+
+        assert!(
+            hayro::decode_j2k(
+                decoder.sect7_payload(),
+                decoder.num_encoded_points() - 1,
+                None,
+                None,
+            )
+            .is_err()
+        );
         Ok(())
     }
 }

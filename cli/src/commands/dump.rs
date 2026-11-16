@@ -13,13 +13,13 @@ use crate::cli;
 
 pub fn cli() -> Command {
     Command::new(crate::cli::module_component!())
-        .about("Dump the content of a GRIB submessage")
+        .about("Dump the content of GRIB submessages")
         .arg(
             arg!(<FILE> "Target file name (or a single dash (`-`) for standard input)")
                 .value_parser(clap::value_parser!(PathBuf)),
         )
         .arg(
-            arg!(<INDEX> "Submessage index")
+            arg!([INDEX] "Submessage index (all submessages if omitted)")
                 .value_parser(clap::value_parser!(cli::CliMessageIndex)),
         )
         .arg(arg!(--"no-color" "Output without colorizing").action(clap::ArgAction::SetTrue))
@@ -28,28 +28,44 @@ pub fn cli() -> Command {
 pub fn exec(args: &ArgMatches) -> Result<()> {
     let file_name = args.get_one::<PathBuf>("FILE").unwrap();
     let grib = cli::grib(file_name)?;
-    let cli::CliMessageIndex(message_index) = args.get_one("INDEX").unwrap();
-    let (_, submessage) = grib
-        .iter()
-        .find(|(index, _)| index == message_index)
-        .ok_or_else(|| anyhow::anyhow!("no such index: {}.{}", message_index.0, message_index.1))?;
     let mut stream = std::io::stdout();
-    if args.get_flag("no-color") {
-        submessage.dump(&mut stream)?;
-    } else {
-        // TODO: Implement multithreading for the coloring process.
-        // Since the current `SubMessage` is not thread-safe and cannot be used
-        // in a multithreaded environment, we will first write
-        // everything to a buffer and then apply the coloring process to
-        // it.
+    let mut dump = |submessage: grib::SubMessage<'_, _>| -> Result<()> {
+        if args.get_flag("no-color") {
+            submessage.dump(&mut stream)?;
+        } else {
+            // TODO: Implement multithreading for the coloring process.
+            // Since the current `SubMessage` is not thread-safe and cannot be
+            // used in a multithreaded environment, we will first write
+            // everything to a buffer and then apply the coloring process to
+            // it.
 
-        let mut buf = std::io::Cursor::new(Vec::with_capacity(4096));
-        submessage.dump(&mut buf)?;
-        buf.set_position(0);
-        for line in buf.lines() {
-            stream.write_all(colorize(&line?).as_bytes())?;
+            let mut buf = std::io::Cursor::new(Vec::with_capacity(4096));
+            submessage.dump(&mut buf)?;
+            buf.set_position(0);
+            for line in buf.lines() {
+                stream.write_all(colorize(&line?).as_bytes())?;
+            }
         }
+        Ok(())
     };
+    if let Some(cli::CliMessageIndex(message_index)) = args.get_one("INDEX") {
+        let (_, submessage) = grib
+            .iter()
+            .find(|(index, _)| index == message_index)
+            .ok_or_else(|| {
+                anyhow::anyhow!("no such index: {}.{}", message_index.0, message_index.1)
+            })?;
+        // Display using the pager without checking the number of lines. It is
+        // almost always assumed that the dump output will be longer than the
+        // number of lines in the terminal.
+        cli::start_pager();
+        dump(submessage)?;
+    } else {
+        cli::start_pager();
+        for (_, submessage) in grib.iter() {
+            dump(submessage)?;
+        }
+    }
     Ok(())
 }
 

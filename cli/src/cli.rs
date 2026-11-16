@@ -65,15 +65,11 @@ where
 }
 
 pub(crate) fn prepare_pager(num_lines: usize) {
-    let user_attended = console::user_attended();
-
     let term = console::Term::stdout();
     let (height, _width) = term.size();
     if num_lines > height.into() {
         start_pager();
-    }
-
-    if user_attended {
+    } else if console::user_attended() {
         console::set_colors_enabled(true);
     }
 }
@@ -82,17 +78,20 @@ pub(crate) trait PredictableNumLines {
     fn num_lines(&self) -> usize;
 }
 
-#[cfg(unix)]
-fn start_pager() {
+pub(crate) fn start_pager() {
+    let user_attended = console::user_attended();
+
+    #[cfg(unix)]
     if which("less").is_ok() {
         Pager::with_pager("less -R").setup();
     } else {
         Pager::new().setup();
     }
-}
 
-#[cfg(not(unix))]
-fn start_pager() {}
+    if user_attended {
+        console::set_colors_enabled(true);
+    }
+}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct CliMessageIndex(pub(crate) grib::MessageIndex);

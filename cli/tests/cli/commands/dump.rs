@@ -24,3 +24,47 @@ fn no_color_display() -> Result<(), Box<dyn std::error::Error>> {
 
     Ok(())
 }
+
+#[test]
+fn omitted_index_dumps_all_submessages() -> Result<(), Box<dyn std::error::Error>> {
+    let tempfile = utils::testdata::grib2::jma_tornado_nowcast()?;
+    let mut expected = Vec::new();
+    for index in 0..7 {
+        let output = Command::cargo_bin(CMD_NAME)?
+            .arg("dump")
+            .arg("--no-color")
+            .arg(tempfile.path())
+            .arg(format!("0.{index}"))
+            .assert()
+            .success()
+            .get_output()
+            .stdout
+            .clone();
+        expected.extend(output);
+    }
+    for options in [vec![], vec!["--no-color"]] {
+        Command::cargo_bin(CMD_NAME)?
+            .arg("dump")
+            .args(options)
+            .arg(tempfile.path())
+            .assert()
+            .success()
+            .stdout(expected.clone())
+            .stderr(predicate::str::is_empty());
+    }
+    Ok(())
+}
+
+#[test]
+fn nonexistent_index_is_an_error() -> Result<(), Box<dyn std::error::Error>> {
+    let tempfile = utils::testdata::grib2::jma_tornado_nowcast()?;
+    Command::cargo_bin(CMD_NAME)?
+        .arg("dump")
+        .arg(tempfile.path())
+        .arg("0.7")
+        .assert()
+        .failure()
+        .stdout(predicate::str::is_empty())
+        .stderr(predicate::str::contains("no such index: 0.7"));
+    Ok(())
+}
