@@ -36,6 +36,10 @@ pub use crate::{
     time::*,
 };
 
+// temporarily works around the conflict between devel/v0.21 and devel/v0.22
+#[rustfmt::skip]
+pub use grib_template_helpers::CodeTable;
+
 #[doc = include_str!("../README.md")]
 #[cfg(doctest)]
 pub struct ReadmeDoctests;
