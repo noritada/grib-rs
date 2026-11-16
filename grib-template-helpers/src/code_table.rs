@@ -5,8 +5,8 @@ pub trait CodeTable<C: ?Sized = ()> {
     /// Whether any entry in the entire table defines a unit.
     ///
     /// This includes all disciplines and parameter categories, independently of
-    /// the current code or context. When true, `code_unit` may still return
-    /// `None` for an individual lookup. When false, it always returns `None`.
+    /// the current code or context. When `true`, `code_unit` may still return
+    /// `None` for an individual lookup. When `false`, it always returns `None`.
     const HAS_UNIT: bool;
 
     /// Whether this code is explicitly defined as missing by the table.
