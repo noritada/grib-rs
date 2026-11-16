@@ -7,6 +7,55 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.21.0] - 2026-11-16
+
+This release is an intermediate step toward a broader replacement of the code table and parameter access APIs.
+It makes code table descriptions and missing parameter values available in dumps, with breaking changes mainly consisting of replacing code numbers with tuple structs and removing legacy APIs that already have replacements.
+
+### Enhancements
+
+- Dumps produced by `SubMessage::dump` and the CLI's `dump` command now display code number descriptions, including those from context-dependent Code Tables 4.1 and 4.2 and Common Code Tables C-0 and C-11.
+  Missing GRIB2 parameter values are now marked as `[Missing]`, while flag values and code numbers with special meanings, such as the bit-map indicator, retain their table-specific interpretation.
+  (PR #258, PR #260, PR #261, PR #262, PR #263, PR #265, PR #266, PR #267, PR #268)
+- The new code table tuple structs implement the `CodeTable` trait, which provides access to code number descriptions and unit information through `code_description` and `code_unit`.
+  (PR #261, PR #265, PR #266, PR #267, PR #275)
+
+### Breaking changes
+
+- Code numbers in section and template structs under `def::grib2` are now represented by tuple structs rather than primitive integers.
+  Use the corresponding types under `def::grib2::table` when constructing these fields, and access their underlying numbers through `.0`.
+  (PR #260, PR #266, PR #267)
+- Flag tuple structs previously under `def::grib2::template::param_set` have been moved to `def::grib2::table`.
+  Update imports and type paths accordingly.
+  (PR #260)
+- Legacy APIs have been removed in favor of their replacements:
+  - Use the CLI's `dump` command instead of `list --dump`.
+  - Use `SubMessage::dump` instead of `SubMessage::describe`.
+  - Use `def::grib2::table::SpatialDifferencingOrder` instead of `codetables::grib2::Table5_6`.
+  - Use `def::grib2::table::RefTimeSignificance` instead of `codetables::grib2::Table1_2`.
+    The type of `TemporalRawInfo::ref_time_significance` has also changed accordingly.
+  (PR #269)
+- `Dump::dump` now takes a context argument; pass `&()` when no external information is needed.
+  Handwritten implementations of `Dump` must also implement the `Dumpable` marker trait, which is implemented automatically by the derive macro.
+  (PR #263, PR #268)
+- Single-field `u8` tuple structs now dump their values as decimal numbers by default; use `#[dump(flag)]` to retain binary output.
+  (PR #258)
+
+#### Encoder behavior changes
+
+- When all values are identical and simple packing uses zero bits per value, the encoder now always sets the decimal scale factor (`dec`) to zero and stores the original value as the reference value (`ref_val`), regardless of the requested decimal scale factor.
+  This avoids differences in how ecCodes and wgrib2 decode constant fields with a nonzero decimal scale factor.
+  (PR #274)
+
+### Versions
+
+```
+grib 0.21.0
+grib-cli 0.21.0
+grib-template-derive 0.3.0
+grib-template-helpers 0.3.0
+```
+
 ## [0.20.4] - 2026-11-15
 
 ### Enhancements
@@ -1400,7 +1449,8 @@ grib-build 0.1.0
 grib 0.1.0
 ```
 
-[unreleased]: https://github.com/noritada/grib-rs/compare/v0.20.4...HEAD
+[unreleased]: https://github.com/noritada/grib-rs/compare/v0.21.0...HEAD
+[0.21.0]: https://github.com/noritada/grib-rs/compare/v0.20.4...v0.21.0
 [0.20.4]: https://github.com/noritada/grib-rs/compare/v0.20.3...v0.20.4
 [0.20.3]: https://github.com/noritada/grib-rs/compare/v0.20.2...v0.20.3
 [0.20.2]: https://github.com/noritada/grib-rs/compare/v0.20.1...v0.20.2
