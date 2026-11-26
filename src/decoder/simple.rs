@@ -1,4 +1,4 @@
-use num::ToPrimitive;
+use num::traits::AsPrimitive;
 
 use crate::{
     DecodeError, Grib2GpvUnpack,
@@ -19,7 +19,7 @@ pub(crate) enum SimplePackingDecoder<I> {
 impl<I, N> Iterator for SimplePackingDecoder<I>
 where
     I: Iterator<Item = N>,
-    N: ToPrimitive,
+    N: AsPrimitive<f32>,
 {
     type Item = f32;
 
@@ -89,13 +89,13 @@ impl<I> NonZeroSimplePackingDecoder<I> {
     }
 }
 
-impl<I: Iterator<Item = N>, N: ToPrimitive> Iterator for NonZeroSimplePackingDecoder<I> {
+impl<I: Iterator<Item = N>, N: AsPrimitive<f32>> Iterator for NonZeroSimplePackingDecoder<I> {
     type Item = f32;
 
     fn next(&mut self) -> Option<Self::Item> {
         match self.iter.next() {
             Some(encoded) => {
-                let encoded = encoded.to_f32().unwrap();
+                let encoded = encoded.as_();
                 let diff = encoded * self.binary_factor;
                 let value: f32 = (self.ref_val + diff) * self.decimal_factor;
                 Some(value)
