@@ -609,6 +609,43 @@ mod tests {
         );
     }
 
+    #[test]
+    fn complex_packing_decodes_secondary_missing_value_in_constant_groups() {
+        let params = param_set::ComplexPacking {
+            missing_value_management: ComplexPackingMissingValueManagement(2),
+            num_groups: 3,
+            num_group_width_bits: 0,
+            group_len_ref: 1,
+            num_group_len_bits: 0,
+            ..params()
+        };
+
+        // Two-bit references 11, 10, and 01, followed by two padding bits.
+        let actual = decode_complex_packing(&params, &[0b11_10_01_00], 0, 2, 0)
+            .map(|values| values.collect::<Vec<_>>());
+
+        assert_eq!(actual, Ok(vec![Missing1, Missing2, Normal(1)]));
+    }
+
+    #[test]
+    fn complex_packing_decodes_secondary_missing_value_in_nonconstant_group() {
+        let params = param_set::ComplexPacking {
+            missing_value_management: ComplexPackingMissingValueManagement(2),
+            group_width_ref: 2,
+            num_group_width_bits: 0,
+            group_len_last: 4,
+            num_group_len_bits: 0,
+            ..params()
+        };
+
+        // Reference 01, then packed two-bit values 00, 11, 10, and 01.
+        let data = [0b01_00_00_00, 0b00_11_10_01];
+        let actual = decode_complex_packing(&params, &data, 0, 2, 0)
+            .map(|values| values.collect::<Vec<_>>());
+
+        assert_eq!(actual, Ok(vec![Normal(1), Missing1, Missing2, Normal(2)]));
+    }
+
     macro_rules! complex_packing_rejection_tests {
         (
             $(
