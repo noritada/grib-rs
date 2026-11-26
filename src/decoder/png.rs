@@ -73,7 +73,48 @@ fn read_image_buffer(buf: &[u8]) -> Result<Vec<u8>, String> {
 
 #[cfg(test)]
 mod tests {
-    use super::Grib2SubmessageDecoder;
+    use crate::{DecodeError, Grib2SubmessageDecoder, GribError};
+
+    fn encode_png(
+        width: u32,
+        color: png::ColorType,
+        depth: png::BitDepth,
+        pixels: &[u8],
+    ) -> Result<Vec<u8>, png::EncodingError> {
+        let mut image = Vec::new();
+        let mut encoder = png::Encoder::new(&mut image, width, 1);
+        encoder.set_color(color);
+        encoder.set_depth(depth);
+        let mut writer = encoder.write_header()?;
+        writer.write_image_data(pixels)?;
+        writer.finish()?;
+        Ok(image)
+    }
+
+    fn png_decoder(
+        num_points: u8,
+        num_bits: u8,
+        image: &[u8],
+    ) -> Result<Grib2SubmessageDecoder, GribError> {
+        let mut sect5 = vec![0, 0, 0, 21, 5, 0, 0, 0, num_points, 0, 41];
+        sect5.extend_from_slice(&[0; 10]); // Zero reference and scales, float values.
+        sect5[19] = num_bits;
+        let sect6 = vec![0, 0, 0, 6, 6, 255]; // No bitmap.
+        let mut sect7 = ((5 + image.len()) as u32).to_be_bytes().to_vec();
+        sect7.push(7);
+        sect7.extend_from_slice(image);
+        Grib2SubmessageDecoder::new(usize::from(num_points), sect5, sect6, sect7)
+    }
+
+    fn assert_png_decode_error(image: &[u8]) -> Result<(), GribError> {
+        let decoder = png_decoder(1, 8, image)?;
+        assert!(matches!(
+            decoder.dispatch(),
+            Err(GribError::DecodeError(DecodeError::UnclassifiedError(message)))
+                if message.starts_with("PNG decode error:")
+        ));
+        Ok(())
+    }
 
     #[test]
     fn decode_png_constant_field_without_image() -> Result<(), Box<dyn std::error::Error>> {
@@ -87,6 +128,63 @@ mod tests {
         let actual = decoder.dispatch()?.collect::<Vec<_>>();
 
         assert_eq!(actual, [2.5; 3]);
+        Ok(())
+    }
+
+    #[test]
+    fn decode_png_rejects_invalid_header() -> Result<(), GribError> {
+        assert_png_decode_error(b"not a PNG image")
+    }
+
+    #[test]
+    fn decode_png_rejects_truncated_image() -> Result<(), Box<dyn std::error::Error>> {
+        let mut image = encode_png(1, png::ColorType::Grayscale, png::BitDepth::Eight, &[42])?;
+        let idat = image
+            .windows(4)
+            .position(|bytes| bytes == b"IDAT")
+            .ok_or("generated image has no IDAT chunk")?;
+        // Keep the chunk header so the decoder reaches the frame data.
+        image.truncate(idat + 4);
+
+        assert_png_decode_error(&image)?;
+        Ok(())
+    }
+
+    #[test]
+    fn decode_png_accepts_subbyte_grayscale_depths() -> Result<(), Box<dyn std::error::Error>> {
+        let cases: [(png::BitDepth, u8, &[f32]); 3] = [
+            (
+                png::BitDepth::One,
+                0b1010_0110,
+                &[1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0],
+            ),
+            (png::BitDepth::Two, 0b00_01_10_11, &[0.0, 1.0, 2.0, 3.0]),
+            (png::BitDepth::Four, 0b0011_1010, &[3.0, 10.0]),
+        ];
+        for (depth, packed, expected) in cases {
+            let num_points = expected.len() as u8;
+            let image = encode_png(
+                u32::from(num_points),
+                png::ColorType::Grayscale,
+                depth,
+                &[packed],
+            )?;
+            let decoder = png_decoder(num_points, depth as u8, &image)?;
+            let actual = decoder.dispatch()?.collect::<Vec<_>>();
+
+            assert_eq!(actual.as_slice(), expected);
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn decode_png_accepts_32_bit_rgba() -> Result<(), Box<dyn std::error::Error>> {
+        let image = encode_png(1, png::ColorType::Rgba, png::BitDepth::Eight, &[0, 1, 2, 3])?;
+        let decoder = png_decoder(1, 32, &image)?;
+
+        let actual = decoder.dispatch()?.collect::<Vec<_>>();
+
+        assert_eq!(actual, [66_051.0]); // 0x00010203, including the alpha byte.
         Ok(())
     }
 }
