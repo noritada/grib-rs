@@ -484,6 +484,30 @@ mod tests {
                 num_group_len_bits: 3,
                 ..params()
             }, Err(DecodeError::LengthMismatch)),
+        (
+            metadata_accepts_32_bit_width_and_length_descriptors,
+            [0; 16],
+            0,
+            0,
+            param_set::ComplexPacking {
+                num_groups: 2,
+                num_group_width_bits: 32,
+                group_len_ref: 1,
+                num_group_len_bits: 32,
+                ..params()
+            }, Ok(()),
+        ),
+        (
+            metadata_rejects_33_bit_length_descriptors,
+            [0; 5],
+            0,
+            0,
+            param_set::ComplexPacking {
+                num_group_width_bits: 0,
+                num_group_len_bits: 33,
+                ..params()
+            }, Err(DecodeError::LengthMismatch),
+        ),
         // This product exceeds u32::MAX and used to wrap to zero without overflow checks.
         // On 32-bit targets the checked multiplication must instead return an error.
         (metadata_reference_bit_count_exceeds_u32, [0; 0], 0, 2,
@@ -707,6 +731,41 @@ mod tests {
                 num_group_len_bits: 0,
                 ..params()
             }, [0xff, 0xff, 0xff, 0xff], 0),
+    }
+
+    #[test]
+    fn dispatch_accepts_primary_and_secondary_missing_values()
+    -> Result<(), Box<dyn std::error::Error>> {
+        for (template, extra_descriptors, expected) in
+            [(2_u16, &[][..], [0.0, 1.0]), (3, &[4, 0][..], [4.0, 5.0])]
+        {
+            let mut sect5 = vec![0; 47];
+            if template == 3 {
+                sect5.extend_from_slice(&[1, 1]); // First order, one octet per descriptor.
+            }
+            let len = sect5.len() as u32;
+            sect5[..4].copy_from_slice(&len.to_be_bytes());
+            sect5[4] = 5;
+            sect5[5..9].copy_from_slice(&4u32.to_be_bytes());
+            sect5[9..11].copy_from_slice(&template.to_be_bytes());
+            sect5[21] = 1; // General group splitting.
+            sect5[22] = 2; // Primary and secondary missing values.
+            sect5[31..35].copy_from_slice(&1u32.to_be_bytes());
+            sect5[35] = 2; // Two bits per packed value in the group.
+            sect5[42..46].copy_from_slice(&4u32.to_be_bytes());
+            let sect6 = vec![0, 0, 0, 6, 6, 255]; // No bitmap.
+            let mut sect7 = vec![0, 0, 0, 6 + extra_descriptors.len() as u8, 7];
+            sect7.extend_from_slice(extra_descriptors);
+            sect7.push(0b00_11_10_01);
+            let decoder = Grib2SubmessageDecoder::new(4, sect5, sect6, sect7)?;
+
+            let values = decoder.dispatch()?.collect::<Vec<_>>();
+
+            assert_eq!(values.len(), 4);
+            assert_eq!([values[0], values[3]], expected);
+            assert!(values[1..3].iter().all(|value| value.is_nan()));
+        }
+        Ok(())
     }
 
     #[test]
