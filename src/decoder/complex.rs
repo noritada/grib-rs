@@ -539,17 +539,20 @@ mod tests {
             params(), Err(DecodeError::LengthMismatch)),
     }
 
+    #[cfg(target_pointer_width = "32")]
     #[test]
-    fn complex_packing_rejects_invalid_width_at_maximum_group_count() {
+    fn complex_packing_rejects_overflowing_group_size_at_maximum_group_count() {
         let params = param_set::ComplexPacking {
             num_groups: u32::MAX,
-            group_width_ref: 32,
+            group_width_ref: 2,
             num_group_width_bits: 0,
+            group_len_ref: u32::MAX,
             num_group_len_bits: 0,
             ..params()
         };
 
-        // On 32-bit targets the group count is already usize::MAX.
+        // The group count equals usize::MAX, and the first group's size
+        // overflows.
         let actual = decode_complex_packing(&params, &[], 0, 0, 0);
 
         assert!(matches!(actual, Err(DecodeError::LengthMismatch)));
