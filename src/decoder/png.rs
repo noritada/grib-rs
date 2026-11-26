@@ -45,12 +45,8 @@ impl<'d> Grib2GpvUnpack for Png<'d> {
         // - 24 : Treat as RGB colour image (each component having 8-bit depth)
         // - 32 : Treat as RGB w/ alpha sample colour image (each component
         //   having 8-bit depth)
-        //
-        // Since we have verified the decoding process through testing for cases
-        // where `num_bits` is 8, 16, and 24, we believe other cases
-        // should also be fine.
 
-        let buf = read_image_buffer(target.sect7_payload())
+        let buf = read_image_buffer(target.sect7_payload(), template.simple.num_bits)
             .map_err(|e| DecodeError::from(format!("PNG decode error: {e}")))?;
         let iter = NBitwiseIterator::new(buf, usize::from(template.simple.num_bits));
         let iter = NonZeroSimplePackingDecoder::new(iter, &template.simple);
@@ -59,7 +55,7 @@ impl<'d> Grib2GpvUnpack for Png<'d> {
     }
 }
 
-fn read_image_buffer(buf: &[u8]) -> Result<Vec<u8>, String> {
+fn read_image_buffer(buf: &[u8], num_bits: u8) -> Result<Vec<u8>, String> {
     let reader = std::io::Cursor::new(&buf);
     let decoder = png::Decoder::new(reader);
     let mut reader = decoder.read_info().map_err(|e| e.to_string())?;
@@ -67,8 +63,52 @@ fn read_image_buffer(buf: &[u8]) -> Result<Vec<u8>, String> {
         .output_buffer_size()
         .ok_or("Getting output buffer size failed")?;
     let mut out_buf = vec![0; buf_size];
-    let _info = reader.next_frame(&mut out_buf).map_err(|e| e.to_string())?;
+    let info = reader.next_frame(&mut out_buf).map_err(|e| e.to_string())?;
+    if info.height > 1 && matches!(num_bits, 1 | 2 | 4) && info.bit_depth as u8 == num_bits {
+        let bits_per_pixel = usize::from(num_bits);
+        let pixels_per_byte = 8 / bits_per_pixel;
+        let last_byte_bits = (info.width as usize % pixels_per_byte) * bits_per_pixel;
+        if last_byte_bits != 0 {
+            // Pack the samples contiguously for the bit iterator.
+            let len = remove_scanline_padding(
+                &mut out_buf[..info.buffer_size()],
+                info.line_size,
+                last_byte_bits,
+            );
+            out_buf.truncate(len);
+        }
+    }
     Ok(out_buf)
+}
+
+fn remove_scanline_padding(buf: &mut [u8], line_size: usize, last_byte_bits: usize) -> usize {
+    let mut write_pos = 0;
+    let mut bytes_left_in_row = line_size;
+    let mut pending = 0u16;
+    let mut pending_bits = 0;
+    for read_pos in 0..buf.len() {
+        bytes_left_in_row -= 1;
+        let bits = if bytes_left_in_row == 0 {
+            bytes_left_in_row = line_size;
+            last_byte_bits
+        } else {
+            8
+        };
+
+        pending = (pending << bits) | u16::from(buf[read_pos] >> (8 - bits));
+        pending_bits += bits;
+        if pending_bits >= 8 {
+            pending_bits -= 8;
+            buf[write_pos] = (pending >> pending_bits) as u8;
+            write_pos += 1;
+            pending &= (1 << pending_bits) - 1;
+        }
+    }
+    if pending_bits != 0 {
+        buf[write_pos] = (pending << (8 - pending_bits)) as u8;
+        write_pos += 1;
+    }
+    write_pos
 }
 
 #[cfg(test)]
@@ -77,12 +117,13 @@ mod tests {
 
     fn encode_png(
         width: u32,
+        height: u32,
         color: png::ColorType,
         depth: png::BitDepth,
         pixels: &[u8],
     ) -> Result<Vec<u8>, png::EncodingError> {
         let mut image = Vec::new();
-        let mut encoder = png::Encoder::new(&mut image, width, 1);
+        let mut encoder = png::Encoder::new(&mut image, width, height);
         encoder.set_color(color);
         encoder.set_depth(depth);
         let mut writer = encoder.write_header()?;
@@ -138,7 +179,7 @@ mod tests {
 
     #[test]
     fn decode_png_rejects_truncated_image() -> Result<(), Box<dyn std::error::Error>> {
-        let mut image = encode_png(1, png::ColorType::Grayscale, png::BitDepth::Eight, &[42])?;
+        let mut image = encode_png(1, 1, png::ColorType::Grayscale, png::BitDepth::Eight, &[42])?;
         let idat = image
             .windows(4)
             .position(|bytes| bytes == b"IDAT")
@@ -165,6 +206,7 @@ mod tests {
             let num_points = expected.len() as u8;
             let image = encode_png(
                 u32::from(num_points),
+                1,
                 png::ColorType::Grayscale,
                 depth,
                 &[packed],
@@ -178,8 +220,43 @@ mod tests {
     }
 
     #[test]
+    fn decode_png_skips_scanline_padding() -> Result<(), Box<dyn std::error::Error>> {
+        let cases: [(png::BitDepth, &[u8], [f32; 6]); 3] = [
+            (
+                png::BitDepth::One,
+                &[0b1010_0000, 0b0110_0000],
+                [1.0, 0.0, 1.0, 0.0, 1.0, 1.0],
+            ),
+            (
+                png::BitDepth::Two,
+                &[0b00_01_10_00, 0b11_10_01_00],
+                [0.0, 1.0, 2.0, 3.0, 2.0, 1.0],
+            ),
+            (
+                png::BitDepth::Four,
+                &[0x12, 0x30, 0x45, 0x60],
+                [1.0, 2.0, 3.0, 4.0, 5.0, 6.0],
+            ),
+        ];
+        for (depth, pixels, expected) in cases {
+            let image = encode_png(3, 2, png::ColorType::Grayscale, depth, pixels)?;
+            let decoder = png_decoder(expected.len() as u8, depth as u8, &image)?;
+            let actual = decoder.dispatch()?.collect::<Vec<_>>();
+
+            assert_eq!(actual, expected, "{depth:?} scanlines");
+        }
+        Ok(())
+    }
+
+    #[test]
     fn decode_png_accepts_32_bit_rgba() -> Result<(), Box<dyn std::error::Error>> {
-        let image = encode_png(1, png::ColorType::Rgba, png::BitDepth::Eight, &[0, 1, 2, 3])?;
+        let image = encode_png(
+            1,
+            1,
+            png::ColorType::Rgba,
+            png::BitDepth::Eight,
+            &[0, 1, 2, 3],
+        )?;
         let decoder = png_decoder(1, 32, &image)?;
 
         let actual = decoder.dispatch()?.collect::<Vec<_>>();
