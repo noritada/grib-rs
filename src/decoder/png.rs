@@ -70,3 +70,23 @@ fn read_image_buffer(buf: &[u8]) -> Result<Vec<u8>, String> {
     let _info = reader.next_frame(&mut out_buf).map_err(|e| e.to_string())?;
     Ok(out_buf)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::Grib2SubmessageDecoder;
+
+    #[test]
+    fn decode_png_constant_field_without_image() -> Result<(), Box<dyn std::error::Error>> {
+        let mut sect5 = vec![0, 0, 0, 21, 5, 0, 0, 0, 3, 0, 41]; // Three points, template 5.41.
+        sect5.extend_from_slice(&25.0_f32.to_be_bytes());
+        sect5.extend_from_slice(&[0, 0, 0, 1, 0, 0]); // E = 0, D = 1, zero bits, float.
+        let sect6 = vec![0, 0, 0, 6, 6, 255]; // No bitmap.
+        let sect7 = vec![0, 0, 0, 5, 7]; // Header only, no PNG image.
+        let decoder = Grib2SubmessageDecoder::new(3, sect5, sect6, sect7)?;
+
+        let actual = decoder.dispatch()?.collect::<Vec<_>>();
+
+        assert_eq!(actual, [2.5; 3]);
+        Ok(())
+    }
+}
