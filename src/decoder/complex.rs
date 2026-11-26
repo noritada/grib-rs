@@ -539,6 +539,38 @@ mod tests {
             params(), Err(DecodeError::LengthMismatch)),
     }
 
+    #[test]
+    fn complex_packing_rejects_invalid_width_at_maximum_group_count() {
+        let params = param_set::ComplexPacking {
+            num_groups: u32::MAX,
+            group_width_ref: 32,
+            num_group_width_bits: 0,
+            num_group_len_bits: 0,
+            ..params()
+        };
+
+        // On 32-bit targets the group count is already usize::MAX.
+        let actual = decode_complex_packing(&params, &[], 0, 0, 0);
+
+        assert!(matches!(actual, Err(DecodeError::LengthMismatch)));
+    }
+
+    #[test]
+    fn complex_packing_group_iterator_yields_and_stops() {
+        let mut groups = ComplexPackingValueDecodeIterator::new(
+            [1u32].into_iter(),
+            [0u32].into_iter(),
+            [1u32].into_iter(),
+            0,
+            1,
+            0,
+            Vec::new(),
+        );
+
+        assert_eq!(groups.next(), Some(vec![Normal(1)]));
+        assert_eq!(groups.next(), None);
+    }
+
     macro_rules! reference_width_tests {
         (
             $(

@@ -273,6 +273,15 @@ mod tests {
     }
 
     #[test]
+    fn spdiff_first_values_yield_and_stop() -> Result<(), DecodeError> {
+        let descriptors = SpatialDifferencingExtraDescriptors::new(2, 1, &[7, 8, 0])?;
+        let actual = descriptors.first_values().take(3).collect::<Vec<_>>();
+
+        assert_eq!(actual, [7, 8]);
+        Ok(())
+    }
+
+    #[test]
     fn spdiff_first_values_with_high_bits_are_unsigned() -> Result<(), DecodeError> {
         let cases: [(u8, &[u8], &[i64], i32); 4] = [
             (1, &[0x7f, 0x80, 0x9d], &[127, 128], -29),
